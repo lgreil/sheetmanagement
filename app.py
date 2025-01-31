@@ -60,7 +60,7 @@ def login():
             #login_user(user)
             return render_template("index.html")
         else:
-            return "Invalid username or password", 401
+            return redirect(url_for('login', error=True))
     return render_template("login.html")
 
 @app.route("/logout")
