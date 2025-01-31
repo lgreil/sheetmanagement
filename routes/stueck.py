@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify
 from extensions import db
 from models import Stueck, Komponiert, Arrangiert, Person
+import logging
 
+logging.basicConfig(level=logging.ERROR)
 stueck_bp = Blueprint('stueck_bp', __name__)
 
 @stueck_bp.route("/", methods=["GET", "POST", "PUT", "DELETE"])
@@ -49,7 +51,8 @@ def handle_stueck():
             db.session.commit()
             return jsonify({'message': 'Stueck added successfully!'}), 201
         except Exception as e:
-            return jsonify({'error': str(e)}), 400
+            logging.error("Error occurred while adding Stueck: %s", str(e))
+            return jsonify({'error': 'An internal error has occurred!'}), 400
 
     elif request.method == "PUT":
         # Update an existing Stueck record
