@@ -1,70 +1,60 @@
-Collecting workspace information
+# Bachkreis Datenbank
 
-Notendatenbank
-Notendatenbank is a web application for managing musical scores, composers, arrangers, and related information. The application allows users to add, edit, delete, and view records of musical pieces and associated persons. It also includes user authentication to restrict access to authorized users.
+This is a Flask-based web application for managing a database of musical pieces, composers, and arrangers.
 
-Table of Contents
-Features
-Project Structure
-Setup
-Usage
-API Endpoints
-Contributing
-License
-Features
-Add, edit, delete, and view musical pieces (Stueck)
-Add, edit, delete, and view persons (composers and arrangers)
-User authentication and authorization
-Import musical pieces from JSON files
-Search and sort functionality for tables
-Project Structure
-Setup
-Prerequisites
-Python 3.8+
-PostgreSQL
-Node.js and npm (for frontend dependencies)
-Installation
-Clone the repository:
-Create a virtual environment and activate it:
-Install the required Python packages:
-Set up the PostgreSQL database and update the .env file with your database URI and secret key:
-Initialize the database:
-Install frontend dependencies:
-Usage
-Running the Application
-Start the Flask application:
-Open your web browser and navigate to http://localhost:5000.
-Creating User Accounts
-As an admin, you can create user accounts using the create_user.py script:
+## Features
 
-Importing Musical Pieces
-You can import musical pieces from a JSON file using the import functionality in the web interface.
+- User authentication (login/logout)
+- CRUD operations for musical pieces, composers, and arrangers
 
-API Endpoints
-Stueck
-GET /api/stueck: Fetch all musical pieces
-POST /api/stueck: Add a new musical piece
-PUT /api/stueck: Update an existing musical piece
-DELETE /api/stueck: Delete a musical piece
-GET /api/stueck/<int:stid>: Fetch a single musical piece by ID
-Person
-GET /api/person: Fetch all persons
-POST /api/person: Add a new person
-PUT /api/person: Update an existing person
-DELETE /api/person: Delete a person
-GET /api/person/<int:pid>: Fetch a single person by ID
-Komponiert
-GET /api/komponiert: Fetch all composer records
-POST /api/komponiert: Add a new composer record
-PUT /api/komponiert: Update an existing composer record
-DELETE /api/komponiert: Delete a composer record
-Arrangiert
-GET /api/arrangiert: Fetch all arranger records
-POST /api/arrangiert: Add a new arranger record
-PUT /api/arrangiert: Update an existing arranger record
-DELETE /api/arrangiert: Delete an arranger record
-Contributing
-Contributions are welcome! Please open an issue or submit a pull request for any improvements or bug fixes.
+## Setup
 
-License
-This project is licensed under the GPL Public License. See the LICENSE file for details.
+1. Clone the repository:
+    ```sh
+    git clone <repository-url>
+    cd <repository-directory>
+    ```
+
+2. Create a virtual environment and activate it:
+    ```sh
+    python -m venv venv
+    source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+    ```
+
+3. Install the dependencies:
+    ```sh
+    pip install -r requirements.txt
+    ```
+
+4. Create a `.env` file in the project root and add the following environment variables:
+    ```
+    DATABASE_URI=<your-database-uri>
+    SECRET_KEY=<your-secret-key>
+    ```
+
+5. Initialize the database:
+    ```sh
+    flask db upgrade
+    ```
+
+6. Run the application:
+    ```sh
+    flask run
+    ```
+
+## Usage
+
+- Access the application at `http://localhost:5000`
+- Login with your credentials
+- Use the provided routes to manage musical pieces, composers, and arrangers
+
+## Routes
+
+- `/api/stueck` - Manage musical pieces
+- `/api/person` - Manage composers and arrangers
+- `/api/komponiert` - Manage compositions
+- `/api/arrangiert` - Manage arrangements
+
+## License
+
+This project is licensed under the MIT License.
