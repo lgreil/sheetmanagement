@@ -1,4 +1,4 @@
-# Bachkreis Datenbank
+# Sheetmusic Database
 
 This is a Flask-based web application for managing a database of musical pieces, composers, and arrangers.
 
