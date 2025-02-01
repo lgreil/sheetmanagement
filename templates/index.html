@@ -16,6 +16,12 @@
             <h1>Notenmanagement</h1>
         </div>
 
+        {% if current_user.is_authenticated and current_user.is_admin %}
+        <div class="text-center my-4">
+            <a href="{{ url_for('manage_users') }}" class="btn btn-primary">Manage Users</a>
+        </div>
+        {% endif %}
+
         <!-- Nav Tabs -->
         <ul class="nav nav-tabs mb-4" id="management-tabs" role="tablist">
             <li class="nav-item" role="presentation">
@@ -242,6 +248,9 @@
             };
             reader.readAsText(file);
         }
+    </script>
+    <script>
+        console.log("{{ user_info }}");
     </script>
 </body>
 </html>

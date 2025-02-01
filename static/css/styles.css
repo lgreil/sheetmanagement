@@ -191,7 +191,7 @@ th.sortable.sorted-desc::after {
 
 .schwierigkeit-bar.easy .fill {
     width: 33%;
-    background-color: var(--easy-green);
+    background-color: var (--easy-green);
 }
 
 .schwierigkeit-bar.medium .fill {
@@ -291,6 +291,28 @@ th.sortable.sorted-desc::after {
 
 .login-box .btn-primary:hover {
     background: var(--secondary-color);
+}
+
+/* User Management Styles */
+.user-management-container {
+    margin-top: 20px;
+}
+
+.user-management-container h2 {
+    color: var(--primary-color);
+    text-align: center;
+}
+
+.user-management-container .btn {
+    margin-right: 10px;
+}
+
+.user-management-container .form-control {
+    margin-bottom: 10px;
+}
+
+.user-management-container .table {
+    margin-top: 20px;
 }
 
 /* Responsive styles */
