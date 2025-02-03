@@ -1,0 +1,583 @@
+2025-02-01 13:32:36,072 -  * Debugger is active!
+2025-02-01 13:32:36,073 -  * Debugger PIN: 121-382-174
+2025-02-01 13:32:37,863 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "POST /login HTTP/1.1" 200 -
+2025-02-01 13:32:37,983 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/fetchData.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,990 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/crudOperations.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,992 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/modal.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,992 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,993 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/populateTable.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,993 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/js/sortTable.js HTTP/1.1" 200 -
+2025-02-01 13:32:37,995 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/css/styles.css HTTP/1.1" 200 -
+2025-02-01 13:32:37,998 - 217.83.55.124 - - [01/Feb/2025 13:32:37] "GET /static/logo.png HTTP/1.1" 200 -
+2025-02-01 13:32:38,028 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "[33mGET /static/js/importCSV.js HTTP/1.1[0m" 404 -
+2025-02-01 13:32:38,034 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "GET /static/js/search.js HTTP/1.1" 200 -
+2025-02-01 13:32:38,036 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "[33mGET /static/js/importFile.js HTTP/1.1[0m" 404 -
+2025-02-01 13:32:38,057 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "GET /static/js/importTSV.js HTTP/1.1" 200 -
+2025-02-01 13:32:38,135 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "GET /api/stueck/ HTTP/1.1" 200 -
+2025-02-01 13:32:38,773 - 217.83.55.124 - - [01/Feb/2025 13:32:38] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:32:39,445 - 217.83.55.124 - - [01/Feb/2025 13:32:39] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:36:34,645 - Exception on /login [POST]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 70, in login
+    login_user(user)
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 183, in login_user
+    user_id = getattr(user, current_app.login_manager.id_attribute)()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/mixins.py", line 27, in get_id
+    raise NotImplementedError("No `id` attribute - override `get_id`") from None
+NotImplementedError: No `id` attribute - override `get_id`
+2025-02-01 13:36:41,258 - Exception on /login [POST]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 70, in login
+    login_user(user)
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 183, in login_user
+    user_id = getattr(user, current_app.login_manager.id_attribute)()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/mixins.py", line 27, in get_id
+    raise NotImplementedError("No `id` attribute - override `get_id`") from None
+NotImplementedError: No `id` attribute - override `get_id`
+2025-02-01 13:36:50,114 - Exception on /login [POST]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 70, in login
+    login_user(user)
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 183, in login_user
+    user_id = getattr(user, current_app.login_manager.id_attribute)()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/mixins.py", line 27, in get_id
+    raise NotImplementedError("No `id` attribute - override `get_id`") from None
+NotImplementedError: No `id` attribute - override `get_id`
+2025-02-01 13:37:58,493 - Exception on /login [POST]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 70, in login
+    login_user(user)
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 183, in login_user
+    user_id = getattr(user, current_app.login_manager.id_attribute)()
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/mixins.py", line 27, in get_id
+    raise NotImplementedError("No `id` attribute - override `get_id`") from None
+NotImplementedError: No `id` attribute - override `get_id`
+2025-02-01 13:38:10,293 - An error occurred: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-02-01 13:38:12,858 - An error occurred: No `id` attribute - override `get_id`
+2025-02-01 13:38:12,906 - An error occurred: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-02-01 13:38:30,665 - An error occurred: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-02-01 13:38:35,508 - An error occurred: No `id` attribute - override `get_id`
+2025-02-01 13:38:35,573 - An error occurred: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-02-01 13:38:58,469 - An error occurred: No `id` attribute - override `get_id`
+2025-02-01 13:38:58,501 - An error occurred: 404 Not Found: The requested URL was not found on the server. If you entered the URL manually please check your spelling and try again.
+2025-02-01 13:43:48,423 - [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on all addresses (0.0.0.0)
+ * Running on http://127.0.0.1:5000
+ * Running on http://192.168.2.223:5000
+2025-02-01 13:43:48,424 - [33mPress CTRL+C to quit[0m
+2025-02-01 13:43:48,427 -  * Restarting with stat
+2025-02-01 13:43:50,026 -  * Debugger is active!
+2025-02-01 13:43:50,027 -  * Debugger PIN: 121-382-174
+2025-02-01 13:43:53,652 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "POST /login HTTP/1.1" 200 -
+2025-02-01 13:43:53,773 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/populateTable.js HTTP/1.1" 200 -
+2025-02-01 13:43:53,776 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/css/styles.css HTTP/1.1" 200 -
+2025-02-01 13:43:53,778 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/modal.js HTTP/1.1" 200 -
+2025-02-01 13:43:53,781 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/fetchData.js HTTP/1.1" 200 -
+2025-02-01 13:43:53,783 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/logo.png HTTP/1.1" 200 -
+2025-02-01 13:43:53,791 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/crudOperations.js HTTP/1.1" 200 -
+2025-02-01 13:43:53,794 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-02-01 13:43:53,798 - 217.83.55.124 - - [01/Feb/2025 13:43:53] "GET /static/js/sortTable.js HTTP/1.1" 200 -
+2025-02-01 13:43:54,607 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "GET /static/js/search.js HTTP/1.1" 200 -
+2025-02-01 13:43:54,619 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "[33mGET /static/js/importCSV.js HTTP/1.1[0m" 404 -
+2025-02-01 13:43:54,626 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "[33mGET /static/js/importFile.js HTTP/1.1[0m" 404 -
+2025-02-01 13:43:54,626 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "GET /static/js/importTSV.js HTTP/1.1" 200 -
+2025-02-01 13:43:54,652 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "[32mGET /api/stueck HTTP/1.1[0m" 308 -
+2025-02-01 13:43:54,656 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "[32mGET /api/person HTTP/1.1[0m" 308 -
+2025-02-01 13:43:54,659 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "[32mGET /api/person HTTP/1.1[0m" 308 -
+2025-02-01 13:43:54,809 - 217.83.55.124 - - [01/Feb/2025 13:43:54] "GET /api/stueck/ HTTP/1.1" 200 -
+2025-02-01 13:43:55,142 - 217.83.55.124 - - [01/Feb/2025 13:43:55] "GET /static/favicon.png HTTP/1.1" 200 -
+2025-02-01 13:43:55,832 - 217.83.55.124 - - [01/Feb/2025 13:43:55] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:43:55,832 - 217.83.55.124 - - [01/Feb/2025 13:43:55] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:43:57,259 - 217.83.55.124 - - [01/Feb/2025 13:43:57] "GET /login HTTP/1.1" 200 -
+2025-02-01 13:43:57,304 - 217.83.55.124 - - [01/Feb/2025 13:43:57] "GET /static/css/styles.css HTTP/1.1" 200 -
+2025-02-01 13:43:57,322 - 217.83.55.124 - - [01/Feb/2025 13:43:57] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-02-01 13:44:01,488 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "POST /login HTTP/1.1" 200 -
+2025-02-01 13:44:01,583 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/logo.png HTTP/1.1" 200 -
+2025-02-01 13:44:01,585 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/css/styles.css HTTP/1.1" 200 -
+2025-02-01 13:44:01,599 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/modal.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,599 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/populateTable.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,600 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/fetchData.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,605 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/main.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,608 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/crudOperations.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,608 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/sortTable.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,657 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "[33mGET /static/js/importCSV.js HTTP/1.1[0m" 404 -
+2025-02-01 13:44:01,662 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/search.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,663 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "[33mGET /static/js/importFile.js HTTP/1.1[0m" 404 -
+2025-02-01 13:44:01,665 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /static/js/importTSV.js HTTP/1.1" 200 -
+2025-02-01 13:44:01,701 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "[32mGET /api/stueck HTTP/1.1[0m" 308 -
+2025-02-01 13:44:01,703 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "[32mGET /api/person HTTP/1.1[0m" 308 -
+2025-02-01 13:44:01,707 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "[32mGET /api/person HTTP/1.1[0m" 308 -
+2025-02-01 13:44:01,850 - 217.83.55.124 - - [01/Feb/2025 13:44:01] "GET /api/stueck/ HTTP/1.1" 200 -
+2025-02-01 13:44:02,145 - 217.83.55.124 - - [01/Feb/2025 13:44:02] "GET /static/favicon.png HTTP/1.1" 200 -
+2025-02-01 13:44:02,796 - 217.83.55.124 - - [01/Feb/2025 13:44:02] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:44:02,807 - 217.83.55.124 - - [01/Feb/2025 13:44:02] "GET /api/person/ HTTP/1.1" 200 -
+2025-02-01 13:48:14,589 -  * Detected change in '/media/pi/Greil-Festplatte1/Server/bachkreis/models.py', reloading
+2025-02-01 13:48:14,925 -  * Restarting with stat
+2025-02-01 13:48:16,551 -  * Debugger is active!
+2025-02-01 13:48:16,552 -  * Debugger PIN: 121-382-174
+2025-02-01 13:48:22,558 - 217.83.55.124 - - [01/Feb/2025 13:48:22] "[35m[1mPOST /login HTTP/1.1[0m" 500 -
+2025-02-01 13:48:22,635 - 172.21.0.2 - - [01/Feb/2025 13:48:22] "GET /login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-02-01 13:48:22,646 - 172.21.0.2 - - [01/Feb/2025 13:48:22] "GET /login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-02-01 13:48:22,658 - 172.21.0.2 - - [01/Feb/2025 13:48:22] "GET /login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-02-01 13:48:25,571 - 217.83.55.124 - - [01/Feb/2025 13:48:25] "GET /login HTTP/1.1" 200 -
+2025-02-01 13:48:25,611 - 217.83.55.124 - - [01/Feb/2025 13:48:25] "GET /static/css/styles.css HTTP/1.1" 200 -
+2025-02-01 13:48:25,627 - 217.83.55.124 - - [01/Feb/2025 13:48:25] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+2025-02-01 13:48:28,505 - 217.83.55.124 - - [01/Feb/2025 13:48:28] "[35m[1mPOST /login HTTP/1.1[0m" 500 -
+2025-02-01 13:48:28,593 - 172.21.0.2 - - [01/Feb/2025 13:48:28] "GET /login?__debugger__=yes&cmd=resource&f=style.css HTTP/1.1" 200 -
+2025-02-01 13:48:28,601 - 172.21.0.2 - - [01/Feb/2025 13:48:28] "GET /login?__debugger__=yes&cmd=resource&f=debugger.js HTTP/1.1" 200 -
+2025-02-01 13:48:28,622 - 172.21.0.2 - - [01/Feb/2025 13:48:28] "GET /login?__debugger__=yes&cmd=resource&f=console.png HTTP/1.1" 200 -
+2025-02-01 13:51:44,860 -  * Detected change in '/media/pi/Greil-Festplatte1/Server/bachkreis/routes/arrangiert.py', reloading
+2025-02-01 13:51:45,211 -  * Restarting with stat
+2025-02-01 13:51:47,257 -  * Debugger is active!
+2025-02-01 13:51:47,258 -  * Debugger PIN: 121-382-174
+2025-02-01 13:52:00,088 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:52:16,911 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:52:23,273 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:54:19,105 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:55:41,335 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:55:44,313 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:55:55,663 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:56:00,801 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:56:04,331 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 13:57:02,283 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:37:30,641 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:37:47,076 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:40:18,331 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:40:22,119 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:40:23,940 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:40:25,085 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:40:28,081 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 58, in index
+    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
+                                    ^^^^^^^^^^^^^^^
+AttributeError: 'User' object has no attribute 'id'
+2025-02-01 19:44:05,977 - Exception on /admin/users [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 88, in manage_users
+    def add_user():
+                    
+AttributeError: 'User' object has no attribute 'id'
+2025-02-03 10:41:00,986 - Exception on / [GET]
+Traceback (most recent call last):
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 1511, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 919, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 917, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask/app.py", line 902, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/venv/lib/python3.11/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/media/pi/Greil-Festplatte1/Server/bachkreis/app.py", line 57, in index
+    return render_template("index.html", user_info=user_info)
+                                                   ^^^^^^^^^
+NameError: name 'user_info' is not defined
