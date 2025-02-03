@@ -39,6 +39,7 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+<<<<<<< HEAD
 <<<<<<< Updated upstream
         return check_password_hash(self.password_hash, password)
 =======
@@ -47,3 +48,9 @@ class User(UserMixin, db.Model):
     def get_id(self):
         return int(self.uid)
 >>>>>>> Stashed changes
+=======
+        return check_password_hash(self.password_hash, password)
+    
+    def get_id(self):
+        return str(self.uid)
+>>>>>>> ae845216a145762f94b52354c20452c4b24e90e2
