@@ -54,20 +54,11 @@ logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s 
 @app.route("/")
 @login_required
 def index():
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-    # Render the main index page
-    return render_template("index.html")
-=======
-    return render_template("index.html", user_info=user_info)
->>>>>>> Stashed changes
-=======
     # Debug: Output current user ID and admin status
     user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
     logging.info(user_info)
     # Render the main index page
     return render_template("index.html", user_info=user_info)
->>>>>>> ae845216a145762f94b52354c20452c4b24e90e2
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -88,26 +79,13 @@ def logout():
     logout_user()
     return redirect(url_for('login'))
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> ae845216a145762f94b52354c20452c4b24e90e2
 @app.route("/admin/users", methods=["GET"])
 @login_required
 def manage_users():
     if not current_user.is_admin:
         return redirect(url_for('index'))
-<<<<<<< HEAD
     users = User.query.all()
     return render_template("manage_users.html", users=users)
-=======
-    # Debug: Output current user ID and admin status
-    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
-    logging.info(user_info)
-    users = User.query.all()
-    return render_template("manage_users.html")
->>>>>>> ae845216a145762f94b52354c20452c4b24e90e2
 
 @app.route("/admin/users/add", methods=["POST"])
 @login_required
@@ -154,10 +132,6 @@ def update_rights(user_id):
     db.session.commit()
     return redirect(url_for('manage_users'))
 
-<<<<<<< HEAD
->>>>>>> Stashed changes
-=======
->>>>>>> ae845216a145762f94b52354c20452c4b24e90e2
 if __name__ == '__main__':
     # Run the Flask application
     app.run(host='0.0.0.0', port=5000, debug=False)
