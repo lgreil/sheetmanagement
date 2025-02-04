@@ -43,3 +43,10 @@ class User(UserMixin, db.Model):
     
     def get_id(self):
         return int(self.uid)
+
+    def to_dict(self):
+        return {
+            'uid': self.uid,
+            'username': self.username,
+            'is_admin': self.is_admin
+        }
