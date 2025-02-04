@@ -139,7 +139,7 @@ function editStueck(stid) {
             document.body.appendChild(modal);
             modal.style.display = 'block';
 
-            document.getElementById('edit-stueck-form').addEventListener('submit', function(event) {
+            document.getElementById('edit-stueck-form').addEventListener('submit', function (event) {
                 event.preventDefault();
                 const formData = new FormData(event.target);
                 const composerName = formData.get('composer_name');
@@ -165,12 +165,12 @@ function editStueck(stid) {
                     },
                     body: JSON.stringify(updatedStueck)
                 })
-                .then(response => response.json())
-                .then(data => {
-                    fetchStueck();
-                    document.body.removeChild(modal);
-                })
-                .catch(error => console.error("Error:", error));
+                    .then(response => response.json())
+                    .then(data => {
+                        fetchStueck();
+                        document.body.removeChild(modal);
+                    })
+                    .catch(error => console.error("Error:", error));
             });
         })
         .catch(error => console.error("Error fetching Stueck details:", error));
@@ -239,11 +239,11 @@ function deleteStueck(stid) {
         },
         body: JSON.stringify({ stid })
     })
-    .then(response => response.json())
-    .then(data => {
-        fetchStueck();
-    })
-    .catch(error => console.error("Error:", error));
+        .then(response => response.json())
+        .then(data => {
+            fetchStueck();
+        })
+        .catch(error => console.error("Error:", error));
 }
 
 document.addEventListener("DOMContentLoaded", function () {

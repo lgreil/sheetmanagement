@@ -11,7 +11,7 @@ function populateTable(data, tableBodyId, populateRowFunction) {
 // Populate a row in the Stueck table
 function populateStueckRow(stueck) {
     const schwierigkeitClass = stueck.schwierigkeit === 'Einfach' ? 'easy' :
-                               stueck.schwierigkeit === 'Mittel' ? 'medium' : 'hard';
+        stueck.schwierigkeit === 'Mittel' ? 'medium' : 'hard';
 
     return `
         <tr>
