@@ -8,9 +8,10 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <link rel="icon" type="image/png" href="../static/favicon.png">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
 </head>
 <body>
-    <div class="container">
+    <div id="app" class="container">
         <div class="text-center my-4">
             <img src="/static/logo.png" alt="Orchestra Logo" class="img-fluid" style="max-width: 150px;">
             <h1>Notenmanagement</h1>
@@ -37,220 +38,20 @@
 
         <!-- Tab Content -->
         <div class="tab-content" id="management-content">
-
-            <!-- Stueck Section -->
             <div class="tab-pane fade show active" id="stueck" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Manage Stueck</h2>
-                    <div>
-                        <button class="btn btn-primary me-2" onclick="openAddStueckModal()">Add New Stueck</button>
-                        <button class="btn btn-secondary" onclick="fetchStueck()">Refresh</button>
-                        <button class="btn btn-info" onclick="document.getElementById('jsonInput').click()">Import JSON</button>
-                        <input type="file" id="jsonInput" accept=".json" onchange="handleJsonImport(event)" style="display: none;">
-                    </div>
-                </div>
-                <input type="text" class="form-control mb-3" id="stueck-search" onkeyup="searchTable('stueck-table-body', 'stueck-search')" placeholder="Search for Stueck..">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 0)">Name</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 1)">Schwierigkeit</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 2)">Genre</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 3)">Digitalisiert</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 4)">Jahr</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 5)">Composer</th>
-                            <th class="sortable" onclick="sortTable('stueck-table-body', 6)">Arranger</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="stueck-table-body">
-                        <!-- Rows will be dynamically populated -->
-                    </tbody>
-                </table>
-
-                <div id="addStueckModal" class="modal">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Add a New Stück</h5>
-                                <button type="button" class="btn-close" onclick="closeAddStueckModal()"></button>
-                            </div>
-                            <div class="modal-body">
-                                <form id="addStueckForm">
-                                    <div class="mb-3">
-                                        <label for="name" class="form-label">Name</label>
-                                        <input type="text" class="form-control" id="name" name="name" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="schwierigkeit" class="form-label">Schwierigkeit</label>
-                                        <select class="form-control" id="schwierigkeit" name="schwierigkeit">
-                                            <option value="Einfach">Einfach</option>
-                                            <option value="Mittel">Mittel</option>
-                                            <option value="Schwer">Schwer</option>
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="genre" class="form-label">Genre</label>
-                                        <input type="text" class="form-control" id="genre" name="genre">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="isdigitalisiert" class="form-label">Digitalisiert</label>
-                                        <input type="checkbox" class="form-check-input" id="isdigitalisiert" name="isdigitalisiert">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="jahr" class="form-label">Jahr</label>
-                                        <input type="number" class="form-control" id="jahr" name="jahr">
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="composer_name" class="form-label">Composer</label>
-                                        <input type="text" class="form-control" id="composer_name" name="composer_name" list="composer-list">
-                                        <datalist id="composer-list">
-                                            <!-- Options will be dynamically populated -->
-                                        </datalist>
-                                        <button type="button" class="btn btn-link" onclick="openAddPersonModal()">Add New Composer</button>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="arranger_name" class="form-label">Arranger</label>
-                                        <input type="text" class="form-control" id="arranger_name" name="arranger_name" list="arranger-list">
-                                        <datalist id="arranger-list">
-                                            <!-- Options will be dynamically populated -->
-                                        </datalist>
-                                        <button type="button" class="btn btn-link" onclick="openAddPersonModal()">Add New Arranger</button>
-                                    </div>
-                                    <button type="submit" class="btn btn-success">Submit</button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <stueck-management></stueck-management>
             </div>
-
-            <!-- Person Section -->
             <div class="tab-pane fade" id="person" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Manage Person</h2>
-                    <div>
-                        <button class="btn btn-primary me-2" onclick="openAddPersonModal()">Add New Person</button>
-                        <button class="btn btn-secondary" onclick="fetchPerson()">Refresh</button>
-                    </div>
-                </div>
-                <input type="text" class="form-control mb-3" id="person-search" onkeyup="searchTable('person-table-body', 'person-search')" placeholder="Search for Person..">
-                <table class="table table-bordered table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th class="sortable" onclick="sortTable('person-table-body', 0)">Vorname</th>
-                            <th class="sortable" onclick="sortTable('person-table-body', 1)">Name</th>
-                            <th class="sortable" onclick="sortTable('person-table-body', 2)">Appearances</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="person-table-body">
-                        <!-- Rows will be dynamically populated -->
-                    </tbody>
-                </table>
+                <person-management></person-management>
             </div>
-
-            <!-- Schrank Section -->
             <div class="tab-pane fade" id="schrank" role="tabpanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h2>Manage Schrank</h2>
-                    <div>
-                        <button class="btn btn-primary me-2" onclick="openAddSchrankModal()">Add New Schrank</button>
-                    </div>
-                </div>
-                <table class="table table-bordered table-hover">
-                    <thead class="table-dark">
-                        <tr>
-                            <th class="sortable" onclick="sortTable('schrank-table-body', 0)">Name</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="schrank-table-body">
-                        <!-- Rows will be dynamically populated -->
-                    </tbody>
-                </table>
+                <schrank-management></schrank-management>
             </div>
         </div>
-
-        <!-- Modals for Adding Data -->
-        <div class="modal" id="add-stueck-modal">
-            <div class="modal-dialog">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Add New Stueck</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body">
-                        <form id="add-stueck-form">
-                            <div class="mb-3">
-                                <label for="stueck-name" class="form-label">Name</label>
-                                <input type="text" class="form-control" id="stueck-name" name="name" required>
-                            </div>
-                            <div class="mb-3">
-                                <label for="stueck-schwierigkeit" class="form-label">Schwierigkeit</label>
-                                <select class="form-control" id="stueck-schwierigkeit" name="schwierigkeit">
-                                    <option value="Einfach">Einfach</option>
-                                    <option value="Mittel">Mittel</option>
-                                    <option value="Schwer">Schwer</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="stueck-genre" class="form-label">Genre</label>
-                                <input type="text" class="form-control" id="stueck-genre" name="genre">
-                            </div>
-                            <div class="mb-3">
-                                <label for="stueck-jahr" class="form-label">Jahr</label>
-                                <input type="number" class="form-control" id="stueck-jahr" name="jahr">
-                            </div>
-                            <div class="mb-3">
-                                <label for="stueck-digitalisiert" class="form-label">Digitalisiert</label>
-                                <select class="form-control" id="stueck-digitalisiert" name="isdigitalisiert">
-                                    <option value="true">True</option>
-                                    <option value="false">False</option>
-                                </select>
-                            </div>
-                            <div class="mb-3">
-                                <label for="composer_id" class="form-label">Composer ID</label>
-                                <input type="number" class="form-control" id="composer_id" name="composer_id">
-                            </div>
-                            <div class="mb-3">
-                                <label for="arranger_id" class="form-label">Arranger ID</label>
-                                <input type="number" class="form-control" id="arranger_id" name="arranger_id">
-                            </div>
-                            <button type="submit" class="btn btn-success">Save</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- More Modals for Person and Schrank can follow the same structure -->
-
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/static/js/fetchData.js" defer></script>
-    <script src="/static/js/populateTable.js" defer></script>
-    <script src="/static/js/modal.js" defer></script>
-    <script src="/static/js/crudOperations.js" defer></script>
-    <script src="/static/js/main.js" defer></script>
-    <script src="/static/js/sortTable.js" defer></script>
-
-    <script>
-        function handleJsonImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const jsonData = JSON.parse(e.target.result);
-                importMultipleStuecke(jsonData);
-            };
-            reader.readAsText(file);
-        }
-    </script>
-    <script>
-        console.log("{{ user_info }}");
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="/static/js/app.js" defer></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, jsonify
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
@@ -63,14 +63,15 @@ def index():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form['username'].lower()
-        password = request.form['password']
+        data = request.get_json()
+        username = data['username'].lower()
+        password = data['password']
         user = User.query.filter_by(username=username).first()
         if user and user.check_password(password):
             login_user(user)  # Log in the user
-            return render_template("index.html")
+            return jsonify(success=True)
         else:
-            return redirect(url_for('login', error=True))
+            return jsonify(success=False), 401
     return render_template("login.html")
 
 @app.route("/logout")
@@ -84,25 +85,23 @@ def logout():
 def manage_users():
     if not current_user.is_admin:
         return redirect(url_for('index'))
-    # Debug: Output current user ID and admin status
-    user_info = f"Current User ID: {current_user.id}, Is Admin: {current_user.is_admin}"
-    logging.info(user_info)
     users = User.query.all()
-    return render_template("manage_users.html")
+    return render_template("manage_users.html", users=users)
 
 @app.route("/admin/users/add", methods=["POST"])
 @login_required
 def add_user():
     if not current_user.is_admin:
         return redirect(url_for('index'))
-    username = request.form['username']
-    password = request.form['password']
-    is_admin = 'is_admin' in request.form
+    data = request.get_json()
+    username = data['username']
+    password = data['password']
+    is_admin = data['is_admin']
     new_user = User(username=username, is_admin=is_admin)
     new_user.set_password(password)
     db.session.add(new_user)
     db.session.commit()
-    return redirect(url_for('manage_users'))
+    return jsonify(success=True, user=new_user.to_dict())
 
 @app.route("/admin/users/delete/<int:user_id>", methods=["POST"])
 @login_required
@@ -112,29 +111,31 @@ def delete_user(user_id):
     user = User.query.get(user_id)
     db.session.delete(user)
     db.session.commit()
-    return redirect(url_for('manage_users'))
+    return jsonify(success=True)
 
 @app.route("/admin/users/reset_password/<int:user_id>", methods=["POST"])
 @login_required
 def reset_password(user_id):
     if not current_user.is_admin:
         return redirect(url_for('index'))
+    data = request.get_json()
     user = User.query.get(user_id)
-    new_password = request.form['new_password']
+    new_password = data['new_password']
     user.set_password(new_password)
     db.session.commit()
-    return redirect(url_for('manage_users'))
+    return jsonify(success=True)
 
 @app.route("/admin/users/update_rights/<int:user_id>", methods=["POST"])
 @login_required
 def update_rights(user_id):
     if not current_user.is_admin:
         return redirect(url_for('index'))
+    data = request.get_json()
     user = User.query.get(user_id)
-    user.is_admin = 'is_admin' in request.form
+    user.is_admin = data['is_admin']
     db.session.commit()
-    return redirect(url_for('manage_users'))
+    return jsonify(success=True)
 
 if __name__ == '__main__':
     # Run the Flask application
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
