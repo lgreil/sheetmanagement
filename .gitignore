@@ -1,1 +1,30 @@
-*.env
+# Environment variables
+.env
+
+# Logs
+*.log
+
+# Dependency directories
+node_modules/
+venv/
+
+# Compiled files
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.swp
+
+# IDE specific files
+.vscode/
+.idea/
+
+# Python specific
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Vue specific
+.DS_Store
