@@ -1,5 +1,10 @@
-// stueck-management.js
-const StueckManagement = {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+import SuggestionsInput from './SuggestionsInput.js'; // Adjust the path as necessary
+
+const StueckManagement = defineComponent({
+    components: {
+        SuggestionsInput,
+    },
     data() {
         return {
             stuecke: [],
@@ -268,6 +273,6 @@ const StueckManagement = {
             <popup-message ref="popup"></popup-message>
         </div>
     `
-};
+});
 
 export default StueckManagement;

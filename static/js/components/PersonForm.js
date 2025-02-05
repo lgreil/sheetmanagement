@@ -1,4 +1,6 @@
-const PersonForm = {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const PersonForm = defineComponent({
     data() {
         return {
             title: '',
@@ -42,6 +44,6 @@ const PersonForm = {
             </template>
         </modal>
     `
-};
+});
 
 export default PersonForm;

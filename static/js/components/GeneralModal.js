@@ -1,4 +1,6 @@
-const GeneralModal = {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const GeneralModal = defineComponent({
     props: ['title', 'submitText'],
     methods: {
         submit() {
@@ -27,6 +29,6 @@ const GeneralModal = {
             </div>
         </div>
     `
-};
+});
 
 export default GeneralModal;

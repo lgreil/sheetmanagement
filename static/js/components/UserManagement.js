@@ -1,3 +1,5 @@
+import { createApp } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
 const UserManagement = {
     data() {
         return {
@@ -171,3 +173,5 @@ const UserManagement = {
 };
 
 export default UserManagement;
+
+createApp(UserManagement).mount('#user-management-app');

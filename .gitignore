@@ -28,4 +28,9 @@ __pycache__/
 *.pyd
 
 # Vue specific
+
 .DS_Store
+
+
+*.env
+.dockerignore
