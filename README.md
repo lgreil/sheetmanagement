@@ -1,13 +1,14 @@
 # Sheetmusic Database
 
-This is a Flask-based web application for managing a database of musical pieces, composers, and arrangers. The frontend is built using Vue.js.
+This is a Flask-based web application with a Vue.js frontend for managing a database of musical pieces, composers, and arrangers.
 
 ## Features
 
 - User authentication (login/logout)
 - CRUD operations for musical pieces, composers, and arrangers
-- User management for admin users
-- Import musical pieces from JSON and TSV files
+- Responsive UI built with Vue.js
+- Real-time data updates
+- User management with role-based access control
 
 ## Setup
 
@@ -39,7 +40,17 @@ This is a Flask-based web application for managing a database of musical pieces,
     flask db upgrade
     ```
 
-6. Run the application:
+6. Install frontend dependencies:
+    ```sh
+    npm install
+    ```
+
+7. Build the Vue.js frontend:
+    ```sh
+    npm run build
+    ```
+
+8. Run the application:
     ```sh
     flask run
     ```
@@ -56,11 +67,6 @@ This is a Flask-based web application for managing a database of musical pieces,
 - `/api/person` - Manage composers and arrangers
 - `/api/komponiert` - Manage compositions
 - `/api/arrangiert` - Manage arrangements
-- `/admin/users` - Manage users (admin only)
-
-## Frontend
-
-The frontend is built using Vue.js and includes components for managing musical pieces, composers, arrangers, and users.
 
 ## License
 
