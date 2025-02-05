@@ -1,5 +1,14 @@
-// person-management.js
-app.component('person-management', {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+import TableManagement from './TableManagement.js';
+import PopupMessage from './PopupMessage.js';
+import PersonForm from './PersonForm.js';
+import SuggestionsInput from './SuggestionsInput.js'; // Import SuggestionsInput
+const PersonManagement = defineComponent({
+    components: {
+        TableManagement,
+        PersonForm,
+        PopupMessage
+    },
     data() {
         return {
             persons: [],
@@ -77,3 +86,5 @@ app.component('person-management', {
         </div>
     `
 });
+
+export default PersonManagement;

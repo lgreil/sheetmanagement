@@ -1,5 +1,7 @@
-const TableManagement = {
-    name: 'table-management', // Added name option
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const TableManagement = defineComponent({
+    name: 'table-management',
     props: ['items', 'columns', 'searchPlaceholder', 'actions'],
     data() {
         return {
@@ -11,7 +13,7 @@ const TableManagement = {
     },
     computed: {
         filteredItems() {
-            console.log('Original Items:', this.items); // Debugging log
+            console.log('Original Items:', this.items);
             let items = JSON.parse(JSON.stringify(this.items)).filter(item => {
                 return Object.values(item).some(value =>
                     String(value).toLowerCase().includes(this.searchQuery.toLowerCase())
@@ -23,7 +25,7 @@ const TableManagement = {
                     return this.sortAsc ? result : -result;
                 });
             }
-            console.log('Filtered Items:', items); // Debugging log
+            console.log('Filtered Items:', items);
             return items;
         }
     },
@@ -48,13 +50,13 @@ const TableManagement = {
         }
     },
     mounted() {
-        console.log('Columns:', this.columns); // Debugging log
-        console.log('Items:', this.items); // Debugging log
+        console.log('Columns:', this.columns);
+        console.log('Items:', this.items);
         this.columns.forEach(column => {
-            console.log('Column:', column); // Detailed column log
+            console.log('Column:', column);
         });
         this.items.forEach(item => {
-            console.log('Item:', item); // Detailed item log
+            console.log('Item:', item);
         });
     },
     template: `
@@ -105,6 +107,6 @@ const TableManagement = {
             </table>
         </div>
     `
-};
+});
 
 export default TableManagement;

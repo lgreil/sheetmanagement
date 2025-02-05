@@ -1,3 +1,5 @@
+import { createApp } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
 const Login = {
     data() {
         return {
@@ -61,3 +63,5 @@ const Login = {
 };
 
 export default Login;
+
+createApp(Login).mount('#login-app');

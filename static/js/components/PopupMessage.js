@@ -1,4 +1,6 @@
-const PopupMessage = {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const PopupMessage = defineComponent({
     data() {
         return {
             message: '',
@@ -21,6 +23,6 @@ const PopupMessage = {
             {{ message }}
         </div>
     `
-};
+});
 
 export default PopupMessage;

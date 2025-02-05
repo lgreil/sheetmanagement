@@ -1,4 +1,6 @@
-const UserForm = {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const UserForm = defineComponent({
     data() {
         return {
             title: '',
@@ -47,6 +49,6 @@ const UserForm = {
             </template>
         </modal>
     `
-};
+});
 
 export default UserForm;

@@ -1,5 +1,6 @@
-// schrank-management.js
-Vue.component('schrank-management', {
+import { defineComponent } from 'https://unpkg.com/vue@3.2.31/dist/vue.esm-browser.js';
+
+const SchrankManagement = defineComponent({
     data() {
         return {
             schraenke: [],
@@ -60,3 +61,5 @@ Vue.component('schrank-management', {
         </div>
     `
 });
+
+export default SchrankManagement;
