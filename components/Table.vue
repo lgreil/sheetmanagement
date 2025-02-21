@@ -1,16 +1,15 @@
 <template>
   <div class="table-container mt-5">
-    <!-- Pagination Component -->
-    <Pagination
-      :currentPage="currentPage"
-      :totalPages="totalPages"
-      @pageChange="handlePageChange"
-      class="mb-4"
-    />
-
-    <!-- AddEntry Component -->
-    <AddEntry @add-entry-failure="handleFailure" class="mb-4" />
-
+    <!-- Flex container for Pagination and Add Entry -->
+    <div class="flex items-center justify-between mb-4">
+      <Pagination
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        @pageChange="handlePageChange"
+      />
+      <AddEntry @add-entry-failure="handleFailure" />
+    </div>
+    
     <!-- Search Bar Component -->
     <SearchBar @search="updateSearch" class="mb-4" />
 
