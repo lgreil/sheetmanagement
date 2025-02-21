@@ -45,39 +45,45 @@ Welcome to Bachkreis Sheetmanagement, your all-in-one sheet music management sys
    git clone https://github.com/yourusername/Bachkreis Sheetmanagement.git
     ```
 
-    Navigate to the Project Directory
+   2. Navigate to the Project Directory
 
-bash
+```bash
 cd Bachkreis Sheetmanagement
-Install Dependencies
+```
+3. Install Dependencies
 
-bash
+```bash
 npm install
 # or
 yarn install
-Running the App
-Development Server
+```
+4. Running the App
+4.1 Development Server
 Start the development server with hot reload at http://localhost:3000:
 
-bash
+```bash
 npm run dev
 # or
 yarn dev
-Production Build
+```
+4.2 Production Build
+
 To build the application for production:
 
-bash
+```bash
 npm run build
 # or
 yarn build
-Then start the server:
+```
+5. Start the server:
 
-bash
+```bash
 npm run start
 # or
 yarn start
-Project Structure
-
+```
+# Project Structure
+```
 Bachkreis Sheetmanagement/
 ├── components/
 │   ├── AddEntry.vue
@@ -97,119 +103,46 @@ Bachkreis Sheetmanagement/
 ├── nuxt.config.js
 ├── package.json
 └── README.md
-
-Components Overview
-Table.vue
-A dynamic and responsive table component that displays sheet music entries with features like sorting, pagination, and search functionality.
-
-Features
-
-Sortable columns
-
-Pagination controls
-
-Search bar integration
-
-Tailwind CSS styling for a modern look
-
-TableEntry.vue
-Represents each row in the table with customized cells:
-
-Difficulty Visualization
-
-Displays difficulty as a colored bar
-
-Low: Green bar (25% width)
-
-Medium: Yellow bar (50% width)
-
-High: Orange bar (75% width)
-
-Very High: Red bar (100% width)
-
-Digitalization Status
-
-Uses icons to indicate whether a piece is digitalized
-
-Digitalized: Green checkmark
-
-Not Digitalized: Red cross
-
-Pagination.vue
-Controls the pagination of the table entries.
-
-Features
-
-"Prev" and "Next" buttons
-
-Displays current page and total pages
-
-Disabled states when at the beginning or end
-
-AddEntry.vue
-Allows users to add new sheet music entries (feature under development).
-
-Features
-
-Styled button that emits events when clicked
-
-Placeholder functionality for future implementation
-
-StueckManager.vue
-Manages the list of sheet music pieces.
-
-Features
-
-Renders the table with data
-
-Handles edit and delete actions
-
-Integrates the AddEntry component
-
-Usage
+```
+# Usage
 Navigate to http://localhost:3000 to access the application. From there, you can:
 
-View and search through the list of sheet music pieces.
+- View and search through the list of sheet music pieces.
+- Sort the list by different criteria (e.g., name, genre, year).
+- Use pagination controls to navigate through pages.
+- Toggle between light and dark modes using the switch in the interface.
 
-Sort the list by different criteria (e.g., name, genre, year).
-
-Use pagination controls to navigate through pages.
-
-Toggle between light and dark modes using the switch in the interface.
-
-Contributing
+# Contributing
 Contributions are welcome! Since this is a hobby project, any improvements, suggestions, or additions are greatly appreciated.
 
-Fork the Project
+1. Fork the Project
+2. Create your Feature Branch
 
-Create your Feature Branch
-
-bash
+```bash
 git checkout -b feature/AmazingFeature
-Commit your Changes
+```
+3. Commit your Changes
 
-bash
+```bash
 git commit -m 'Add some AmazingFeature'
-Push to the Branch
+```
 
-bash
+4. Push to the Branch
+
+```bash
 git push origin feature/AmazingFeature
-Open a Pull Request
+```
+5. Open a Pull Request
 
-License
+# License
 This project is licensed under the MIT License - see the LICENSE file for details.
 
-Acknowledgments
-Nuxt.js: For providing a powerful and flexible framework.
-
-Tailwind CSS: For making styling efficient and enjoyable.
-
-Heroicons: For the beautiful icons that enhance the user interface.
-
-Lucide Icons: For the versatile icon set used in the app.
-
-Vue.jsCommunity: For continuous support and inspiration.
-
-You: For taking the time to explore Bachkreis Sheetmanagement!
+# Acknowledgments
+- Nuxt.js: For providing a powerful and flexible framework.
+- Tailwind CSS: For making styling efficient and enjoyable.
+- Heroicons: For the beautiful icons that enhance the user interface.
+- Lucide Icons: For the versatile icon set used in the app.
+- Vue.jsCommunity: For continuous support and inspiration.
+- You: For taking the time to explore Bachkreis Sheetmanagement!
 
 Enjoy managing your sheet music with Bachkreis Sheetmanagement! If you have any questions or suggestions, feel free to open an issue or contribute to the project. Let's make music management harmonious together! 🎵✨
