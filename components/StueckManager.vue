@@ -43,9 +43,38 @@ export default {
         isdigitalisiert: false,
         composer_name: ['Composer C'],
         arranger_name: ['Arranger Y', 'Arranger Z']
-      }
-      // Add more stueck objects as needed
-    ]);
+      },{
+    id: 4,
+    name: 'Stueck One',
+    genre: 'Classical',
+    jahr: 1990,
+    schwierigkeit: 'Medium',
+    isdigitalisiert: true,
+    composer_name: ['Composer A', 'Composer B'],
+    arranger_name: ['Arranger X'],
+  },
+  {
+    id: 5,
+    name: 'Stueck Two',
+    genre: 'Jazz',
+    jahr: 2005,
+    schwierigkeit: 'High',
+    isdigitalisiert: false,
+    composer_name: ['Composer C'],
+    arranger_name: ['Arranger Y', 'Arranger Z'],
+  },
+  {
+    id: 3,
+    name: 'Stueck Three',
+    genre: 'Pop',
+    jahr: 2010,
+    schwierigkeit: 'Low',
+    isdigitalisiert: true,
+    composer_name: ['Composer D'],
+    arranger_name: ['Arranger W'],
+  }
+  // Add more stueck objects as needed
+]);
 
     // Define the columns that match the stueck properties
     const stueckColumns = [
