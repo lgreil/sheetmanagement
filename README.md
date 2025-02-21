@@ -77,6 +77,7 @@ npm run start
 # or
 yarn start
 Project Structure
+
 Bachkreis Sheetmanagement/
 ├── components/
 │   ├── AddEntry.vue
@@ -96,6 +97,7 @@ Bachkreis Sheetmanagement/
 ├── nuxt.config.js
 ├── package.json
 └── README.md
+
 Components Overview
 Table.vue
 A dynamic and responsive table component that displays sheet music entries with features like sorting, pagination, and search functionality.
