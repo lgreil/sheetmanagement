@@ -1,48 +1,76 @@
 <template>
-  <div class="table-container">
-    <!-- Pagination Component -->
-    <Pagination
-      :currentPage="currentPage"
-      :totalPages="totalPages"
-      @pageChange="handlePageChange"
-    />
-
-    <!-- AddEntry Component now listens for a failure event -->
-    <AddEntry @add-entry-failure="handleFailure" />
-
+  <div class="table-container mt-5">
+    <!-- Flex container for Pagination and Add Entry -->
+    <div class="flex items-center justify-between mb-4">
+      <Pagination
+        :currentPage="currentPage"
+        :totalPages="totalPages"
+        @pageChange="handlePageChange"
+      />
+      <AddEntry @add-entry-failure="handleFailure" />
+    </div>
+    
     <!-- Search Bar Component -->
-    <SearchBar @search="updateSearch" />
+    <SearchBar @search="updateSearch" class="mb-4" />
 
-    <table class="table">
-      <thead class="thead-dark">
-        <tr>
-          <!-- Loop through columns and add sorting -->
-          <th
-            v-for="column in columns"
-            :key="column.key"
-            @click="sortTable(column.key)"
-          >
-            {{ column.label }}
-            <span v-if="sortKey === column.key">
-              <i class="fas" :class="sortAsc ? 'fa-sort-up' : 'fa-sort-down'"></i>
-            </span>
-          </th>
-          <th v-if="actions">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <!-- Loop through the filtered, sorted, and paginated items -->
-        <TableEntry
-          v-for="item in paginatedItems"
-          :key="item.id"
-          :item="item"
-          :columns="columns"
-          :actions="actions"
-          @edit="handleEdit"
-          @delete="handleDelete"
-        />
-      </tbody>
-    </table>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <!-- Loop through columns and add sorting -->
+            <th
+              v-for="column in columns"
+              :key="column.key"
+              @click="sortTable(column.key)"
+              class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+            >
+              <div class="flex items-center">
+                {{ column.label }}
+                <span v-if="sortKey === column.key" class="ml-1">
+                  <svg
+                    v-if="sortAsc"
+                    class="w-4 h-4 text-gray-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M5.23 7.21a.75.75 0 011.06-.02L10 10.862l3.71-3.672a.75.75 0 111.06 1.064l-4.24 4.2a.75.75 0 01-1.06 0l-4.24-4.2a.75.75 0 01-.02-1.06z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  <svg
+                    v-else
+                    class="w-4 h-4 text-gray-500"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M14.77 12.79a.75.75 0 01-1.06.02L10 9.138l-3.71 3.672a.75.75 0 11-1.06-1.064l4.24-4.2a.75.75 0 011.06 0l4.24 4.2a.75.75 0 01.02 1.06z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </span>
+              </div>
+            </th>
+            <th v-if="actions" class="px-6 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          <!-- Loop through the filtered, sorted, and paginated items -->
+          <TableEntry
+            v-for="item in paginatedItems"
+            :key="item.id"
+            :item="item"
+            :columns="columns"
+            :actions="actions"
+            @edit="handleEdit"
+            @delete="handleDelete"
+          />
+        </tbody>
+      </table>
+    </div>
 
     <!-- PopupMessage Component used for displaying failure messages -->
     <PopupMessage ref="popup" />
@@ -63,21 +91,21 @@ export default {
     Pagination,
     SearchBar,
     AddEntry,
-    PopupMessage
+    PopupMessage,
   },
   props: {
     items: {
       type: Array,
-      default: () => []
+      default: () => [],
     },
     columns: {
       type: Array,
-      required: true
+      required: true,
     },
     actions: {
       type: Boolean,
-      default: false
-    }
+      default: false,
+    },
   },
   data() {
     return {
@@ -87,7 +115,7 @@ export default {
       currentPage: 1,
       searchQuery: '',
       // Local copy of items for internal manipulation
-      tableItems: this.items
+      tableItems: this.items,
     };
   },
   computed: {
@@ -108,8 +136,8 @@ export default {
     // Filter the sorted items based on the search query
     filteredItems() {
       if (!this.searchQuery) return this.sortedItems;
-      return this.sortedItems.filter(item =>
-        Object.values(item).some(val =>
+      return this.sortedItems.filter((item) =>
+        Object.values(item).some((val) =>
           String(val).toLowerCase().includes(this.searchQuery.toLowerCase())
         )
       );
@@ -121,7 +149,7 @@ export default {
     },
     totalPages() {
       return Math.ceil(this.filteredItems.length / this.perPage);
-    }
+    },
   },
   methods: {
     sortTable(key) {
@@ -159,33 +187,21 @@ export default {
     },
     // This method is called when a called Component emits a failure event
     handleFailure() {
-      this.$refs.popup.showMessage('not yet implemented', 'error');
-    }
+      this.$refs.popup.showMessage('Not yet implemented', 'error');
+    },
   },
   // Update local items when the prop changes
   watch: {
     items(newItems) {
       this.tableItems = newItems;
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
+/* Remove old styles since we're using Tailwind classes */
 .table-container {
-  margin-top: 20px;
-}
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-.table th,
-.table td {
-  border: 1px solid #ddd;
-  padding: 8px;
-  text-align: left;
-}
-.thead-dark {
-  background-color: #f2f2f2;
+  /* margin-top: 20px; */
 }
 </style>

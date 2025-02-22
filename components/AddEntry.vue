@@ -1,6 +1,11 @@
 <template>
   <div>
-    <button class="add" @click="addEntry">Add Entry</button>
+    <button
+      @click="addEntry"
+      class="bg-green-500 hover:bg-green-600 text-white font-semibold py-2 px-4 rounded"
+    >
+      Add Entry
+    </button>
   </div>
 </template>
 
@@ -11,22 +16,7 @@ export default {
     addEntry() {
       // Emit an event to signal that this feature is not yet implemented
       this.$emit('add-entry-failure');
-    }
-  }
-}
+    },
+  },
+};
 </script>
-
-<style scoped>
-.add {
-  background-color: #4caf50;
-  border: none;
-  color: white;
-  padding: 15px 32px;
-  text-align: center;
-  font-size: 16px;
-  cursor: pointer;
-}
-.add:hover {
-  background-color: #45a049;
-}
-</style>
