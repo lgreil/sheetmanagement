@@ -22,230 +22,28 @@ export default {
     Table
   },
   setup() {
-    // Initial dummy data for Stueck items; in real scenario, you might fetch this from an API
-    const stueckList = ref([
-      {
-        id: 1,
-        name: 'Stueck One',
-        genre: 'Classical',
-        jahr: 1990,
-        schwierigkeit: 'Medium',
-        isdigitalisiert: true,
-        composer_name: ['Composer A', 'Composer B'],
-        arranger_name: ['Arranger X']
-      },
-      {
-        id: 2,
-        name: 'Stueck Two',
-        genre: 'Jazz',
-        jahr: 2005,
-        schwierigkeit: 'High',
-        isdigitalisiert: false,
-        composer_name: ['Composer C'],
-        arranger_name: ['Arranger Y', 'Arranger Z']
-      },
-      {
-    id: 4,
-      name: 'Stueck One',
-      genre: 'Classical',
-      jahr: 1990,
-      schwierigkeit: 'Medium',
-      isdigitalisiert: true,
-      composer_name: ['Composer A', 'Composer B'],
-      arranger_name: ['Arranger X'],
-    },
-    {
-      id: 5,
-      name: 'Stueck Two',
-      genre: 'Jazz',
-      jahr: 2005,
-      schwierigkeit: 'High',
-      isdigitalisiert: false,
-      composer_name: ['Composer C'],
-      arranger_name: ['Arranger Y', 'Arranger Z'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
-    },
-    {
-      id: 3,
-      name: 'Stueck Three',
-      genre: 'Pop',
-      jahr: 2010,
-      schwierigkeit: 'Low',
-      isdigitalisiert: true,
-      composer_name: ['Composer D'],
-      arranger_name: ['Arranger W'],
+    const stueckList = ref([]);
+    const fetchStueckData = async () => {
+    try {
+      const { data, error } = await useFetch('http://localhost:3005/stuecke');
+
+      console.log('API Response:', data.value); // Log data
+      if (error.value) {
+        console.error('Error fetching data:', error.value);
+        return;
+      }
+
+      if (!data.value || data.value.length === 0) {
+        console.warn('No stuecke data found');
+      }
+
+      stueckList.value = data.value || []; // Ensure it's always an array
+    } catch (err) {
+      console.error('Fetch failed:', err);
     }
-  // Add more stueck objects as needed
-]);
+  };
+
+
 
     // Define the columns that match the stueck properties
     const stueckColumns = [
@@ -278,9 +76,8 @@ export default {
       stueckList.value.push(item);
     };
 
-    // If you need to fetch data on mount:
     onMounted(() => {
-      // fetchStueckData(); // Implement data fetching logic here if needed
+      fetchStueckData();
     });
 
     return {
