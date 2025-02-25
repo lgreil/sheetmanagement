@@ -38,15 +38,18 @@
           </tr>
         </thead>
         <tbody class="bg-white divide-y divide-gray-200">
-          <!-- Loop through the filtered, sorted, and paginated items -->
-          <TableEntry v-for="item in paginatedItems" :key="item.id" :item="item" :columns="columns" :actions="actions"
-            @edit="handleEdit" @delete="handleDelete" />
+          <!-- Display loading animation if data is being fetched -->
+          <template v-if="loading">
+            <USkeleton v-for="n in 5" :key="n" class="h-10 my-2" />
+          </template>
+          <template v-else>
+            <!-- Loop through the filtered, sorted, and paginated items -->
+            <TableEntry v-for="item in paginatedItems" :key="item.id" :item="item" :columns="columns" :actions="actions"
+              @edit="handleEdit" @delete="handleDelete" />
+          </template>
         </tbody>
       </table>
     </div>
-
-    <!-- PopupMessage Component used for displaying failure messages -->
-    <PopupMessage ref="popup" />
   </div>
 </template>
 
@@ -54,7 +57,6 @@
 import TableEntry from './TableEntry.vue';
 import Pagination from './Pagination.vue';
 import SearchBar from './SearchBar.vue';
-import PopupMessage from './PopupMessage.vue';
 
 export default {
   name: 'Table',
@@ -62,7 +64,6 @@ export default {
     TableEntry,
     Pagination,
     SearchBar,
-    PopupMessage,
   },
   props: {
     items: {
@@ -87,6 +88,7 @@ export default {
       searchQuery: '',
       // Local copy of items for internal manipulation
       tableItems: this.items,
+      loading: false,
     };
   },
   computed: {
@@ -132,12 +134,15 @@ export default {
       }
     },
     async fetchEntries(endpoint) {
+      this.loading = true;
       try {
-        const response = await fetch(endpoint);
+        const response = await $fetch(endpoint);
         const data = await response.json();
         this.tableItems = data;
       } catch (error) {
         console.error(error);
+      } finally {
+        this.loading = false;
       }
     },
     handlePageChange(page) {
@@ -158,7 +163,7 @@ export default {
     },
     // This method is called when a called Component emits a failure event
     handleFailure() {
-      this.$refs.popup.showMessage('Not yet implemented', 'error');
+      this.toast.add('Not yet implemented', 'error');
     },
   },
   // Update local items when the prop changes
