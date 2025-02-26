@@ -4,8 +4,7 @@
         <MusicTableSearch v-model="globalFilter" />
 
         <!-- Table Card -->
-        <div
-            class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
             <!-- Table Component -->
             <div class="overflow-x-auto">
                 <UTable ref="table" v-model:pagination="pagination"
@@ -13,6 +12,11 @@
                     v-model:global-filter="globalFilter" v-model:sorting="sorting" :loading="loading"
                     loading-color="primary" loading-animation="carousel" :data="pieces || []" :columns="columns"
                     :get-filtered-rows-model="getFilteredRowsModel" hover class="w-full table-auto">
+                    <template #default="{ column }">
+                        <UButton :label="column.label" :icon="column.icon" variant="ghost" color="column.color" @click="column.toggleSorting">
+                            {{ column.label }}
+                        </UButton>
+                    </template>
                 </UTable>
             </div>
 
@@ -23,13 +27,15 @@
     </div>
 </template>
 
+
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { UTable } from '#components'
 import { getPaginationRowModel } from '@tanstack/vue-table'
 import { useMusicTable } from '#imports'
 import MusicTableSearch from './MusicTableSearch.vue'
 import MusicTablePagination from './MusicTablePagination.vue'
+import { useMusicData } from '~/composables/useMusicData'
 import type { Piece } from '~/types/music.ts'
 
 // Props and emits
@@ -48,4 +54,12 @@ const pagination = ref({
 
 // Get table utilities from composable
 const { columns, getFilteredRowsModel } = useMusicTable()
+
+// Fetch pieces data
+const { pieces, loading, error, fetchPieces } = useMusicData()
+
+// Watch for changes in pagination and fetch pieces accordingly
+watch([pagination, globalFilter], () => {
+    fetchPieces()
+}, { immediate: true })
 </script>

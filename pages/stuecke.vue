@@ -1,8 +1,26 @@
+/* pages/music-collection.vue */
 <template>
-  <div class="bg-gray-100 dark:bg-gray-800 min-h-screen flex items-center justify-center">
-    <div class="bg-white dark:bg-gray-900 p-8 rounded shadow-lg text-center">
-      <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-4">🎵 Manage Stueck 🎵</h1>
-      <StueckTable />
+    <div class="container mx-auto py-8">
+        <h1 class="text-2xl font-bold mb-6">Music Collection</h1>
+
+        <MusicTableContainer :pieces="pieces" :loading="loading" />
+
+        <div v-if="error" class="mt-4 p-4 bg-red-100 text-red-800 rounded-lg">
+            Failed to load music collection: {{ error.message }}
+        </div>
     </div>
-  </div>
 </template>
+
+<script setup lang="ts">
+import { onMounted } from 'vue'
+import MusicTableContainer from '~/components/MusicTable/MusicTableContainer.vue'
+import { useMusicData } from '~/composables/useMusicData'
+
+// Get music data from composable
+const { pieces, loading, error, fetchPieces } = useMusicData()
+
+// Fetch data on component mount
+onMounted(() => {
+    fetchPieces()
+})
+</script>

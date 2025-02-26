@@ -27,9 +27,7 @@ export function useMusicTable() {
                     color: isSorted ? 'primary' : 'neutral',
                     class: 'font-medium',
                     onClick: () => column.toggleSorting(isSorted === 'asc'),
-                },
-                label
-            )
+                }, { default: () => label})
         }
     }
 
