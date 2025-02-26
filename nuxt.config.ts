@@ -2,7 +2,7 @@
 export default defineNuxtConfig({
   app: {
     head: {
-      link: [{rel : 'icon', type: 'image/x-icon', alt: "logo", href: '/img/favicon.ico'}]
+      link: [{rel : 'icon', type: 'image/x-icon', href: '/img/favicon.ico'}]
     }
   },
   compatibilityDate: '2024-11-01',

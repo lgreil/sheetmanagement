@@ -32,3 +32,24 @@ input:focus, textarea:focus {
   border-color: #4a90e2;
   box-shadow: 0 0 0 1px #4a90e2;
 }
+
+
+
+@layer components {
+  /* Table styling */
+  .music-table th {
+     @apply py-3 px-4 text-left font-semibold bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .music-table td {
+    @apply py-3 px-4 border-b border-gray-200 dark:border-gray-700;
+  }
+
+  .music-table tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .music-table tr:hover {
+    @apply bg-gray-50 dark:bg-gray-800;
+  }
+}

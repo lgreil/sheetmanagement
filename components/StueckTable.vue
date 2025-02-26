@@ -1,33 +1,63 @@
 <template>
-    <div class="w-full max-w-7xl mx-auto space-y-4 pb-4">
-        <div
-            class="flex px-4 py-3.5 border-b border-(--ui-border-accented) bg-white dark:bg-gray-900 rounded-t-lg shadow-md">
-            <UInput v-model="globalFilter" class="max-w-sm" placeholder="Filter..." />
+    <div class="w-full max-w-7xl mx-auto space-y-6 p-4">
+        <!-- Search with explanatory text -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div class="mb-2 text-sm text-gray-600 dark:text-gray-400">
+                Search across all columns (name, genre, composer, arranger, etc.)
+            </div>
+            <UInput v-model="globalFilter" class="w-full" placeholder="Search anything..." icon="i-lucide-search" />
         </div>
 
-        <div class="overflow-x-auto bg-white dark:bg-gray-900 rounded-b-lg shadow-md">
-            <UTable ref="table" v-model:pagination="pagination"
-                :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
-                v-model:global-filter="globalFilter" v-model:sorting="sorting" :loading="status === 'pending'"
-                loading-color="primary" loading-animation="carousel" :data="data || []" :columns="columns"
-                class="w-full table-fixed">
-            </UTable>
-        </div>
+        <!-- Table Card -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+            <!-- Table Component -->
+            <div class="overflow-x-auto">
+                <UTable 
+                    ref="table" 
+                    v-model:pagination="pagination"
+                    :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+                    v-model:global-filter="globalFilter" 
+                    v-model:sorting="sorting" 
+                    :loading="status === 'pending'"
+                    loading-color="primary" 
+                    loading-animation="carousel" 
+                    :data="data || []" 
+                    :columns="columns"
+                    :get-filtered-rows-model="getFilteredRowsModel"
+                    hover
+                    class="w-full table-auto">
+                </UTable>
+            </div>
 
-        <div
-            class="flex justify-center border-t border-(--ui-border) pt-4 bg-white dark:bg-gray-900 rounded-b-lg shadow-md">
-            <UPagination :model-value="pagination.pageIndex + 1" :default-page="pagination.pageIndex + 1"
-                :items-per-page="pagination.pageSize" :total="data ? data.length : 0"
-                @update:page="(p: number) => (pagination.pageIndex = p - 1)" />
+            <!-- Pagination (now inside the same card) -->
+            <div class="flex justify-between items-center px-4 py-3 border-t border-gray-200 dark:border-gray-700">
+                <div class="text-sm text-gray-600 dark:text-gray-400">
+                    Showing page {{ pagination.pageIndex + 1 }} of {{ Math.ceil((data ? data.length : 0) / pagination.pageSize) }}
+                </div>
+                <UPagination 
+                    :model-value="pagination.pageIndex + 1" 
+                    :default-page="pagination.pageIndex + 1"
+                    :items-per-page="pagination.pageSize" 
+                    :total="data ? data.length : 0"
+                    @update:page="(p: number) => (pagination.pageIndex = p - 1)" 
+                    class="shadow-none" />
+                <USelect 
+                    v-model="pagination.pageSize"
+                    :options="[5, 10, 20, 50]" 
+                    placeholder="Items per page"
+                    size="sm"
+                    class="w-32" />
+            </div>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { UButton, UInput, UPagination, UTable, UTooltip } from '#components'
+import { UButton, UInput, UPagination, UTable, UTooltip, USelect } from '#components'
 import { getPaginationRowModel } from '@tanstack/vue-table'
+import type { FilterFn } from '@tanstack/vue-table'
 import type { TableColumn } from '@nuxt/ui'
-import { ref, h } from 'vue'
+import { ref, h, computed } from 'vue'
 
 type Stueck = {
     stid: number
@@ -52,7 +82,7 @@ const sorting = ref([
     },
 ])
 
-// Reusable header function
+// Improved header function with better styling
 function createSortableHeader(label: string) {
     return ({ column }: { column: any }) => {
         const isSorted = column.getIsSorted()
@@ -67,7 +97,8 @@ function createSortableHeader(label: string) {
                         : 'i-lucide-arrow-down'
                     : 'i-lucide-arrow-up-down',
                 variant: 'ghost',
-                class: '-mx-2.5',
+                color: isSorted ? 'primary' : 'neutral',
+                class: 'font-medium',
                 onClick: () => column.toggleSorting(isSorted === 'asc'),
             },
             label
@@ -75,20 +106,20 @@ function createSortableHeader(label: string) {
     }
 }
 
+// Enhanced difficulty visualization
 function getDifficultyClass(difficulty: string) {
     switch (difficulty) {
         case 'easy':
-            return 'bg-green-500 w-1/4';
+            return 'bg-emerald-500 dark:bg-emerald-600';
         case 'medium':
-            return 'bg-yellow-500 w-1/2';
+            return 'bg-amber-500 dark:bg-amber-600';
         case 'hard':
-            return 'bg-red-500 w-3/4';
+            return 'bg-rose-500 dark:bg-rose-600';
         case 'very hard':
-            return 'bg-red-900 w-full';
+            return 'bg-red-700 dark:bg-red-800';
         case 'Unknown':
-            return 'bg-gray-500 w-0';
         default:
-            return 'bg-gray-500 w-0';
+            return 'bg-gray-400 dark:bg-gray-600';
     }
 }
 
@@ -123,17 +154,88 @@ function getDifficultyValue(difficulty: string) {
     }
 }
 
+// Custom filter function that searches across all columns
+const getFilteredRowsModel = (rows: any[], columnIds: string[], filterValue: string) => {
+    if (!filterValue || filterValue === '') return rows
+
+    const searchLower = filterValue.toLowerCase()
+    
+    return rows.filter(row => {
+        // Get all the values from the row
+        const nameMatch = String(row.getValue('name') || '').toLowerCase().includes(searchLower)
+        const genreMatch = String(row.getValue('genre') || '').toLowerCase().includes(searchLower)
+        const yearMatch = String(row.getValue('jahr') || '').toLowerCase().includes(searchLower)
+        const difficultyMatch = String(row.getValue('schwierigkeit') || '').toLowerCase().includes(searchLower)
+        
+        // Array fields need special handling
+        const composerNames = row.getValue('composer_names') as string[] || []
+        const composerMatch = composerNames.some(name => 
+            name.toLowerCase().includes(searchLower)
+        )
+        
+        const arrangerNames = row.getValue('arranger_names') as string[] || []
+        const arrangerMatch = arrangerNames.some(name => 
+            name.toLowerCase().includes(searchLower)
+        )
+        
+        return nameMatch || genreMatch || yearMatch || difficultyMatch || composerMatch || arrangerMatch
+    })
+}
+
+// Utility function to extract last name for sorting
+function extractLastName(fullName: string): string {
+    // Remove any trailing/leading whitespace
+    const trimmedName = fullName.trim()
+    
+    // Handle format like "J.S. Bach"
+    if (/^[A-Z]\.[A-Z]\./.test(trimmedName)) {
+        const parts = trimmedName.split(' ')
+        return parts.length > 1 ? parts[parts.length - 1] : trimmedName
+    }
+    
+    // Regular format: "Johann Sebastian Bach"
+    const nameParts = trimmedName.split(' ')
+    return nameParts.length > 1 ? nameParts[nameParts.length - 1] : trimmedName
+}
+
+// Custom sorting function for composer/arranger names
+function nameArraySortingFn(rowA: any, rowB: any, columnId: string): number {
+    const namesA = rowA.getValue(columnId) as string[] || []
+    const namesB = rowB.getValue(columnId) as string[] || []
+    
+    // Get the first name from each array (or empty string if none)
+    const nameA = namesA.length > 0 ? namesA[0] : ''
+    const nameB = namesB.length > 0 ? namesB[0] : ''
+    
+    // Extract last names
+    const lastNameA = extractLastName(nameA).toLowerCase()
+    const lastNameB = extractLastName(nameB).toLowerCase()
+    
+    // First compare last names
+    if (lastNameA !== lastNameB) {
+        return lastNameA.localeCompare(lastNameB)
+    }
+    
+    // If last names are the same, compare the full names
+    return nameA.toLowerCase().localeCompare(nameB.toLowerCase())
+}
+
 const columns: TableColumn<Stueck>[] = [
     {
         accessorKey: 'name',
         header: createSortableHeader('Name'),
-        cell: ({ row }) => row.getValue('name') || '',
+        cell: ({ row }) => h('div', { class: 'font-medium' }, row.getValue('name') || ''),
         enableSorting: true,
     },
     {
         accessorKey: 'genre',
         header: createSortableHeader('Genre'),
-        cell: ({ row }) => row.getValue('genre') || '',
+        cell: ({ row }) => {
+            const genre = row.getValue('genre') as string
+            return h('span', { 
+                class: 'px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700' 
+            }, genre || '')
+        },
         enableSorting: true,
     },
     {
@@ -141,7 +243,7 @@ const columns: TableColumn<Stueck>[] = [
         header: createSortableHeader('Year'),
         cell: ({ row }) => {
             const value = row.getValue('jahr') as number
-            return value && value !== 0 ? value : ''
+            return h('span', { class: 'text-center block' }, value && value !== 0 ? value : '-')
         },
         enableSorting: true,
     },
@@ -149,15 +251,15 @@ const columns: TableColumn<Stueck>[] = [
         accessorKey: 'schwierigkeit',
         header: createSortableHeader('Difficulty'),
         cell: ({ row }) => {
-            const difficulty = row.getValue('schwierigkeit') || ''
+            const difficulty = row.getValue('schwierigkeit') as string || ''
             const percentage = getDifficultyPercentage(difficulty)
             const tooltipContent = `Difficulty: ${difficulty}`
 
             return h(
                 UTooltip,
-                { content: tooltipContent },
+                { text: tooltipContent },
                 h('div', {
-                    class: `relative h-4 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700`,
+                    class: 'relative h-5 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700',
                     'aria-valuenow': percentage,
                     'aria-valuemin': 0,
                     'aria-valuemax': 100,
@@ -166,7 +268,11 @@ const columns: TableColumn<Stueck>[] = [
                     h('div', {
                         class: `h-full transition-all ${getDifficultyClass(difficulty)}`,
                         style: { width: `${percentage}%` },
-                    })
+                    }),
+                    h('span', {
+                        class: 'absolute inset-0 flex items-center justify-center text-xs font-semibold ' +
+                            (percentage > 50 ? 'text-white' : 'text-gray-800 dark:text-gray-200')
+                    }, difficulty)
                 ])
             )
         },
@@ -180,7 +286,17 @@ const columns: TableColumn<Stueck>[] = [
     {
         accessorKey: 'isdigitalisiert',
         header: createSortableHeader('Digitized'),
-        cell: ({ row }) => row.getValue('isdigitalisiert'),
+        cell: ({ row }) => {
+            const isDigitized = row.getValue('isdigitalisiert') as boolean
+            return h('div', { class: 'flex justify-center' }, 
+                h('div', {
+                    class: isDigitized 
+                        ? 'w-4 h-4 rounded-full bg-emerald-500 dark:bg-emerald-600' 
+                        : 'w-4 h-4 rounded-full bg-gray-300 dark:bg-gray-600',
+                    title: isDigitized ? 'Digitized' : 'Not digitized'
+                })
+            )
+        },
         enableSorting: true,
     },
     {
@@ -188,85 +304,90 @@ const columns: TableColumn<Stueck>[] = [
         header: createSortableHeader('Composer(s)'),
         cell: ({ row }) => {
             const composers = row.getValue('composer_names') as string[]
-            return composers.length > 0 ? composers.join(', ') : ''
+            if (composers.length === 0) return ''
+            
+            if (composers.length === 1) {
+                return composers[0]
+            }
+            
+            return h(
+                UTooltip,
+                { text: composers.join(', ') },
+                h('div', {}, [
+                    h('span', {}, composers[0]),
+                    h('span', { class: 'text-xs text-gray-500 ml-1' }, `+${composers.length - 1} more`)
+                ])
+            )
         },
         enableSorting: true,
+        sortingFn: (rowA, rowB) => nameArraySortingFn(rowA, rowB, 'composer_names'),
     },
     {
         accessorKey: 'arranger_names',
         header: createSortableHeader('Arranger(s)'),
         cell: ({ row }) => {
             const arrangers = row.getValue('arranger_names') as string[]
-            return arrangers.length > 0 ? arrangers.join(', ') : ''
+            if (arrangers.length === 0) return ''
+            
+            if (arrangers.length === 1) {
+                return arrangers[0]
+            }
+            
+            return h(
+                UTooltip,
+                { text: arrangers.join(', ') },
+                h('div', {}, [
+                    h('span', {}, arrangers[0]),
+                    h('span', { class: 'text-xs text-gray-500 ml-1' }, `+${arrangers.length - 1} more`)
+                ])
+            )
         },
         enableSorting: true,
+        sortingFn: (rowA, rowB) => nameArraySortingFn(rowA, rowB, 'arranger_names'),
     },
 ]
 
 const pagination = ref({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 10,
 })
 </script>
 
 <style scoped>
-/* Ensure the table takes up 90% of the screen size */
-.w-full {
-    width: 90%;
+/* Table styling improvements */
+:deep(.UTable th) {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    background-color: #f9fafb;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-/* Zebra striping for table rows */
-.UTable tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-.UTable tr:nth-child(odd) {
-    background-color: #ffffff;
-}
-
-.dark .UTable tr:nth-child(even) {
-    background-color: #2d2d2d;
-}
-
-.dark .UTable tr:nth-child(odd) {
-    background-color: #1f1f1f;
-}
-
-/* Hover effects for table rows */
-.UTable tr:hover {
-    background-color: #e2e8f0;
-}
-
-.dark .UTable tr:hover {
+:deep(.dark .UTable th) {
     background-color: #374151;
+    border-bottom: 1px solid #4b5563;
 }
 
-/* Fixed headers */
-.UTable thead th {
-    position: sticky;
-    top: 0;
-    background-color: inherit;
-    z-index: 1;
+:deep(.UTable td) {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-/* Progress bar styles */
-.bg-green-500 {
-    background-color: #48bb78;
+:deep(.dark .UTable td) {
+    border-bottom: 1px solid #4b5563;
 }
 
-.bg-yellow-500 {
-    background-color: #ecc94b;
+/* Remove the last row's bottom border */
+:deep(.UTable tr:last-child td) {
+    border-bottom: none;
 }
 
-.bg-red-500 {
-    background-color: #f56565;
+/* Row hover styles */
+:deep(.UTable tr:hover) {
+    background-color: #f3f4f6;
 }
 
-.bg-red-900 {
-    background-color: #742a2a;
-}
-
-.bg-gray-500 {
-    background-color: #a0aec0;
+:deep(.dark .UTable tr:hover) {
+    background-color: #1f2937;
 }
 </style>
