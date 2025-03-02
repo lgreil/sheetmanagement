@@ -1,7 +1,7 @@
-import { ref } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import type { Piece } from '~/types/music'
 
-export function useMusicData() {
+export function useMusicData(pageIndex: number, pageSize: number) {
     const pieces = ref<Piece[]>([])
     const loading = ref(true)
     const error = ref<Error | null>(null)
@@ -10,20 +10,25 @@ export function useMusicData() {
         loading.value = true
         error.value = null
 
-        console.log('Fetching pieces...')
-
         try {
-            const { data } = await useFetch<Piece[]>('http://localhost:3005/stuecke')
+            const { data } = await useFetch<Piece[]>(`http://localhost:3005/stuecke?page=${pageIndex}&size=${pageSize}`)
             pieces.value = data.value || []
-            console.log('Fetched pieces:', pieces.value)
         } catch (err) {
             error.value = err as Error
             console.error('Error fetching pieces:', error.value)
         } finally {
             loading.value = false
-            console.log('Loading state:', loading.value)
         }
     }
+
+    // Fetch data on component mount and when pageIndex or pageSize changes
+    onMounted(() => {
+        fetchPieces()
+    })
+
+    watch([pageIndex, pageSize], () => {
+        fetchPieces()
+    })
 
     return {
         pieces,

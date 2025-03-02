@@ -1,4 +1,3 @@
-
 // composables/useMusicTable.ts
 import { h } from 'vue'
 import { UButton, UTooltip } from '#components'
@@ -80,29 +79,45 @@ export function useMusicTable() {
     // Global filtering function that searches all columns
     const getFilteredRowsModel = (rows: any[], columnIds: string[], filterValue: string) => {
         if (!filterValue || filterValue === '') return rows
-
+    
         const searchLower = filterValue.toLowerCase()
-
+    
         return rows.filter(row => {
             // Check each field for matches
             const nameMatch = String(row.getValue('name') || '').toLowerCase().includes(searchLower)
             const genreMatch = String(row.getValue('genre') || '').toLowerCase().includes(searchLower)
             const yearMatch = String(row.getValue('jahr') || '').toLowerCase().includes(searchLower)
             const difficultyMatch = String(row.getValue('schwierigkeit') || '').toLowerCase().includes(searchLower)
-
+    
             // Array fields need special handling
             const composerNames = row.getValue('composer_names') as string[] || []
             const composerMatch = composerNames.some(name =>
                 name.toLowerCase().includes(searchLower)
             )
-
+    
             const arrangerNames = row.getValue('arranger_names') as string[] || []
             const arrangerMatch = arrangerNames.some(name =>
                 name.toLowerCase().includes(searchLower)
             )
-
+    
             return nameMatch || genreMatch || yearMatch || difficultyMatch || composerMatch || arrangerMatch
         })
+    }
+
+    // Function to get genre badge class
+    function getGenreBadgeClass(genre: string): string {
+        switch (genre.toLowerCase()) {
+            case 'traditionell': return 'genre-badge traditionell'
+            case 'klassik': return 'genre-badge klassik'
+            case 'barock': return 'genre-badge barock'
+            case 'moderne klassik': return 'genre-badge moderne-klassik'
+            case 'romantik': return 'genre-badge romantik'
+            case 'musicals': return 'genre-badge musicals'
+            case 'pop / rock / modern': return 'genre-badge pop-rock-modern'
+            case 'weihnachtsmusik': return 'genre-badge weihnachtsmusik'
+            case 'filmmusik': return 'genre-badge filmmusik'
+            default: return 'genre-badge'
+        }
     }
 
     // Table column definitions
@@ -119,7 +134,7 @@ export function useMusicTable() {
             cell: ({ row }) => {
                 const genre = row.getValue('genre') as string
                 return h('span', {
-                    class: 'px-2 py-1 rounded-full text-xs bg-gray-100 dark:bg-gray-700'
+                    class: getGenreBadgeClass(genre)
                 }, [genre || '-']) // Wrap in an array and use a dash instead of empty string
             },
             enableSorting: true,

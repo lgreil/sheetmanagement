@@ -11,3 +11,22 @@ defineProps<{
     isDigitized: boolean
 }>()
 </script>
+
+<style>
+/* Digitized indicator */
+.digitized-indicator {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 9999px;
+}
+
+.digitized-indicator.yes {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.digitized-indicator.no {
+  background-color: #9ca3af;
+}
+</style>
