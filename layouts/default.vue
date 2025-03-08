@@ -1,9 +1,11 @@
 <template>
   <div :class="[$colorMode.value, 'min-h-screen flex flex-col']">
     <MyHeader />
+    <NuxtLoadingIndicator />
     <main class="flex-1 bg-[--bachkreisgelb-hell] dark:bg-gray-800 p-6">
       <slot />
     </main>
+
     <footer class="bg-[--dark-color] dark:bg-gray-900 text-white dark:text-gray-300 py-4">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <p>&copy; 2025 Bachkreis-Sheetmanagement. All rights reserved.</p>

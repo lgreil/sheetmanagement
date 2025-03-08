@@ -2,24 +2,64 @@
   <div class="w-full max-w-7xl mx-auto space-y-6 p-4">
     <!-- Search component -->
     <MusicTableSearch v-model="globalFilter" />
+    <template v-if="loading">
+      <!-- Table Card-->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <!-- Table Component-->
+        <div class="overflow-x-auto">
+          <table class="w-full table-auto">
+            <thead>
+              <tr>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+                <th><USkeleton class="h-4 w-[100px]" /></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="n in 10" :key="n">
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+                <td><USkeleton class="h-4 w-full" /></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-    <!-- Table Card -->
-    <div
-      class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-      <!-- Table Component -->
-      <div class="overflow-x-auto">
-        <UTable ref="table" v-model:pagination="pagination"
-          :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }" v-model:global-filter="globalFilter"
-          v-model:sorting="sorting" :loading="loading" loading-color="primary" loading-animation="carousel"
-          :data="pieces || []" :columns="columns" :get-filtered-rows-model="getFilteredRowsModel" hover
-          class="w-full table-auto">
-        </UTable>
+        <!-- Pagination Component -->
+        <div class="p-4">
+          <USkeleton class="h-4 w-[250px]" />
+        </div>
       </div>
+    </template>
+    <template v-else>
 
-      <!-- Pagination Component -->
-      <MusicTablePagination v-model:page-index="pagination.pageIndex" v-model:page-size="pagination.pageSize"
-        :total-items="pieces ? pieces.length : 0" />
-    </div>
+      <!-- Table Card -->
+      <div
+        class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
+        <!-- Table Component -->
+        <div class="overflow-x-auto">
+          <UTable ref="table" v-model:pagination="pagination"
+            :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+            v-model:global-filter="globalFilter" v-model:sorting="sorting" :loading="loading" loading-color="primary"
+            loading-animation="carousel" :data="pieces || []" :columns="columns"
+            :get-filtered-rows-model="getFilteredRowsModel" hover class="w-full table-auto">
+          </UTable>
+        </div>
+
+        <!-- Pagination Component -->
+        <MusicTablePagination v-model:page-index="pagination.pageIndex" v-model:page-size="pagination.pageSize"
+          :total-items="pieces ? pieces.length : 0" />
+      </div>
+    </template>
   </div>
 </template>
 
@@ -33,10 +73,10 @@ import MusicTablePagination from './MusicTablePagination.vue'
 import type { Piece } from '~/types/music.ts'
 
 // Props and emits
-const props = defineProps < {
+const props = defineProps<{
   pieces?: Piece[]
-    loading: boolean
-} > ()
+  loading: boolean
+}>()
 
 // Table state
 const globalFilter = ref('')
@@ -121,6 +161,7 @@ const { columns, getFilteredRowsModel } = useMusicTable()
 .music-table-header-btn.active:after {
   width: 100%;
 }
+
 .music-table-row {
   transition: background-color 0.3s ease;
 }
@@ -130,6 +171,7 @@ const { columns, getFilteredRowsModel } = useMusicTable()
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
+
 /* Main container styling with dark mode support */
 /* Main container styling with dark mode support */
 .music-table-container {
@@ -138,6 +180,7 @@ const { columns, getFilteredRowsModel } = useMusicTable()
     0 8px 10px -6px rgba(0, 0, 0, 0.1),
     inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
+
 /* Button styling for column headers */
 .music-table-header-btn {
   font-size: 0.875rem;

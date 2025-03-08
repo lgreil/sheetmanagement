@@ -1,7 +1,6 @@
-import { ref, onMounted, watch } from 'vue'
-import type { Piece } from '~/types/music'
-
-export function useMusicData(pageIndex: number, pageSize: number) {
+export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
+    const pageIndex = ref(initialPageIndex)
+    const pageSize = ref(initialPageSize)
     const pieces = ref<Piece[]>([])
     const loading = ref(true)
     const error = ref<Error | null>(null)
@@ -9,9 +8,8 @@ export function useMusicData(pageIndex: number, pageSize: number) {
     async function fetchPieces() {
         loading.value = true
         error.value = null
-
         try {
-            const { data } = await useFetch<Piece[]>(`http://localhost:3005/stuecke?page=${pageIndex}&size=${pageSize}`)
+            const { data } = await useFetch<Piece[]>(`http://localhost:3005/stuecke?page=${pageIndex.value}&size=${pageSize.value}`)
             pieces.value = data.value || []
         } catch (err) {
             error.value = err as Error
@@ -21,11 +19,12 @@ export function useMusicData(pageIndex: number, pageSize: number) {
         }
     }
 
-    // Fetch data on component mount and when pageIndex or pageSize changes
+    // Fetch data on component mount
     onMounted(() => {
         fetchPieces()
     })
 
+    // Watch for changes to pagination
     watch([pageIndex, pageSize], () => {
         fetchPieces()
     })
@@ -34,6 +33,8 @@ export function useMusicData(pageIndex: number, pageSize: number) {
         pieces,
         loading,
         error,
-        fetchPieces
+        fetchPieces,
+        pageIndex,
+        pageSize
     }
 }
