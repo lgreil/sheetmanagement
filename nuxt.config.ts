@@ -13,7 +13,7 @@ export default defineNuxtConfig({
       enabled: true,
     },
   },
-  modules: ["@nuxt/ui", "@nuxtjs/color-mode"],
+  modules: ["@nuxt/ui", "@nuxtjs/color-mode", "@nuxt/test-utils/module"],
   css: ["~/assets/css/main.css"],
   colorMode: {
     preference: "system", // default value of $colorMode.preference
