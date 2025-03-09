@@ -1,177 +1,103 @@
 <template>
-  <div class="flex items-center justify-between px-4 py-3 bg-blue-900/30 dark:bg-gray-800/50">
-    <div class="text-sm text-white/70 dark:text-gray-300">
-      Showing {{ startItem }}-{{ endItem }} of {{ totalItems }} pieces
+    <div
+        class="flex flex-col md:flex-row items-center justify-between px-4 py-3"
+    >
+        <div class="text-sm text-gray-700 dark:text-gray-300 mb-2 md:mb-0">
+            Showing {{ startItem }} – {{ endItem }} of {{ totalItems }} pieces
+        </div>
+        <div class="flex flex-wrap items-center gap-2">
+            <UPagination
+                v-model:page="localPage"
+                color="neutral"
+                variant="subtle"
+                :total="totalPages"
+            />
+            <div class="page-size-container ml-2">
+                <USelect
+                    v-model="localPageSize"
+                    :options="pageSizeOptions"
+                    class="page-size-selector w-36"
+                />
+            </div>
+        </div>
     </div>
-    
-    <div class="flex items-center space-x-2">
-      <UButton
-        icon="i-heroicons-chevron-double-left"
-        variant="ghost"
-        color="white"
-        class="pagination-button"
-        :disabled="pageIndex === 0"
-        @click="updatePageIndex(0)"
-      />
-      <UButton
-        icon="i-heroicons-chevron-left"
-        variant="ghost"
-        color="white"
-        class="pagination-button"
-        :disabled="pageIndex === 0"
-        @click="updatePageIndex(pageIndex - 1)"
-      />
-      
-      <!-- Page numbers -->
-      <div class="flex space-x-1">
-        <UButton
-          v-for="pageNum in visiblePageNumbers"
-          :key="pageNum"
-          variant="ghost"
-          color="white"
-          size="sm"
-          :class="['pagination-button', pageNum === pageIndex + 1 ? 'active' : '']"
-          @click="updatePageIndex(pageNum - 1)"
-        >
-          {{ pageNum }}
-        </UButton>
-      </div>
-      
-      <UButton
-        icon="i-heroicons-chevron-right"
-        variant="ghost"
-        color="white"
-        class="pagination-button"
-        :disabled="pageIndex >= totalPages - 1"
-        @click="updatePageIndex(pageIndex + 1)"
-      />
-      <UButton
-        icon="i-heroicons-chevron-double-right"
-        variant="ghost"
-        color="white"
-        class="pagination-button"
-        :disabled="pageIndex >= totalPages - 1"
-        @click="updatePageIndex(totalPages - 1)"
-      />
-      
-      <!-- Page size selector -->
-      <div class="page-size-container ml-4">
-        <select
-          :value="pageSize"
-          @change="updatePageSize($event.target.value)"
-          class="page-size-selector"
-        >
-          <option value="10">10 per page</option>
-          <option value="20">20 per page</option>
-          <option value="50">50 per page</option>
-        </select>
-      </div>
-    </div>
-  </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import { ref, computed, watch } from "vue";
+
 const props = defineProps({
-  pageIndex: {
-    type: Number,
-    default: 0
-  },
-  pageSize: {
-    type: Number,
-    default: 10
-  },
-  totalItems: {
-    type: Number,
-    default: 0
-  }
+    pageIndex: {
+        type: Number,
+        default: 0,
+    },
+    pageSize: {
+        type: Number,
+        default: 10,
+    },
+    totalItems: {
+        type: Number,
+        required: true,
+    },
 });
 
-const emit = defineEmits(['update:pageIndex', 'update:pageSize']);
+const emit = defineEmits(["update:pageIndex", "update:pageSize"]);
 
-// Computed properties
-const totalPages = computed(() => Math.ceil(props.totalItems / props.pageSize) || 1);
+// UPagination expects 1-indexed pages so we keep a local copy
+const localPage = ref(props.pageIndex + 1);
+const localPageSize = ref(props.pageSize);
 
-const startItem = computed(() => {
-  if (props.totalItems === 0) return 0;
-  return props.pageIndex * props.pageSize + 1;
+// Sync props with local state
+watch(
+    () => props.pageIndex,
+    (newVal) => {
+        localPage.value = newVal + 1;
+    },
+    { immediate: true },
+);
+watch(
+    () => props.pageSize,
+    (newVal) => {
+        localPageSize.value = newVal;
+    },
+    { immediate: true },
+);
+
+// Emit changes to parent (convert back to 0-index)
+watch(localPage, (newVal) => {
+    emit("update:pageIndex", newVal - 1);
 });
 
+// When page size changes, reset to first page
+watch(localPageSize, (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+        emit("update:pageSize", newVal);
+        localPage.value = 1;
+        emit("update:pageIndex", 0);
+    }
+});
+
+// Computed pagination summary
+const totalPages = computed(() =>
+    Math.max(1, Math.ceil(props.totalItems / localPageSize.value)),
+);
+const startItem = computed(() =>
+    props.totalItems === 0 ? 0 : props.pageIndex * localPageSize.value + 1,
+);
 const endItem = computed(() => {
-  const end = (props.pageIndex + 1) * props.pageSize;
-  return end > props.totalItems ? props.totalItems : end;
+    const end = (props.pageIndex + 1) * localPageSize.value;
+    return end > props.totalItems ? props.totalItems : end;
 });
 
-// Generate array of visible page numbers
-const visiblePageNumbers = computed(() => {
-  const maxVisiblePages = 5;
-  const pageNumbers = [];
-  
-  let startPage = Math.max(1, props.pageIndex + 1 - Math.floor(maxVisiblePages / 2));
-  const endPage = Math.min(totalPages.value, startPage + maxVisiblePages - 1);
-  
-  if (endPage - startPage + 1 < maxVisiblePages) {
-    startPage = Math.max(1, endPage - maxVisiblePages + 1);
-  }
-  
-  for (let i = startPage; i <= endPage; i++) {
-    pageNumbers.push(i);
-  }
-  
-  return pageNumbers;
-});
-
-// Methods to update pageIndex and pageSize
-const updatePageIndex = (newPageIndex) => {
-  emit('update:pageIndex', newPageIndex);
-};
-
-const updatePageSize = (newPageSize) => {
-  emit('update:pageSize', parseInt(newPageSize));
-};
+const pageSizeOptions = [
+    { label: "10 per page", value: 10 },
+    { label: "20 per page", value: 20 },
+    { label: "50 per page", value: 50 },
+];
 </script>
 
-<style>
-/* Pagination styling - improved buttons */
-.pagination-button {
-  background-color: rgba(30, 58, 138, 0.3);
-  border-radius: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  color: white;
-  transition: color 0.2s;
-}
-
-.pagination-button:hover {
-  background-color: rgba(30, 58, 138, 0.5);
-}
-
-.pagination-button.active {
-  background-color: #2563eb;
-}
-
-/* Page size selector */
+<style scoped>
 .page-size-selector {
-  background-color: rgba(30, 58, 138, 0.3);
-  border: 1px solid rgba(30, 58, 138, 0.3);
-  border-radius: 0.375rem;
-  color: white;
-  padding: 0.25rem 0.5rem;
-  appearance: none;
-  position: relative;
-  padding-right: 2rem;
-}
-
-.page-size-container {
-  position: relative;
-}
-
-.page-size-container:after {
-  content: "▼";
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.7);
-  pointer-events: none;
+    min-width: 120px;
 }
 </style>
