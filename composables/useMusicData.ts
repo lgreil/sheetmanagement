@@ -3,17 +3,23 @@ import type { Piece } from "~/types/music";
 import { useFetch } from "#app";
 
 export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
-  const pageIndex = ref(initialPageIndex);
-  const pageSize = ref(initialPageSize);
-  const pieces = ref<Piece[]>([]);
-  const loading = ref(true);
-  const error = ref<Error | null>(null);
+  const { pageIndex } = useState("pageIndex", () => initialPageIndex);
+  const { pageSize } = useState("pageSize", () => initialPageSize);
+  const { pieces } = useState<Piece[]>("pieces", () => []);
+  const { loading } = useState("loading", () => true);
+  const { error } = useState<Error | null>("error", () => null);
 
   async function fetchPieces() {
     loading.value = true;
     error.value = null;
     try {
-      const { data } = await useFetch<Piece[]>(`${process.env.API_URL}/stuecke`);
+      const { data } = await useFetch<Piece[]>(
+        {
+          key: `pieces-${pageIndex.value}-${pageSize.value}`,
+          default: () => [],
+        },
+        `${process.env.API_URL}/stuecke`,
+      );
       console.log(data.value);
       pieces.value = data.value || [];
     } catch (err) {

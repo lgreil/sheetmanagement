@@ -24,7 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
+import { computed, watch } from "vue";
 
 const props = defineProps({
     pageIndex: {
@@ -44,8 +44,8 @@ const props = defineProps({
 const emit = defineEmits(["update:pageIndex", "update:pageSize"]);
 
 // UPagination expects 1-indexed pages so we keep a local copy
-const localPage = ref(props.pageIndex + 1);
-const localPageSize = ref(props.pageSize);
+const { localPage } = useState("localPage", () => props.pageIndex + 1);
+const { localPageSize } = useState("localPageSize", () => props.pageSize);
 
 // Sync props with local state
 watch(

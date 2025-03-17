@@ -111,7 +111,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch, onMounted } from "vue";
+import { watch, onMounted } from "vue";
 import MusicTableSearch from "./MusicTableSearch.vue";
 import MusicTablePagination from "./MusicTablePagination.vue";
 import { useMusicTable } from "~/composables/useMusicTable";
@@ -119,18 +119,24 @@ import type { Piece } from "~/types/music";
 import { useFetch } from "#app";
 
 // Table state
-const pieces = ref<Piece[]>([]);
-const totalItems = ref(0);
-const loading = ref(true);
-const error = ref<Error | null>(null);
+const { pieces, totalItems, loading, error } = useState(() => ({
+    pieces: [] as Piece[],
+    totalItems: 0,
+    loading: true,
+    error: null as Error | null,
+}));
 
 // Pagination state
-const pageIndex = ref(0);
-const pageSize = ref(10);
+const { pageIndex, pageSize } = useState(() => ({
+    pageIndex: 0,
+    pageSize: 10,
+}));
 
 // Search and sorting state
-const globalFilter = ref("");
-const sorting = ref([{ id: "name", desc: false }]);
+const { globalFilter, sorting } = useState(() => ({
+    globalFilter: "",
+    sorting: [{ id: "name", desc: false }],
+}));
 
 // Get table columns from composable
 const { columns } = useMusicTable();
