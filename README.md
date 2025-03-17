@@ -34,8 +34,7 @@ Welcome to Bachkreis Sheetmanagement, your all-in-one sheet music management sys
 ### Prerequisites
 
 - **Node.js** (v12 or higher)
-- **npm** or **Yarn**
-- Basic understanding of **Vue.js** and **Tailwind CSS**
+- **npm** or **pnpm**
 
 ### Installation
 
@@ -45,43 +44,43 @@ Welcome to Bachkreis Sheetmanagement, your all-in-one sheet music management sys
    git clone https://github.com/yourusername/Bachkreis Sheetmanagement.git
     ```
 
-   2. Navigate to the Project Directory
+2. Navigate to the Project Directory
 
-```bash
-cd Bachkreis Sheetmanagement
-```
+  ```bash
+  cd Bachkreis Sheetmanagement
+  ```
+
 3. Install Dependencies
 
-```bash
-npm install
-# or
-yarn install
-```
+  ```bash
+  pnpm install
+  # or
+  npm install
+  ```
+
+  Note that you also need to have a PostgresDB running and our SheetbaseStore-Backend up and going.
+
 4. Running the App
 4.1 Development Server
 Start the development server with hot reload at http://localhost:3000:
 
 ```bash
-npm run dev
-# or
-yarn dev
+npx nuxi dev
 ```
+
 4.2 Production Build
 
 To build the application for production:
 
 ```bash
-npm run build
-# or
-yarn build
+npx nuxi build
 ```
 5. Start the server:
 
 ```bash
-npm run start
-# or
-yarn start
+npx nuxi start
 ```
+
 # Project Structure
 ```
 Bachkreis Sheetmanagement/
