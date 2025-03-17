@@ -153,7 +153,7 @@ async function fetchData() {
         const { data, error: fetchError } = await useFetch<{
             items: Piece[];
             total: number;
-        }>(`http://localhost:3005/stuecke?${params.toString()}`);
+        }>(`${process.env.API_URL}${params.toString()}`);
         if (fetchError.value) {
             throw fetchError.value;
         }

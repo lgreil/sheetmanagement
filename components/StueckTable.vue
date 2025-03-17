@@ -43,8 +43,7 @@ type Stueck = {
 const globalFilter = ref('')
 
 // Fetch Stueck-Data from the API
-const { status, data } = await useFetch<Stueck[]>('http://localhost:3005/stuecke')
-
+const {status,data } = await useFetch<Piece[]>(`${process.env.API_URL}/stuecke`);
 const sorting = ref([
     {
         id: 'name', // Default sorted column

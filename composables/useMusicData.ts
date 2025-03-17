@@ -13,7 +13,7 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
     loading.value = true;
     error.value = null;
     try {
-      const { data } = await useFetch<Piece[]>(`http://localhost:3005/stuecke`);
+      const { data } = await useFetch<Piece[]>(`${process.env.API_URL}/stuecke`);
       console.log(data.value);
       pieces.value = data.value || [];
     } catch (err) {
