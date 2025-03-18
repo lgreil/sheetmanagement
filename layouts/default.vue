@@ -31,7 +31,7 @@
 
 <script setup>
 // Access the color mode
-const $colorMode = useColorMode();
+const colorMode = useColorMode();
 console.log(colorMode.preference);
 </script>
 
