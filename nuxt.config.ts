@@ -2,6 +2,8 @@
 export default defineNuxtConfig({
   app: {
     head: {
+      pageTransition: { name: "page", mode: "out-in" },
+      layoutTransition: { name: "layout", mode: "out-in" },
       link: [{ rel: "icon", type: "image/x-icon", href: "/img/favicon.ico" }],
     },
   },
