@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@nuxt/ui": "^3.0.0",
+    "@nuxtjs/tailwindcss": "^6.13.2",
     "module": "link:@nuxt/test-utils/module",
     "nuxt": "latest",
     "vue": "latest",
