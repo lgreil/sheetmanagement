@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from "@tailwindcss/vite";
+
 export default defineNuxtConfig({
   app: {
     head: {
@@ -14,12 +16,16 @@ export default defineNuxtConfig({
     timeline: {
       enabled: true,
     },
+  },  
+  vite: {
+    plugins: [
+      tailwindcss(),
+    ],
   },
   modules: [
     "@nuxt/ui",
     "@nuxtjs/color-mode",
     "@nuxt/test-utils/module",
-    "@nuxtjs/tailwindcss",
   ],
   css: ["~/assets/css/main.css"],
 });
