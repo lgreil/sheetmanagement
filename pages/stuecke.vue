@@ -1,7 +1,7 @@
 <!-- pages/music-collection.vue -->
 <template>
     <div class="container mx-auto py-8">
-        <h1 class="text-2xl font-bold mb-6">Music Collection</h1>
+        <h1 class="text-2xl font-bold mb-6 text-center">Music Collection</h1>
         <MusicTableContainer
             :pieces="pieces"
             :loading="loading"

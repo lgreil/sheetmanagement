@@ -6,24 +6,24 @@
             <slot />
         </main>
 
-        <footer>
-            <div>
-                <p>
-                    &copy; 2025 Bachkreis-Sheetmanagement. All rights reserved.
-                </p>
-                <div class="mt-2">
-                    <NuxtLink
-                        to="/about"
-                        class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200"
-                        >About</NuxtLink
-                    >
-                    <span class="mx-2">|</span>
-                    <NuxtLink
-                        to="/contact"
-                        class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200"
-                        >Contact</NuxtLink
-                    >
-                </div>
+        <footer class="text-center mt-6 py-4 bg-gray-100 dark:bg-gray-900">
+            <div class="text-gray-600 dark:text-gray-400 text-sm">
+            <p class="opacity-80">
+                &copy; 2025 Bachkreis-Sheetmanagement. All rights reserved.
+            </p>
+            <div class="mt-2">
+                <NuxtLink
+                to="/about"
+                class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200 opacity-80"
+                >About</NuxtLink
+                >
+                <span class="mx-2 opacity-50">|</span>
+                <NuxtLink
+                to="/contact"
+                class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200 opacity-80"
+                >Contact</NuxtLink
+                >
+            </div>
             </div>
         </footer>
     </div>
