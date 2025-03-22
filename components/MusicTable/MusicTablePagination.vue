@@ -44,8 +44,8 @@ const props = defineProps({
 const emit = defineEmits(["update:pageIndex", "update:pageSize"]);
 
 // UPagination expects 1-indexed pages so we keep a local copy
-const { localPage } = useState("localPage", () => props.pageIndex + 1);
-const { localPageSize } = useState("localPageSize", () => props.pageSize);
+const localPage = useState("localPage", () => props.pageIndex + 1);
+const localPageSize = useState("localPageSize", () => props.pageSize);
 
 // Sync props with local state
 watch(
