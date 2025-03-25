@@ -13,9 +13,14 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
     loading.value = true;
     error.value = null;
     try {
-      const { data } = await useFetch<Piece[]>(`${process.env.API_URL}/stuecke`);
-      console.log(data.value);
-      pieces.value = data.value || [];
+      const { data } = await useFetch<{ items: Piece[] }>(
+        `${useRuntimeConfig().public.API_URL}/stuecke`
+      );
+      if (data.value && data.value.items) {
+        pieces.value = data.value.items;
+      } else {
+        throw new Error("Invalid API response");
+      }
     } catch (err) {
       error.value = err as Error;
       console.error("Error fetching pieces:", error.value);

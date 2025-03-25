@@ -16,30 +16,26 @@
 import { UTooltip } from '#components'
 import { computed } from 'vue'
 
-const props = defineProps<{
-    difficulty: string
-}>()
-
+const difficulty = useState('difficulty', () => 'Unknown');
 const difficultyPercentage = computed(() => {
-    switch (props.difficulty) {
-        case 'easy': return 25
-        case 'medium': return 50
-        case 'hard': return 75
-        case 'very hard': return 100
-        default: return 0
+    switch (difficulty.value) {
+        case 'easy': return 25;
+        case 'medium': return 50;
+        case 'hard': return 75;
+        case 'very hard': return 100;
+        default: return 0;
     }
-})
+});
 
 const difficultyClass = computed(() => {
-    switch (props.difficulty) {
-        case 'easy': return 'bg-emerald-500 dark:bg-emerald-600'
-        case 'medium': return 'bg-amber-500 dark:bg-amber-600'
-        case 'hard': return 'bg-rose-500 dark:bg-rose-600'
-        case 'very hard': return 'bg-red-700 dark:bg-red-800'
-        case 'Unknown':
-        default: return 'bg-gray-400 dark:bg-gray-600'
+    switch (difficulty.value) {
+        case 'easy': return 'bg-emerald-500 dark:bg-emerald-600';
+        case 'medium': return 'bg-amber-500 dark:bg-amber-600';
+        case 'hard': return 'bg-rose-500 dark:bg-rose-600';
+        case 'very hard': return 'bg-red-700 dark:bg-red-800';
+        default: return 'bg-gray-400 dark:bg-gray-600';
     }
-})
+});
 </script>
 
 <style>

@@ -6,68 +6,56 @@
         <!-- Loading State -->
         <template v-if="loading">
             <div
-                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-            >
+                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                 <div class="overflow-x-auto">
                     <table class="w-full table-auto">
                         <thead>
                             <tr class="bg-gray-50 dark:bg-gray-700">
                                 <th class="px-4 py-2" v-for="n in 7" :key="n">
-                                    <USkeleton
-                                        :class="
-                                            n === 1
-                                                ? 'h-6 w-[150px]'
-                                                : n === 2
-                                                  ? 'h-6 w-[100px]'
-                                                  : n === 3
+                                    <USkeleton :class="n === 1
+                                            ? 'h-6 w-[150px]'
+                                            : n === 2
+                                                ? 'h-6 w-[100px]'
+                                                : n === 3
                                                     ? 'h-6 w-[120px]'
                                                     : n === 4
-                                                      ? 'h-6 w-[80px]'
-                                                      : n === 5
-                                                        ? 'h-6 w-[100px]'
-                                                        : n === 6
-                                                          ? 'h-6 w-[120px]'
-                                                          : 'h-6 w-[80px]'
-                                        "
-                                    />
+                                                        ? 'h-6 w-[80px]'
+                                                        : n === 5
+                                                            ? 'h-6 w-[100px]'
+                                                            : n === 6
+                                                                ? 'h-6 w-[120px]'
+                                                                : 'h-6 w-[80px]'
+                                        " />
                                 </th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr
-                                v-for="n in 10"
-                                :key="n"
-                                class="border-t border-gray-200 dark:border-gray-700"
-                            >
+                            <tr v-for="n in 10" :key="n" class="border-t border-gray-200 dark:border-gray-700">
                                 <td class="px-4 py-3" v-for="m in 7" :key="m">
-                                    <USkeleton
-                                        :class="
-                                            m === 1
-                                                ? 'h-5 w-[180px]'
-                                                : m === 2
-                                                  ? 'h-5 w-[100px] rounded-full'
-                                                  : m === 3
+                                    <USkeleton :class="m === 1
+                                            ? 'h-5 w-[180px]'
+                                            : m === 2
+                                                ? 'h-5 w-[100px] rounded-full'
+                                                : m === 3
                                                     ? 'h-5 w-[140px]'
                                                     : m === 4
-                                                      ? 'h-5 w-[60px] rounded-full'
-                                                      : m === 5
-                                                        ? 'h-5 w-8 rounded-full'
-                                                        : m === 6
-                                                          ? 'h-5 w-[120px]'
-                                                          : 'h-5 w-[80px]'
-                                        "
-                                    />
+                                                        ? 'h-5 w-[60px] rounded-full'
+                                                        : m === 5
+                                                            ? 'h-5 w-8 rounded-full'
+                                                            : m === 6
+                                                                ? 'h-5 w-[120px]'
+                                                                : 'h-5 w-[80px]'
+                                        " />
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
                 <!-- Skeleton Pagination -->
-                <div
-                    class="p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700"
-                >
+                <div class="p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
                     <USkeleton class="h-8 w-[120px]" />
                     <USkeleton class="h-8 w-[200px]" />
+
                 </div>
             </div>
         </template>
@@ -75,71 +63,69 @@
         <!-- Loaded Data -->
         <template v-else>
             <div
-                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700"
-            >
+                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                 <!-- Table Component -->
                 <div class="overflow-x-auto">
-                    <UTable
-                        :columns="columns"
-                        :data="pieces"
-                        :sort="sorting"
-                        @update:sort="handleSortChange"
-                        hover
-                        class="w-full table-auto"
-                    />
+                    <UTable :columns="columns" :data="pieces" :sort="sorting" @update:sort="handleSortChange" hover
+                        class="w-full table-auto" />
                 </div>
                 <!-- Pagination Component -->
-                <MusicTablePagination
-                    v-model:page-index="pageIndex"
-                    v-model:page-size="pageSize"
-                    :total-items="totalItems"
-                />
+                <MusicTablePagination v-model:page-index="pageIndex" v-model:page-size="pageSize"
+                    :total-items="totalItems" />
             </div>
         </template>
     </div>
 
     <!-- Dev Loading Toggle Button -->
     <div class="fixed bottom-4 right-4">
-        <UButton
-            color="neutral"
-            @click="toggleLoading"
-            class="px-4 py-2 text-sm font-medium"
-        >
+        <UButton color="neutral" @click="toggleLoading" class="px-4 py-2 text-sm font-medium">
             Toggle Loading State
         </UButton>
     </div>
 </template>
 
 <script setup lang="ts">
-import { watch, onMounted } from "vue";
+import { defineProps, ref, watch, onMounted } from 'vue';
 import MusicTableSearch from "./MusicTableSearch.vue";
 import MusicTablePagination from "./MusicTablePagination.vue";
 import { useMusicTable } from "~/composables/useMusicTable";
 import type { Piece } from "~/types/music";
 import { useFetch } from "#app";
 
+// Define props for the component
+const props = defineProps({
+  pieces: {
+    type: Array as () => Piece[],
+    required: false,
+    default: () => [],
+  },
+  loading: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
+});
+
 // Table state
-const { pieces, totalItems, loading, error } = useState(() => ({
-    pieces: [] as Piece[],
-    totalItems: 0,
-    loading: true,
-    error: null as Error | null,
-}));
+const pieces = useState<Piece[]>('pieces', () => props.pieces);
+const loading = useState('loading', () => props.loading);
+const error = ref<Error | null>(null);
+const pageIndex = ref(0);
+const pageSize = ref(10);
+const globalFilter = ref("");
+const sorting = ref<{ id: string; desc: boolean }[]>([]);
+const totalItems = ref(0);
 
-// Pagination state
-const { pageIndex, pageSize } = useState(() => ({
-    pageIndex: 0,
-    pageSize: 10,
-}));
-
-// Search and sorting state
-const { globalFilter, sorting } = useState(() => ({
-    globalFilter: "",
-    sorting: [{ id: "name", desc: false }],
-}));
-
-// Get table columns from composable
-const { columns } = useMusicTable();
+// Define columns for the table
+const columns = [
+  { id: 'name', label: 'Name', sortable: true },
+  { id: 'genre', label: 'Genre', sortable: true },
+  { id: 'schwierigkeit', label: 'Difficulty', sortable: true },
+  { id: 'isdigitalisiert', label: 'Digitized', sortable: false },
+  { id: 'jahr', label: 'Year', sortable: true },
+  { id: 'composer_names', label: 'Composers', sortable: false },
+  { id: 'arranger_names', label: 'Arrangers', sortable: false },
+];
 
 // Fetch data from API using query parameters
 async function fetchData() {
@@ -157,14 +143,23 @@ async function fetchData() {
             params.append("sortDir", sorting.value[0].desc ? "desc" : "asc");
         }
         const { data, error: fetchError } = await useFetch<{
-            items: Piece[];
+            items: any[];
             total: number;
-        }>(`${process.env.API_URL}${params.toString()}`);
+        }>(`http://localhost:3005/stuecke?${params.toString()}`);
         if (fetchError.value) {
             throw fetchError.value;
         }
         if (data.value) {
-            pieces.value = data.value.items || [];
+            pieces.value = data.value.items.map((item: any) => ({
+                stid: item.stid,
+                name: item.name,
+                genre: item.genre || "Unknown",
+                schwierigkeit: item.schwierigkeit || "Unknown",
+                isdigitalisiert: item.isdigitalisiert || false,
+                jahr: item.jahr || "Unknown",
+                composer_names: item.komponiert.map((k: any) => `${k.person.vorname} ${k.person.name}`),
+                arranger_names: item.arrangiert.map((a: any) => `${a.person.vorname} ${a.person.name}`),
+            }));
             totalItems.value = data.value.total || 0;
         }
     } catch (err) {
@@ -176,7 +171,7 @@ async function fetchData() {
 }
 
 // Event Handlers
-function handleSortChange(newSort: any[]) {
+function handleSortChange(newSort: { id: string; desc: boolean }[]) {
     sorting.value = newSort;
     fetchData();
 }
@@ -199,6 +194,12 @@ watch(globalFilter, () => {
 onMounted(() => {
     fetchData();
 });
+</script>
+
+<script lang="ts">
+export default {
+  emits: ["update:loading", "piece-click"],
+};
 </script>
 
 <style>
@@ -285,7 +286,6 @@ onMounted(() => {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* Main container styling with dark mode support */
 /* Main container styling with dark mode support */
 .music-table-container {
     background-image: linear-gradient(145deg, #1e3a8a, #1e40af);
@@ -476,11 +476,9 @@ onMounted(() => {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(
-        90deg,
-        rgba(59, 130, 246, 0.2),
-        rgba(37, 99, 235, 0.4)
-    );
+    background: linear-gradient(90deg,
+            rgba(59, 130, 246, 0.2),
+            rgba(37, 99, 235, 0.4));
     transition: left 0.3s ease;
     z-index: -1;
 }

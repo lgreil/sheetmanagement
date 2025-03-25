@@ -1,23 +1,12 @@
 <template>
-    <div
-        class="flex flex-col md:flex-row items-center justify-between px-4 py-3"
-    >
+    <div class="flex flex-col md:flex-row items-center justify-between px-4 py-3" v-auto-animate>
         <div class="text-sm text-gray-700 dark:text-gray-300 mb-2 md:mb-0">
             Showing {{ startItem }} – {{ endItem }} of {{ totalItems }} pieces
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <UPagination
-                v-model:page="localPage"
-                color="neutral"
-                variant="subtle"
-                :total="totalPages"
-            />
+        <div class="flex flex-wrap items-center gap-2" v-auto-animate>
+            <UPagination v-model:page="localPage" color="neutral" variant="subtle" :total="totalPages" />
             <div class="page-size-container ml-2">
-                <USelect
-                    v-model="localPageSize"
-                    :options="pageSizeOptions"
-                    class="page-size-selector w-36"
-                />
+                <USelect v-model="localPageSize" :options="pageSizeOptions" class="page-size-selector w-36" />
             </div>
         </div>
     </div>
@@ -43,9 +32,9 @@ const props = defineProps({
 
 const emit = defineEmits(["update:pageIndex", "update:pageSize"]);
 
-// UPagination expects 1-indexed pages so we keep a local copy
-const localPage = useState("localPage", () => props.pageIndex + 1);
-const localPageSize = useState("localPageSize", () => props.pageSize);
+// Correctly use useState for local state
+const localPage = useState<number>("localPage", () => props.pageIndex + 1);
+const localPageSize = useState<number>("localPageSize", () => props.pageSize);
 
 // Sync props with local state
 watch(

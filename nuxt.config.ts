@@ -26,6 +26,12 @@ export default defineNuxtConfig({
     "@nuxt/ui",
     "@nuxtjs/color-mode",
     "@nuxt/test-utils/module",
+    "@formkit/auto-animate",
   ],
   css: ["~/assets/css/main.css"],
+  runtimeConfig: {
+    public: {
+      API_URL: process.env.API_URL || 'http://localhost:3000',
+    },
+  },
 });

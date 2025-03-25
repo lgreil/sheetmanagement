@@ -24,13 +24,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
-    modelValue: {
-        type: String,
-        default: "",
-    },
-});
-defineEmits(["update:modelValue"]);
+const modelValue = useState('searchModelValue', () => '');
 </script>
 
 <style scoped>

@@ -1,9 +1,8 @@
 <template>
-    <section class="bg-[--bachkreisgelb-hell] dark:bg-gray-800 text-center py-16 px-6">
+    <section class="bg-[--bachkreisgelb-hell] dark:bg-gray-800 text-center py-16 px-6" v-auto-animate>
         <div class="max-w-3xl mx-auto">
             <UAlert color="red" title="Not being added soon!" variant="solid"
                 description="Since we are currently focusing on other parts of the App this will not be implemented for quite a while." />
-
 
             <h1 class="text-4xl font-bold text-[--smoky-black] dark:text-white">🎻 Instrument Inventory 🎻</h1>
             <p class="text-xl text-[--dark-color] dark:text-gray-300 mt-4">
@@ -16,7 +15,7 @@
 
             <div class="mt-6">
                 <h3 class="text-2xl font-semibold text-[--dark-color] dark:text-gray-200">🔹 Features:</h3>
-                <ul class="list-none mt-3 space-y-2 text-lg text-[--dark-color] dark:text-gray-400">
+                <ul class="list-none mt-3 space-y-2 text-lg text-[--dark-color] dark:text-gray-400" v-auto-animate="{ duration: 100 }">
                     <li>🎺 <strong>Track Instrument Conditions</strong> - Monitor the condition and maintenance status
                         of each instrument.</li>
                     <li>🎷 <strong>Assign Instruments</strong> - Easily assign instruments to musicians and keep track
@@ -43,3 +42,18 @@
         </div>
     </section>
 </template>
+
+<script>
+import { useAutoAnimate } from '@formkit/auto-animate/vue';
+
+export default {
+    setup() {
+        const [parent] = useAutoAnimate();
+        return { parent };
+    }
+}
+</script>
+
+<style>
+/* Removed custom animations as auto-animate handles them */
+</style>
