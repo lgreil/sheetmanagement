@@ -34,7 +34,7 @@ const { pieces, loading, error } = useMusicData(
 const router = useRouter();
 
 // Navigate to piece overview page
-function navigateToPieceOverview(pieceId: string) {
-    router.push(`/stuecke/${pieceId}`);
+function navigateToPieceOverview(pieceName: string) {
+    router.push(`/stueck/${encodeURIComponent(pieceName)}`);
 }
 </script>

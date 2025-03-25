@@ -1,4 +1,5 @@
-import { h } from "vue";
+import { h, ref, computed } from "vue";
+import { useState } from "#app";
 import { UButton, UTooltip } from "#components";
 import type { TableColumn } from "@nuxt/ui";
 import type { Piece } from "~/types/music";
@@ -7,6 +8,30 @@ import DigitizedIndicator from "~/components/MusicTable/DigitizedIndicator.vue";
 import NameList from "~/components/MusicTable/NameList.vue";
 
 export function useMusicTable() {
+  const globalFilter = useState("globalFilter", () => "");
+
+  // Add explicit types to the parameters of the filterData function
+  const filterData = (data: Piece[], filterValue: string): Piece[] => {
+    if (!filterValue) return data;
+    const searchLower = filterValue.toLowerCase();
+    return data.filter((row: Piece) => {
+      const nameMatch = String(row.name || "").toLowerCase().includes(searchLower);
+      const genreMatch = String(row.genre || "").toLowerCase().includes(searchLower);
+      const composerMatch = (row.composer_names || []).some((name: string) =>
+        name.toLowerCase().includes(searchLower)
+      );
+      const arrangerMatch = (row.arranger_names || []).some((name: string) =>
+        name.toLowerCase().includes(searchLower)
+      );
+      return nameMatch || genreMatch || composerMatch || arrangerMatch;
+    });
+  };
+
+  const filteredData = computed(() => {
+    const data = useState<Piece[]>("pieces").value;
+    return filterData(data, globalFilter.value);
+  });
+
   function createSortableHeader(label: string) {
     return ({ column }: { column: any }) => {
       const isSorted = column.getIsSorted();
@@ -182,29 +207,42 @@ export function useMusicTable() {
         }),
       enableSorting: true,
     },
+    
+    // Add a column for 'komponiert' to handle the provided format
     {
-      accessorKey: "composer_names",
+      accessorKey: "komponiert",
       header: createSortableHeader("Composer(s)"),
-      cell: ({ row }) =>
-        h(NameList, {
-          names: (row.getValue("composer_names") as string[]) || [],
-        }),
+      cell: ({ row }) => {
+        const composers = (row.getValue("komponiert") as { pid: number; vorname: string; name: string }[]) || [];
+        return composers.length > 0
+          ? composers.map(composer => `${composer.vorname} ${composer.name}`).join(", ")
+          : "-";
+      },
       enableSorting: true,
-      sortingFn: (rowA, rowB) =>
-        nameArraySortingFn(rowA, rowB, "composer_names"),
+      sortingFn: (rowA, rowB) => {
+        const composersA = ((rowA.getValue("komponiert") as { pid: number; vorname: string; name: string }[]) || []).map(composer => `${composer.vorname} ${composer.name}`).join(", ");
+        const composersB = ((rowB.getValue("komponiert") as { pid: number; vorname: string; name: string }[]) || []).map(composer => `${composer.vorname} ${composer.name}`).join(", ");
+        return composersA.localeCompare(composersB);
+      },
     },
+    // Update the cell function to handle the provided format of 'arrangiert' and 'komponiert'
     {
-      accessorKey: "arranger_names",
+      accessorKey: "arrangiert",
       header: createSortableHeader("Arranger(s)"),
-      cell: ({ row }) =>
-        h(NameList, {
-          names: (row.getValue("arranger_names") as string[]) || [],
-        }),
+      cell: ({ row }) => {
+        const arrangers = (row.getValue("arrangiert") as { pid: number; vorname: string; name: string }[]) || [];
+        return arrangers.length > 0
+          ? arrangers.map(arranger => `${arranger.vorname} ${arranger.name}`).join(", ")
+          : "-";
+      },
       enableSorting: true,
-      sortingFn: (rowA, rowB) =>
-        nameArraySortingFn(rowA, rowB, "arranger_names"),
+      sortingFn: (rowA, rowB) => {
+        const arrangersA = ((rowA.getValue("arrangiert") as { pid: number; vorname: string; name: string }[]) || []).map(arranger => `${arranger.vorname} ${arranger.name}`).join(", ");
+        const arrangersB = ((rowB.getValue("arrangiert") as { pid: number; vorname: string; name: string }[]) || []).map(arranger => `${arranger.vorname} ${arranger.name}`).join(", ");
+        return arrangersA.localeCompare(arrangersB);
+      },
     },
   ];
 
-  return { columns, getFilteredRowsModel };
+  return { columns, getFilteredRowsModel, globalFilter, filteredData };
 }

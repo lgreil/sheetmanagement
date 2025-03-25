@@ -13,12 +13,18 @@
 </template>
 
 <script setup lang="ts">
-import { UTooltip } from '#components'
-import { computed } from 'vue'
+import { UTooltip } from '#components';
+import { computed, defineProps } from 'vue';
 
-const difficulty = useState('difficulty', () => 'Unknown');
+const props = defineProps({
+    difficulty: {
+        type: String,
+        required: true
+    }
+});
+
 const difficultyPercentage = computed(() => {
-    switch (difficulty.value) {
+    switch (props.difficulty) {
         case 'easy': return 25;
         case 'medium': return 50;
         case 'hard': return 75;
@@ -28,7 +34,7 @@ const difficultyPercentage = computed(() => {
 });
 
 const difficultyClass = computed(() => {
-    switch (difficulty.value) {
+    switch (props.difficulty) {
         case 'easy': return 'bg-emerald-500 dark:bg-emerald-600';
         case 'medium': return 'bg-amber-500 dark:bg-amber-600';
         case 'hard': return 'bg-rose-500 dark:bg-rose-600';

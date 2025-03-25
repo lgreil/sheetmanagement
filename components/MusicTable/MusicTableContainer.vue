@@ -66,8 +66,15 @@
                 class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
                 <!-- Table Component -->
                 <div class="overflow-x-auto">
-                    <UTable :columns="columns" :data="pieces" :sort="sorting" @update:sort="handleSortChange" hover
-                        class="w-full table-auto" />
+                    <UTable 
+                        :columns="columns" 
+                        :data="pieces" 
+                        :sort="sorting" 
+                        @update:sort="handleSortChange" 
+                        hover
+                        class="w-full table-auto"
+                        @select="onRowSelect"
+                    />
                 </div>
                 <!-- Pagination Component -->
                 <MusicTablePagination v-model:page-index="pageIndex" v-model:page-size="pageSize"
@@ -85,12 +92,15 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, watch, onMounted } from 'vue';
+import { defineProps, ref, watch, onMounted, defineEmits } from 'vue';
 import MusicTableSearch from "./MusicTableSearch.vue";
 import MusicTablePagination from "./MusicTablePagination.vue";
 import { useMusicTable } from "~/composables/useMusicTable";
 import type { Piece } from "~/types/music";
 import dummyMusicData from "~/content/dummyMusicData";
+
+// Define emits for the component
+const emit = defineEmits(["update:loading", "piece-click"]);
 
 // Define props for the component
 const props = defineProps({
@@ -114,7 +124,21 @@ const { columns, getFilteredRowsModel } = useMusicTable();
 // Define missing states and properties using useState for Nuxt state management
 const pieces = useState<Piece[]>("pieces", () => (props.pieces.length ? props.pieces : dummyData));
 const loading = useState("loading", () => props.loading);
-const error = useState<Error | null>("error", () => null);
+const error = useState<string | null>("error", () => null);
+
+// Add an indicator for dummy data usage
+if (!props.pieces.length) {
+  error.value = "Using dummy data instead of real data.";
+  if (process.client) {
+    const toast = useToast();
+    toast.add({
+      title: "Dummy Data in Use",
+      description: "Real data is unavailable. Dummy data is being displayed instead.",
+      icon: "i-lucide-database",
+      color: "warning",
+    });
+  }
+}
 
 // Replace ref with useState for Nuxt state management
 const pageIndex = useState("pageIndex", () => 0);
@@ -139,6 +163,11 @@ onMounted(() => {
 
 function handleSortChange(newSort: any) {
   sorting.value = newSort;
+}
+
+
+function onRowSelect(row: any) {
+  emit('piece-click', row.id);
 }
 </script>
 

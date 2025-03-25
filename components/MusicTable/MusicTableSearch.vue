@@ -7,15 +7,15 @@
       />
     </div>
     <input
-      v-model="searchModelValue"
+      v-model="globalFilter"
       placeholder="Search across all columns (name, genre, composer, arranger, etc.)"
       class="w-full"
     />
     <UButton
-      v-if="searchModelValue"
+      v-if="globalFilter"
       icon="i-heroicons-x-mark"
       variant="ghost"
-      color="white"
+      color="neutral"
       class="ml-2 opacity-70 hover:opacity-100"
       @click="clearSearch"
     />
@@ -25,10 +25,10 @@
 <script setup lang="ts">
 import { useState } from "#app";
 
-const searchModelValue = useState("searchModelValue", () => "");
+const globalFilter = useState("globalFilter", () => "");
 
 function clearSearch() {
-  searchModelValue.value = "";
+  globalFilter.value = "";
 }
 </script>
 

@@ -2,7 +2,7 @@
     {
         "stid":1,
         "name":"Test",
-        "genre":"Unknown",
+        "genre":"klassik",
         "jahr":null,
         "schwierigkeit":"easy",
         "isdigitalisiert":null,
@@ -74,7 +74,7 @@
         "name":"Lion King",
         "genre":"Filmmusik",
         "jahr":null,
-        "schwierigkeit":null,
+        "schwierigkeit":"test",
         "isdigitalisiert":true,
         "arrangiert":[{"pid":51,"vorname":"Ted","name":"Parson"}],
         "komponiert":[{"pid":50,"vorname":"Hans","name":"Zimmer"}]
@@ -84,7 +84,7 @@
         "name":"Seven Nation Army",
         "genre":"Pop / Rock / Modern",
         "jahr":null,
-        "schwierigkeit":null,
+        "schwierigkeit":"very hard",
         "isdigitalisiert":true,
         "arrangiert":[{"pid":67,"vorname":"Paul","name":"Murtha"}],
         "komponiert":[{"pid":66,"vorname":"the","name":"White Stripes"}]
@@ -94,7 +94,7 @@
         "name":"Jesu bleibet meine Freude - Choral",
         "genre":"Barock",
         "jahr":null,
-        "schwierigkeit":null,
+        "schwierigkeit":"very easy",
         "isdigitalisiert":true,
         "arrangiert":[{"pid":90,"vorname":"Barbara","name":"Fritsch"}],
         "komponiert":[{"pid":15,"vorname":"J. S.","name":"Bach"}]
