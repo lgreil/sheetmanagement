@@ -8,6 +8,34 @@
             <p v-if="piece.description" class="text-lg text-gray-600 dark:text-gray-300 mb-6 text-center">{{ piece.description }}</p>
             <p v-else class="text-lg text-gray-600 dark:text-gray-300 mb-6 text-center">This piece does not exist or is not available yet.</p>
 
+            <!-- Enhanced NuxtUI Card for Piece Information -->
+            <n-card class="mb-6 border border-gray-300 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
+                <n-card-header>
+                    <h2 class="text-xl font-semibold text-[--dark-color] dark:text-white">Piece Information</h2>
+                </n-card-header>
+                <n-card-body class="flex items-center space-x-4">
+                    <img :src="piece.imageUrl || '~/assets/img/default-piece.jpg'" alt="Piece Image" class="w-24 h-24 rounded-lg object-cover shadow-md">
+                    <ul class="text-gray-600 dark:text-gray-300">
+                        <li><strong>Year:</strong> {{ piece.year || 'Unknown' }}</li>
+                        <li><strong>Composer:</strong> {{ piece.komponiert?.map(composer => `${composer.vorname} ${composer.name}`).join(', ') || 'Unknown' }}</li>
+                        <li><strong>Arranger:</strong> {{ piece.arrangiert?.map(arranger => `${arranger.vorname} ${arranger.name}`).join(', ') || 'None' }}</li>
+                        <li class="flex items-center space-x-2">
+                            <strong>Difficulty:</strong>
+                            <DifficultyIndicator :difficulty="piece.difficulty || 'unknown'" />
+                        </li>
+                        <li class="flex items-center space-x-2">
+                            <strong>Digitized:</strong>
+                            <DigitizedIndicator :isDigitized="piece.digitized || false" />
+                        </li>
+                    </ul>
+                </n-card-body>
+            </n-card>
+
+            <!-- Timeline Component -->
+            <div class="my-8">
+                <Timeline :events="timelineEvents" />
+            </div>
+
             <div v-if="piece.name" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- YouTube Search -->
                 <div class="bg-gray-100 dark:bg-gray-700 p-4 rounded-lg shadow">
@@ -63,6 +91,9 @@
 import { ref, onMounted, watch } from 'vue';
 import { useRoute, useRouter } from '#app';
 import { useMusicData } from "~/composables/useMusicData";
+import DifficultyIndicator from '~/components/MusicTable/DifficultyIndicator.vue';
+import DigitizedIndicator from '~/components/MusicTable/DigitizedIndicator.vue';
+import Timeline from '~/components/Timeline.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -78,6 +109,11 @@ const piece = ref({
 
 const youtubeSearchUrl = ref('');
 const imslpSearchUrl = ref('');
+const timelineEvents = ref([
+    { date: '2023-01-15', title: 'Arranged', description: 'This piece was arranged by John Doe.', link: null, icon: 'mdi-pencil', iconColor: '#10b981' },
+    { date: '2023-03-10', title: 'Last Played', description: 'Performed at the Spring Concert.', link: 'https://example.com/concert', icon: 'mdi-music', iconColor: '#3b82f6' },
+    { date: '2023-05-05', title: 'Bought', description: 'Purchased by the orchestra.', link: null, icon: 'mdi-cart', iconColor: '#f59e0b' }
+]);
 
 const { fetchPieceById } = useMusicData();
 
@@ -134,5 +170,10 @@ watch(() => route.params.id, (newId) => {
 <style>
 .container {
     max-width: 800px;
+}
+
+.my-8 {
+    margin-top: 2rem;
+    margin-bottom: 2rem;
 }
 </style>

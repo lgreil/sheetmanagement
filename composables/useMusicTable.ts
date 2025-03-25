@@ -174,17 +174,6 @@ export function useMusicTable() {
       enableSorting: true,
     },
     {
-      accessorKey: "jahr",
-      header: createSortableHeader("Year"),
-      cell: ({ row }) => {
-        const value = row.getValue("jahr") as number;
-        return h("span", { class: "text-center block" }, [
-          value && value !== 0 ? value.toString() : "-",
-        ]);
-      },
-      enableSorting: true,
-    },
-    {
       accessorKey: "schwierigkeit",
       header: createSortableHeader("Difficulty"),
       cell: ({ row }) =>
