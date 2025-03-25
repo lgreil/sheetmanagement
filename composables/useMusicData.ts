@@ -13,11 +13,11 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
     loading.value = true;
     error.value = null;
     try {
-      const { data } = await useFetch<{ items: Piece[] }>(
+      const { data } = await useFetch<Piece[]>(
         `${useRuntimeConfig().public.API_URL}/stuecke`
       );
-      if (data.value && data.value.items) {
-        pieces.value = data.value.items;
+      if (Array.isArray(data.value)) {
+        pieces.value = data.value;
       } else {
         throw new Error("Invalid API response");
       }

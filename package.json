@@ -23,6 +23,7 @@
     "@iconify-json/lucide": "^1.2.32",
     "@nuxt/test-utils": "^3.17.2",
     "@nuxtjs/tailwindcss": "^6.13.2",
+    "@vitest/ui": "3.0.9",
     "@vue/test-utils": "^2.4.6",
     "autoprefixer": "^10.4.21",
     "happy-dom": "^17.4.4",
