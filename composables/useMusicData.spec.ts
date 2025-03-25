@@ -2,6 +2,7 @@
 import { ref, nextTick } from "vue";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useMusicData } from "./useMusicData";
+import dummyMusicData from "~/content/dummyMusicData";
 import type { Piece } from "../types/music";
 
 // Mock the useFetch function from Nuxt
@@ -79,6 +80,55 @@ describe("useMusicData", () => {
 
     expect(error.value).toEqual(fakeError);
     expect(loading.value).toBe(false);
+  });
+
+  it("falls back to dummy data when API returns no data", async () => {
+    (useFetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: ref([]),
+    });
+
+    const { pieces, fetchPieces } = useMusicData();
+    await fetchPieces();
+    await nextTick();
+
+    expect(pieces.value).toEqual(dummyMusicData);
+  });
+
+  it("falls back to dummy data when API call fails", async () => {
+    const fakeError = new Error("API failure");
+    (useFetch as ReturnType<typeof vi.fn>).mockRejectedValue(fakeError);
+
+    const { pieces, fetchPieces, error } = useMusicData();
+    await fetchPieces();
+    await nextTick();
+
+    expect(pieces.value).toEqual(dummyMusicData);
+    expect(error.value).toEqual(fakeError);
+  });
+
+  it("uses API data when valid data is returned", async () => {
+    const fakePieces: Piece[] = [
+      {
+        stid: 1,
+        name: "Piece One",
+        genre: "rock",
+        jahr: 2020,
+        schwierigkeit: "medium",
+        isdigitalisiert: true,
+        composer_names: ["Composer One"],
+        arranger_names: ["Arranger One"],
+      },
+    ];
+
+    (useFetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+      data: ref(fakePieces),
+    });
+
+    const { pieces, fetchPieces } = useMusicData();
+    await fetchPieces();
+    await nextTick();
+
+    expect(pieces.value).toEqual(fakePieces);
   });
 });
 

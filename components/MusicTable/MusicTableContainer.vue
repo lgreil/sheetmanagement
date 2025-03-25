@@ -90,7 +90,7 @@ import MusicTableSearch from "./MusicTableSearch.vue";
 import MusicTablePagination from "./MusicTablePagination.vue";
 import { useMusicTable } from "~/composables/useMusicTable";
 import type { Piece } from "~/types/music";
-import { useFetch } from "#app";
+import dummyMusicData from "~/content/dummyMusicData";
 
 // Define props for the component
 const props = defineProps({
@@ -106,94 +106,40 @@ const props = defineProps({
   },
 });
 
-// Table state
-const pieces = useState<Piece[]>('pieces', () => props.pieces);
-const loading = useState('loading', () => props.loading);
-const error = ref<Error | null>(null);
-const pageIndex = ref(0);
-const pageSize = ref(10);
-const globalFilter = ref("");
-const sorting = ref<{ id: string; desc: boolean }[]>([]);
-const totalItems = ref(0);
+const dummyData: Piece[] = dummyMusicData;
 
-// Define columns for the table
-const columns = [
-  { id: 'name', label: 'Name', sortable: true },
-  { id: 'genre', label: 'Genre', sortable: true },
-  { id: 'schwierigkeit', label: 'Difficulty', sortable: true },
-  { id: 'isdigitalisiert', label: 'Digitized', sortable: false },
-  { id: 'jahr', label: 'Year', sortable: true },
-  { id: 'composer_names', label: 'Composers', sortable: false },
-  { id: 'arranger_names', label: 'Arrangers', sortable: false },
-];
+// Correct the usage of the `useMusicTable` composable
+const { columns, getFilteredRowsModel } = useMusicTable();
 
-// Fetch data from API using query parameters
-async function fetchData() {
-    loading.value = true;
-    error.value = null;
-    try {
-        const params = new URLSearchParams();
-        params.append("page", pageIndex.value.toString());
-        params.append("size", pageSize.value.toString());
-        if (globalFilter.value) {
-            params.append("search", globalFilter.value);
-        }
-        if (sorting.value.length > 0) {
-            params.append("sortBy", sorting.value[0].id);
-            params.append("sortDir", sorting.value[0].desc ? "desc" : "asc");
-        }
-        const { data, error: fetchError } = await useFetch<{
-            items: any[];
-            total: number;
-        }>(`http://localhost:3005/stuecke?${params.toString()}`);
-        if (fetchError.value) {
-            throw fetchError.value;
-        }
-        if (data.value) {
-            pieces.value = data.value.items.map((item: any) => ({
-                stid: item.stid,
-                name: item.name,
-                genre: item.genre || "Unknown",
-                schwierigkeit: item.schwierigkeit || "Unknown",
-                isdigitalisiert: item.isdigitalisiert || false,
-                jahr: item.jahr || "Unknown",
-                composer_names: item.komponiert.map((k: any) => `${k.person.vorname} ${k.person.name}`),
-                arranger_names: item.arrangiert.map((a: any) => `${a.person.vorname} ${a.person.name}`),
-            }));
-            totalItems.value = data.value.total || 0;
-        }
-    } catch (err) {
-        console.error("Error fetching data:", err);
-        error.value = err as Error;
-    } finally {
-        loading.value = false;
-    }
-}
+// Define missing states and properties using useState for Nuxt state management
+const pieces = useState<Piece[]>("pieces", () => (props.pieces.length ? props.pieces : dummyData));
+const loading = useState("loading", () => props.loading);
+const error = useState<Error | null>("error", () => null);
 
-// Event Handlers
-function handleSortChange(newSort: { id: string; desc: boolean }[]) {
-    sorting.value = newSort;
-    fetchData();
-}
+// Replace ref with useState for Nuxt state management
+const pageIndex = useState("pageIndex", () => 0);
+const pageSize = useState("pageSize", () => 10);
+const globalFilter = useState("globalFilter", () => "");
+const sorting = useState("sorting", () => []);
+const totalItems = useState("totalItems", () => pieces.value.length);
 
 function toggleLoading() {
-    loading.value = !loading.value;
+  loading.value = !loading.value;
 }
 
 // Watchers: re-fetch data when pagination or search changes
-watch([pageIndex, pageSize], () => {
-    fetchData();
-});
-
-watch(globalFilter, () => {
-    pageIndex.value = 0;
-    fetchData();
+watch([pageIndex, pageSize, globalFilter, sorting], () => {
+  // The `useMusicTable` composable handles data fetching internally
 });
 
 // Initial fetch on mount
 onMounted(() => {
-    fetchData();
+  // The `useMusicTable` composable handles data fetching internally
 });
+
+function handleSortChange(newSort: any) {
+  sorting.value = newSort;
+}
 </script>
 
 <script lang="ts">

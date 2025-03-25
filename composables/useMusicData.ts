@@ -1,29 +1,43 @@
 import { ref, onMounted, watch } from "vue";
 import type { Piece } from "~/types/music";
-import { useFetch } from "#app";
+import { useFetch, useState } from "#app";
+import dummyMusicData from "~/content/dummyMusicData";
 
 export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
-  const pageIndex = ref(initialPageIndex);
-  const pageSize = ref(initialPageSize);
-  const pieces = ref<Piece[]>([]);
-  const loading = ref(true);
-  const error = ref<Error | null>(null);
+  const pageIndex = useState("pageIndex", () => initialPageIndex);
+  const pageSize = useState("pageSize", () => initialPageSize);
+  const pieces = useState<Piece[]>("pieces", () => []);
+  const loading = useState("loading", () => true);
+  const error = useState<Error | null>("error", () => null);
 
   async function fetchPieces() {
     loading.value = true;
     error.value = null;
+
     try {
-      const { data } = await useFetch<Piece[]>(
+      const { data, pending, error: fetchError } = await useFetch<Piece[]>(
         `${useRuntimeConfig().public.API_URL}/stuecke`
       );
-      if (Array.isArray(data.value)) {
-        pieces.value = data.value;
-      } else {
-        throw new Error("Invalid API response");
+
+      await pending;
+
+      if (fetchError.value) {
+        throw fetchError.value;
       }
-    } catch (err) {
+
+      if (Array.isArray(data.value) && data.value.length > 0) {
+        pieces.value = data.value;
+        useToast().success("Data successfully fetched!");
+      } else {
+        console.warn("API returned no data or invalid data. Falling back to dummy data.");
+        pieces.value = dummyMusicData;
+        useToast().warning("No valid data from API. Using dummy data.");
+      }
+        } catch (err) {
+      console.error("Error fetching pieces. Falling back to dummy data:", err);
+      pieces.value = dummyMusicData;
+      useToast().error("Error fetching data. Using dummy data.");
       error.value = err as Error;
-      console.error("Error fetching pieces:", error.value);
     } finally {
       loading.value = false;
     }
