@@ -19,26 +19,26 @@
             :sort="state.sorting" :search="globalFilter" :loading-state="{
               icon: 'i-heroicons-document-text',
               label: 'Loading music pieces...'
-            }" :empty-state="{
+            }" :empty-state="renderEmptyState({
               icon: 'i-heroicons-document-text',
               title: 'No music pieces found',
               description: globalFilter 
                 ? 'Try adjusting your search terms'
                 : 'Add some music pieces to get started'
-            }" @select="(row) => onRowSelect(row)" @update:sort="(sort: TableSort[]) => updateFilters({ sorting: sort })"
+            })" @select="(row: Row<Piece>) => onRowSelect(row.original)" @update:sort="(sort: TableSort[]) => updateFilters({ sorting: sort })"
             @update:search="(value: string) => updateFilters({ globalFilter: value })" :ui="tableUI">
             <!-- Add header slot to customize header rendering -->
             <template #header-cell="{ column }">
               <div class="flex items-center gap-2">
-                {{ column.label }}
-                <UIcon v-if="column.sortable" name="i-heroicons-arrows-up-down" class="w-4 h-4 text-gray-400" />
+                {{ (column as ExtendedColumn).label }}
+                <UIcon v-if="(column as ExtendedColumn).sortable" name="i-heroicons-arrows-up-down" class="w-4 h-4 text-gray-400" />
               </div>
             </template>
-            <template #empty-state="{ icon, title, description = '' }">
+            <template #empty-state="slotProps">
               <div class="flex flex-col items-center justify-center p-12 text-center">
-                <UIcon :name="icon" class="w-12 h-12 text-gray-400 mb-4" />
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ title }}</h3>
-                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ description }}</p>
+                <UIcon :name="slotProps.icon" class="w-12 h-12 text-gray-400 mb-4" />
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ slotProps.title }}</h3>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ slotProps.description }}</p>
                 <div class="mt-6">
                   <UButton v-if="!globalFilter" to="/stueck/new" icon="i-heroicons-plus" color="primary">
                     Add New Piece
@@ -55,10 +55,10 @@
                   <tr>
                     <th v-for="column in columns" :key="column.id" 
                         class="transition-colors whitespace-nowrap sticky top-0 bg-blue-900/95 backdrop-blur supports-[backdrop-filter]:bg-blue-900/75 z-10 px-3 py-2 sm:px-4 sm:py-3 text-white font-medium"
-                        @click="column.sortable && updateFilters({ sorting: [{ id: column.id, desc: state.sorting[0]?.desc ? false : true }] })">
+                        @click="(column as ExtendedColumn).sortable && updateFilters({ sorting: [{ id: column.id!, desc: state.sorting[0]?.desc ? false : true }] })">
                       <div class="flex items-center gap-2">
-                        {{ column.label }}
-                        <UIcon v-if="column.sortable" 
+                        {{ (column as ExtendedColumn).label }}
+                        <UIcon v-if="(column as ExtendedColumn).sortable" 
                                :name="getSortIcon(column.id || '')"
                                class="w-4 h-4 text-gray-400" />
                       </div>
@@ -69,16 +69,16 @@
             </div>
 
             <VirtualTable ref="virtualTable" :items="paginatedItems" :item-height="48" class="virtual-table-content"
-              v-slot="{ item, index }" @scroll="onScroll">
+              v-slot="{ item: virtualItem }" @scroll="onScroll">
               <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
-                :class="{ 'bg-blue-900/20': selectedRowIndex === index }"
-                :tabindex="index === selectedRowIndex ? 0 : -1" @click="() => onRowSelect(item)">
+                :class="{ 'bg-blue-900/20': virtualItem.index === selectedRowIndex }"
+                :tabindex="virtualItem.index === selectedRowIndex ? 0 : -1" @click="() => onRowSelect(virtualItem.data)">
                 <td v-for="column in columns" :key="column.id"
                   class="transition-colors whitespace-nowrap sm:whitespace-normal px-3 py-2 sm:px-4 sm:py-3">
-                  <component v-if="column.render" :is="column.render(item)" />
-                  <template v-else>
-                    {{ column.accessor ? column.accessor(item) : item[column.id] }}
-                  </template>
+                    <template v-if="column.id === 'name'">{{ virtualItem.data.name }}</template>
+                    <template v-else-if="column.id === 'genre'">{{ virtualItem.data.genre }}</template>
+                    <template v-else-if="column.id === 'jahr'">{{ virtualItem.data.jahr }}</template>
+                    <template v-else>{{ virtualItem.data[column.id as keyof Piece] }}</template>
                 </td>
               </tr>
             </VirtualTable>
@@ -123,6 +123,9 @@ import { useTablePerformance } from '~/composables/useTablePerformance'
 import VirtualTable from './VirtualTable.vue'
 import ErrorBoundary from './ErrorBoundary.vue'
 import ErrorState from './ErrorState.vue'
+import type { Column, Row } from '@tanstack/vue-table'
+import type { VirtualTableInstance } from './VirtualTable.vue'
+import type { ColumnDef } from '@tanstack/table-core'
 
 // Add useRuntimeConfig
 const config = useRuntimeConfig()
@@ -154,12 +157,36 @@ const pieces = useVModel(props, 'modelValue', emit, {
 // Initialize composables
 const {
   state,
-  columns,
   totalItems,
   paginatedItems,
   setPieces,
   updateFilters
 } = useMusicTable()
+
+// Define proper column type
+type ExtendedColumn = ColumnDef<Piece> & {
+  label: string
+  sortable?: boolean
+}
+
+// Add column definitions with proper typing
+const columns = ref<ExtendedColumn[]>([
+  {
+    id: 'name',
+    label: 'Title',
+    sortable: true
+  },
+  {
+    id: 'genre',
+    label: 'Genre',
+    sortable: true
+  },
+  {
+    id: 'jahr',
+    label: 'Year',
+    sortable: true
+  }
+])
 
 // Initialize pieces when received through props
 watchEffect(() => {
@@ -194,7 +221,8 @@ const {
   debugInfo
 } = useTablePerformance()
 
-const virtualTable = ref()
+// Fix virtual table typings
+const virtualTable = ref<VirtualTableInstance>()
 const showDebugInfo = ref(false)
 
 // Determine when to use virtual scrolling
@@ -210,9 +238,8 @@ const globalFilter = computed({
 })
 
 // Event handlers with proper error handling
-const onRowSelect = async (row: TableRow<Piece>) => {
+const onRowSelect = (piece: Piece) => {
   try {
-    const piece = row.original // Extract the Piece object from the TableRow
     emit('piece-click', piece)
     selectedRowIndex.value = paginatedItems.value.findIndex(p => p.stid === piece.stid)
   } catch (err) {
@@ -402,6 +429,13 @@ const getSortIcon = (columnKey: string) => {
   return currentSort.desc ? 'i-heroicons-arrow-down' : 'i-heroicons-arrow-up'
 }
 
+// Add proper typing for empty state
+interface EmptyState {
+  icon: string
+  title: string
+  description?: string
+}
+
 // Update UTable UI configuration
 const tableUI = {
   root: 'relative overflow-x-auto sm:overflow-visible',
@@ -416,6 +450,13 @@ const tableUI = {
   emptyLabel: 'text-sm text-gray-900 dark:text-white',
   emptyIcon: 'w-6 h-6 text-gray-400 dark:text-gray-500 mb-4'
 } as const
+
+// Update empty state handling
+const renderEmptyState = (state: EmptyState) => ({
+  icon: state.icon,
+  title: state.title,
+  description: state.description || ''
+})
 </script>
 
 <style scoped>

@@ -11,20 +11,22 @@
     @blur="focused = false"
   >
     <td v-for="column in columns" :key="column.key" class="p-3">
+      <div v-if="column.component">
       <component
-        v-if="column.render"
-        :is="column.render"
+        :is="column.component"
         v-bind="getRenderProps(column)"
       />
-      <template v-else>
-        {{ getValue(column) }}
-      </template>
+      </div>
+      <div v-else>
+      {{ getValue(column) }}
+      </div>
     </td>
   </tr>
 </template>
 
 <script setup lang="ts">
 
+import type { TableColumn } from '@nuxt/ui'
 import type { Piece } from '~/types/Types'
 
 interface Props {
@@ -46,7 +48,8 @@ defineEmits<{
 const focused = ref(false)
 
 function getValue(column: TableColumn<Piece>) {
-  return typeof column.key === 'string' ? props.item[column.key] : ''
+  const key = (column as any).key; // Temporary cast if 'key' is not in the type
+  return typeof key === 'string' && key in props.item ? props.item[key as keyof Piece] : ''
 }
 
 function getRenderProps(column: TableColumn<Piece>) {

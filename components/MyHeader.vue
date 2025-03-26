@@ -1,126 +1,152 @@
 <template>
-    <header class="bg-white dark:bg-gray-900 shadow-md">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <nav class="flex items-center justify-between h-16">
-                <!-- Logo -->
-                <NuxtLink to="/" class="flex items-center">
-                    <img
-                        src="assets/img/logo.png"
-                        alt="Logo"
-                        class="h-10 w-10 mr-2 transition-transform duration-300 hover:scale-110"
-                    />
-                    <span
-                        class="text-xl font-semibold text-gray-900 dark:text-white font-sans"
-                        >Bachkreis</span
-                    >
-                </NuxtLink>
+  <header class="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 dark:bg-gray-900/95 dark:supports-[backdrop-filter]:bg-gray-900/60 transition-colors duration-200">
+    <div class="container mx-auto flex h-16 items-center justify-between px-4">
+      <div class="flex items-center gap-6">
+        <NuxtLink to="/" class="flex items-center space-x-2 transition-transform hover:scale-105">
+          <img src="~/assets/img/logo.png" alt="Logo" class="h-8 w-8 rounded-lg shadow-sm" />
+          <span class="font-bold text-gray-900 dark:text-white">Bachkreis</span>
+        </NuxtLink>
+        <nav class="hidden md:flex items-center space-x-6">
+          <NuxtLink to="/stuecke" class="nav-link">Stücke</NuxtLink>
+          <NuxtLink to="/instrumente" class="nav-link">Instrumente</NuxtLink>
+          <NuxtLink to="/about" class="nav-link">About</NuxtLink>
+          <NuxtLink to="/contact" class="nav-link">Contact</NuxtLink>
+        </nav>
+      </div>
 
-                <!-- Desktop Menu -->
-                <div class="hidden md:flex space-x-8">
-                    <NuxtLink
-                        v-for="item in navigationItems"
-                        :key="item.label"
-                        :to="item.to"
-                        class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 font-sans"
-                        active-class="border-b-2 border-indigo-600 dark:border-indigo-400"
-                    >
-                        <Icon
-                            :name="item.icon"
-                            class="inline-block h-5 w-5 mr-1 align-middle"
-                        />
-                        <span class="align-middle">{{ item.label }}</span>
-                    </NuxtLink>
-                </div>
+      <div class="flex items-center gap-4">
+        <UColorModeButton class="transition-transform hover:scale-105" />
+        
+        <!-- Auth Section -->
+        <template v-if="auth.isAuthenticated.value">
+          <UDropdown :items="userMenuItems" class="transition-all duration-200">
+            <UButton color="neutral" variant="ghost" class="hover:bg-gray-100 dark:hover:bg-gray-800">
+              {{ auth.user.value?.name || auth.user.value?.email }}
+              <Icon name="heroicons:chevron-down" class="ml-2 h-4 w-4 transition-transform group-hover:rotate-180" />
+            </UButton>
+          </UDropdown>
+        </template>
+        <template v-else>
+          <NuxtLink to="/login">
+            <UButton color="primary" class="shadow-sm hover:shadow-md transition-all duration-200">Sign in</UButton>
+          </NuxtLink>
+        </template>
 
-                <!-- Mobile Menu Button & Theme Toggle -->
-                <div class="flex items-center">
-                    <!-- Theme Toggle -->
-                    <button
-                        @click="toggleColorMode"
-                        class="text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 focus:outline-none mr-4"
-                        aria-label="Toggle Dark Mode"
-                    >
-                        <Icon
-                            :name="
-                                $colorMode.value === 'light'
-                                    ? 'mdi:weather-night'
-                                    : 'mdi:weather-sunny'
-                            "
-                            class="h-5 w-5"
-                        />
-                    </button>
+        <!-- Mobile menu button -->
+        <UButton
+          color="neutral"
+          variant="ghost"
+          class="md:hidden hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          @click="toggleMenu"
+        >
+          <Icon name="heroicons:bars-3" class="h-6 w-6" />
+        </UButton>
+      </div>
+    </div>
 
-                    <!-- Mobile Menu Button -->
-                    <button
-                        @click="toggleMenu"
-                        class="md:hidden text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors duration-200 focus:outline-none"
-                        aria-label="Open Mobile Menu"
-                    >
-                        <Icon name="mdi:menu" class="h-6 w-6" />
-                    </button>
-                </div>
-            </nav>
-
-            <!-- Mobile Menu -->
-            <transition
-                name="fade"
-                enter-active-class="transition ease-out duration-300"
-                enter-from-class="opacity-0 -translate-y-2"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition ease-in duration-200"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 -translate-y-2"
-            >
-                <div v-if="menuOpen" class="md:hidden">
-                    <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        <NuxtLink
-                            v-for="item in navigationItems"
-                            :key="item.label"
-                            :to="item.to"
-                            class="block text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md px-3 py-2 text-base font-medium font-sans"
-                            @click="closeMenu"
-                        >
-                            <Icon
-                                :name="item.icon"
-                                class="inline-block h-5 w-5 mr-2 align-middle"
-                            />
-                            <span class="align-middle">{{ item.label }}</span>
-                        </NuxtLink>
-                    </div>
-                </div>
-            </transition>
-        </div>
-    </header>
+    <!-- Mobile menu -->
+    <div v-if="menuOpen" class="md:hidden">
+      <nav class="border-t px-4 py-2 bg-white/95 dark:bg-gray-900/95 backdrop-blur">
+        <NuxtLink to="/stuecke" class="mobile-nav-link">Stücke</NuxtLink>
+        <NuxtLink to="/instrumente" class="mobile-nav-link">Instrumente</NuxtLink>
+        <NuxtLink to="/about" class="mobile-nav-link">About</NuxtLink>
+        <NuxtLink to="/contact" class="mobile-nav-link">Contact</NuxtLink>
+      </nav>
+    </div>
+  </header>
 </template>
 
-<script setup>
-const $colorMode = useColorMode();
-const { menuOpen, toggleMenu, closeMenu } = useMenu();
+<script setup lang="ts">
+import { useAuth } from '~/composables/useAuth'
 
-// Toggle between light and dark mode
-function toggleColorMode() {
-    $colorMode.preference = $colorMode.value === "dark" ? "light" : "dark";
-}
+const { menuOpen, toggleMenu } = useMenu()
+const auth = useAuth()
 
-// Navigation items
-const navigationItems = [
-    { label: "Instrumentenbestände", icon: "mdi:guitar-acoustic", to: "/instrumente" },
-    { label: "Stücke", icon: "mdi:music-note", to: "/stuecke" },
-    { label: "About", icon: "mdi:information-outline", to: "/about" },
-];
+const userMenuItems = computed(() => [
+  [
+    {
+      label: 'Profile',
+      icon: 'heroicons:user',
+      click: () => navigateTo('/profile')
+    },
+    {
+      label: 'Settings',
+      icon: 'heroicons:cog-6-tooth',
+      click: () => navigateTo('/settings')
+    }
+  ],
+  [
+    {
+      label: 'Sign out',
+      icon: 'heroicons:arrow-right-on-rectangle',
+      click: () => auth.logout()
+    }
+  ]
+])
 </script>
 
 <style scoped>
-.fade-enter-active, .fade-leave-active {
-    transition: opacity 0.3s ease, transform 0.3s ease;
+.nav-link {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(75, 85, 99);
+    transition-property: color;
+    transition-duration: 200ms;
+    position: relative;
 }
+
+.dark .nav-link {
+    color: rgb(209, 213, 219);
+}
+
+.nav-link:hover {
+    color: rgb(17, 24, 39);
+}
+
+.dark .nav-link:hover {
+    color: rgb(255, 255, 255);
+}
+
+.nav-link::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0.125rem;
+    background-color: rgb(59, 130, 246);
+    transform: scaleX(0);
+    transition-property: transform;
+    transition-duration: 200ms;
+    transform-origin: left;
+}
+
+.nav-link:hover::after {
+    transform: scaleX(1);
+}
+
+.mobile-nav-link {
+    display: block;
+    padding: 0.625rem 0.5rem;
+    color: rgb(75, 85, 99);
+    border-radius: 0.5rem;
+    transition-property: color, background-color;
+    transition-duration: 200ms;
+}
+
+.dark .mobile-
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
 .fade-enter-from, .fade-leave-to {
-    opacity: 0;
-    transform: translateY(-10px);
+  opacity: 0;
+  transform: translateY(-10px);
 }
 
 /* Ensure consistent font and alignment */
 .font-sans {
-    font-family: 'Inter', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 </style>

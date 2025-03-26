@@ -64,9 +64,20 @@ function onScroll(e: Event) {
   emit('scroll', e)
 }
 
+// Add type export
+export interface VirtualTableInstance {
+  scrollTo: (index: number) => void;
+}
+
 // Expose scroll methods
 defineExpose({
-  scrollTo,
+  scrollTo: (index: number) => {
+    // Implementation of scrollTo
+    const container = containerRef.value
+    if (container) {
+      container.scrollTop = index * props.itemHeight
+    }
+  },
   containerRef
 })
 </script>
