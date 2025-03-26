@@ -1,5 +1,5 @@
 <template>
-    <div :class="[$colorMode.value, 'min-h-screen flex flex-col']">
+    <div class="min-h-screen flex flex-col">
         <MyHeader />
         <NuxtLoadingIndicator />
         <main class="flex-1 bg-[--bachkreisgelb-hell] dark:bg-gray-800 p-6">
@@ -30,32 +30,21 @@
 </template>
 
 <script setup>
-// Access the color mode
-const colorMode = useColorMode();
+// Color mode is handled automatically by Nuxt
 </script>
 
 <style>
-/* You can add global color mode styles here */
-.dark body {
-    background-color: #121212;
-    color: #e0e0e0;
-}
-
-.light body {
-    background-color: #ffffff;
-    color: #121212;
+:root {
+    color-scheme: light dark;
 }
 
 body {
     background-color: #fff;
     color: rgba(0, 0, 0, 0.8);
 }
-.dark-mode body {
-    background-color: #091a28;
-    color: #ebf4f1;
-}
-.sepia-mode body {
-    background-color: #f1e7d0;
-    color: #433422;
+
+html.dark body {
+    background-color: #121212;
+    color: #e0e0e0;
 }
 </style>

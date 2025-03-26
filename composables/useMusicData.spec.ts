@@ -3,7 +3,7 @@ import { ref, nextTick } from "vue";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { useMusicData } from "./useMusicData";
 import dummyMusicData from "~/content/dummyMusicData";
-import type { Piece } from "../types/music";
+import type { Piece } from "../types/Types";
 
 // Mock the useFetch function from Nuxt
 vi.mock("#app", () => ({

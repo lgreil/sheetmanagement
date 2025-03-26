@@ -10,9 +10,12 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
-    "@nuxt/ui": "^3.0.0",
-    "@tailwindcss/vite": "^4.0.0",
-    "module": "link:@nuxt/test-utils/module",
+    "@headlessui/vue": "^1.7.23",
+    "@iconify/vue": "^4.3.0",
+    "@nuxt/ui": "^3.0.1",
+    "@tailwindcss/vite": "^4.0.17",
+    "@vueuse/core": "^13.0.0",
+    "module": "link:@nuxt\\test-utils\\module",
     "nuxt": "latest",
     "vue": "latest",
     "vue-router": "latest"
@@ -20,6 +23,7 @@
   "packageManager": "pnpm@10.6.4+sha512.da3d715bfd22a9a105e6e8088cfc7826699332ded60c423b14ec613a185f1602206702ff0fe4c438cb15c979081ce4cb02568e364b15174503a63c7a8e2a5f6c",
   "devDependencies": {
     "@formkit/auto-animate": "^0.8.2",
+    "@iconify-json/heroicons": "^1.2.2",
     "@iconify-json/lucide": "^1.2.32",
     "@iconify-json/mdi": "^1.2.3",
     "@nuxt/test-utils": "^3.17.2",
@@ -29,7 +33,7 @@
     "autoprefixer": "^10.4.21",
     "happy-dom": "^17.4.4",
     "playwright-core": "^1.51.1",
-    "tailwindcss": "^4.0.0",
+    "tailwindcss": "^4.0.17",
     "vitest": "^3.0.9"
   }
 }

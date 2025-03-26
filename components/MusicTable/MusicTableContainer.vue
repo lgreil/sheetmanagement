@@ -1,500 +1,507 @@
 <template>
+  <ErrorBoundary>
     <div class="w-full max-w-7xl mx-auto space-y-6 p-4">
-        <!-- Search Component -->
-        <MusicTableSearch v-model="globalFilter" />
+      <div class="sticky top-0 z-20 -mx-4 px-4 py-2">
+        <MusicTableSearch v-model="globalFilter"
+          @update:model-value="(value) => updateFilters({ globalFilter: value })" :disabled="isLoading" />
+      </div>
 
-        <!-- Loading State -->
-        <template v-if="loading">
-            <div
-                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead>
-                            <tr class="bg-gray-50 dark:bg-gray-700">
-                                <th class="px-4 py-2" v-for="n in 7" :key="n">
-                                    <USkeleton :class="n === 1
-                                            ? 'h-6 w-[150px]'
-                                            : n === 2
-                                                ? 'h-6 w-[100px]'
-                                                : n === 3
-                                                    ? 'h-6 w-[120px]'
-                                                    : n === 4
-                                                        ? 'h-6 w-[80px]'
-                                                        : n === 5
-                                                            ? 'h-6 w-[100px]'
-                                                            : n === 6
-                                                                ? 'h-6 w-[120px]'
-                                                                : 'h-6 w-[80px]'
-                                        " />
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="n in 10" :key="n" class="border-t border-gray-200 dark:border-gray-700">
-                                <td class="px-4 py-3" v-for="m in 7" :key="m">
-                                    <USkeleton :class="m === 1
-                                            ? 'h-5 w-[180px]'
-                                            : m === 2
-                                                ? 'h-5 w-[100px] rounded-full'
-                                                : m === 3
-                                                    ? 'h-5 w-[140px]'
-                                                    : m === 4
-                                                        ? 'h-5 w-[60px] rounded-full'
-                                                        : m === 5
-                                                            ? 'h-5 w-8 rounded-full'
-                                                            : m === 6
-                                                                ? 'h-5 w-[120px]'
-                                                                : 'h-5 w-[80px]'
-                                        " />
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Skeleton Pagination -->
-                <div class="p-4 flex items-center justify-between border-t border-gray-200 dark:border-gray-700">
-                    <USkeleton class="h-8 w-[120px]" />
-                    <USkeleton class="h-8 w-[200px]" />
+      <TransitionGroup :show="true" name="fade" tag="div" class="flex flex-col h-full"
+        enter-active-class="transition-all duration-300 ease-out" enter-from-class="opacity-0 -translate-y-4"
+        enter-to-class="opacity-100 translate-y-0" leave-active-class="transition-all duration-200 ease-in"
+        leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 -translate-y-4">
+        <MusicTableSkeleton v-if="isLoading" key="skeleton" />
 
+        <ErrorState v-else-if="error" :key="error.message" :error="error" @dismiss="clearError" />
+
+        <div v-else class="music-table-container rounded-lg shadow-lg overflow-hidden" key="table">
+          <UTable v-if="!shouldUseVirtualScroll" :rows="paginatedItems" :columns="columns" :loading="isLoading"
+            :sort="state.sorting" :search="globalFilter" :loading-state="{
+              icon: 'i-heroicons-document-text',
+              label: 'Loading music pieces...'
+            }" :empty-state="{
+              icon: 'i-heroicons-document-text',
+              title: 'No music pieces found',
+              description: globalFilter 
+                ? 'Try adjusting your search terms'
+                : 'Add some music pieces to get started'
+            }" @select="(row) => onRowSelect(row)" @update:sort="(sort: TableSort[]) => updateFilters({ sorting: sort })"
+            @update:search="(value: string) => updateFilters({ globalFilter: value })" :ui="tableUI">
+            <!-- Add header slot to customize header rendering -->
+            <template #header-cell="{ column }">
+              <div class="flex items-center gap-2">
+                {{ column.label }}
+                <UIcon v-if="column.sortable" name="i-heroicons-arrows-up-down" class="w-4 h-4 text-gray-400" />
+              </div>
+            </template>
+            <template #empty-state="{ icon, title, description = '' }">
+              <div class="flex flex-col items-center justify-center p-12 text-center">
+                <UIcon :name="icon" class="w-12 h-12 text-gray-400 mb-4" />
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">{{ title }}</h3>
+                <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ description }}</p>
+                <div class="mt-6">
+                  <UButton v-if="!globalFilter" to="/stueck/new" icon="i-heroicons-plus" color="primary">
+                    Add New Piece
+                  </UButton>
                 </div>
+              </div>
+            </template>
+          </UTable>
+
+          <div v-else class="virtual-table-wrapper">
+            <div class="sticky top-0 z-10 bg-blue-900/95 backdrop-blur">
+              <table class="w-full">
+                <thead>
+                  <tr>
+                    <th v-for="column in columns" :key="column.id" 
+                        class="transition-colors whitespace-nowrap sticky top-0 bg-blue-900/95 backdrop-blur supports-[backdrop-filter]:bg-blue-900/75 z-10 px-3 py-2 sm:px-4 sm:py-3 text-white font-medium"
+                        @click="column.sortable && updateFilters({ sorting: [{ id: column.id, desc: state.sorting[0]?.desc ? false : true }] })">
+                      <div class="flex items-center gap-2">
+                        {{ column.label }}
+                        <UIcon v-if="column.sortable" 
+                               :name="getSortIcon(column.id || '')"
+                               class="w-4 h-4 text-gray-400" />
+                      </div>
+                    </th>
+                  </tr>
+                </thead>
+              </table>
             </div>
-        </template>
 
-        <!-- Loaded Data -->
-        <template v-else>
-            <div
-                class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border border-gray-200 dark:border-gray-700">
-                <!-- Table Component -->
-                <div class="overflow-x-auto">
-                    <UTable 
-                        :columns="columns" 
-                        :data="pieces" 
-                        :sort="sorting" 
-                        @update:sort="handleSortChange" 
-                        hover
-                        class="w-full table-auto"
-                        @select="onRowSelect"
-                    />
-                </div>
-                <!-- Pagination Component -->
-                <MusicTablePagination v-model:page-index="pageIndex" v-model:page-size="pageSize"
-                    :total-items="totalItems" />
-            </div>
-        </template>
-    </div>
+            <VirtualTable ref="virtualTable" :items="paginatedItems" :item-height="48" class="virtual-table-content"
+              v-slot="{ item, index }" @scroll="onScroll">
+              <tr class="group transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                :class="{ 'bg-blue-900/20': selectedRowIndex === index }"
+                :tabindex="index === selectedRowIndex ? 0 : -1" @click="() => onRowSelect(item)">
+                <td v-for="column in columns" :key="column.id"
+                  class="transition-colors whitespace-nowrap sm:whitespace-normal px-3 py-2 sm:px-4 sm:py-3">
+                  <component v-if="column.render" :is="column.render(item)" />
+                  <template v-else>
+                    {{ column.accessor ? column.accessor(item) : item[column.id] }}
+                  </template>
+                </td>
+              </tr>
+            </VirtualTable>
+          </div>
 
-    <!-- Dev Loading Toggle Button -->
-    <div class="fixed bottom-4 right-4">
-        <UButton color="neutral" @click="toggleLoading" class="px-4 py-2 text-sm font-medium">
-            Toggle Loading State
-        </UButton>
+          <MusicTablePagination v-model:page-index="state.pageIndex" v-model:page-size="state.pageSize"
+            :total-items="totalItems" @update:page-index="(index) => updateFilters({ pageIndex: index })"
+            @update:page-size="(size) => updateFilters({ pageSize: size })" />
+
+          <!-- Performance Debug Info (Dev Only) -->
+          <div v-if="isDev && showDebugInfo"
+            class="fixed bottom-16 right-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow-lg">
+            <pre class="text-xs">{{ debugInfo }}</pre>
+          </div>
+        </div>
+      </TransitionGroup>
+
+      <!-- Dev Tools -->
+      <ClientOnly>
+        <div v-if="isDev" class="fixed bottom-4 right-4 space-y-2">
+          <UButton color="neutral" @click="toggleLoading" class="w-full" :variant="isLoading ? 'solid' : 'outline'">
+            Toggle Loading
+          </UButton>
+          <UButton color="warning" @click="simulateError" variant="outline" class="w-full">
+            Simulate Error
+          </UButton>
+        </div>
+      </ClientOnly>
     </div>
+  </ErrorBoundary>
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref, watch, onMounted, defineEmits } from 'vue';
-import MusicTableSearch from "./MusicTableSearch.vue";
-import MusicTablePagination from "./MusicTablePagination.vue";
-import { useMusicTable } from "~/composables/useMusicTable";
-import type { Piece } from "~/types/music";
-import dummyMusicData from "~/content/dummyMusicData";
+import { useVModel } from '@vueuse/core'
+import type { Piece } from '~/types/Types'
+import type { TableSort, TableRow, TableColumn } from '~/types/table'
+import { useMusicTable } from '~/composables/useMusicTable'
+import { useTableError } from '~/composables/useTableError'
+import type { TableError } from '~/composables/useTableError'
+import { useTableAnimations } from '~/composables/useTableAnimations'
+import { useTablePerformance } from '~/composables/useTablePerformance'
+import VirtualTable from './VirtualTable.vue'
+import ErrorBoundary from './ErrorBoundary.vue'
+import ErrorState from './ErrorState.vue'
 
-// Define emits for the component
-const emit = defineEmits(["update:loading", "piece-click"]);
+// Add useRuntimeConfig
+const config = useRuntimeConfig()
+const isDev = config.public.dev || false
 
-// Define props for the component
-const props = defineProps({
-  pieces: {
-    type: Array as () => Piece[],
-    required: false,
-    default: () => [],
-  },
-  loading: {
-    type: Boolean,
-    required: false,
-    default: false,
-  },
-});
+// Props with better TypeScript support
+interface Props {
+  initialPieces?: Piece[]
+  modelValue?: Piece[]
+  loading?: boolean
+}
 
-const dummyData: Piece[] = dummyMusicData;
+const props = withDefaults(defineProps<Props>(), {
+  initialPieces: () => [],
+  modelValue: undefined,
+  loading: false
+})
 
-// Correct the usage of the `useMusicTable` composable
-const { columns, getFilteredRowsModel } = useMusicTable();
+const emit = defineEmits<{
+  'update:modelValue': [pieces: Piece[]]
+  'piece-click': [piece: Piece]
+}>()
 
-// Define missing states and properties using useState for Nuxt state management
-const pieces = useState<Piece[]>("pieces", () => (props.pieces.length ? props.pieces : dummyData));
-const loading = useState("loading", () => props.loading);
-const error = useState<string | null>("error", () => null);
+// State management
+const pieces = useVModel(props, 'modelValue', emit, { 
+  defaultValue: props.initialPieces 
+})
 
-// Add an indicator for dummy data usage
-if (!props.pieces.length) {
-  error.value = "Using dummy data instead of real data.";
-  if (process.client) {
-    const toast = useToast();
-    toast.add({
-      title: "Dummy Data in Use",
-      description: "Real data is unavailable. Dummy data is being displayed instead.",
-      icon: "i-lucide-database",
-      color: "warning",
-    });
+// Initialize composables
+const {
+  state,
+  columns,
+  totalItems,
+  paginatedItems,
+  setPieces,
+  updateFilters
+} = useMusicTable()
+
+// Initialize pieces when received through props
+watchEffect(() => {
+  if (pieces.value?.length) {
+    setPieces(pieces.value)
+  }
+})
+
+const {
+  error,
+  withErrorHandling,
+  setError,
+  clearError
+} = useTableError()
+
+const isLoading = useVModel(props, 'loading', emit, { defaultValue: false })
+
+const { 
+  smoothScrollToRow, 
+  handleTouchStart, 
+  handleTouchMove 
+} = useTableAnimations()
+
+// Performance optimizations
+const {
+  renderTime,
+  fps,
+  isScrolling,
+  measureRenderTime,
+  measureFPS,
+  onScroll,
+  debugInfo
+} = useTablePerformance()
+
+const virtualTable = ref()
+const showDebugInfo = ref(false)
+
+// Determine when to use virtual scrolling
+const VIRTUAL_SCROLL_THRESHOLD = 100
+const shouldUseVirtualScroll = computed(() => 
+  paginatedItems.value.length > VIRTUAL_SCROLL_THRESHOLD
+)
+
+// Computed property for globalFilter
+const globalFilter = computed({
+  get: () => state.value.globalFilter,
+  set: (value) => updateFilters({ globalFilter: value })
+})
+
+// Event handlers with proper error handling
+const onRowSelect = async (row: TableRow<Piece>) => {
+  try {
+    const piece = row.original // Extract the Piece object from the TableRow
+    emit('piece-click', piece)
+    selectedRowIndex.value = paginatedItems.value.findIndex(p => p.stid === piece.stid)
+  } catch (err) {
+    setError({
+      message: 'Failed to select piece',
+      type: 'error',
+      code: 'ROW_SELECT_ERROR',
+      retry: () => Promise.resolve()
+    })
   }
 }
 
-// Replace ref with useState for Nuxt state management
-const pageIndex = useState("pageIndex", () => 0);
-const pageSize = useState("pageSize", () => 10);
-const globalFilter = useState("globalFilter", () => "");
-const sorting = useState("sorting", () => []);
-const totalItems = useState("totalItems", () => pieces.value.length);
+// Navigation state
+const selectedRowIndex = ref(-1)
 
-function toggleLoading() {
-  loading.value = !loading.value;
+// Touch gesture handler for mobile
+const handleTouchSwipe = (direction: 'left' | 'right') => {
+  if (direction === 'left' && canGoForward.value) {
+    updateFilters({ pageIndex: state.value.pageIndex + 1 })
+  } else if (direction === 'right' && canGoBack.value) {
+    updateFilters({ pageIndex: state.value.pageIndex - 1 })
+  }
 }
 
-// Watchers: re-fetch data when pagination or search changes
-watch([pageIndex, pageSize, globalFilter, sorting], () => {
-  // The `useMusicTable` composable handles data fetching internally
-});
+// Computed values for navigation
+const canGoForward = computed(() => 
+  state.value.pageIndex < Math.ceil(totalItems.value / state.value.pageSize) - 1
+)
+const canGoBack = computed(() => state.value.pageIndex > 0)
 
-// Initial fetch on mount
+// Keyboard navigation
+function handleKeyboardNavigation(e: KeyboardEvent) {
+  if (!paginatedItems.value.length) return
+
+  // Only handle keyboard navigation when table is focused
+  const tableElement = document.querySelector('.music-table-container')
+  if (!tableElement?.contains(document.activeElement)) return
+
+  const handlers: Record<string, () => void> = {
+    ArrowDown: () => {
+      selectedRowIndex.value = Math.min(
+        selectedRowIndex.value + 1,
+        paginatedItems.value.length - 1
+      )
+      focusSelectedRow()
+    },
+    ArrowUp: () => {
+      selectedRowIndex.value = Math.max(selectedRowIndex.value - 1, 0)
+      focusSelectedRow()
+    },
+    Enter: () => {
+      if (selectedRowIndex.value >= 0) {
+        onRowSelect(paginatedItems.value[selectedRowIndex.value])
+      }
+    },
+    PageDown: () => {
+      if (canGoForward.value) {
+        updateFilters({ pageIndex: state.value.pageIndex + 1 })
+        selectedRowIndex.value = 0
+        focusSelectedRow()
+      }
+    },
+    PageUp: () => {
+      if (canGoBack.value) {
+        updateFilters({ pageIndex: state.value.pageIndex - 1 })
+        selectedRowIndex.value = 0
+        focusSelectedRow()
+      }
+    },
+    Home: () => {
+      if (e.ctrlKey) {
+        updateFilters({ pageIndex: 0 })
+        selectedRowIndex.value = 0
+      } else {
+        selectedRowIndex.value = 0
+      }
+      focusSelectedRow()
+    },
+    End: () => {
+      if (e.ctrlKey) {
+        const lastPage = Math.ceil(totalItems.value / state.value.pageSize) - 1
+        updateFilters({ pageIndex: lastPage })
+        selectedRowIndex.value = 0
+      } else {
+        selectedRowIndex.value = paginatedItems.value.length - 1
+      }
+      focusSelectedRow()
+    }
+  }
+
+  const handler = handlers[e.key]
+  if (handler) {
+    e.preventDefault()
+    handler()
+  }
+}
+
+function focusSelectedRow() {
+  nextTick(() => {
+    if (shouldUseVirtualScroll.value && virtualTable.value) {
+      virtualTable.value.scrollTo(selectedRowIndex.value)
+    } else {
+      const rows = document.querySelectorAll('.music-table-container tbody tr')
+      const row = rows[selectedRowIndex.value] as HTMLElement
+      if (row) {
+        row.focus()
+        smoothScrollToRow(row)
+      }
+    }
+  })
+}
+
+// Lifecycle hooks
 onMounted(() => {
-  // The `useMusicTable` composable handles data fetching internally
-});
+  // Initialize data
+  if (pieces.value?.length) {
+    withErrorHandling(
+      async () => setPieces(pieces.value!),
+      'Failed to load music pieces'
+    )
+  }
 
-function handleSortChange(newSort: any) {
-  sorting.value = newSort;
+  // Add keyboard event listener
+  window.addEventListener('keydown', handleKeyboardNavigation)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyboardNavigation)
+})
+
+// Watch for external changes
+watch(() => pieces.value, (newPieces) => {
+  if (newPieces?.length) {
+    setPieces(newPieces)
+  }
+}, { deep: true })
+
+// Development helpers
+const toggleLoading = () => {
+  if (isDev) {
+    isLoading.value = !isLoading.value
+  }
 }
 
-
-function onRowSelect(row: any) {
-  emit('piece-click', row.id);
+const simulateError = () => {
+  if (isDev) {
+    setError({
+      message: 'This is a simulated error',
+      type: 'error',
+      code: 'SIMULATED_ERROR',
+      // debug: new Error().stack, // Removed as 'debug' is not part of 'TableError'
+      retry: () => {
+        clearError()
+        return Promise.resolve()
+      }
+    })
+  }
 }
+
+function toggleDebugInfo() {
+  showDebugInfo.value = !showDebugInfo.value
+  if (showDebugInfo.value) {
+    measureFPS()
+  }
+}
+
+// Add performance monitoring in development
+if (isDev) {
+  onMounted(() => {
+    const observer = new PerformanceObserver((list) => {
+      const entries = list.getEntries()
+      entries.forEach((entry) => {
+        if (entry.entryType === 'measure' && entry.name === 'render') {
+          measureRenderTime()
+        }
+      })
+    })
+    observer.observe({ entryTypes: ['measure'] })
+  })
+}
+
+const getSortIcon = (columnKey: string) => {
+  const currentSort = state.value.sorting[0]
+  if (!currentSort || currentSort.id !== columnKey) {
+    return 'i-heroicons-arrows-up-down'
+  }
+  return currentSort.desc ? 'i-heroicons-arrow-down' : 'i-heroicons-arrow-up'
+}
+
+// Update UTable UI configuration
+const tableUI = {
+  root: 'relative overflow-x-auto sm:overflow-visible',
+  base: 'min-h-[400px] w-full',
+  td: 'transition-colors whitespace-nowrap sm:whitespace-normal group-hover:bg-gray-50 dark:group-hover:bg-gray-800/50 px-3 py-2 sm:px-4 sm:py-3',
+  th: 'transition-colors whitespace-nowrap sticky top-0 bg-blue-900/95 backdrop-blur supports-[backdrop-filter]:bg-blue-900/75 z-10 px-3 py-2 sm:px-4 sm:py-3 text-white font-medium',
+  tr: 'group focus-within:bg-blue-900/30 outline-none transition-colors hover:bg-gray-50 dark:hover:bg-gray-800/50 bg-blue-900/20',
+  loadingWrapper: 'flex flex-col items-center justify-center flex-1 px-6 py-14',
+  loadingLabel: 'text-sm text-gray-900 dark:text-white',
+  loadingIcon: 'w-6 h-6 text-gray-400 dark:text-gray-500 mb-4 animate-spin',
+  emptyWrapper: 'flex flex-col items-center justify-center flex-1 px-6 py-14',
+  emptyLabel: 'text-sm text-gray-900 dark:text-white',
+  emptyIcon: 'w-6 h-6 text-gray-400 dark:text-gray-500 mb-4'
+} as const
 </script>
 
-<script lang="ts">
-export default {
-  emits: ["update:loading", "piece-click"],
-};
-</script>
-
-<style>
-/* Add this to your component's <style> section or to your global CSS */
-@media (max-width: 768px) {
-    .music-table-container {
-        border-radius: 0.5rem;
-    }
-
-    .music-table-row td {
-        padding: 0.75rem 0.5rem;
-    }
-
-    .genre-badge,
-    .difficulty-badge {
-        padding: 0.2rem 0.5rem;
-        font-size: 0.7rem;
-    }
+<style scoped>
+/* Add touch feedback */
+.music-table-container {
+  touch-action: pan-y pinch-zoom;
 }
 
-.digitized-indicator {
-    transition:
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
-}
-
-.digitized-indicator.yes {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
-    }
-
-    70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
-}
-
-.genre-badge {
-    transform: translateY(0);
-    transition: all 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.genre-badge:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-}
-
-.music-table-header-btn {
-    position: relative;
-    overflow: hidden;
-}
-
-.music-table-header-btn:after {
-    content: "";
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 0;
-    height: 2px;
-    background-color: #3b82f6;
-    transition: width 0.3s ease;
-}
-
-.music-table-header-btn:hover:after,
-.music-table-header-btn.active:after {
-    width: 100%;
-}
-
-.music-table-row {
-    transition: background-color 0.3s ease;
-}
-
-.music-table-row:hover {
-    background-color: rgba(30, 58, 138, 0.3);
+@media (hover: hover) {
+  .music-table-row:hover {
     transform: translateY(-1px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
 }
 
-/* Main container styling with dark mode support */
-.music-table-container {
-    background-image: linear-gradient(145deg, #1e3a8a, #1e40af);
-    box-shadow:
-        0 10px 25px -5px rgba(0, 0, 0, 0.2),
-        0 8px 10px -6px rgba(0, 0, 0, 0.1),
-        inset 0 1px 1px rgba(255, 255, 255, 0.1);
-}
-
-/* Button styling for column headers */
-.music-table-header-btn {
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    font-weight: 500;
-    transition: color 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.25rem;
-    padding: 0.75rem 1rem;
-    width: 100%;
-}
-
-.music-table-header-btn:hover {
-    background-color: rgba(30, 58, 138, 0.5);
-}
-
-.music-table-header-btn.active {
-    background-color: rgba(30, 58, 138, 0.7);
-}
-
-/* Search input styling */
-.music-search-input {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(30, 58, 138, 0.3);
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    transition: all 0.3s ease;
-    color: white;
-    width: 100%;
-}
-
-.music-search-input:focus-within {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(59, 130, 246, 0.5);
-}
-
-.music-search-input input {
-    background-color: transparent;
-    border: none;
-    outline: none;
-    width: 100%;
-    color: white;
-}
-
-.music-search-input input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-/* Genre badge styling */
-.genre-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-    transition: all 0.3s;
-}
-
-.genre-badge.traditionell {
-    background-image: linear-gradient(to right, #059669, #047857);
-    color: white;
-}
-
-.genre-badge.klassik {
-    background-image: linear-gradient(to right, #4f46e5, #7c3aed);
-    color: white;
-}
-
-.genre-badge.barock {
-    background-image: linear-gradient(to right, #d97706, #b45309);
-    color: white;
-}
-
-.genre-badge.moderne-klassik {
-    background-image: linear-gradient(to right, #06b6d4, #3b82f6);
-    color: white;
-}
-
-.genre-badge.romantik {
-    background-image: linear-gradient(to right, #f43f5e, #e11d48);
-    color: white;
-}
-
-.genre-badge.musicals {
-    background-image: linear-gradient(to right, #8b5cf6, #7c3aed);
-    color: white;
-}
-
-.genre-badge.pop-rock-modern {
-    background-image: linear-gradient(to right, #f87171, #ef4444);
-    color: white;
-}
-
-.genre-badge.weihnachtsmusik {
-    background-image: linear-gradient(to right, #34d399, #10b981);
-    color: white;
-}
-
-.genre-badge.filmmusik {
-    background-image: linear-gradient(to right, #f59e0b, #d97706);
-    color: white;
-}
-
-/* Difficulty badge styling */
-.difficulty-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    padding: 0.25rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
-
-.difficulty-badge.unknown {
-    background-color: rgba(107, 114, 128, 0.5);
-    color: white;
-}
-
-.difficulty-badge.medium {
-    background-image: linear-gradient(to right, #f59e0b, #ea580c);
-    color: white;
-}
-
-/* Digitized indicator */
-.digitized-indicator {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 9999px;
-}
-
-.digitized-indicator.yes {
-    background-color: #10b981;
-    box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
-}
-
-.digitized-indicator.no {
-    background-color: #9ca3af;
-}
-
-/* Table row styling */
+/* Optimize transitions for performance */
 .music-table-row {
-    border-bottom: 1px solid rgba(30, 58, 138, 0.3);
-    transition: color 0.2s;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  will-change: transform, background-color;
 }
 
-.music-table-row:hover {
-    background-color: rgba(30, 58, 138, 0.2);
+/* Smooth scrolling for keyboard navigation */
+.music-table-container {
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
-.music-table-row td {
-    padding: 1rem;
+/* Improve touch targets on mobile */
+@media (max-width: 640px) {
+  .music-table-row td {
+    min-height: 48px;
+  }
+  
+  .music-table-container {
+    margin-left: -1rem;
+    margin-right: -1rem;
+    border-radius: 0;
+  }
 }
 
-/* Pagination styling - improved buttons */
-.pagination-button {
-    background-color: rgba(30, 58, 138, 0.3);
-    border-radius: 0.375rem;
-    padding: 0.5rem 0.75rem;
-    color: white;
-    transition: color 0.2s;
-    position: relative;
-    overflow: hidden;
-    z-index: 1;
+/* Virtual scroll container height */
+.virtual-table-container {
+  height: calc(100vh - 300px); /* Adjust based on your layout */
+  min-height: 400px;
 }
 
-.pagination-button:before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg,
-            rgba(59, 130, 246, 0.2),
-            rgba(37, 99, 235, 0.4));
-    transition: left 0.3s ease;
-    z-index: -1;
+/* Add container query support for better responsive design */
+@container (min-width: 640px) {
+  .music-table-container {
+    container-type: inline-size;
+  }
 }
 
-.pagination-button:hover:before {
-    left: 0;
+/* Virtual scroll styling */
+.virtual-table-wrapper {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 300px);
+  min-height: 400px;
+  overflow: hidden;
 }
 
-.pagination-button:hover {
-    background-color: rgba(30, 58, 138, 0.5);
+.virtual-table-content {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
-.pagination-button.active {
-    box-shadow: 0 0 10px rgba(37, 99, 235, 0.5);
-    background-color: #2563eb;
+.virtual-table-content tr {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  align-items: center;
 }
 
-/* Page size selector */
-.page-size-selector {
-    background-color: rgba(30, 58, 138, 0.3);
-    border: 1px solid rgba(30, 58, 138, 0.3);
-    border-radius: 0.375rem;
-    color: white;
-    padding: 0.25rem 0.5rem;
-    appearance: none;
-    position: relative;
-    padding-right: 2rem;
+@media (min-width: 640px) {
+  .virtual-table-content tr {
+    display: table-row;
+  }
 }
 
-.page-size-container {
-    position: relative;
+/* Improve virtual scroll performance */
+.virtual-table-content {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
-.page-size-container:after {
-    content: "▼";
-    position: absolute;
-    right: 0.5rem;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 0.75rem;
-    color: rgba(255, 255, 255, 0.7);
-    pointer-events: none;
-}
 </style>
