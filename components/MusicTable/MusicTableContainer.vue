@@ -71,9 +71,15 @@
                         <!-- Add header slot to customize header rendering -->
                         <template #header-cell="{ column }">
                             <div class="flex items-center gap-2">
-                                {{ (column as ExtendedColumn).label }}
+                                {{
+                                    (column as unknown as ExtendedColumn)
+                                        .label || column.id
+                                }}
                                 <UIcon
-                                    v-if="(column as ExtendedColumn).sortable"
+                                    v-if="
+                                        (column as unknown as ExtendedColumn)
+                                            .sortable
+                                    "
                                     name="i-heroicons-arrows-up-down"
                                     class="w-4 h-4 text-gray-400"
                                 />
@@ -84,18 +90,29 @@
                                 class="flex flex-col items-center justify-center p-12 text-center"
                             >
                                 <UIcon
-                                    :name="slotProps.icon"
+                                    :name="
+                                        (slotProps as any)?.icon ||
+                                        'i-heroicons-document-text'
+                                    "
                                     class="w-12 h-12 text-gray-400 mb-4"
                                 />
                                 <h3
                                     class="text-lg font-medium text-gray-900 dark:text-gray-100"
                                 >
-                                    {{ slotProps.title }}
+                                    {{
+                                        (slotProps as any)?.title ||
+                                        "No music pieces found"
+                                    }}
                                 </h3>
                                 <p
                                     class="mt-2 text-sm text-gray-500 dark:text-gray-400"
                                 >
-                                    {{ slotProps.description }}
+                                    {{
+                                        (slotProps as any)?.description ||
+                                        (globalFilter
+                                            ? "Try adjusting your search terms"
+                                            : "Add some music pieces to get started")
+                                    }}
                                 </p>
                                 <div class="mt-6">
                                     <UButton
@@ -112,16 +129,16 @@
                         <!-- Add cell slot to ensure content is correctly rendered -->
                         <template #cell="{ column, row }">
                             <template v-if="column.id === 'name'">
-                                {{ row.name }}
+                                {{ row.original.name }}
                             </template>
                             <template v-else-if="column.id === 'genre'">
-                                {{ row.genre }}
+                                {{ row.original.genre }}
                             </template>
                             <template v-else-if="column.id === 'jahr'">
-                                {{ row.jahr }}
+                                {{ row.original.jahr }}
                             </template>
                             <template v-else>
-                                {{ row[column.id as keyof Piece] }}
+                                {{ row.original[column.id as keyof Piece] }}
                             </template>
                         </template>
                     </UTable>
@@ -143,7 +160,7 @@
                                                 updateFilters({
                                                     sorting: [
                                                         {
-                                                            id: column.id!,
+                                                            id: column.id as keyof Piece,
                                                             desc: state
                                                                 .sorting[0]
                                                                 ?.desc
@@ -343,6 +360,26 @@ const columns = ref<ExtendedColumn[]>([
     {
         id: "jahr",
         label: "Year",
+        sortable: true,
+    },
+    {
+        id: "schwierigkeit",
+        label: "Difficulty",
+        sortable: true,
+    },
+    {
+        id: "isdigitalisiert",
+        label: "Digitalized",
+        sortable: true,
+    },
+    {
+        id: "arrangiert",
+        label: "Arranged By",
+        sortable: true,
+    },
+    {
+        id: "komponiert",
+        label: "Composed By",
         sortable: true,
     },
 ]);

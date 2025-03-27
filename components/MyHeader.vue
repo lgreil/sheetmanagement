@@ -35,24 +35,29 @@
 
                 <!-- Auth Section -->
                 <template v-if="auth.isAuthenticated.value">
-                    <UDropdown
-                        :items="userMenuItems"
-                        class="transition-all duration-200"
-                    >
+                    <div class="relative">
                         <UButton
                             color="neutral"
                             variant="ghost"
                             class="hover:bg-gray-100 dark:hover:bg-gray-800"
+                            @click="navigateTo('/profile')"
                         >
                             {{
                                 auth.user.value?.name || auth.user.value?.email
                             }}
+                        </UButton>
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            class="hover:bg-gray-100 dark:hover:bg-gray-800 ml-2"
+                            @click="auth.logout()"
+                        >
                             <Icon
-                                name="heroicons:chevron-down"
-                                class="ml-2 h-4 w-4 transition-transform group-hover:rotate-180"
+                                name="heroicons:arrow-right-on-rectangle"
+                                class="h-4 w-4"
                             />
                         </UButton>
-                    </UDropdown>
+                    </div>
                 </template>
                 <template v-else>
                     <NuxtLink to="/login">
