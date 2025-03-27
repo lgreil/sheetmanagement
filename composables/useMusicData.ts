@@ -21,7 +21,7 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
 
     try {
       const apiUrl = config.public.API_URL;
-      
+     
       if (!apiUrl) {
         console.info("No API URL configured, using dummy data");
         pieces.value = dummyMusicData;
@@ -113,13 +113,13 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
     }
   });
 
-  return { 
-    pieces, 
-    loading, 
-    error, 
-    fetchPieces, 
-    fetchPieceById, 
-    pageIndex, 
+  return {
+    pieces,
+    loading,
+    error,
+    fetchPieces,
+    fetchPieceById,
+    pageIndex,
     pageSize,
     isUsingDummyData
   };

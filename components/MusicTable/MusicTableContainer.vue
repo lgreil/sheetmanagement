@@ -27,6 +27,7 @@
                 : 'Add some music pieces to get started'
             })" @select="(row: Row<Piece>) => onRowSelect(row.original)" @update:sort="(sort: TableSort[]) => updateFilters({ sorting: sort })"
             @update:search="(value: string) => updateFilters({ globalFilter: value })" :ui="tableUI">
+            
             <!-- Add header slot to customize header rendering -->
             <template #header-cell="{ column }">
               <div class="flex items-center gap-2">
@@ -457,6 +458,7 @@ const renderEmptyState = (state: EmptyState) => ({
   title: state.title,
   description: state.description || ''
 })
+
 </script>
 
 <style scoped>
