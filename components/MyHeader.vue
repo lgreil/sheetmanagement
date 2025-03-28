@@ -22,6 +22,9 @@
                     >
                 </NuxtLink>
                 <nav class="hidden md:flex items-center space-x-6 ml-2">
+                    <NuxtLink to="/concerts" class="nav-link"
+                        >Concerts</NuxtLink
+                    >
                     <NuxtLink to="/stuecke" class="nav-link">Stücke</NuxtLink>
                     <NuxtLink to="/instrumente" class="nav-link"
                         >Instrumente</NuxtLink
@@ -105,6 +108,9 @@
                     class="border-t mt-0 rounded-b-lg shadow-lg bg-[var(--color-surface)]"
                 >
                     <nav class="px-4 py-3 space-y-1">
+                        <NuxtLink to="/concerts" class="mobile-nav-link"
+                            >Concerts</NuxtLink
+                        >
                         <NuxtLink to="/stuecke" class="mobile-nav-link"
                             >Stücke</NuxtLink
                         >
