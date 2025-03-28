@@ -11,6 +11,14 @@
 
             <h1 class="new-piece-title">Add New Piece</h1>
 
+            <div class="form-info-banner">
+                <p>
+                    Fields marked with <span class="required-field">*</span> are
+                    required. Please fill out the form with accurate
+                    information.
+                </p>
+            </div>
+
             <UForm
                 :schema="schema"
                 :state="state"
@@ -25,33 +33,60 @@
                     </template>
                     <template #default>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <UFormGroup label="Title" name="name">
+                            <UFormGroup
+                                label="Title <span class='required-field'>*</span>"
+                                name="name"
+                            >
                                 <UInput
                                     v-model="state.name"
                                     class="form-input"
+                                    placeholder="e.g. Symphony No. 5"
                                 />
+                                <span class="field-help"
+                                    >Enter the complete title of the piece</span
+                                >
                             </UFormGroup>
 
-                            <UFormGroup label="Genre" name="genre">
+                            <UFormGroup
+                                label="Genre <span class='required-field'>*</span>"
+                                name="genre"
+                            >
                                 <UInput
                                     v-model="state.genre"
                                     class="form-input"
+                                    placeholder="e.g. Classical, Jazz, March"
                                 />
+                                <span class="field-help"
+                                    >Musical style or category</span
+                                >
                             </UFormGroup>
 
-                            <UFormGroup label="Year" name="year">
+                            <UFormGroup
+                                label="Year <span class='required-field'>*</span>"
+                                name="year"
+                            >
                                 <UNumberInput
                                     v-model="state.year"
-                                    class="form-input"
+                                    class="form-input year-input"
+                                    placeholder="e.g. 1808"
                                 />
+                                <span class="field-help"
+                                    >Year of composition (1000-2024)</span
+                                >
                             </UFormGroup>
 
-                            <UFormGroup label="Difficulty" name="difficulty">
+                            <UFormGroup
+                                label="Difficulty <span class='required-field'>*</span>"
+                                name="difficulty"
+                            >
                                 <USelect
                                     v-model="state.difficulty"
                                     :options="difficultyOptions"
                                     class="form-input"
                                 />
+                                <span class="field-help"
+                                    >Select the playing difficulty level</span
+                                >
                             </UFormGroup>
 
                             <UFormGroup
@@ -60,6 +95,10 @@
                                 class="digitized-checkbox"
                             >
                                 <UCheckbox v-model="state.digitized" />
+                                <span class="field-help ml-2"
+                                    >Check if sheet music is available in
+                                    digital format</span
+                                >
                             </UFormGroup>
 
                             <UFormGroup
@@ -70,7 +109,12 @@
                                 <UTextarea
                                     v-model="state.description"
                                     class="form-input"
+                                    placeholder="e.g. This piece was composed for a special occasion..."
                                 />
+                                <span class="field-help"
+                                    >Brief description of the piece, its
+                                    history, or special notes</span
+                                >
                             </UFormGroup>
 
                             <UFormGroup
@@ -80,9 +124,13 @@
                             >
                                 <UInput
                                     v-model="state.sheetMusicUrl"
-                                    placeholder="Optional"
+                                    placeholder="https://example.com/sheet-music.pdf"
                                     class="form-input"
                                 />
+                                <span class="field-help"
+                                    >Full URL to the digital sheet music (if
+                                    available)</span
+                                >
                             </UFormGroup>
 
                             <UFormGroup
@@ -92,9 +140,13 @@
                             >
                                 <UInput
                                     v-model="state.imageUrl"
-                                    placeholder="Optional"
+                                    placeholder="https://example.com/image.jpg"
                                     class="form-input"
                                 />
+                                <span class="field-help"
+                                    >Full URL to an image representing the piece
+                                    (cover art, etc.)</span
+                                >
                             </UFormGroup>
                         </div>
                     </template>
@@ -108,11 +160,19 @@
                     </template>
                     <template #default>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <UFormGroup label="Composer(s)" name="komponiert">
+                            <UFormGroup
+                                label="Composer(s) <span class='required-field'>*</span>"
+                                name="komponiert"
+                            >
                                 <UInput
                                     v-model="state.komponiert"
                                     class="form-input"
+                                    placeholder="e.g. Ludwig van Beethoven, Wolfgang Amadeus Mozart"
                                 />
+                                <span class="field-help"
+                                    >For multiple composers, separate names with
+                                    commas</span
+                                >
                             </UFormGroup>
                         </div>
                     </template>
@@ -130,11 +190,30 @@
                                 <UInput
                                     v-model="state.arrangiert"
                                     class="form-input"
+                                    placeholder="e.g. John Williams, Hans Zimmer"
                                 />
+                                <span class="field-help"
+                                    >For multiple arrangers, separate names with
+                                    commas</span
+                                >
                             </UFormGroup>
                         </div>
                     </template>
                 </UCard>
+
+                <div class="form-example-card">
+                    <h3>Example Entry</h3>
+                    <p><strong>Title:</strong> Symphony No. 5 in C minor</p>
+                    <p><strong>Genre:</strong> Classical</p>
+                    <p><strong>Year:</strong> 1808</p>
+                    <p><strong>Difficulty:</strong> hard</p>
+                    <p><strong>Composer:</strong> Ludwig van Beethoven</p>
+                    <p>
+                        <strong>Description:</strong> One of Beethoven's most
+                        popular compositions, known for its distinctive
+                        four-note opening motif.
+                    </p>
+                </div>
 
                 <div class="flex justify-end mt-6">
                     <UButton
@@ -293,6 +372,12 @@ function goBack() {
     box-shadow: 0 0 0 3px rgba(var(--color-primary-rgb), 0.15);
 }
 
+/* Year input specific styling */
+.year-input {
+    width: 100% !important;
+    min-width: 120px;
+}
+
 /* Checkbox styling */
 .digitized-checkbox {
     display: flex;
@@ -312,6 +397,49 @@ function goBack() {
 .submit-button:not(:disabled):hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+}
+
+/* Field help text */
+.field-help {
+    display: block;
+    font-size: 0.875rem;
+    color: #666;
+    margin-top: 0.25rem;
+}
+
+/* Form info banner */
+.form-info-banner {
+    background-color: rgba(var(--color-primary-rgb), 0.05);
+    border-left: 4px solid var(--color-primary);
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 0.5rem;
+}
+
+/* Required field marking */
+.required-field {
+    color: #e53e3e;
+    font-weight: bold;
+}
+
+/* Example entry card */
+.form-example-card {
+    background-color: rgba(0, 0, 0, 0.02);
+    border-radius: 0.75rem;
+    padding: 1.25rem;
+    margin-top: 1rem;
+    border: 1px dashed rgba(0, 0, 0, 0.1);
+}
+
+.form-example-card h3 {
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--color-primary);
+}
+
+.form-example-card p {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
 }
 
 /* Responsive adjustments */
