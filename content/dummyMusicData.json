@@ -1,0 +1,102 @@
+[
+    {
+        "stid":1,
+        "name":"Test",
+        "genre":"klassik",
+        "jahr":null,
+        "schwierigkeit":"easy",
+        "isdigitalisiert":null,
+        "arrangiert":[],
+        "komponiert":[]
+    },
+    {
+        "stid":2,
+        "name":"A Michael Jackson Tribute",
+        "genre":"Pop / Rock / Modern",
+        "jahr":null,
+        "schwierigkeit":"hard",
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":2,"vorname":"Michael","name":"Story"}],
+        "komponiert":[{"pid":1,"vorname":"Michael","name":"Jackson"}]
+    },
+    {
+        "stid":5,
+        "name":"Egmont Overtüre",
+        "genre":"Klassik",
+        "jahr":null,
+        "schwierigkeit":null,
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":6,"vorname":"Richard","name":"Meyer"}],
+        "komponiert":[{"pid":5,"vorname":"Ludwig van","name":"Beethoven"}]
+    },
+    {
+        "stid":8,
+        "name":"Ode to Joy",
+        "genre":"Moderne Klassik",
+        "jahr":null,
+        "schwierigkeit":null,
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":11,"vorname":"Keith","name":"Christopher"}],
+        "komponiert":[{"pid":5,"vorname":"Ludwig van","name":"Beethoven"}]
+    },
+    {
+        "stid":14,
+        "name":"Highlights from WICKED",
+        "genre":"Musicals",
+        "jahr":null,
+        "schwierigkeit":null,
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":20,"vorname":"Ted","name":"Ricketts"}],
+        "komponiert":[{"pid":19,"vorname":"Stephen","name":"Schwartz"}]
+    },
+    {
+        "stid":21,
+        "name":"Lord of the Rings",
+        "genre":"Filmmusik",
+        "jahr":null,
+        "schwierigkeit":null,
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":29,"vorname":"John","name":"Whitney"}],
+        "komponiert":[{"pid":28,"vorname":"Howard","name":"Shore"}]
+    },
+    {
+        "stid":32,
+        "name":"Die vier Jahreszeiten: der Frühling",
+        "genre":"Barock",
+        "jahr":null,
+        "schwierigkeit":"medium",
+        "isdigitalisiert":true,
+        "arrangiert":[],
+        "komponiert":[{"pid":42,"vorname":"Antonio","name":"Vivaldi"}]
+    },
+    {
+        "stid":43,
+        "name":"Lion King",
+        "genre":"Filmmusik",
+        "jahr":null,
+        "schwierigkeit":"test",
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":51,"vorname":"Ted","name":"Parson"}],
+        "komponiert":[{"pid":50,"vorname":"Hans","name":"Zimmer"}]
+    },
+    {
+        "stid":62,
+        "name":"Seven Nation Army",
+        "genre":"Pop / Rock / Modern",
+        "jahr":null,
+        "schwierigkeit":"very hard",
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":67,"vorname":"Paul","name":"Murtha"}],
+        "komponiert":[{"pid":66,"vorname":"the","name":"White Stripes"}]
+    },
+    {
+        "stid":89,
+        "name":"Jesu bleibet meine Freude - Choral",
+        "genre":"Barock",
+        "jahr":null,
+        "schwierigkeit":"very easy",
+        "isdigitalisiert":true,
+        "arrangiert":[{"pid":90,"vorname":"Barbara","name":"Fritsch"}],
+        "komponiert":[{"pid":15,"vorname":"J. S.","name":"Bach"}]
+    }
+]

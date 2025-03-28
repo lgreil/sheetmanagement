@@ -1,0 +1,13 @@
+/* themes/theme-one.css */
+[data-theme="one"] {
+    :root {
+        --color-primary: #2563eb; /* Blue-600 */
+        --color-secondary: #475569; /* Slate-600 */
+        --color-accent: #059669; /* Green-600 */
+        --color-background: #eff6ff; /* Blue-50 */
+        --color-text: #0f172a; /* Slate-900 */
+        --color-muted-text: #4a5568; /* Slate-700 */
+        --color-border: #cbd5e1; /* Blue-200 */
+        --color-surface: #ffffff; /* White */
+    }
+}

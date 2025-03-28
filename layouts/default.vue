@@ -1,38 +1,51 @@
 <template>
-  <div :class="[$colorMode.value, 'min-h-screen flex flex-col']">
-    <MyHeader />
-    <NuxtLoadingIndicator />
-    <main class="flex-1 bg-[--bachkreisgelb-hell] dark:bg-gray-800 p-6">
-      <slot />
-    </main>
+    <div class="min-h-screen flex flex-col font-sans">
+        <MyHeader />
+        <NuxtLoadingIndicator />
+        <main class="flex-1 bg-[--color-surface] py-8">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8 max-w-screen-xl">
+                <slot />
+            </div>
+        </main>
 
-    <footer class="bg-[--dark-color] dark:bg-gray-900 text-white dark:text-gray-300 py-4">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-        <p>&copy; 2025 Bachkreis-Sheetmanagement. All rights reserved.</p>
-        <div class="mt-2">
-          <NuxtLink to="/about" class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200">About</NuxtLink>
-          <span class="mx-2">|</span>
-          <NuxtLink to="/contact" class="text-indigo-400 hover:text-indigo-600 transition-colors duration-200">Contact</NuxtLink>
-        </div>
-      </div>
-    </footer>
-  </div>
+        <footer class="bg-[--color-surface] py-4 mt-8">
+            <div class="container mx-auto px-4 text-center">
+                <div class="text-[--color-muted-text] text-sm">
+                    <p class="opacity-80">
+                        &copy; 2025 Bachkreis-Sheetmanagement. All rights
+                        reserved.
+                    </p>
+                    <div class="mt-2">
+                        <NuxtLink
+                            to="/about"
+                            class="text-[--color-primary] hover:opacity-80 transition-colors duration-200"
+                            >About</NuxtLink
+                        >
+                        <span class="mx-2 opacity-50">|</span>
+                        <NuxtLink
+                            to="/contact"
+                            class="text-[--color-primary] hover:opacity-80 transition-colors duration-200"
+                            >Contact</NuxtLink
+                        >
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
 </template>
 
 <script setup>
-// Access the color mode
-const $colorMode = useColorMode();
+// Color mode is handled automatically by Nuxt
 </script>
 
 <style>
-/* You can add global color mode styles here */
-.dark body {
-  background-color: #121212;
-  color: #e0e0e0;
+:root {
+    color-scheme: light dark;
 }
 
-.light body {
-  background-color: #ffffff;
-  color: #121212;
+body {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    font-family: "Inter", sans-serif; /* Apply font globally */
 }
 </style>

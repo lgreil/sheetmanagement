@@ -1,267 +1,46 @@
-@import "tailwindcss" theme(static);
+@import "tailwindcss";
 @import "@nuxt/ui";
+@import "./base.css";
 
 /* Custom styles */
 body {
-  font-family: 'Inter', sans-serif;
+    font-family: "Inter", sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
 }
 
 a {
-  color: inherit;
-  text-decoration: none;
+    color: var(--color-primary);
+    text-decoration: none;
 }
 
 a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 button {
-  cursor: pointer;
+    cursor: pointer;
+    background-color: var(--color-primary);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
 }
 
 button:focus {
-  outline: none;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--color-primary);
 }
 
-input, textarea {
-  font-family: inherit;
+input,
+textarea {
+    font-family: inherit;
+    background-color: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
 }
 
-input:focus, textarea:focus {
-  outline: none;
-  border-color: #4a90e2;
-  box-shadow: 0 0 0 1px #4a90e2;
-}
-
-@layer components {
-  /* Table styling */
-  .music-table th {
-     @apply py-3 px-4 text-left font-semibold bg-gray-50 dark:bg-gray-600 border-b border-gray-200 dark:border-gray-700;
-  }
-
-  .music-table td {
-    @apply py-3 px-4 border-b border-gray-200 dark:border-gray-700;
-  }
-
-  .music-table tr:last-child td {
-    @apply border-b-0;
-  }
-
-  .music-table tr:hover {
-    @apply bg-gray-50 dark:bg-gray-600;
-  }
-
-  /* Pagination styling */
-  .pagination-container {
-    @apply bg-white dark:bg-gray-600 rounded-lg shadow-lg p-4 border border-gray-200 dark:border-gray-700;
-  }
-
-  .pagination-control {
-    @apply transition-colors duration-300 ease-in-out;
-  }
-
-  .pagination-control:hover {
-    @apply bg-gray-100 dark:bg-gray-600;
-  }
-
-  /* Add this to your main stylesheet file */
-
-/* Main container styling */
-.music-catalog-container {
-  background: linear-gradient(to bottom, #1a2a3a, #0f1824);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-  overflow: hidden;
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
-}
-
-/* Search bar styling */
-.search-bar {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 8px;
-  padding: 14px 20px;
-  margin: 16px;
-  transition: all 0.3s ease;
-}
-
-.search-bar:focus-within {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(255, 255, 255, 0.2);
-  box-shadow: 0 0 0 4px rgba(100, 150, 255, 0.15);
-}
-
-.search-bar input {
-  background: transparent;
-  border: none;
-  color: #ffffff;
-  font-size: 15px;
-  width: 100%;
-  outline: none;
-}
-
-.search-bar input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-/* Table header styling */
-.music-table th {
-  background-color: rgba(30, 50, 80, 0.8);
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-size: 12px;
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.music-table th:hover {
-  background-color: rgba(40, 70, 110, 0.8);
-}
-
-.music-table th.active {
-  background-color: rgba(50, 100, 160, 0.8);
-}
-
-/* Table row styling */
-.music-table tr {
-  transition: background-color 0.2s ease;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.music-table tr:hover {
-  background-color: rgba(255, 255, 255, 0.05);
-}
-
-.music-table td {
-  padding: 16px 18px;
-  color: rgba(255, 255, 255, 0.85);
-}
-
-/* Genre badges */
-.genre-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-  text-align: center;
-}
-
-.genre-traditionell {
-  background: linear-gradient(135deg, #6d9f71, #3f704f);
-}
-
-.genre-klassik {
-  background: linear-gradient(135deg, #7d6ae7, #5942c8);
-}
-
-.genre-barock {
-  background: linear-gradient(135deg, #be8c3c, #94682b);
-}
-
-.genre-moderne-klassik {
-  background: linear-gradient(135deg, #4c8dae, #2a6682);
-}
-
-.genre-romantik {
-  background: linear-gradient(135deg, #d16b75, #b83a47);
-}
-
-/* Difficulty indicators */
-.difficulty-badge {
-  display: inline-block;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-  color: white;
-  text-align: center;
-}
-
-.difficulty-unknown {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.9);
-}
-
-.difficulty-medium {
-  background: linear-gradient(135deg, #f5a742, #e67e22);
-}
-
-/* Digitized indicator */
-.digitized-indicator {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  display: inline-block;
-}
-
-.digitized-yes {
-  background: #2ecc71;
-  box-shadow: 0 0 8px rgba(46, 204, 113, 0.6);
-}
-
-.digitized-no {
-  background: #95a5a6;
-}
-
-/* Pagination styling */
-.pagination-controls {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 16px;
-  gap: 8px;
-}
-
-.pagination-controls button {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  border-radius: 4px;
-  color: white;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background 0.2s ease;
-}
-
-.pagination-controls button:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.pagination-controls button.active {
-  background: rgba(100, 150, 255, 0.5);
-}
-
-/* Dropdown styling */
-.items-per-page {
-  position: relative;
-  margin-left: auto;
-  margin-right: 16px;
-}
-
-.items-per-page select {
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 4px;
-  color: white;
-  padding: 6px 10px;
-  appearance: none;
-  padding-right: 24px;
-  cursor: pointer;
-}
-
-.items-per-page:after {
-  content: "▼";
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.7);
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
+input:focus,
+textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
 }
