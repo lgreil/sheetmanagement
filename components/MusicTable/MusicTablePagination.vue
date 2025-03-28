@@ -188,10 +188,6 @@ onMounted(() => {
 
 <style scoped>
 .page-size-selector {
-<<<<<<< HEAD
   min-width: 120px;
-=======
-    min-width: 120px;
->>>>>>> main
 }
 </style>

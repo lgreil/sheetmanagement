@@ -151,16 +151,7 @@ watch(
 
 <style scoped>
 .music-search-input {
-<<<<<<< HEAD
-<<<<<<< HEAD
-  background-color: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
-  padding: 0.75rem 1rem;
-  transition: all 0.2s;
-  color: white;
-  width: 100%;
-=======
+
     background-color: transparent;
     border: 1px solid rgba(156, 163, 175, 0.3);
     border-radius: 0.5rem;
@@ -168,7 +159,6 @@ watch(
     transition: all 0.2s;
     color: rgb(31, 41, 55);
     width: 100%;
->>>>>>> 582d6980ab7938ac3892f487f9826630926b34b6
 }
 .music-search-input:focus-within {
     border-color: rgba(59, 130, 246, 0.5);
@@ -182,9 +172,6 @@ watch(
     color: inherit;
 }
 .music-search-input input::placeholder {
-<<<<<<< HEAD
-  color: rgba(255, 255, 255, 0.5);
-=======
     background-color: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(30, 58, 138, 0.3);
     border-radius: 0.5rem;
@@ -207,9 +194,6 @@ watch(
 }
 .music-search-input input::placeholder {
     color: rgba(255, 255, 255, 0.5);
->>>>>>> main
-=======
-    color: rgba(107, 114, 128, 0.7);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -220,6 +204,5 @@ watch(
     .music-search-input input::placeholder {
         color: rgba(255, 255, 255, 0.5);
     }
->>>>>>> 582d6980ab7938ac3892f487f9826630926b34b6
 }
 </style>

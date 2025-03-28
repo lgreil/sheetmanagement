@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 
 export interface TableError {
   message: string
@@ -9,44 +9,33 @@ export interface TableError {
 
 export function useTableError() {
   const error = ref<TableError | null>(null)
-  const isLoading = ref(false)
 
-  const hasError = computed(() => error.value !== null)
-
-  function setError(newError: TableError | null) {
+  const setError = (newError: TableError) => {
     error.value = newError
   }
 
-  function clearError() {
+  const clearError = () => {
     error.value = null
   }
 
-  async function withErrorHandling<T>(
-    operation: () => Promise<T>,
-    errorMessage: string = 'An error occurred'
-  ): Promise<T | undefined> {
+  const withErrorHandling = async (
+    fn: () => Promise<void>,
+    errorMessage: string
+  ) => {
     try {
-      isLoading.value = true
-      clearError()
-      return await operation()
-    } catch (e) {
-      const err = e as Error
+      await fn()
+    } catch (err: any) {
       setError({
         message: errorMessage,
         type: 'error',
-        code: err.name,
-        retry: () => withErrorHandling(operation, errorMessage)
+        code: 'GENERIC_ERROR',
+        retry: () => Promise.resolve()
       })
-      return undefined
-    } finally {
-      isLoading.value = false
     }
   }
 
   return {
-    error: readonly(error),
-    isLoading: readonly(isLoading),
-    hasError,
+    error,
     setError,
     clearError,
     withErrorHandling

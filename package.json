@@ -19,7 +19,7 @@
     "@tanstack/vue-table": "^8.21.2",
     "@vueuse/core": "^13.0.0",
     "destr": "^2.0.3",
-    "module": "link:@nuxt/test-utils/module",
+    "module": "link:@nuxt\\test-utils\\module",
     "nuxt": "latest",
     "valibot": "^1.0.0",
     "vue": "latest",

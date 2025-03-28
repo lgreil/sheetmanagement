@@ -2,36 +2,22 @@
 <template>
     <UContainer class="py-8">
         <h1 class="text-2xl font-bold mb-6 text-center">Music Collection</h1>
-        <UAlert
-            color="error"
-            variant="soft"
-            title="Error - Still being implemented"
-        >
+        <UAlert color="error" variant="soft" title="Error - Still being implemented">
             Still being implemented
         </UAlert>
         <Suspense>
             <template #default>
-                <MusicTableContainer
-                    :pieces="pieces"
-                    :loading="loading"
-                    @update:loading="loading = $event"
+                <MusicTableContainer :pieces="pieces" :loading="loading" @update:loading="loading = $event"
                     @piece-click="
                         (piece) => navigateToPieceOverview(piece.stid)
-                    "
-                />
+                    " />
             </template>
             <template #fallback>
                 <MusicTableSkeleton />
             </template>
         </Suspense>
 
-        <UAlert
-            v-if="error"
-            class="mt-4"
-            color="error"
-            variant="soft"
-            title="Error"
-        >
+        <UAlert v-if="error" class="mt-4" color="error" variant="soft" title="Error">
             Failed to load music collection: {{ error.message }}
         </UAlert>
     </UContainer>
