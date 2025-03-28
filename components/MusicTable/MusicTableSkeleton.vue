@@ -6,7 +6,7 @@
         <div class="overflow-x-auto">
             <table class="w-full">
                 <thead>
-                    <tr class="border-b border-blue-900/30">
+                    <tr class="border-b border-border">
                         <th
                             v-for="(width, i) in columnWidths"
                             :key="i"
@@ -17,11 +17,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr
-                        v-for="n in 10"
-                        :key="n"
-                        class="border-b border-blue-900/30"
-                    >
+                    <tr v-for="n in 10" :key="n" class="border-b border-border">
                         <td
                             v-for="(content, i) in rowContents"
                             :key="i"
@@ -56,7 +52,7 @@
 
         <!-- Pagination skeleton -->
         <div
-            class="p-4 flex items-center justify-between border-t border-blue-900/30"
+            class="p-4 flex items-center justify-between border-t border-border"
         >
             <USkeleton class="h-5 w-32" />
             <div class="flex items-center gap-4">
@@ -99,7 +95,11 @@ const rowContents = [
 
 <style scoped>
 .music-table-container {
-    background: linear-gradient(to bottom right, #1e3a8a, #1e40af);
+    background: linear-gradient(
+        to bottom right,
+        var(--color-surface),
+        var(--color-background)
+    );
     animation: shimmer 2s infinite linear;
     background-size: 200% 200%;
 }

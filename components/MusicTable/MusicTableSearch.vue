@@ -6,7 +6,7 @@
         >
             <UIcon
                 name="i-heroicons-magnifying-glass"
-                class="flex-shrink-0 mr-3 text-gray-600 dark:text-white/70 w-5 h-5"
+                class="flex-shrink-0 mr-3 text-muted-text w-5 h-5"
             />
             <UInput
                 v-model="searchQuery"
@@ -14,7 +14,7 @@
                 :ui="{
                     base: 'relative w-full bg-transparent border-none focus:ring-0',
                 }"
-                :class="'bg-transparent text-gray-800 dark:text-white placeholder-gray-500 dark:placeholder-white/50'"
+                class="bg-transparent text-text placeholder-muted-text"
                 placeholder="Search across all columns (name, genre, composer, arranger, etc.)"
                 @update:modelValue="onSearchChange"
                 @keydown.escape="clearSearch"
@@ -34,7 +34,7 @@
                 />
                 <UTooltip v-if="!disabled" text="Press '/' to focus search">
                     <kbd
-                        class="hidden md:inline-block px-2 py-1 text-xs font-medium text-gray-500 dark:text-white/50 bg-gray-200 dark:bg-white/10 rounded"
+                        class="hidden md:inline-block px-2 py-1 text-xs font-medium text-muted-text bg-surface rounded"
                     >
                         /
                     </kbd>
@@ -151,17 +151,16 @@ watch(
 
 <style scoped>
 .music-search-input {
-
     background-color: transparent;
-    border: 1px solid rgba(156, 163, 175, 0.3);
+    border: 1px solid var(--color-border);
     border-radius: 0.5rem;
     padding: 0.75rem 1rem;
     transition: all 0.2s;
-    color: rgb(31, 41, 55);
+    color: var(--color-text);
     width: 100%;
 }
 .music-search-input:focus-within {
-    border-color: rgba(59, 130, 246, 0.5);
+    border-color: var(--color-primary);
     box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
 .music-search-input input {
@@ -172,37 +171,6 @@ watch(
     color: inherit;
 }
 .music-search-input input::placeholder {
-    background-color: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(30, 58, 138, 0.3);
-    border-radius: 0.5rem;
-    padding: 0.75rem 1rem;
-    transition: all 0.2s;
-    color: white;
-    width: 100%;
-}
-.music-search-input:focus-within {
-    background-color: rgba(255, 255, 255, 0.15);
-    border-color: rgba(59, 130, 246, 0.5);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-.music-search-input input {
-    background-color: transparent;
-    border: none;
-    outline: none;
-    width: 100%;
-    color: white;
-}
-.music-search-input input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-}
-
-@media (prefers-color-scheme: dark) {
-    .music-search-input {
-        border-color: rgba(255, 255, 255, 0.2);
-        color: white;
-    }
-    .music-search-input input::placeholder {
-        color: rgba(255, 255, 255, 0.5);
-    }
+    color: var(--color-muted-text);
 }
 </style>

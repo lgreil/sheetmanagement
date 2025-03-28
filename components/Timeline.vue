@@ -8,8 +8,10 @@
             >
                 <div class="flex flex-col items-center mr-4 relative">
                     <div
-                        class="w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110"
-                        :class="getMarkerClass(index)"
+                        :class="{
+                            'w-10 h-10 rounded-full flex items-center justify-center shadow-md transition-transform duration-300 hover:scale-110': true,
+                            [getMarkerClass(index)]: true,
+                        }"
                     >
                         <Icon
                             :icon="getIconComponent(event.icon)"
@@ -17,7 +19,7 @@
                         />
                     </div>
                     <div
-                        v-if="index !== events.length - 1"
+                        v-if="index < events.length - 1"
                         class="w-1 absolute top-10 left-1/2 -translate-x-1/2 opacity-70"
                         :class="getConnectorClass(index)"
                         :style="{ height: 'calc(100% - 2.5rem)' }"
@@ -26,24 +28,24 @@
 
                 <div class="flex-grow">
                     <div
-                        class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 transition-all duration-300 border border-gray-200 dark:border-gray-700 hover:shadow-lg hover:-translate-y-1"
+                        class="bg-[var(--color-surface)] rounded-lg shadow-md p-6 transition-all duration-300 border border-[var(--color-border)] hover:shadow-lg hover:-translate-y-1"
                     >
                         <div
-                            class="flex justify-between items-center mb-3 pb-2 border-b border-gray-200 dark:border-gray-700"
+                            class="flex justify-between items-center mb-3 pb-2 border-b border-[var(--color-border)]"
                         >
                             <h3
-                                class="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                                class="text-lg font-semibold text-[var(--color-text)]"
                             >
                                 {{ event.title }}
                             </h3>
                             <span
-                                class="text-sm text-gray-500 dark:text-gray-400"
+                                class="text-sm text-[var(--color-muted-text)]"
                                 >{{ formatDate(event.date) }}</span
                             >
                         </div>
 
                         <p
-                            class="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed"
+                            class="text-sm text-[var(--color-text)] mb-4 leading-relaxed"
                         >
                             {{ event.description }}
                         </p>
@@ -53,7 +55,8 @@
                                 v-if="event.link"
                                 :href="event.link"
                                 target="_blank"
-                                class="inline-flex items-center text-indigo-600 dark:text-indigo-400 font-medium text-sm transition-colors duration-200 hover:text-indigo-800 dark:hover:text-indigo-300"
+                                :aria-label="'Learn more about ' + event.title"
+                                class="inline-flex items-center text-[var(--color-primary)] font-medium text-sm transition-colors duration-200 hover:opacity-80"
                             >
                                 Learn More
                                 <Icon
@@ -91,11 +94,12 @@ const props = defineProps({
     },
 });
 
-const sortedEvents = computed(() =>
-    [...props.events].sort(
+const sortedEvents = computed(() => {
+    // Create a new array to avoid mutating the original props.events array
+    return [...props.events].sort(
         (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
-    ),
-);
+    );
+});
 
 function formatDate(dateString: string) {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -105,26 +109,28 @@ function formatDate(dateString: string) {
     });
 }
 
+// Updated timeline colors to match the new color scheme
+const colorClasses = {
+    primary: { base: "bg-[var(--color-primary)]", light: "bg-[#93c5fd]" }, // Blue
+    accent: { base: "bg-[var(--color-accent)]", light: "bg-[#6ee7b7]" }, // Emerald
+    warning: { base: "bg-[var(--color-warning)]", light: "bg-[#fcd34d]" }, // Amber
+    highlight: { base: "bg-[var(--color-highlight)]", light: "bg-[#c4b5fd]" }, // Violet
+    highlight2: {
+        base: "bg-[var(--color-highlight-2)]",
+        light: "bg-[#f9a8d4]",
+    },
+};
+
 function getMarkerClass(index: number) {
-    const colors = [
-        "bg-emerald-500 dark:bg-emerald-600",
-        "bg-blue-500 dark:bg-blue-600",
-        "bg-amber-500 dark:bg-amber-600",
-        "bg-indigo-500 dark:bg-indigo-600",
-        "bg-rose-500 dark:bg-rose-600",
-    ];
-    return colors[index % colors.length];
+    const colors = Object.values(colorClasses);
+    const color = colors[index % colors.length];
+    return color.base;
 }
 
 function getConnectorClass(index: number) {
-    const colors = [
-        "bg-emerald-300 dark:bg-emerald-400",
-        "bg-blue-300 dark:bg-blue-400",
-        "bg-amber-300 dark:bg-amber-400",
-        "bg-indigo-300 dark:bg-indigo-400",
-        "bg-rose-300 dark:bg-rose-400",
-    ];
-    return colors[index % colors.length];
+    const colors = Object.values(colorClasses);
+    const color = colors[index % colors.length];
+    return color.light;
 }
 
 function getIconComponent(iconName?: string) {
@@ -135,8 +141,11 @@ function getIconComponent(iconName?: string) {
         link: "mdi:link-variant",
     };
 
-    return iconName && iconMap[iconName]
-        ? iconMap[iconName]
-        : "mdi:information"; // Default to mdi:information
+    if (iconName && iconMap[iconName]) {
+        return iconMap[iconName];
+    } else {
+        console.warn(`Unknown icon name: ${iconName}.  Using default icon.`);
+        return "mdi:information"; // Default to mdi:information
+    }
 }
 </script>

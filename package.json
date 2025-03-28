@@ -14,6 +14,7 @@
     "@headlessui/vue": "^1.7.23",
     "@iconify/vue": "^4.3.0",
     "@nuxt/ui": "^3.0.1",
+    "@nuxtjs/color-mode": "^3.5.2",
     "@tailwindcss/vite": "^4.0.17",
     "@tanstack/table-core": "^8.21.2",
     "@tanstack/vue-table": "^8.21.2",
@@ -23,7 +24,8 @@
     "nuxt": "latest",
     "valibot": "^1.0.0",
     "vue": "latest",
-    "vue-router": "latest"
+    "vue-router": "latest",
+    "zod": "^3.24.2"
   },
   "packageManager": "pnpm@10.7.0",
   "devDependencies": {
@@ -31,6 +33,7 @@
     "@iconify-json/heroicons": "^1.2.2",
     "@iconify-json/lucide": "^1.2.33",
     "@iconify-json/mdi": "^1.2.3",
+    "@nuxt/image": "^1.10.0",
     "@nuxt/test-utils": "^3.17.2",
     "@nuxtjs/tailwindcss": "^6.13.2",
     "@vitest/ui": "3.0.9",

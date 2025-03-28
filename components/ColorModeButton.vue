@@ -1,66 +1,76 @@
 <template>
     <div class="theme-toggle-container">
-        <UButton
+        <span
             @click="toggleColorMode"
-            variant="soft"
-            :color="colorMode.value === 'light' ? 'indigo' : 'amber'"
-            size="sm"
-            class="theme-toggle-btn"
+            class="theme-icon cursor-pointer"
+            aria-label="Toggle color mode"
         >
-            <div class="flex items-center justify-center">
-                <span class="theme-icon">
-                    <transition name="morph" mode="out-in">
-                        <Icon
-                            :key="colorMode.value"
-                            :name="
-                                colorMode.value === 'light'
-                                    ? 'i-heroicons-moon'
-                                    : 'i-heroicons-sun'
-                            "
-                            class="text-lg"
-                        />
-                    </transition>
-                </span>
-            </div>
-        </UButton>
+            <transition name="morph" mode="out-in">
+                <Icon
+                    :key="colorMode.value"
+                    :name="
+                        colorMode.value === 'light'
+                            ? 'i-heroicons-moon'
+                            : 'i-heroicons-sun'
+                    "
+                    class="text-lg"
+                    :class="
+                        colorMode.value === 'light'
+                            ? 'text-primary-500'
+                            : 'text-accent-500'
+                    "
+                />
+            </transition>
+        </span>
     </div>
 </template>
+
 <script setup>
 const colorMode = useColorMode();
 
 function toggleColorMode() {
-    colorMode.preference = colorMode.value === "light" ? "dark" : "light";
+    colorMode.preference = colorMode.value === "dark" ? "light" : "dark";
+    document.documentElement.setAttribute("data-theme", colorMode.preference);
+    document.documentElement.classList.toggle(
+        "light",
+        colorMode.preference === "light",
+    );
+    document.documentElement.classList.toggle(
+        "dark",
+        colorMode.preference === "dark",
+    );
 }
+
+// Set the initial theme class on mount
+onMounted(() => {
+    document.documentElement.setAttribute("data-theme", colorMode.preference);
+    document.documentElement.classList.add(colorMode.preference);
+});
 </script>
+
 <style scoped>
 .theme-toggle-container {
     position: relative;
 }
-.theme-toggle-btn {
-    transition: all 0.3s ease;
-    border-radius: 50%;
-    padding: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    min-width: auto;
-    aspect-ratio: 1/1;
-}
-.theme-toggle-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
+
 .morph-enter-active,
 .morph-leave-active {
-    transition: all 0.5s ease;
+    transition:
+        opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     position: absolute;
 }
+
 .morph-enter-from {
     opacity: 0;
     transform: rotate(-180deg) scale(0.5);
 }
+
 .morph-leave-to {
     opacity: 0;
     transform: rotate(180deg) scale(0.5);
 }
+
 .theme-icon {
     display: inline-flex;
     align-items: center;
@@ -68,5 +78,10 @@ function toggleColorMode() {
     position: relative;
     width: 1.5rem;
     height: 1.5rem;
+    transition: transform 0.3s ease;
+}
+
+.theme-icon:hover {
+    transform: translateY(-2px);
 }
 </style>
