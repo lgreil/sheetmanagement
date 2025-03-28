@@ -34,59 +34,63 @@
                 <div v-else key="table" class="music-table-wrapper">
                     <UTable
                         v-if="!shouldUseVirtualScroll"
-                        :rows="paginatedItems"
+                        :data="paginatedItems"
                         :columns="columnsWithAccessor"
                         :loading="isLoading"
-                        :sort="state.sorting"
-                        :search="globalFilter"
-                        :loading-state="{
-                            icon: 'i-heroicons-document-text',
-                            label: 'Loading music pieces...',
-                        }"
-                        :empty-state="{
-                            icon: 'i-heroicons-document-text',
-                            title: 'No music pieces found',
-                            description: globalFilter
-                                ? 'Try adjusting your search terms'
-                                : 'Add some music pieces to get started',
-                        }"
-                        @select="onRowSelect"
-                        @update:sort="
-                            (sort) => updateFilters({ sorting: sort })
+                        :sorting="state.sorting"
+                        :globalFilter="globalFilter"
+                        :empty="
+                            globalFilter
+                                ? 'No matching music pieces found'
+                                : 'No music pieces found'
                         "
-                        @update:search="
+                        @rowClick="onRowSelect"
+                        @update:sorting="
+                            (sorting) => updateFilters({ sorting })
+                        "
+                        @update:globalFilter="
                             (value) => updateFilters({ globalFilter: value })
                         "
                         :ui="tableUI"
                     >
-                        <template #header-cell="{ column }">
-                            <div class="flex items-center gap-2">
-                                {{ column.label }}
-                                <UIcon
-                                    v-if="column.sortable"
-                                    :name="getSortIcon(column.key)"
-                                    class="w-4 h-4 text-muted-text"
-                                />
-                            </div>
+                        <template #thead-tr="{ row }">
+                            <th
+                                v-for="column in row.cells"
+                                :key="column.id"
+                                class="table-header-cell"
+                                scope="col"
+                            >
+                                <div class="flex items-center gap-2">
+                                    {{ column.column.meta?.label }}
+                                    <UIcon
+                                        v-if="column.column.meta?.sortable"
+                                        :name="getSortIcon(column.column.id)"
+                                        class="w-4 h-4 text-muted-text"
+                                    />
+                                </div>
+                            </th>
                         </template>
-                        <template #cell="{ column, row }">
-                            <div>
-                                {{ row.original[column.key] }}
-                            </div>
-                        </template>
-                        <template #empty-state="{ icon, title, description }">
+                        <template #empty>
                             <div
                                 class="flex flex-col items-center justify-center p-12 text-center"
                             >
                                 <UIcon
-                                    :name="icon"
+                                    name="i-heroicons-document-text"
                                     class="w-12 h-12 text-muted-text mb-4 animate-pulse-slow"
                                 />
                                 <h3 class="text-lg font-medium text-text">
-                                    {{ title }}
+                                    {{
+                                        globalFilter
+                                            ? "No matching music pieces found"
+                                            : "No music pieces found"
+                                    }}
                                 </h3>
                                 <p class="mt-2 text-sm text-muted-text">
-                                    {{ description }}
+                                    {{
+                                        globalFilter
+                                            ? "Try adjusting your search terms"
+                                            : "Add some music pieces to get started"
+                                    }}
                                 </p>
                                 <div class="mt-6">
                                     <UButton
@@ -99,6 +103,15 @@
                                         Add New Piece
                                     </UButton>
                                 </div>
+                            </div>
+                        </template>
+                        <template #loading>
+                            <div class="flex items-center justify-center p-12">
+                                <UIcon
+                                    name="i-heroicons-document-text"
+                                    class="w-8 h-8 text-primary mr-3 animate-pulse"
+                                />
+                                <span>Loading music pieces...</span>
                             </div>
                         </template>
                     </UTable>
@@ -278,6 +291,10 @@ const columnsWithAccessor = computed(() => {
         ...col,
         key: col.id,
         accessor: (row: Piece) => row[col.id as keyof Piece],
+        meta: {
+            label: col.label,
+            sortable: col.sortable,
+        },
     }));
 });
 

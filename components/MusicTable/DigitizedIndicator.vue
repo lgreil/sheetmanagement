@@ -17,6 +17,8 @@
 </template>
 
 <script setup lang="ts">
+import { computed, toRefs } from "vue";
+
 interface Props {
     isDigitized: boolean;
     showLabel?: boolean;
@@ -46,58 +48,59 @@ const { isDigitized, showLabel } = toRefs(props);
 </script>
 
 <style scoped>
-/* Container for the indicator and label */
 .digital-availability {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
 }
 
-/* Base styles for the indicator */
 .digital-indicator {
-    display: inline-block;
-    width: 0.75rem;
-    height: 0.75rem;
-    border-radius: 9999px;
-    transition-property: color, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 200ms;
+    display: block;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+    transition: all 150ms ease-in-out;
+    will-change: transform, background-color, box-shadow;
 }
 
-/* Style for when a digital version is available */
 .digital-available {
     background-color: var(--color-accent);
-    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-    animation: pulse 2s infinite;
-}
-
-/* Style for when only a print version is available */
-.digital-indicator:not(.digital-available) {
-    background-color: var(--color-secondary);
-}
-/* Keyframes for pulse animation */
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5); /* Using accent color with opacity */
-    }
-
-    70% {
-        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); /* Expand the shadow then fade */
-    }
-
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); /* Fully faded */
-    }
-}
-
-/* Apply pulse animation only when digital is available */
-.digital-available {
+    box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
     animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* Optional label styling (if `showLabel` is true) */
+.digital-indicator:not(.digital-available) {
+    background-color: var(--color-secondary);
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
 .digital-label {
     font-size: 0.75rem;
+    font-weight: 500;
     color: var(--color-muted-text);
+    white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .digital-available {
+        animation: none;
+        box-shadow: 0 0 2px rgba(16, 185, 129, 0.5);
+    }
 }
 </style>
