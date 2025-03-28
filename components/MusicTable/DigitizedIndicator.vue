@@ -47,6 +47,7 @@ const ariaLabel = computed(() =>
   width: 0.75rem;
   height: 0.75rem;
   border-radius: 9999px;
+<<<<<<< HEAD
   transition: all;
 }
 
@@ -72,5 +73,16 @@ const ariaLabel = computed(() =>
 
 .digitized-yes {
   animation: pulse 2s infinite;
+=======
+}
+
+.digitized-indicator.yes {
+  background-color: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.6);
+}
+
+.digitized-indicator.no {
+  background-color: #9ca3af;
+>>>>>>> main
 }
 </style>

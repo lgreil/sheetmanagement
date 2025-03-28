@@ -142,6 +142,7 @@ watch(() => props.modelValue, (newValue) => {
 
 <style scoped>
 .music-search-input {
+<<<<<<< HEAD
   background-color: transparent;
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.5rem;
@@ -163,5 +164,29 @@ watch(() => props.modelValue, (newValue) => {
 }
 .music-search-input input::placeholder {
   color: rgba(255, 255, 255, 0.5);
+=======
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(30, 58, 138, 0.3);
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.2s;
+    color: white;
+    width: 100%;
+}
+.music-search-input:focus-within {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+.music-search-input input {
+    background-color: transparent;
+    border: none;
+    outline: none;
+    width: 100%;
+    color: white;
+}
+.music-search-input input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+>>>>>>> main
 }
 </style>

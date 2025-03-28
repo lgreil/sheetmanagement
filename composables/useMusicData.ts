@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { ref, watch } from "vue";
 import type { Piece } from "~/types/Types";
 import { useFetch, useState, useRuntimeConfig } from "#app";
@@ -60,11 +61,35 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
       error.value = err as Error;
       pieces.value = dummyMusicData;
       isUsingDummyData.value = true;
+=======
+import { ref, onMounted, watch } from "vue";
+import type { Piece } from "~/types/music";
+import { useFetch } from "#app";
+
+export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
+  const pageIndex = ref(initialPageIndex);
+  const pageSize = ref(initialPageSize);
+  const pieces = ref<Piece[]>([]);
+  const loading = ref(true);
+  const error = ref<Error | null>(null);
+
+  async function fetchPieces() {
+    loading.value = true;
+    error.value = null;
+    try {
+      const { data } = await useFetch<Piece[]>(`${process.env.API_URL}/stuecke`);
+      console.log(data.value);
+      pieces.value = data.value || [];
+    } catch (err) {
+      error.value = err as Error;
+      console.error("Error fetching pieces:", error.value);
+>>>>>>> main
     } finally {
       loading.value = false;
     }
   }
 
+<<<<<<< HEAD
   async function fetchPieceById(id: string): Promise<Piece | null> {
     if (pieceCache.value[id]) {
       return pieceCache.value[id];
@@ -124,3 +149,15 @@ export function useMusicData(initialPageIndex = 0, initialPageSize = 10) {
     isUsingDummyData
   };
 }
+=======
+  onMounted(() => {
+    fetchPieces();
+  });
+
+  watch([pageIndex, pageSize], () => {
+    fetchPieces();
+  });
+
+  return { pieces, loading, error, fetchPieces, pageIndex, pageSize };
+}
+>>>>>>> main

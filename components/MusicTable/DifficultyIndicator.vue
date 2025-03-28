@@ -66,5 +66,21 @@ const tooltipText = computed(() => `Difficulty Level: ${displayText.value}`)
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
+<<<<<<< HEAD
+=======
+  padding: 0.25rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.difficulty-badge.unknown {
+  background-color: rgba(107, 114, 128, 0.5);
+  color: white;
+}
+
+.difficulty-badge.medium {
+  background-image: linear-gradient(to right, #f59e0b, #ea580c);
+  color: white;
+>>>>>>> main
 }
 </style>
