@@ -6,7 +6,18 @@
             'bg-surface text-text': true,
         }"
     >
-        <h1 class="text-2xl font-bold mb-6 text-center">Music Collection</h1>
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-2xl font-bold text-center flex-grow">
+                Music Collection
+            </h1>
+            <UButton
+                color="primary"
+                icon="i-heroicons-plus"
+                @click="navigateToNewPiece"
+            >
+                Add New Piece
+            </UButton>
+        </div>
         <UAlert
             color="error"
             variant="soft"
@@ -92,5 +103,9 @@ pieces.value = dummyPieces as any;
 
 const navigateToPieceOverview = (pieceId: number) => {
     router.push(`/stueck/${pieceId}`);
+};
+
+const navigateToNewPiece = () => {
+    router.push("/stueck/new");
 };
 </script>

@@ -35,7 +35,7 @@
                     <UTable
                         v-if="!shouldUseVirtualScroll"
                         :rows="paginatedItems"
-                        :columns="columns"
+                        :columns="columnsWithAccessor"
                         :loading="isLoading"
                         :sort="state.sorting"
                         :search="globalFilter"
@@ -43,63 +43,50 @@
                             icon: 'i-heroicons-document-text',
                             label: 'Loading music pieces...',
                         }"
-                        :empty-state="
-                            renderEmptyState({
-                                icon: 'i-heroicons-document-text',
-                                title: 'No music pieces found',
-                                description: globalFilter
-                                    ? 'Try adjusting your search terms'
-                                    : 'Add some music pieces to get started',
-                            })
-                        "
-                        @select="(row: Row<Piece>) => onRowSelect(row.original)"
+                        :empty-state="{
+                            icon: 'i-heroicons-document-text',
+                            title: 'No music pieces found',
+                            description: globalFilter
+                                ? 'Try adjusting your search terms'
+                                : 'Add some music pieces to get started',
+                        }"
+                        @select="onRowSelect"
                         @update:sort="
-                            (sort: TableSort[]) =>
-                                updateFilters({ sorting: sort })
+                            (sort) => updateFilters({ sorting: sort })
                         "
                         @update:search="
-                            (value: string) =>
-                                updateFilters({ globalFilter: value })
+                            (value) => updateFilters({ globalFilter: value })
                         "
                         :ui="tableUI"
                     >
                         <template #header-cell="{ column }">
                             <div class="flex items-center gap-2">
-                                {{ (column as ExtendedColumn).label }}
+                                {{ column.label }}
                                 <UIcon
-                                    v-if="(column as ExtendedColumn).sortable"
-                                    name="i-heroicons-arrows-up-down"
+                                    v-if="column.sortable"
+                                    :name="getSortIcon(column.key)"
                                     class="w-4 h-4 text-muted-text"
                                 />
                             </div>
                         </template>
-                        <template #empty-state="slotProps">
+                        <template #cell="{ column, row }">
+                            <div>
+                                {{ row.original[column.key] }}
+                            </div>
+                        </template>
+                        <template #empty-state="{ icon, title, description }">
                             <div
                                 class="flex flex-col items-center justify-center p-12 text-center"
                             >
                                 <UIcon
-                                    :name="'i-heroicons-document-text'"
+                                    :name="icon"
                                     class="w-12 h-12 text-muted-text mb-4 animate-pulse-slow"
                                 />
                                 <h3 class="text-lg font-medium text-text">
-                                    {{
-                                        slotProps &&
-                                        typeof slotProps === "object" &&
-                                        "title" in slotProps
-                                            ? (slotProps.title as string)
-                                            : "No music pieces found"
-                                    }}
+                                    {{ title }}
                                 </h3>
                                 <p class="mt-2 text-sm text-muted-text">
-                                    {{
-                                        slotProps &&
-                                        typeof slotProps === "object" &&
-                                        "description" in slotProps
-                                            ? (slotProps.description as string)
-                                                ? slotProps.description
-                                                : ""
-                                            : ""
-                                    }}
+                                    {{ description }}
                                 </p>
                                 <div class="mt-6">
                                     <UButton
@@ -169,54 +156,11 @@
                                 </thead>
                             </table>
                         </div>
-
-                        <VirtualTable
+                        <div
                             ref="virtualTable"
-                            :items="paginatedItems"
-                            :item-height="48"
                             class="virtual-table-content"
-                            v-slot="{ item: virtualItem }"
                             @scroll="onScroll"
-                        >
-                            <tr
-                                class="virtual-table-row"
-                                :class="{
-                                    'selected-row':
-                                        virtualItem.data.stid ===
-                                        selectedRowStid,
-                                }"
-                                :tabindex="
-                                    virtualItem.data.stid === selectedRowStid
-                                        ? 0
-                                        : -1
-                                "
-                                @click="() => onRowSelect(virtualItem.data)"
-                                :key="virtualItem.data.stid"
-                            >
-                                <td
-                                    v-for="column in columns"
-                                    :key="column.id"
-                                    class="table-data-cell"
-                                >
-                                    <template v-if="column.id === 'name'">{{
-                                        virtualItem.data.name
-                                    }}</template>
-                                    <template
-                                        v-else-if="column.id === 'genre'"
-                                        >{{ virtualItem.data.genre }}</template
-                                    >
-                                    <template
-                                        v-else-if="column.id === 'jahr'"
-                                        >{{ virtualItem.data.jahr }}</template
-                                    >
-                                    <template v-else>{{
-                                        virtualItem.data[
-                                            column.id as keyof Piece
-                                        ]
-                                    }}</template>
-                                </td>
-                            </tr>
-                        </VirtualTable>
+                        ></div>
                     </div>
 
                     <MusicTablePagination
@@ -244,17 +188,6 @@
                         @click="toggleLoading"
                         class="w-full dev-button neutral-button"
                         :variant="isLoading ? 'solid' : 'outline'"
-                        :ui="{
-                            rounded: 'rounded-md',
-                            variant: {
-                                solid: {
-                                    color: {
-                                        neutral:
-                                            'bg-gray-500 text-white hover:bg-gray-600',
-                                    },
-                                },
-                            },
-                        }"
                     >
                         Toggle Loading
                     </UButton>
@@ -263,17 +196,6 @@
                         @click="simulateError"
                         variant="outline"
                         class="w-full dev-button warning-button"
-                        :ui="{
-                            rounded: 'rounded-md',
-                            variant: {
-                                outline: {
-                                    color: {
-                                        warning:
-                                            'border-amber-500 text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/50',
-                                    },
-                                },
-                            },
-                        }"
                     >
                         Simulate Error
                     </UButton>
@@ -281,17 +203,6 @@
                         color="primary"
                         @click="toggleDebugInfo"
                         class="w-full dev-button primary-button"
-                        :ui="{
-                            rounded: 'rounded-md',
-                            variant: {
-                                solid: {
-                                    color: {
-                                        primary:
-                                            'bg-blue-500 text-white hover:bg-blue-600',
-                                    },
-                                },
-                            },
-                        }"
                     >
                         Toggle Debug Info
                     </UButton>
@@ -307,6 +218,9 @@ import type { TableSort } from "@/types/table";
 import type { Row } from "@tanstack/vue-table";
 import type { ColumnDef } from "@tanstack/table-core";
 import type { Piece } from "@/types/piece";
+import VirtualTable from "@/components/MusicTable/VirtualTable.vue";
+import ErrorState from "@/components/MusicTable/ErrorState.vue";
+import ErrorBoundary from "@/components/MusicTable/ErrorBoundary.vue";
 
 const config = useRuntimeConfig();
 const isDev = config.public.dev || false;
@@ -357,6 +271,15 @@ const columns = ref<ExtendedColumn[]>([
         sortable: true,
     },
 ]);
+
+// Add accessors and key properties to columns for UTable
+const columnsWithAccessor = computed(() => {
+    return columns.value.map((col) => ({
+        ...col,
+        key: col.id,
+        accessor: (row: Piece) => row[col.id as keyof Piece],
+    }));
+});
 
 watchEffect(() => {
     if (pieces.value?.length) {

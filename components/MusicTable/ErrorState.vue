@@ -21,18 +21,6 @@
                 Dismiss
             </UButton>
         </div>
-
-        <div
-            v-if="import.meta.dev && error.debug !== undefined"
-            class="error-debug"
-        >
-            <p class="debug-title">Debug Information:</p>
-            <pre class="debug-content">{{
-                error.debug !== undefined
-                    ? error.debug
-                    : "No debug information available"
-            }}</pre>
-        </div>
     </div>
 </template>
 
