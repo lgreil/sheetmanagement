@@ -57,7 +57,7 @@
                                     <span>Year</span>
                                 </div>
                                 <div class="info-value">
-                                    {{ (piece as any).year || "Unknown" }}
+                                    {{ piece.jahr || "Unknown" }}
                                 </div>
                             </div>
 
@@ -71,7 +71,7 @@
                                 </div>
                                 <div class="info-value">
                                     {{
-                                        (piece as any).komponiert
+                                        piece.komponiert
                                             ?.map(
                                                 (composer: {
                                                     vorname: string;
@@ -94,7 +94,7 @@
                                 </div>
                                 <div class="info-value">
                                     {{
-                                        (piece as any).arrangiert
+                                        piece.arrangiert
                                             ?.map(
                                                 (arranger: {
                                                     vorname: string;
@@ -117,14 +117,7 @@
                                 </div>
                                 <div class="info-value">
                                     <DifficultyIndicator
-                                        :level="
-                                            (piece as any).difficulty ||
-                                            'unknown'
-                                        "
-                                        :difficulty="
-                                            (piece as any).difficulty ||
-                                            'unknown'
-                                        "
+                                        :level="piece.schwierigkeit?.toLowerCase() || 'unknown'"
                                     />
                                 </div>
                             </div>
@@ -139,12 +132,7 @@
                                 </div>
                                 <div class="info-value">
                                     <DigitizedIndicator
-                                        :isDigitized="
-                                            Boolean(
-                                                (piece as any).digitized ??
-                                                    false,
-                                            )
-                                        "
+                                        :isDigitized="Boolean(piece.isdigitalisiert)"
                                     />
                                 </div>
                             </div>
@@ -179,7 +167,7 @@
 
                 <UCard
                     v-if="
-                        ['Klassik', 'Barock', 'Romantik'].includes(
+                        ['klassik', 'barock', 'romantik'].includes(
                             piece.genre?.toLowerCase(),
                         )
                     "
@@ -268,84 +256,104 @@ import Timeline from "~/components/Timeline.vue";
 const route = useRoute();
 const router = useRouter();
 
-// Adjusted to directly use the ID from route parameters
+// Get the ID from route parameters
 const pieceId = ref(String(route.params.id));
 
+// Initialize with empty piece
 const piece = ref({
     name: "",
     description: "",
     sheetMusicUrl: "",
     genre: "",
+    jahr: null,
+    schwierigkeit: null,
+    isdigitalisiert: false,
+    arrangiert: [],
+    komponiert: [],
+    stid: 0
 });
 
 const youtubeSearchUrl = ref("");
 const imslpSearchUrl = ref("");
-const timelineEvents = ref([
-    {
-        date: "2023-01-15",
-        title: "Arranged",
-        description: "This piece was arranged by John Doe.",
-        link: null,
-        icon: "mdi-pencil",
-        iconColor: "#10b981",
-    },
-    {
-        date: "2023-03-10",
-        title: "Last Played",
-        description: "Performed at the Spring Concert.",
-        link: "https://example.com/concert",
-        icon: "mdi-music",
-        iconColor: "#3b82f6",
-    },
-    {
-        date: "2023-05-05",
-        title: "Bought",
-        description: "Purchased by the orchestra.",
-        link: null,
-        icon: "mdi-cart",
-        iconColor: "#f59e0b",
-    },
-]);
 
-const { fetchPieceById } = useMusicData();
+// Get the music data composable with its full state
+const { fetchPieceById, pieces, isUsingDummyData } = useMusicData();
+
+// Function to update URLs based on piece data
+function updateSearchUrls(pieceData: any) {
+    if (!pieceData?.name) return;
+
+    // Create YouTube search URL
+    const arrangerNames = pieceData.arrangiert
+        ?.map((arranger: { vorname: string; name: string }) =>
+            `${arranger.vorname} ${arranger.name}`)
+        .join(" ") || "";
+    const composerNames = pieceData.komponiert
+        ?.map((composer: { vorname: string; name: string }) =>
+            `${composer.vorname} ${composer.name}`)
+        .join(" ") || "";
+        
+    const youtubeQuery = [
+        pieceData.name,
+        composerNames,
+        "orchestra",
+        arrangerNames
+    ].filter(Boolean).join(" ");
+    
+    youtubeSearchUrl.value = `https://www.youtube.com/results?search_query=${encodeURIComponent(youtubeQuery)}`;
+
+    // Create IMSLP search URL
+    const imslpQuery = [pieceData.name, composerNames].filter(Boolean).join(" ");
+    imslpSearchUrl.value = `https://imslp.org/wiki/Special:Search?search=${encodeURIComponent(imslpQuery)}`;
+}
 
 async function fetchPieceDetails() {
     try {
-        const foundPiece = await fetchPieceById(pieceId.value);
+        // If using dummy data, first check the pieces array
+        if (isUsingDummyData.value) {
+            const dummyPiece = pieces.value.find(p => p.stid.toString() === pieceId.value);
+            if (dummyPiece) {
+                piece.value = dummyPiece;
+                updateSearchUrls(dummyPiece);
+                return;
+            }
+        }
 
+        // If not found in dummy data or using API, try to fetch
+        const foundPiece = await fetchPieceById(pieceId.value);
         if (foundPiece) {
             piece.value = foundPiece;
-            const arrangerName =
-                foundPiece.arrangiert
-                    ?.map(
-                        (arranger: { vorname: string; name: string }) =>
-                            `${arranger.vorname} ${arranger.name}`,
-                    )
-                    .join(" ") || "";
-            const searchQuery = `${encodeURIComponent(foundPiece.name)}+intitle:${encodeURIComponent(arrangerName)}+orchestra`;
-            youtubeSearchUrl.value = `https://www.youtube.com/results?search_query=${searchQuery}`;
-
-            const composerNames =
-                foundPiece.komponiert
-                    ?.map(
-                        (composer: { vorname: string; name: string }) =>
-                            `${composer.vorname} ${composer.name}`,
-                    )
-                    .join(" ") || "";
-            const imslpQuery = `${encodeURIComponent(foundPiece.name)}+intitle:${encodeURIComponent(composerNames)}`;
-            imslpSearchUrl.value = `https://imslp.org/wiki/Special:Search?search=${imslpQuery}`;
+            updateSearchUrls(foundPiece);
         } else {
+            // If piece is not found, show a "not found" state
             piece.value = {
-                name: "",
-                description:
-                    "This piece does not exist or is not available yet.",
+                name: "Piece Not Found",
+                description: "This piece does not exist in our database.",
                 sheetMusicUrl: "",
                 genre: "",
+                jahr: null,
+                schwierigkeit: null,
+                isdigitalisiert: false,
+                arrangiert: [],
+                komponiert: [],
+                stid: 0
             };
         }
     } catch (error) {
-        console.error("Failed to fetch piece details:", error);
-        // Optionally, display an error message to the user
+        console.error('Error fetching piece details:', error);
+        // Show error state
+        piece.value = {
+            name: "Error Loading Piece",
+            description: "There was an error loading this piece. Please try again later.",
+            sheetMusicUrl: "",
+            genre: "",
+            jahr: null,
+            schwierigkeit: null,
+            isdigitalisiert: false,
+            arrangiert: [],
+            komponiert: [],
+            stid: 0
+        };
     }
 }
 
@@ -365,18 +373,18 @@ function showAdditionalInfo() {
     alert("Additional information about this piece will be available soon!");
 }
 
+// Watch for route changes to update the piece details
+watch(() => route.params.id, (newId) => {
+    if (newId) {
+        pieceId.value = String(newId);
+        fetchPieceDetails();
+    }
+});
+
+// Initial fetch
 onMounted(() => {
     fetchPieceDetails();
 });
-
-// Watch for changes in the route params and refetch the piece details
-watch(
-    () => route.params.id,
-    (newId) => {
-        pieceId.value = String(newId);
-        fetchPieceDetails();
-    },
-);
 </script>
 
 <style scoped>
