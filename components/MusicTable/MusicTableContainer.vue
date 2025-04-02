@@ -2,682 +2,236 @@
     <ErrorBoundary>
         <div class="table-container glass-panel">
             <div class="search-wrapper">
-                <MusicTableSearch
-                    v-model="globalFilter"
-                    @update:model-value="
-                        (value) => updateFilters({ globalFilter: value })
-                    "
+                <UInput
+                    v-model="searchQuery"
+                    placeholder="Search across all columns"
                     :disabled="isLoading"
+                    icon="i-heroicons-magnifying-glass"
                 />
             </div>
 
-            <TransitionGroup
-                name="fade"
-                tag="div"
-                class="table-transition-group"
-                enter-active-class="transition-all duration-300 ease-out"
-                enter-from-class="opacity-0 -translate-y-4"
-                enter-to-class="opacity-100 translate-y-0"
-                leave-active-class="transition-all duration-200 ease-in"
-                leave-from-class="opacity-100 translate-y-0"
-                leave-to-class="opacity-0 -translate-y-4"
-            >
-                <MusicTableSkeleton v-if="isLoading" key="skeleton" />
+            <div class="relative">
+                <MusicTableSkeleton v-if="isLoading" />
 
                 <ErrorState
                     v-else-if="error"
-                    :key="error.message"
                     :error="error"
                     @dismiss="clearError"
                 />
 
-                <div v-else key="table" class="music-table-wrapper">
-                    <UTable
-                        v-if="!shouldUseVirtualScroll"
-                        :data="paginatedItems"
-                        :columns="columnsWithAccessor"
-                        :loading="isLoading"
-                        :sorting="state.sorting"
-                        :globalFilter="globalFilter"
-                        :empty="
-                            globalFilter
-                                ? 'No matching music pieces found'
-                                : 'No music pieces found'
-                        "
-                        @rowClick="onRowSelect"
-                        @update:sorting="
-                            (sorting) => updateFilters({ sorting })
-                        "
-                        @update:globalFilter="
-                            (value) => updateFilters({ globalFilter: value })
-                        "
-                        :ui="tableUI"
-                    >
-                        <template #thead-tr="{ row }">
-                            <th
-                                v-for="column in row.cells"
-                                :key="column.id"
-                                class="table-header-cell"
-                                scope="col"
+                <div v-else class="music-table-wrapper">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th
+                                    v-for="col in columns"
+                                    :key="col.name"
+                                    scope="col"
+                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                                    @click="sortBy = { column: col.name, direction: sortBy.direction === 'asc' ? 'desc' : 'asc' }"
+                                >
+                                    <div class="flex items-center gap-2">
+                                        {{ col.label }}
+                                        <UIcon
+                                            v-if="sortBy.column === col.name"
+                                            :name="sortBy.direction === 'asc' ? 'i-heroicons-arrow-up' : 'i-heroicons-arrow-down'"
+                                            class="w-4 h-4"
+                                        />
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody v-if="filteredAndSortedPieces.length" class="bg-white divide-y divide-gray-200">
+                            <tr
+                                v-for="piece in filteredAndSortedPieces"
+                                :key="piece.stid"
+                                class="hover:bg-gray-50 cursor-pointer"
+                                @click="onRowSelect(piece)"
                             >
-                                <div class="flex items-center gap-2">
-                                    {{ column.column.meta?.label }}
-                                    <UIcon
-                                        v-if="column.column.meta?.sortable"
-                                        :name="getSortIcon(column.column.id)"
-                                        class="w-4 h-4 text-muted-text"
-                                    />
-                                </div>
-                            </th>
-                        </template>
-                        <template #empty>
-                            <div
-                                class="flex flex-col items-center justify-center p-12 text-center"
-                            >
-                                <UIcon
-                                    name="i-heroicons-document-text"
-                                    class="w-12 h-12 text-muted-text mb-4 animate-pulse-slow"
-                                />
-                                <h3 class="text-lg font-medium text-text">
-                                    {{
-                                        globalFilter
-                                            ? "No matching music pieces found"
-                                            : "No music pieces found"
-                                    }}
-                                </h3>
-                                <p class="mt-2 text-sm text-muted-text">
-                                    {{
-                                        globalFilter
-                                            ? "Try adjusting your search terms"
-                                            : "Add some music pieces to get started"
-                                    }}
-                                </p>
-                                <div class="mt-6">
-                                    <UButton
-                                        v-if="!globalFilter"
-                                        to="/stueck/new"
-                                        icon="i-heroicons-plus"
-                                        color="primary"
-                                        class="add-button"
-                                    >
-                                        Add New Piece
-                                    </UButton>
-                                </div>
-                            </div>
-                        </template>
-                        <template #loading>
-                            <div class="flex items-center justify-center p-12">
-                                <UIcon
-                                    name="i-heroicons-document-text"
-                                    class="w-8 h-8 text-primary mr-3 animate-pulse"
-                                />
-                                <span>Loading music pieces...</span>
-                            </div>
-                        </template>
-                    </UTable>
-
-                    <div v-else class="virtual-table-container">
-                        <div class="virtual-table-header">
-                            <table class="w-full">
-                                <thead>
-                                    <tr>
-                                        <th
-                                            v-for="column in columns"
-                                            :key="column.id"
-                                            class="table-header-cell"
-                                            @click="
-                                                (column as ExtendedColumn)
-                                                    .sortable &&
-                                                updateFilters({
-                                                    sorting: [
-                                                        {
-                                                            id: column.id!,
-                                                            desc: state
-                                                                .sorting[0]
-                                                                ?.desc
-                                                                ? false
-                                                                : true,
-                                                        },
-                                                    ],
-                                                })
-                                            "
-                                            scope="col"
-                                        >
-                                            <div
-                                                class="flex items-center gap-2"
+                                <td v-for="col in columns" :key="col.name" class="px-6 py-4 whitespace-nowrap text-sm">
+                                    <template v-if="col.format">
+                                        {{ col.format(piece) }}
+                                    </template>
+                                    <template v-else>
+                                        {{ piece[col.name] || '-' }}
+                                    </template>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tbody v-else>
+                            <tr>
+                                <td :colspan="columns.length" class="px-6 py-12 text-center">
+                                    <div class="flex flex-col items-center justify-center">
+                                        <UIcon
+                                            name="i-heroicons-document-text"
+                                            class="w-12 h-12 text-gray-400 mb-4"
+                                        />
+                                        <h3 class="text-lg font-medium text-gray-900">
+                                            {{ searchQuery ? "No matching music pieces found" : "No music pieces found" }}
+                                        </h3>
+                                        <p class="mt-2 text-sm text-gray-500">
+                                            {{ searchQuery ? "Try adjusting your search terms" : "Add some music pieces to get started" }}
+                                        </p>
+                                        <div class="mt-6">
+                                            <UButton
+                                                v-if="!searchQuery"
+                                                to="/stueck/new"
+                                                icon="i-heroicons-plus"
+                                                color="primary"
                                             >
-                                                {{
-                                                    (column as ExtendedColumn)
-                                                        .label
-                                                }}
-                                                <UIcon
-                                                    v-if="
-                                                        (
-                                                            column as ExtendedColumn
-                                                        ).sortable
-                                                    "
-                                                    :name="
-                                                        getSortIcon(
-                                                            column.id || '',
-                                                        )
-                                                    "
-                                                    class="w-4 h-4 text-muted-text"
-                                                />
-                                            </div>
-                                        </th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
-                        <div
-                            ref="virtualTable"
-                            class="virtual-table-content"
-                            @scroll="onScroll"
-                        ></div>
-                    </div>
-
-                    <MusicTablePagination
-                        v-model:page-index="state.pageIndex"
-                        v-model:page-size="state.pageSize"
-                        :total-items="totalItems"
-                        @update:page-index="
-                            (index) => updateFilters({ pageIndex: index })
-                        "
-                        @update:page-size="
-                            (size) => updateFilters({ pageSize: size })
-                        "
-                    />
-
-                    <div v-if="isDev && showDebugInfo" class="debug-info">
-                        <pre class="text-xs">{{ debugInfo }}</pre>
-                    </div>
+                                                Add New Piece
+                                            </UButton>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </TransitionGroup>
-
-            <ClientOnly>
-                <div v-if="isDev" class="dev-tools">
-                    <UButton
-                        color="neutral"
-                        @click="toggleLoading"
-                        class="w-full dev-button neutral-button"
-                        :variant="isLoading ? 'solid' : 'outline'"
-                    >
-                        Toggle Loading
-                    </UButton>
-                    <UButton
-                        color="warning"
-                        @click="simulateError"
-                        variant="outline"
-                        class="w-full dev-button warning-button"
-                    >
-                        Simulate Error
-                    </UButton>
-                    <UButton
-                        color="primary"
-                        @click="toggleDebugInfo"
-                        class="w-full dev-button primary-button"
-                    >
-                        Toggle Debug Info
-                    </UButton>
-                </div>
-            </ClientOnly>
+            </div>
         </div>
     </ErrorBoundary>
 </template>
 
 <script setup lang="ts">
 import { useVModel } from "@vueuse/core";
-import type { TableSort } from "@/types/table";
-import type { Row } from "@tanstack/vue-table";
-import type { ColumnDef } from "@tanstack/table-core";
-import type { Piece } from "@/types/piece";
-import VirtualTable from "@/components/MusicTable/VirtualTable.vue";
+import type { Piece } from "~/types/Types";
 import ErrorState from "@/components/MusicTable/ErrorState.vue";
 import ErrorBoundary from "@/components/MusicTable/ErrorBoundary.vue";
+import { computed, ref } from "vue";
 
 const config = useRuntimeConfig();
 const isDev = config.public.dev || false;
 
 interface Props {
-    initialPieces?: Piece[];
-    modelValue?: Piece[];
+    pieces?: Piece[];
     loading?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
-    initialPieces: () => [],
-    modelValue: undefined,
+    pieces: () => [],
     loading: false,
 });
 
 const emit = defineEmits<{
-    "update:modelValue": [pieces: Piece[]];
+    "update:loading": [loading: boolean];
     "piece-click": [piece: Piece];
 }>();
 
-const pieces = useVModel(props, "modelValue", emit, {
-    defaultValue: props.initialPieces,
-});
-
-const { state, totalItems, paginatedItems, setPieces, updateFilters } =
-    useMusicTable();
-
-type ExtendedColumn = ColumnDef<Piece> & {
+interface Column {
+    name: keyof Piece;
     label: string;
-    sortable?: boolean;
-};
+    sortable: boolean;
+    format?: (row: Piece) => string;
+}
 
-const columns = ref<ExtendedColumn[]>([
+const sortBy = ref({ column: 'name' as keyof Piece, direction: 'asc' });
+const searchQuery = ref('');
+
+const columns: Column[] = [
     {
-        id: "name",
-        label: "Title",
+        name: 'name',
+        label: 'Title',
         sortable: true,
     },
     {
-        id: "genre",
-        label: "Genre",
+        name: 'genre',
+        label: 'Genre',
         sortable: true,
     },
     {
-        id: "jahr",
-        label: "Year",
+        name: 'jahr',
+        label: 'Year',
         sortable: true,
     },
-]);
-
-// Add accessors and key properties to columns for UTable
-const columnsWithAccessor = computed(() => {
-    return columns.value.map((col) => ({
-        ...col,
-        key: col.id,
-        accessor: (row: Piece) => row[col.id as keyof Piece],
-        meta: {
-            label: col.label,
-            sortable: col.sortable,
-        },
-    }));
-});
-
-watchEffect(() => {
-    if (pieces.value?.length) {
-        setPieces(pieces.value);
+    {
+        name: 'schwierigkeit',
+        label: 'Difficulty',
+        sortable: true,
+    },
+    {
+        name: 'komponiert',
+        label: 'Composer',
+        sortable: true,
+        format: (row: Piece) => row.komponiert?.map(k => `${k.vorname} ${k.name}`).join(", ") || "-"
+    },
+    {
+        name: 'arrangiert',
+        label: 'Arranger',
+        sortable: true,
+        format: (row: Piece) => row.arrangiert?.map(a => `${a.vorname} ${a.name}`).join(", ") || "-"
     }
-});
-
-const { error, withErrorHandling, setError, clearError } = useTableError();
+];
 
 const isLoading = useVModel(props, "loading", emit, { defaultValue: false });
 
-const { smoothScrollToRow } = useTableAnimations();
-
-const {
-    renderTime,
-    fps,
-    isScrolling,
-    measureRenderTime,
-    measureFPS,
-    onScroll,
-    debugInfo,
-} = useTablePerformance();
-
-const virtualTable = ref<any>();
-const showDebugInfo = ref(false);
-
-const VIRTUAL_SCROLL_THRESHOLD = 100;
-const shouldUseVirtualScroll = computed(
-    () => paginatedItems.value.length > VIRTUAL_SCROLL_THRESHOLD,
-);
-
-const globalFilter = computed({
-    get: () => state.globalFilter,
-    set: (value) => updateFilters({ globalFilter: value }),
-});
-
 const onRowSelect = (piece: Piece) => {
-    try {
-        emit("piece-click", piece);
-        selectedRowStid.value = String(piece.stid);
-    } catch (err: any) {
-        setError({
-            message: "Failed to select piece",
-            type: "error",
-            code: "ROW_SELECT_ERROR",
-            retry: () => Promise.resolve(),
-        });
-    }
+    emit("piece-click", piece);
 };
 
-const selectedRowStid = ref<string | null>(null);
-
-const handleTouchSwipe = (direction: "left" | "right") => {
-    if (direction === "left" && canGoForward.value) {
-        updateFilters({ pageIndex: state.pageIndex + 1 });
-    } else if (direction === "right" && canGoBack.value) {
-        updateFilters({ pageIndex: state.pageIndex - 1 });
-    }
-};
-
-const canGoForward = computed(
-    () => state.pageIndex < Math.ceil(totalItems.value / state.pageSize) - 1,
-);
-const canGoBack = computed(() => state.pageIndex > 0);
-
-function handleKeyboardNavigation(e: KeyboardEvent) {
-    if (!paginatedItems.value.length) return;
-
-    const tableElement = document.querySelector(".music-table-wrapper");
-    if (!tableElement?.contains(document.activeElement)) return;
-
-    const handlers: Record<string, () => void> = {
-        ArrowDown: () => {
-            const currentIndex = paginatedItems.value.findIndex(
-                (item: Piece) => String(item.stid) === selectedRowStid.value,
-            );
-            const newIndex = Math.min(
-                currentIndex + 1,
-                paginatedItems.value.length - 1,
-            );
-            selectedRowStid.value = String(paginatedItems.value[newIndex].stid);
-            focusSelectedRow();
-        },
-        ArrowUp: () => {
-            const currentIndex = paginatedItems.value.findIndex(
-                (item: Piece) => String(item.stid) === selectedRowStid.value,
-            );
-            const newIndex = Math.max(currentIndex - 1, 0);
-            selectedRowStid.value = String(paginatedItems.value[newIndex].stid);
-            focusSelectedRow();
-        },
-        Enter: () => {
-            if (selectedRowStid.value) {
-                const selectedPiece = paginatedItems.value.find(
-                    (item: Piece) =>
-                        String(item.stid) === selectedRowStid.value,
-                );
-                if (selectedPiece) {
-                    onRowSelect(selectedPiece);
-                }
-            }
-        },
-        PageDown: () => {
-            if (canGoForward.value) {
-                updateFilters({ pageIndex: state.pageIndex + 1 });
-                selectedRowStid.value = String(paginatedItems.value[0].stid);
-                focusSelectedRow();
-            }
-        },
-        PageUp: () => {
-            if (canGoBack.value) {
-                updateFilters({ pageIndex: state.pageIndex - 1 });
-                selectedRowStid.value = String(paginatedItems.value[0].stid);
-                focusSelectedRow();
-            }
-        },
-        Home: () => {
-            if (e.ctrlKey) {
-                updateFilters({ pageIndex: 0 });
-            }
-            selectedRowStid.value = String(paginatedItems.value[0].stid);
-            focusSelectedRow();
-        },
-        End: () => {
-            if (e.ctrlKey) {
-                const lastPage =
-                    Math.ceil(totalItems.value / state.pageSize) - 1;
-                updateFilters({ pageIndex: lastPage });
-            }
-            selectedRowStid.value = String(
-                paginatedItems.value[paginatedItems.value.length - 1].stid,
-            );
-            focusSelectedRow();
-        },
-    };
-
-    const handler = handlers[e.key];
-    if (handler) {
-        e.preventDefault();
-        handler();
-    }
-}
-
-function focusSelectedRow() {
-    nextTick(() => {
-        if (shouldUseVirtualScroll.value && virtualTable.value) {
-            const index = paginatedItems.value.findIndex(
-                (item: Piece) => String(item.stid) === selectedRowStid.value,
-            );
-            virtualTable.value.scrollTo(index);
-        } else {
-            const rows = document.querySelectorAll(
-                ".music-table-wrapper tbody tr",
-            );
-            const index = paginatedItems.value.findIndex(
-                (item: Piece) => String(item.stid) === selectedRowStid.value,
-            );
-            const row = rows[index] as HTMLElement;
-            if (row) {
-                row.focus();
-                smoothScrollToRow(row);
-            }
-        }
-    });
-}
-
-onMounted(() => {
-    if (pieces.value?.length) {
-        withErrorHandling(
-            async () => setPieces(pieces.value!),
-            "Failed to load music pieces",
-        );
-    }
-
-    window.addEventListener("keydown", handleKeyboardNavigation);
-});
-
-onUnmounted(() => {
-    window.removeEventListener("keydown", handleKeyboardNavigation);
-});
-
-watch(
-    () => pieces.value,
-    (newPieces) => {
-        if (newPieces?.length) {
-            setPieces(newPieces);
-        }
-    },
-    { deep: true },
-);
-
-const toggleLoading = () => {
-    if (isDev) {
-        isLoading.value = !isLoading.value;
-    }
-};
-
-const simulateError = () => {
-    if (isDev) {
-        setError({
-            message: "This is a simulated error",
-            type: "error",
-            code: "SIMULATED_ERROR",
-            retry: () => {
-                clearError();
-                return Promise.resolve();
-            },
-        });
-    }
-};
-
-function toggleDebugInfo() {
-    showDebugInfo.value = !showDebugInfo.value;
-    if (showDebugInfo.value) {
-        measureFPS();
-    }
-}
-
-if (isDev) {
-    onMounted(() => {
-        const observer = new PerformanceObserver((list) => {
-            const entries = list.getEntries();
-            entries.forEach((entry) => {
-                if (entry.entryType === "measure" && entry.name === "render") {
-                    measureRenderTime();
-                }
+const filteredAndSortedPieces = computed(() => {
+    let result = [...(props.pieces || [])];
+    
+    // Filter
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        result = result.filter(piece => {
+            return columns.some(col => {
+                const value = col.format ? col.format(piece) : piece[col.name];
+                return String(value).toLowerCase().includes(query);
             });
         });
-        observer.observe({ entryTypes: ["measure"] });
-    });
-}
-
-const getSortIcon = (columnKey: string) => {
-    const currentSort = state.sorting[0];
-    if (!currentSort || currentSort.id !== columnKey) {
-        return "i-heroicons-arrows-up-down";
     }
-    return currentSort.desc ? "i-heroicons-arrow-down" : "i-heroicons-arrow-up";
-};
-
-interface EmptyState {
-    icon: string;
-    title: string;
-    description?: string;
-}
-
-const tableUI = {
-    root: "table-root",
-    base: "table-base",
-    td: "table-td",
-    th: "table-th",
-    tr: "table-tr",
-    loadingWrapper: "table-loading-wrapper",
-    loadingLabel: "table-loading-label",
-    loadingIcon: "table-loading-icon",
-    emptyWrapper: "table-empty-wrapper",
-    emptyLabel: "table-empty-label",
-    emptyIcon: "table-empty-icon",
-} as const;
-
-const renderEmptyState = (state: EmptyState) => ({
-    icon: state.icon,
-    title: state.title,
-    description: state.description,
+    
+    // Sort
+    result.sort((a, b) => {
+        const col = columns.find(c => c.name === sortBy.value.column);
+        if (!col) return 0;
+        
+        const aValue = col.format ? col.format(a) : a[col.name];
+        const bValue = col.format ? col.format(b) : b[col.name];
+        
+        if (aValue === bValue) return 0;
+        if (aValue === null || aValue === undefined) return 1;
+        if (bValue === null || bValue === undefined) return -1;
+        
+        const result = aValue > bValue ? 1 : -1;
+        return sortBy.value.direction === 'asc' ? result : -result;
+    });
+    
+    return result;
 });
+
+const { error, withErrorHandling, setError, clearError } = useTableError();
 </script>
 
-<style>
-.selected-row {
-    background-color: rgba(59, 130, 246, 0.1) !important;
-    border-left: 3px solid var(--color-primary);
-}
-
-.table-data-cell {
-    color: var(--color-text);
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid var(--color-border);
-    transition: all 0.2s ease;
-}
-
-.table-header-cell {
-    background-color: var(--color-surface);
-    color: var(--color-muted-text);
-    font-weight: 600;
-    text-align: left;
-    padding: 0.75rem 1rem;
-    border-bottom: 2px solid var(--color-primary);
-    transition: all 0.2s ease;
-}
-
-.virtual-table-container {
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow:
-        0 4px 6px -1px rgba(0, 0, 0, 0.1),
-        0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    transition: all 0.3s ease;
-}
-
-.virtual-table-content {
-    height: 450px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: var(--color-primary) var(--color-surface);
-}
-
-.virtual-table-content::-webkit-scrollbar {
-    width: 8px;
-}
-
-.virtual-table-content::-webkit-scrollbar-track {
-    background: var(--color-surface);
-}
-
-.virtual-table-content::-webkit-scrollbar-thumb {
-    background-color: var(--color-primary);
-    border-radius: 20px;
-    border: 2px solid var(--color-surface);
-}
-
-.virtual-table-row {
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.virtual-table-row:hover {
-    background-color: rgba(59, 130, 246, 0.05);
-    transform: translateY(-1px);
-}
-
-.glass-panel {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(10px);
-    border-radius: 1rem;
-    box-shadow:
-        0 10px 15px -3px rgba(0, 0, 0, 0.1),
-        0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    padding: 1.5rem;
-    margin-bottom: 2rem;
+<style scoped>
+.table-container {
+    @apply rounded-lg overflow-hidden;
 }
 
 .search-wrapper {
-    margin-bottom: 1.5rem;
+    @apply p-4 border-b border-gray-200;
 }
 
-.add-button {
-    transition: transform 0.2s ease;
-    border-radius: 0.5rem;
-    font-weight: 500;
-    padding: 0.5rem 1.25rem;
-    box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
+.music-table-wrapper {
+    @apply relative overflow-x-auto;
 }
 
-.add-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 8px -1px rgba(59, 130, 246, 0.4);
+.glass-panel {
+    @apply bg-white bg-opacity-50 backdrop-blur-sm;
 }
 
-.animate-pulse-slow {
-    animation: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+th {
+    @apply transition-colors duration-200;
 }
 
-@keyframes pulse {
-    0%,
-    100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.6;
-    }
+th:hover {
+    @apply bg-gray-100;
 }
 
-html.dark .glass-panel {
-    background: rgba(31, 41, 55, 0.8);
-}
-
-@media (hover: hover) {
-    .table-tr:hover .table-td {
-        background-color: rgba(59, 130, 246, 0.05);
-    }
+tr {
+    @apply transition-colors duration-200;
 }
 </style>
+

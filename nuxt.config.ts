@@ -1,11 +1,7 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
   app: {
     head: {
-      pageTransition: { name: "page", mode: "out-in" },
-      layoutTransition: { name: "layout", mode: "out-in" },
       link: [
         { rel: "icon", type: "image/x-icon", href: "/img/favicon.ico" },
         // Preload fonts if any
@@ -26,23 +22,12 @@ export default defineNuxtConfig({
     },
   },
   experimental: {
-    // Enable inlined styles
-    inlineSSRStyles: true,
     // Improve initial page load
     payloadExtraction: true,
-  },
-  vite: {
-    plugins: [tailwindcss()],
-    // Optimize CSS loading
-    build: {
-      cssCodeSplit: true,
-      cssMinify: true,
-    },
   },
   modules: [
     "@nuxt/ui",
     "@nuxtjs/color-mode",
-    "@nuxt/test-utils/module",
     "@formkit/auto-animate",
     "@nuxt/image",
   ],
@@ -57,15 +42,6 @@ export default defineNuxtConfig({
     storageKey: "nuxt-color-mode",
   },
   css: ["~/assets/css/main.css"],
-  tailwindcss: {
-    cssPath: "~/assets/css/main.css",
-    configPath: "tailwind.config.ts",
-    viewer: true,
-    // Add exposeConfig for better optimization
-    exposeConfig: true,
-    // Enable JIT mode for faster compilation
-    jit: true,
-  },
   components: {
     dirs: ["~/components", "~/components/MusicTable"],
   },
@@ -74,8 +50,5 @@ export default defineNuxtConfig({
       dev: process.env.NODE_ENV === "development",
       API_URL: process.env.API_URL || "http://localhost:3000",
     },
-  },
-  ui: {
-    icons: ["heroicons"],
   },
 });

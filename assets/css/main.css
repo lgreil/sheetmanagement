@@ -1,6 +1,6 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
-@import "./base.css";
+
 
 /* Custom styles */
 body {
