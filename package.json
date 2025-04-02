@@ -21,6 +21,7 @@
     "date-fns": "^4.1.0",
     "destr": "^2.0.3",
     "nuxt": "latest",
+    "tailwindcss": "^4.1.1",
     "valibot": "^1.0.0",
     "vue": "latest",
     "vue-router": "latest",

@@ -20,14 +20,13 @@
                 />
 
                 <div v-else class="music-table-wrapper">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
+                    <table>
+                        <thead>
                             <tr>
                                 <th
                                     v-for="col in columns"
                                     :key="col.name"
                                     scope="col"
-                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
                                     @click="sortBy = { column: col.name, direction: sortBy.direction === 'asc' ? 'desc' : 'asc' }"
                                 >
                                     <div class="flex items-center gap-2">
@@ -41,15 +40,17 @@
                                 </th>
                             </tr>
                         </thead>
-                        <tbody v-if="filteredAndSortedPieces.length" class="bg-white divide-y divide-gray-200">
+                        <tbody v-if="filteredAndSortedPieces.length">
                             <tr
                                 v-for="piece in filteredAndSortedPieces"
                                 :key="piece.stid"
-                                class="hover:bg-gray-50 cursor-pointer"
                                 @click="onRowSelect(piece)"
                             >
-                                <td v-for="col in columns" :key="col.name" class="px-6 py-4 whitespace-nowrap text-sm">
-                                    <template v-if="col.format">
+                                <td v-for="col in columns" :key="col.name">
+                                    <template v-if="col.component && col.props">
+                                        <component :is="col.component" v-bind="col.props(piece)" />
+                                    </template>
+                                    <template v-else-if="col.format">
                                         {{ col.format(piece) }}
                                     </template>
                                     <template v-else>
@@ -60,16 +61,16 @@
                         </tbody>
                         <tbody v-else>
                             <tr>
-                                <td :colspan="columns.length" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center justify-center">
+                                <td :colspan="columns.length">
+                                    <div class="empty-state">
                                         <UIcon
                                             name="i-heroicons-document-text"
-                                            class="w-12 h-12 text-gray-400 mb-4"
+                                            class="w-12 h-12 empty-state-icon"
                                         />
-                                        <h3 class="text-lg font-medium text-gray-900">
+                                        <h3 class="empty-state-title">
                                             {{ searchQuery ? "No matching music pieces found" : "No music pieces found" }}
                                         </h3>
-                                        <p class="mt-2 text-sm text-gray-500">
+                                        <p class="empty-state-description">
                                             {{ searchQuery ? "Try adjusting your search terms" : "Add some music pieces to get started" }}
                                         </p>
                                         <div class="mt-6">
@@ -89,6 +90,15 @@
                     </table>
                 </div>
             </div>
+
+            <MusicTablePagination
+                v-if="!isLoading && !error"
+                :total-items="totalItems"
+                :page-size="pageSize"
+                :page-index="pageIndex"
+                @update:page-size="onPageSizeChange"
+                @update:page-index="onPageIndexChange"
+            />
         </div>
     </ErrorBoundary>
 </template>
@@ -98,7 +108,11 @@ import { useVModel } from "@vueuse/core";
 import type { Piece } from "~/types/Types";
 import ErrorState from "@/components/MusicTable/ErrorState.vue";
 import ErrorBoundary from "@/components/MusicTable/ErrorBoundary.vue";
+import MusicTablePagination from "@/components/MusicTable/MusicTablePagination.vue";
 import { computed, ref } from "vue";
+import GenreBadge from "@/components/MusicTable/GenreBadge.vue";
+import DifficultyIndicator from "@/components/MusicTable/DifficultyIndicator.vue";
+import DigitizedIndicator from "@/components/MusicTable/DigitizedIndicator.vue";
 
 const config = useRuntimeConfig();
 const isDev = config.public.dev || false;
@@ -106,16 +120,24 @@ const isDev = config.public.dev || false;
 interface Props {
     pieces?: Piece[];
     loading?: boolean;
+    totalItems?: number;
+    pageSize?: number;
+    pageIndex?: number;
 }
 
 const props = withDefaults(defineProps<Props>(), {
     pieces: () => [],
     loading: false,
+    totalItems: 0,
+    pageSize: 10,
+    pageIndex: 0,
 });
 
 const emit = defineEmits<{
     "update:loading": [loading: boolean];
     "piece-click": [piece: Piece];
+    "update:pageSize": [size: number];
+    "update:pageIndex": [index: number];
 }>();
 
 interface Column {
@@ -123,6 +145,8 @@ interface Column {
     label: string;
     sortable: boolean;
     format?: (row: Piece) => string;
+    component?: any;
+    props?: (row: Piece) => Record<string, any>;
 }
 
 const sortBy = ref({ column: 'name' as keyof Piece, direction: 'asc' });
@@ -138,16 +162,22 @@ const columns: Column[] = [
         name: 'genre',
         label: 'Genre',
         sortable: true,
-    },
-    {
-        name: 'jahr',
-        label: 'Year',
-        sortable: true,
+        component: GenreBadge,
+        props: (row: Piece) => ({ genre: row.genre || 'unknown' })
     },
     {
         name: 'schwierigkeit',
         label: 'Difficulty',
         sortable: true,
+        component: DifficultyIndicator,
+        props: (row: Piece) => ({ level: row.schwierigkeit?.toLowerCase() || 'unknown' })
+    },
+    {
+        name: 'isdigitalisiert',
+        label: 'Digitized',
+        sortable: true,
+        component: DigitizedIndicator,
+        props: (row: Piece) => ({ isDigitized: row.isdigitalisiert || false })
     },
     {
         name: 'komponiert',
@@ -167,6 +197,14 @@ const isLoading = useVModel(props, "loading", emit, { defaultValue: false });
 
 const onRowSelect = (piece: Piece) => {
     emit("piece-click", piece);
+};
+
+const onPageSizeChange = (size: number) => {
+    emit("update:pageSize", size);
+};
+
+const onPageIndexChange = (index: number) => {
+    emit("update:pageIndex", index);
 };
 
 const filteredAndSortedPieces = computed(() => {
@@ -207,31 +245,110 @@ const { error, withErrorHandling, setError, clearError } = useTableError();
 
 <style scoped>
 .table-container {
-    @apply rounded-lg overflow-hidden;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
 .search-wrapper {
-    @apply p-4 border-b border-gray-200;
+    padding: 1.25rem;
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--color-surface);
 }
 
 .music-table-wrapper {
-    @apply relative overflow-x-auto;
+    position: relative;
+    overflow-x: auto;
 }
 
-.glass-panel {
-    @apply bg-white bg-opacity-50 backdrop-blur-sm;
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+thead {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background-color: var(--color-surface);
+    backdrop-filter: blur(8px);
 }
 
 th {
-    @apply transition-colors duration-200;
+    padding: 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted-text);
+    transition: background-color 200ms ease;
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
 }
 
 th:hover {
-    @apply bg-gray-100;
+    background-color: var(--color-background);
+    color: var(--color-text);
+}
+
+td {
+    padding: 1rem;
+    vertical-align: middle;
+    transition: all 200ms ease;
 }
 
 tr {
-    @apply transition-colors duration-200;
+    transition: background-color 200ms ease;
+    border-bottom: 1px solid var(--color-border);
+}
+
+tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background-color: var(--color-background);
+}
+
+.glass-panel {
+    background-color: var(--color-surface);
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--color-border);
+}
+
+/* Empty state styling */
+.empty-state {
+    padding: 3rem 1.5rem;
+    text-align: center;
+}
+
+.empty-state-icon {
+    margin-bottom: 1rem;
+    color: var(--color-muted-text);
+}
+
+.empty-state-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 0.5rem;
+}
+
+.empty-state-description {
+    color: var(--color-muted-text);
+    margin-bottom: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    th, td {
+        padding: 0.75rem;
+    }
+    
+    .search-wrapper {
+        padding: 1rem;
+    }
 }
 </style>
 

@@ -77,61 +77,125 @@ const tooltipText = computed(() => `Difficulty Level: ${displayText.value}`);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9999px;
-    background-color: var(--color-border);
-    min-width: 4rem;
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    border-radius: 4px;
+    min-width: 5rem;
+    height: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: all 200ms ease;
+    background-color: var(--color-surface);
+    border: 1px solid;
+}
+
+.difficulty-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .difficulty-text {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     font-weight: 500;
-    color: var(--color-text);
     letter-spacing: 0.02em;
     white-space: nowrap;
+    z-index: 1;
 }
 
-.difficulty-bar {
-    height: 100%;
-    transform-origin: left;
-    will-change: transform;
+/* Easy */
+.easy-difficulty + .difficulty-text {
+    color: var(--color-success-700);
+}
+.difficulty-badge:has(.easy-difficulty) {
+    background-color: var(--color-success-50);
+    border-color: var(--color-success-200);
 }
 
-.easy-difficulty {
-    background-color: var(--color-success);
+/* Medium */
+.medium-difficulty + .difficulty-text {
+    color: var(--color-warning-700);
+}
+.difficulty-badge:has(.medium-difficulty) {
+    background-color: var(--color-warning-50);
+    border-color: var(--color-warning-200);
 }
 
-.medium-difficulty {
-    background-color: var(--color-warning);
+/* Hard */
+.hard-difficulty + .difficulty-text {
+    color: var(--color-error-700);
+}
+.difficulty-badge:has(.hard-difficulty) {
+    background-color: var(--color-error-50);
+    border-color: var(--color-error-200);
 }
 
-.hard-difficulty {
-    background-color: var(--color-alert);
+/* Very Hard */
+.very-hard-difficulty + .difficulty-text {
+    color: var(--color-error-800);
+}
+.difficulty-badge:has(.very-hard-difficulty) {
+    background-color: var(--color-error-100);
+    border-color: var(--color-error-300);
 }
 
-.very-hard-difficulty {
-    background-color: var(--color-error);
+/* Unknown */
+.unknown-difficulty + .difficulty-text {
+    color: var(--color-secondary-600);
+}
+.difficulty-badge:has(.unknown-difficulty) {
+    background-color: var(--color-secondary-50);
+    border-color: var(--color-secondary-200);
 }
 
-.unknown-difficulty {
-    background-color: var(--color-secondary);
+/* Dark mode adjustments */
+:root[data-color-mode="dark"] .difficulty-badge {
+    background-color: var(--color-surface);
 }
 
-.difficulty-text {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+:root[data-color-mode="dark"] .easy-difficulty + .difficulty-text {
+    color: var(--color-success-400);
+}
+:root[data-color-mode="dark"] .difficulty-badge:has(.easy-difficulty) {
+    background-color: var(--color-success-950);
+    border-color: var(--color-success-700);
+}
+
+:root[data-color-mode="dark"] .medium-difficulty + .difficulty-text {
+    color: var(--color-warning-400);
+}
+:root[data-color-mode="dark"] .difficulty-badge:has(.medium-difficulty) {
+    background-color: var(--color-warning-950);
+    border-color: var(--color-warning-700);
+}
+
+:root[data-color-mode="dark"] .hard-difficulty + .difficulty-text {
+    color: var(--color-error-400);
+}
+:root[data-color-mode="dark"] .difficulty-badge:has(.hard-difficulty) {
+    background-color: var(--color-error-950);
+    border-color: var(--color-error-700);
+}
+
+:root[data-color-mode="dark"] .very-hard-difficulty + .difficulty-text {
+    color: var(--color-error-300);
+}
+:root[data-color-mode="dark"] .difficulty-badge:has(.very-hard-difficulty) {
+    background-color: var(--color-error-950);
+    border-color: var(--color-error-600);
+}
+
+:root[data-color-mode="dark"] .unknown-difficulty + .difficulty-text {
+    color: var(--color-secondary-400);
+}
+:root[data-color-mode="dark"] .difficulty-badge:has(.unknown-difficulty) {
+    background-color: var(--color-secondary-950);
+    border-color: var(--color-secondary-700);
 }
 
 @media (max-width: 640px) {
     .difficulty-badge {
-        min-width: 3rem;
+        min-width: 4.5rem;
     }
     .difficulty-text {
-        font-size: 0.6rem;
+        font-size: 0.7rem;
     }
 }
 </style>

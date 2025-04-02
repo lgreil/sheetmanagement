@@ -4,12 +4,16 @@ export default defineNuxtConfig({
     head: {
       link: [
         { rel: "icon", type: "image/x-icon", href: "/img/favicon.ico" },
-        // Preload fonts if any
+        // Preload fonts
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",
           href: "https://fonts.gstatic.com",
           crossorigin: "",
+        },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
         },
       ],
     },
@@ -26,22 +30,50 @@ export default defineNuxtConfig({
     payloadExtraction: true,
   },
   modules: [
-    "@nuxt/ui",
-    "@nuxtjs/color-mode",
-    "@formkit/auto-animate",
-    "@nuxt/image",
+    '@nuxt/ui',
+    '@formkit/auto-animate',
+    '@nuxt/image',
   ],
   colorMode: {
-    preference: "system", // default value of $colorMode.preference
-    fallback: "light", // fallback value if the system preference can't be detected
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light',
     hid: "nuxt-color-mode-script",
     globalName: "__NUXT_COLOR_MODE__",
     componentName: "ColorScheme",
     classPrefix: "",
-    classSuffix: "-mode",
     storageKey: "nuxt-color-mode",
   },
-  css: ["~/assets/css/main.css"],
+  ui: {
+    global: true,
+    icons: ['heroicons', 'lucide'],
+    colors: ['primary', 'secondary', 'accent', 'success', 'warning', 'error', 'info'],
+    primary: 'blue',
+    secondary: 'slate',
+    accent: 'emerald',
+    gray: 'slate',
+    notifications: {
+      // Notification system configuration
+      position: 'top-right',
+      duration: 5000,
+    },
+    button: {
+      default: {
+        size: 'md',
+        color: 'primary',
+        variant: 'solid',
+      },
+    },
+    input: {
+      default: {
+        size: 'md',
+        color: 'primary',
+      },
+    },
+  },
+  css: [
+    '~/assets/css/main.css'
+  ],
   components: {
     dirs: ["~/components", "~/components/MusicTable"],
   },

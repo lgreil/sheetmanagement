@@ -52,55 +52,44 @@ const { isDigitized, showLabel } = toRefs(props);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-family:
-        system-ui,
-        -apple-system,
-        sans-serif;
 }
 
 .digital-indicator {
-    display: block;
-    width: 0.625rem;
-    height: 0.625rem;
+    display: flex;
+    width: 0.5rem;
+    height: 0.5rem;
     border-radius: 50%;
     flex-shrink: 0;
-    transition: all 150ms ease-in-out;
-    will-change: transform, background-color, box-shadow;
+    transition: all 200ms ease;
+    position: relative;
+    border: 1px solid;
 }
 
 .digital-available {
-    background-color: var(--color-accent);
-    box-shadow: 0 0 4px rgba(16, 185, 129, 0.4);
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    background-color: var(--color-success-100);
+    border-color: var(--color-success-300);
 }
 
 .digital-indicator:not(.digital-available) {
-    background-color: var(--color-secondary);
-}
-
-@keyframes pulse {
-    0% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
-    }
-    50% {
-        box-shadow: 0 0 0 4px rgba(16, 185, 129, 0);
-    }
-    100% {
-        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
-    }
+    background-color: var(--color-secondary-100);
+    border-color: var(--color-secondary-300);
 }
 
 .digital-label {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 500;
-    color: var(--color-muted-text);
+    color: var(--color-text);
     white-space: nowrap;
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .digital-available {
-        animation: none;
-        box-shadow: 0 0 2px rgba(16, 185, 129, 0.5);
-    }
+/* Dark mode adjustments */
+:root[data-color-mode="dark"] .digital-available {
+    background-color: var(--color-success-900);
+    border-color: var(--color-success-600);
+}
+
+:root[data-color-mode="dark"] .digital-indicator:not(.digital-available) {
+    background-color: var(--color-secondary-900);
+    border-color: var(--color-secondary-600);
 }
 </style>

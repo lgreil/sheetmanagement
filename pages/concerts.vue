@@ -274,11 +274,18 @@ const showAllEvents = () => {
 </script>
 
 <style scoped>
-.calendar-event {
-    @apply text-xs truncate;
+.event-name {
+    font-size: 0.75rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.calendar-event:hover {
-    @apply bg-gray-100 dark:bg-gray-800;
+.event-container {
+    background-color: var(--color-background);
+}
+
+html.dark .event-container {
+    background-color: var(--color-surface);
 }
 </style>

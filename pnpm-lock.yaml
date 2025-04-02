@@ -38,6 +38,9 @@ importers:
       nuxt:
         specifier: latest
         version: 3.16.2(@parcel/watcher@2.5.1)(@types/node@22.13.10)(better-sqlite3@11.8.1)(db0@0.3.1(better-sqlite3@11.8.1))(ioredis@5.6.0)(lightningcss@1.29.2)(magicast@0.3.5)(rollup@4.39.0)(terser@5.39.0)(typescript@5.8.2)(vite@6.2.4(@types/node@22.13.10)(jiti@2.4.2)(lightningcss@1.29.2)(terser@5.39.0)(yaml@2.7.1))(yaml@2.7.1)
+      tailwindcss:
+        specifier: ^4.1.1
+        version: 4.1.1
       valibot:
         specifier: ^1.0.0
         version: 1.0.0(typescript@5.8.2)

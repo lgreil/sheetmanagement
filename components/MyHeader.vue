@@ -165,9 +165,7 @@ const userMenuItems = computed(() => [
     font-size: 0.9rem;
     font-weight: 500;
     color: var(--color-muted-text);
-    transition:
-        color 200ms ease,
-        transform 200ms ease;
+    transition: color 200ms ease, transform 200ms ease;
     position: relative;
     padding: 0.5rem 0.25rem;
 }

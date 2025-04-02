@@ -25,7 +25,12 @@
                     <MusicTableContainer
                         :pieces="pieces"
                         :loading="loading"
+                        :total-items="totalItems"
+                        :page-size="pageSize"
+                        :page-index="pageIndex"
                         @update:loading="loading = $event"
+                        @update:page-size="pageSize = $event"
+                        @update:page-index="pageIndex = $event"
                         @piece-click="(piece) => navigateToPieceOverview(piece.stid)"
                     />
                 </template>
@@ -55,7 +60,7 @@ import { useRouter } from "#app";
 import { onMounted } from "vue";
 
 const router = useRouter();
-const { pieces, loading, error, fetchPieces } = useMusicData();
+const { pieces, loading, error, fetchPieces, totalItems, pageSize, pageIndex } = useMusicData();
 
 // Initialize data loading
 onMounted(async () => {
