@@ -47,6 +47,9 @@
                                     placeholder="e.g. Symphony No. 5"
                                     icon="i-heroicons-document-text"
                                 />
+                                <span class="field-help"
+                                    >Enter the complete title of the piece</span
+                                >
                             </UFormGroup>
 
                             <UFormGroup
@@ -566,7 +569,6 @@ const yearOptions = Array.from({ length: currentYear - 1000 + 1 }, (_, i) => ({
     gap: 1rem;
     margin-top: 2rem;
 }
-
 @media (max-width: 768px) {
     .composer-inputs,
     .arranger-inputs {

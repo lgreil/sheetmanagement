@@ -188,6 +188,7 @@ const tooltipText = computed(() => `Difficulty Level: ${displayText.value}`);
 :root[data-color-mode="dark"] .difficulty-badge:has(.unknown-difficulty) {
     background-color: var(--color-secondary-950);
     border-color: var(--color-secondary-700);
+
 }
 
 @media (max-width: 640px) {

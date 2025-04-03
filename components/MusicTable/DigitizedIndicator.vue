@@ -52,6 +52,10 @@ const { isDigitized, showLabel } = toRefs(props);
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
 }
 
 .digital-indicator {

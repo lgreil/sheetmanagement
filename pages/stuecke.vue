@@ -18,7 +18,6 @@
                 Add New Piece
             </UButton>
         </div>
-
         <ClientOnly>
             <Suspense>
                 <template #default>
@@ -39,6 +38,7 @@
                 </template>
             </Suspense>
         </ClientOnly>
+
 
         <UAlert
             v-if="error"
