@@ -1,19 +1,19 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
   app: {
     head: {
-      pageTransition: { name: "page", mode: "out-in" },
-      layoutTransition: { name: "layout", mode: "out-in" },
       link: [
         { rel: "icon", type: "image/x-icon", href: "/img/favicon.ico" },
-        // Preload fonts if any
+        // Preload fonts
         { rel: "preconnect", href: "https://fonts.googleapis.com" },
         {
           rel: "preconnect",
           href: "https://fonts.gstatic.com",
           crossorigin: "",
+        },
+        {
+          rel: "stylesheet",
+          href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
         },
       ],
     },
@@ -26,46 +26,54 @@ export default defineNuxtConfig({
     },
   },
   experimental: {
-    // Enable inlined styles
-    inlineSSRStyles: true,
     // Improve initial page load
     payloadExtraction: true,
   },
-  vite: {
-    plugins: [tailwindcss()],
-    // Optimize CSS loading
-    build: {
-      cssCodeSplit: true,
-      cssMinify: true,
-    },
-  },
   modules: [
-    "@nuxt/ui",
-    "@nuxtjs/color-mode",
-    "@nuxt/test-utils/module",
-    "@formkit/auto-animate",
-    "@nuxt/image",
+    '@nuxt/ui',
+    '@formkit/auto-animate',
+    '@nuxt/image',
   ],
   colorMode: {
-    preference: "system", // default value of $colorMode.preference
-    fallback: "light", // fallback value if the system preference can't be detected
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light',
     hid: "nuxt-color-mode-script",
     globalName: "__NUXT_COLOR_MODE__",
     componentName: "ColorScheme",
     classPrefix: "",
-    classSuffix: "-mode",
     storageKey: "nuxt-color-mode",
   },
-  css: ["~/assets/css/main.css"],
-  tailwindcss: {
-    cssPath: "~/assets/css/main.css",
-    configPath: "tailwind.config.ts",
-    viewer: true,
-    // Add exposeConfig for better optimization
-    exposeConfig: true,
-    // Enable JIT mode for faster compilation
-    jit: true,
+  ui: {
+    global: true,
+    icons: ['heroicons', 'lucide'],
+    colors: ['primary', 'secondary', 'accent', 'success', 'warning', 'error', 'info'],
+    primary: 'blue',
+    secondary: 'slate',
+    accent: 'emerald',
+    gray: 'slate',
+    notifications: {
+      // Notification system configuration
+      position: 'top-right',
+      duration: 5000,
+    },
+    button: {
+      default: {
+        size: 'md',
+        color: 'primary',
+        variant: 'solid',
+      },
+    },
+    input: {
+      default: {
+        size: 'md',
+        color: 'primary',
+      },
+    },
   },
+  css: [
+    '~/assets/css/main.css'
+  ],
   components: {
     dirs: ["~/components", "~/components/MusicTable"],
   },
@@ -74,8 +82,5 @@ export default defineNuxtConfig({
       dev: process.env.NODE_ENV === "development",
       API_URL: process.env.API_URL || "http://localhost:3000",
     },
-  },
-  ui: {
-    icons: ["heroicons"],
   },
 });

@@ -16,8 +16,8 @@
                     class="text-lg"
                     :class="
                         colorMode.value === 'light'
-                            ? 'text-primary-500'
-                            : 'text-accent-500'
+                            ? 'text-[var(--color-primary)]'
+                            : 'text-[var(--color-accent)]'
                     "
                 />
             </transition>

@@ -37,47 +37,85 @@ const tooltipText = computed(() => `Genre: ${displayText.value}`);
 
 <style scoped>
 .genre-badge {
-    display: inline-block;
-    padding: 0.25rem 0.5rem;
-    border-radius: 0.25rem;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    border-radius: 4px;
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--color-text);
-    background-color: var(--color-surface);
-    border: 1px solid var(--color-border);
+    transition: all 200ms ease;
+    white-space: nowrap;
 }
 
-.genre-badge-traditionell {
-    background-color: var(--color-primary);
-}
+/* Classical Music Family */
 .genre-badge-klassik {
-    background-color: var(--color-secondary);
+    color: var(--color-primary-700);
+    background-color: var(--color-primary-50);
+    border-left: 3px solid var(--color-primary-500);
 }
+
 .genre-badge-barock {
-    background-color: var(--color-accent);
+    color: var(--color-primary-700);
+    background-color: var(--color-primary-50);
+    border-left: 3px solid var(--color-primary-600);
 }
+
 .genre-badge-moderne-klassik {
-    background-color: var(--color-primary);
-    opacity: 0.8;
+    color: var(--color-primary-700);
+    background-color: var(--color-primary-50);
+    border-left: 3px solid var(--color-primary-400);
 }
+
 .genre-badge-romantik {
-    background-color: var(--color-secondary);
-    opacity: 0.8;
+    color: var(--color-primary-700);
+    background-color: var(--color-primary-50);
+    border-left: 3px solid var(--color-primary-300);
 }
+
+/* Traditional & Folk */
+.genre-badge-traditionell {
+    color: var(--color-secondary-700);
+    background-color: var(--color-secondary-50);
+    border-left: 3px solid var(--color-secondary-500);
+}
+
+/* Entertainment Music */
 .genre-badge-musicals {
-    background-color: var(--color-accent);
-    opacity: 0.8;
+    color: var(--color-success-700);
+    background-color: var(--color-success-50);
+    border-left: 3px solid var(--color-success-500);
 }
-.genre-badge-pop-rock-modern {
-    background-color: var(--color-primary);
-    opacity: 0.6;
-}
-.genre-badge-weihnachtsmusik {
-    background-color: var(--color-secondary);
-    opacity: 0.6;
-}
+
 .genre-badge-filmmusik {
-    background-color: var(--color-accent);
-    opacity: 0.6;
+    color: var(--color-success-700);
+    background-color: var(--color-success-50);
+    border-left: 3px solid var(--color-success-400);
+}
+
+/* Modern Music */
+.genre-badge-pop-rock-modern {
+    color: var(--color-warning-700);
+    background-color: var(--color-warning-50);
+    border-left: 3px solid var(--color-warning-500);
+}
+
+/* Seasonal */
+.genre-badge-weihnachtsmusik {
+    color: var(--color-error-700);
+    background-color: var(--color-error-50);
+    border-left: 3px solid var(--color-error-500);
+}
+
+/* Default for unknown genres */
+.genre-badge:not([class*="genre-badge-"]) {
+    color: var(--color-secondary-700);
+    background-color: var(--color-secondary-50);
+    border-left: 3px solid var(--color-secondary-400);
+}
+
+/* Hover effect */
+.genre-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 </style>

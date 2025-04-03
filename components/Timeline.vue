@@ -111,14 +111,11 @@ function formatDate(dateString: string) {
 
 // Updated timeline colors to match the new color scheme
 const colorClasses = {
-    primary: { base: "bg-[var(--color-primary)]", light: "bg-[#93c5fd]" }, // Blue
-    accent: { base: "bg-[var(--color-accent)]", light: "bg-[#6ee7b7]" }, // Emerald
-    warning: { base: "bg-[var(--color-warning)]", light: "bg-[#fcd34d]" }, // Amber
-    highlight: { base: "bg-[var(--color-highlight)]", light: "bg-[#c4b5fd]" }, // Violet
-    highlight2: {
-        base: "bg-[var(--color-highlight-2)]",
-        light: "bg-[#f9a8d4]",
-    },
+    primary: { base: "bg-[var(--color-primary)]", light: "bg-[var(--color-primary)]/30" },
+    accent: { base: "bg-[var(--color-accent)]", light: "bg-[var(--color-accent)]/30" },
+    warning: { base: "bg-[var(--color-warning)]", light: "bg-[var(--color-warning)]/30" },
+    highlight: { base: "bg-[var(--color-highlight)]", light: "bg-[var(--color-highlight)]/30" },
+    highlight2: { base: "bg-[var(--color-highlight-2)]", light: "bg-[var(--color-highlight-2)]/30" },
 };
 
 function getMarkerClass(index: number) {
