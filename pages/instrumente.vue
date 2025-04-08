@@ -8,23 +8,17 @@
                 variant="solid"
                 class="mb-6"
             >
-                Since we are currently focusing on other parts of the App this
-                will not be implemented for quite a while.
+                Since we are currently focusing on other parts of the App this will not be implemented for quite a while.
             </UAlert>
 
             <h1 class="text-4xl font-bold text-[--color-text]">
                 🎻 Instrument Inventory 🎻
             </h1>
             <p class="text-xl text-[--color-text] mt-4">
-                <strong
-                    >Manage and track your orchestra's instruments with
-                    ease</strong
-                >
+                <strong>Manage and track your orchestra's instruments with ease</strong>
             </p>
             <p class="text-lg text-[--color-muted-text] mt-2">
-                Keep an organized record of all instruments, their conditions,
-                and assignments. Ensure your orchestra is always ready for
-                rehearsals and performances.
+                Keep an organized record of all instruments, their conditions, and assignments. Ensure your orchestra is always ready for rehearsals and performances.
             </p>
 
             <div class="mt-6">
@@ -35,19 +29,9 @@
                     class="list-none mt-3 space-y-2 text-lg text-[--color-muted-text]"
                     v-auto-animate="{ duration: 100 }"
                 >
-                    <li>
-                        🎺 <strong>Track Instrument Conditions</strong> -
-                        Monitor the condition and maintenance status of each
-                        instrument.
-                    </li>
-                    <li>
-                        🎷 <strong>Assign Instruments</strong> - Easily assign
-                        instruments to musicians and keep track of their usage.
-                    </li>
-                    <li>
-                        🎸 <strong>Inventory Management</strong> - Maintain a
-                        comprehensive inventory of all instruments.
-                    </li>
+                    <li>🎺 Track Instrument Conditions - Monitor the condition and maintenance status of each instrument.</li>
+                    <li>🎷 Assign Instruments - Easily assign instruments to musicians and keep track of their usage.</li>
+                    <li>🎸 Inventory Management - Maintain a comprehensive inventory of all instruments.</li>
                 </ul>
             </div>
 
@@ -56,10 +40,7 @@
                     🔹 Our Commitment:
                 </h3>
                 <p class="text-lg text-[--color-muted-text] mt-2">
-                    We are dedicated to providing a seamless instrument
-                    management experience for orchestras and ensembles. Our
-                    system is designed to help you focus on making music, not
-                    managing equipment.
+                    We are dedicated to providing a seamless instrument management experience for orchestras and ensembles. Our system is designed to help you focus on making music, not managing equipment.
                 </p>
             </div>
 

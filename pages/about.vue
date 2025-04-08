@@ -5,15 +5,10 @@
                 About Bachkreis-Sheetmanagement
             </h1>
             <p class="text-xl text-[--color-text] mt-4">
-                <strong
-                    >Passionate about simplifying sheet music management</strong
-                >
+                <strong>Passionate about simplifying sheet music management</strong>
             </p>
             <p class="text-lg text-[--color-muted-text] mt-2">
-                Bachkreis-Sheetmanagement is a hobby project created to help
-                orchestras and ensembles effortlessly organize, search, and
-                access sheet music. Built with Nuxt.js, it aims to streamline
-                your music management experience.
+                Bachkreis-Sheetmanagement is a hobby project created to help orchestras and ensembles effortlessly organize, search, and access sheet music. Built with Nuxt.js, it aims to streamline your music management experience.
             </p>
 
             <div class="mt-6">
@@ -23,18 +18,9 @@
                 <ul
                     class="list-none mt-3 space-y-2 text-lg text-[--color-muted-text]"
                 >
-                    <li>
-                        🎼 <strong>Find & Manage Pieces</strong> - Easily search
-                        and organize your sheet music collection.
-                    </li>
-                    <li>
-                        🎻 <strong>Assign Parts with Ease</strong> - Quickly
-                        assign parts to musicians.
-                    </li>
-                    <li>
-                        🎶 <strong>Streamline Rehearsals</strong> - Efficiently
-                        plan and manage rehearsals.
-                    </li>
+                    <li>🎼 Find & Manage Pieces - Easily search and organize your sheet music collection.</li>
+                    <li>🎻 Assign Parts with Ease - Quickly assign parts to musicians.</li>
+                    <li>🎶 Streamline Rehearsals - Efficiently plan and manage rehearsals.</li>
                 </ul>
             </div>
 
@@ -43,11 +29,7 @@
                     🔹 Our Vision:
                 </h3>
                 <p class="text-lg text-[--color-muted-text] mt-2">
-                    We envision a world where managing sheet music is a breeze,
-                    allowing musicians to focus on what they do best - creating
-                    beautiful music. Bachkreis-Sheetmanagement is constantly
-                    evolving, with new features and improvements being developed
-                    to better serve the music community.
+                    We envision a world where managing sheet music is a breeze, allowing musicians to focus on what they do best - creating beautiful music. Bachkreis-Sheetmanagement is constantly evolving, with new features and improvements being developed to better serve the music community.
                 </p>
             </div>
 
@@ -56,9 +38,7 @@
                     🔹 Get Involved:
                 </h3>
                 <p class="text-lg text-[--color-muted-text] mt-2">
-                    We welcome feedback and contributions from the community. If
-                    you have ideas, suggestions, or would like to contribute to
-                    the project, please get in touch with us.
+                    We welcome feedback and contributions from the community. If you have ideas, suggestions, or would like to contribute to the project, please get in touch with us.
                 </p>
                 <NuxtLink
                     to="/contact"

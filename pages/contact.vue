@@ -6,9 +6,7 @@
             </h2>
 
             <p class="text-lg text-[--color-text] mb-8">
-                Be part of our growing community dedicated to innovation and
-                collaboration. We're building something special, and your
-                perspective matters.
+                Be part of our growing community dedicated to innovation and collaboration
             </p>
 
             <div
@@ -21,9 +19,7 @@
                     Get Involved
                 </h3>
                 <p class="text-lg text-[--color-muted-text] mt-3">
-                    We welcome feedback and contributions from the community. If
-                    you have ideas, suggestions, or would like to contribute to
-                    the project, please get in touch with us.
+                    We welcome feedback and contributions from the community. If you have ideas, suggestions, or would like to contribute to the project, please get in touch with us.
                 </p>
                 <NuxtLink
                     to="/contact"

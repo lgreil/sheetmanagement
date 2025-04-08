@@ -8,9 +8,7 @@
                 <strong>Your all-in-one sheet music management system</strong>
             </p>
             <p class="text-lg text-[--color-muted-text] mt-2">
-                Effortlessly organize, search, and access your orchestra's sheet
-                music. From classical masterpieces to modern arrangements, keep
-                everything at your fingertips.
+                Effortlessly organize, search, and access your orchestra's sheet music. From classical masterpieces to modern arrangements, keep everything at your fingertips.
             </p>
 
             <div class="mt-6">
@@ -20,9 +18,9 @@
                 <ul
                     class="list-none mt-3 space-y-2 text-lg text-[--color-muted-text]"
                 >
-                    <li>🎼 <strong>Find & Manage Pieces</strong></li>
-                    <li>🎻 <strong>Assign Parts with Ease</strong></li>
-                    <li>🎶 <strong>Streamline Rehearsals</strong></li>
+                    <li>🎼 Find & Manage Pieces</li>
+                    <li>🎻 Assign Parts with Ease</li>
+                    <li>🎶 Streamline Rehearsals</li>
                 </ul>
             </div>
 

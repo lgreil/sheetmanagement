@@ -15,6 +15,8 @@
     "@iconify/vue": "^4.3.0",
     "@nuxt/ui": "^3.0.2",
     "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/i18n": "^9.5.3",
+    "@pinia/nuxt": "^0.10.1",
     "@tanstack/table-core": "^8.21.2",
     "@tanstack/vue-table": "^8.21.2",
     "@vueuse/core": "^13.0.0",
@@ -40,6 +42,7 @@
     "autoprefixer": "^10.4.21",
     "happy-dom": "^17.4.4",
     "playwright-core": "^1.51.1",
+    "vite-tsconfig-paths": "^5.1.4",
     "vitest": "^3.1.1"
   }
 }
