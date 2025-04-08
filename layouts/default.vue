@@ -12,8 +12,7 @@
             <div class="container mx-auto px-4 text-center">
                 <div class="text-[--color-muted-text] text-sm">
                     <p class="opacity-80">
-                        &copy; 2025 Bachkreis-Sheetmanagement. All rights
-                        reserved.
+                        © 2025 Bachkreis-Sheetmanagement. All rights reserved.
                     </p>
                     <div class="mt-2">
                         <NuxtLink

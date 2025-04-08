@@ -31,7 +31,6 @@ export default defineNuxtConfig({
   },
   modules: [
     '@nuxt/ui',
-    '@nuxtjs/i18n',
     '@nuxtjs/color-mode',
     '@nuxt/image',
   ],
@@ -83,15 +82,5 @@ export default defineNuxtConfig({
       dev: process.env.NODE_ENV === "development",
       API_URL: process.env.API_URL || "http://localhost:3000",
     },
-  },
-  i18n: {
-    defaultLocale: 'de',
-    locales: [{
-      code: 'de',
-      name: 'Deutsch',
-    }, {
-      code: 'en',
-      name: 'English',
-    }]
   },
 });

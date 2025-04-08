@@ -22,13 +22,9 @@
                     >
                 </NuxtLink>
                 <nav class="hidden md:flex items-center space-x-6 ml-2">
-                    <NuxtLink to="/concerts" class="nav-link"
-                        >Concerts</NuxtLink
-                    >
-                    <NuxtLink to="/stuecke" class="nav-link">Stücke</NuxtLink>
-                    <NuxtLink to="/instrumente" class="nav-link"
-                        >Instrumente</NuxtLink
-                    >
+                    <NuxtLink to="/concerts" class="nav-link">Concerts</NuxtLink>
+                    <NuxtLink to="/stuecke" class="nav-link">Pieces</NuxtLink>
+                    <NuxtLink to="/instrumente" class="nav-link">Instruments</NuxtLink>
                     <NuxtLink to="/about" class="nav-link">About</NuxtLink>
                     <NuxtLink to="/contact" class="nav-link">Contact</NuxtLink>
                 </nav>
@@ -108,21 +104,11 @@
                     class="border-t mt-0 rounded-b-lg shadow-lg bg-[var(--color-surface)]"
                 >
                     <nav class="px-4 py-3 space-y-1">
-                        <NuxtLink to="/concerts" class="mobile-nav-link"
-                            >Concerts</NuxtLink
-                        >
-                        <NuxtLink to="/stuecke" class="mobile-nav-link"
-                            >Stücke</NuxtLink
-                        >
-                        <NuxtLink to="/instrumente" class="mobile-nav-link"
-                            >Instrumente</NuxtLink
-                        >
-                        <NuxtLink to="/about" class="mobile-nav-link"
-                            >About</NuxtLink
-                        >
-                        <NuxtLink to="/contact" class="mobile-nav-link"
-                            >Contact</NuxtLink
-                        >
+                        <NuxtLink to="/concerts" class="mobile-nav-link">Concerts</NuxtLink>
+                        <NuxtLink to="/stuecke" class="mobile-nav-link">Pieces</NuxtLink>
+                        <NuxtLink to="/instrumente" class="mobile-nav-link">Instruments</NuxtLink>
+                        <NuxtLink to="/about" class="mobile-nav-link">About</NuxtLink>
+                        <NuxtLink to="/contact" class="mobile-nav-link">Contact</NuxtLink>
                     </nav>
                 </UCard>
             </div>
@@ -132,9 +118,11 @@
 
 <script setup lang="ts">
 import { useAuth } from "~/composables/useAuth";
+import { useRouter } from "vue-router";
 
 const { menuOpen, toggleMenu } = useMenu();
 const auth = useAuth();
+const router = useRouter();
 
 // This is kept for potential future use
 const userMenuItems = computed(() => [
