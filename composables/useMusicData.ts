@@ -14,7 +14,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "easy",
     isdigitalisiert: null,
     arrangiert: [],
-    komponiert: []
+    komponiert: [],
   },
   {
     stid: 2,
@@ -24,7 +24,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "hard",
     isdigitalisiert: true,
     arrangiert: [{ pid: 2, vorname: "Michael", name: "Story" }],
-    komponiert: [{ pid: 1, vorname: "Michael", name: "Jackson" }]
+    komponiert: [{ pid: 1, vorname: "Michael", name: "Jackson" }],
   },
   {
     stid: 5,
@@ -34,7 +34,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: null,
     isdigitalisiert: true,
     arrangiert: [{ pid: 6, vorname: "Richard", name: "Meyer" }],
-    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }]
+    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }],
   },
   {
     stid: 8,
@@ -44,7 +44,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: null,
     isdigitalisiert: true,
     arrangiert: [{ pid: 11, vorname: "Keith", name: "Christopher" }],
-    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }]
+    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }],
   },
   {
     stid: 14,
@@ -54,7 +54,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: null,
     isdigitalisiert: true,
     arrangiert: [{ pid: 20, vorname: "Ted", name: "Ricketts" }],
-    komponiert: [{ pid: 19, vorname: "Stephen", name: "Schwartz" }]
+    komponiert: [{ pid: 19, vorname: "Stephen", name: "Schwartz" }],
   },
   {
     stid: 21,
@@ -64,7 +64,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: null,
     isdigitalisiert: true,
     arrangiert: [{ pid: 29, vorname: "John", name: "Whitney" }],
-    komponiert: [{ pid: 28, vorname: "Howard", name: "Shore" }]
+    komponiert: [{ pid: 28, vorname: "Howard", name: "Shore" }],
   },
   {
     stid: 32,
@@ -74,7 +74,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "medium",
     isdigitalisiert: true,
     arrangiert: [],
-    komponiert: [{ pid: 42, vorname: "Antonio", name: "Vivaldi" }]
+    komponiert: [{ pid: 42, vorname: "Antonio", name: "Vivaldi" }],
   },
   {
     stid: 43,
@@ -84,7 +84,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "test",
     isdigitalisiert: true,
     arrangiert: [{ pid: 51, vorname: "Ted", name: "Parson" }],
-    komponiert: [{ pid: 50, vorname: "Hans", name: "Zimmer" }]
+    komponiert: [{ pid: 50, vorname: "Hans", name: "Zimmer" }],
   },
   {
     stid: 62,
@@ -94,7 +94,7 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "very hard",
     isdigitalisiert: true,
     arrangiert: [{ pid: 67, vorname: "Paul", name: "Murtha" }],
-    komponiert: [{ pid: 66, vorname: "the", name: "White Stripes" }]
+    komponiert: [{ pid: 66, vorname: "the", name: "White Stripes" }],
   },
   {
     stid: 89,
@@ -104,8 +104,8 @@ const dummyMusicData: Piece[] = [
     schwierigkeit: "very easy",
     isdigitalisiert: true,
     arrangiert: [{ pid: 90, vorname: "Barbara", name: "Fritsch" }],
-    komponiert: [{ pid: 15, vorname: "J. S.", name: "Bach" }]
-  }
+    komponiert: [{ pid: 15, vorname: "J. S.", name: "Bach" }],
+  },
 ];
 
 interface PaginatedResponse<T> {
@@ -142,7 +142,7 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
 
     try {
       const apiUrl = config.public.API_URL;
-      console.log('API URL:', apiUrl); // Debug log
+      console.log("API URL:", apiUrl); // Debug log
 
       if (!apiUrl) {
         console.info("No API URL configured, using dummy data");
@@ -156,7 +156,7 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
 
       const cacheKey = getFetchCacheKey(pageIndex.value, pageSize.value);
       const cached = fetchCache.value[cacheKey];
-      
+
       // Check if we have a valid cached response (less than 5 minutes old)
       if (cached && Date.now() - cached.timestamp < 5 * 60 * 1000) {
         pieces.value = cached.data.data;
@@ -166,42 +166,43 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
         return;
       }
 
-      console.log('Fetching from API...'); // Debug log
-      const { data, error: fetchError } = await useFetch<PaginatedResponse<Piece>>(
-        `${apiUrl}/stuecke`,
+      console.log("Fetching from API..."); // Debug log
+
+      // Ensure the API URL is properly formatted
+      const url = apiUrl.endsWith("/")
+        ? `${apiUrl}stuecke`
+        : `${apiUrl}/stuecke`;
+
+      const { data: responseData } = await useFetch<PaginatedResponse<Piece>>(
+        url,
         {
-          immediate: false,
-          lazy: true,
           query: {
             page: pageIndex.value,
             limit: pageSize.value,
           },
-          default: () => ({
-            data: [],
-            meta: { total: 0, page: 1, lastPage: 1, limit: 10 },
-          }),
-        }
+        },
       );
 
-      console.log('API Response:', data.value); // Debug log
+      const response = responseData.value;
+      console.log("API Response:", response); // Debug log
 
-      if (fetchError.value) {
-        throw fetchError.value;
-      }
-
-      if (data.value && Array.isArray(data.value.data) && data.value.data.length > 0) {
-        pieces.value = data.value.data;
-        totalItems.value = data.value.meta.total;
-        lastPage.value = data.value.meta.lastPage;
+      if (
+        response &&
+        Array.isArray(response.data) &&
+        response.data.length > 0
+      ) {
+        pieces.value = response.data;
+        totalItems.value = response.meta.total;
+        lastPage.value = response.meta.lastPage;
 
         // Cache the response
         fetchCache.value[cacheKey] = {
-          data: data.value,
-          timestamp: Date.now()
+          data: response,
+          timestamp: Date.now(),
         };
 
         // Cache the pieces by their ID
-        data.value.data.forEach((piece: Piece) => {
+        response.data.forEach((piece: Piece) => {
           if (piece.stid) {
             pieceCache.value[piece.stid.toString()] = piece;
           }
@@ -243,21 +244,18 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
     }
 
     try {
-      const { data, error: fetchError } = await useFetch<{ data: Piece }>(
-        `${config.public.API_URL}/stuecke/${id}`,
-        {
-          immediate: false,
-          lazy: true,
-        },
-      );
+      // Ensure the API URL is properly formatted
+      const apiUrl = config.public.API_URL;
+      const url = apiUrl.endsWith("/")
+        ? `${apiUrl}stuecke/${id}`
+        : `${apiUrl}/stuecke/${id}`;
 
-      if (fetchError.value) {
-        throw fetchError.value;
-      }
+      const { data } = await useFetch<{ data: Piece }>(url);
+      const response = data.value;
 
-      if (data.value && data.value.data) {
-        pieceCache.value[id] = data.value.data;
-        return data.value.data;
+      if (response && response.data) {
+        pieceCache.value[id] = response.data;
+        return response.data;
       }
     } catch (err) {
       console.error(`Error fetching piece with ID ${id}:`, err);
