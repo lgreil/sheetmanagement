@@ -1,0 +1,136 @@
+{
+    "events": [
+        {
+            "id": "1990-england",
+            "title": "B-Orchester – England",
+            "year": 1990,
+            "type": "concert_tour",
+            "location": "England",
+            "program": [
+                {
+                    "title": "Bratislava"
+                },
+                {
+                    "title": "La Traviata"
+                },
+                {
+                    "composer": "Dittersdorf",
+                    "title": "Minuetto / Finale"
+                },
+                {
+                    "title": "Havah Nagiela"
+                },
+                {
+                    "title": "A Bach Suite"
+                },
+                {
+                    "title": "Bach Minuet"
+                },
+                {
+                    "title": "A Salute to Bach"
+                },
+                {
+                    "title": "Bach Passapied"
+                },
+                {
+                    "title": "South American Overture"
+                },
+                {
+                    "title": "Rumanian Rhapsody"
+                },
+                {
+                    "title": "The Blues"
+                },
+                {
+                    "title": "Great Gate"
+                }
+            ],
+            "collections": [
+                "Konzert Hall",
+                "Orchestra Folio",
+                "O-Transcriptions"
+            ],
+            "additional_pieces": [
+                {
+                    "composer": "Warlock",
+                    "title": "Capriol Suite"
+                },
+                {
+                    "composer": "Händel",
+                    "title": "Allegro & Menuett"
+                },
+                {
+                    "composer": "Küchler",
+                    "title": "Concertino"
+                }
+            ]
+        },
+        {
+            "id": "1997-england",
+            "title": "B-Orchesterfahrt nach England",
+            "start_date": "1997-04-27",
+            "end_date": "1997-05-02",
+            "type": "concert_tour",
+            "location": "England",
+            "program": [
+                {
+                    "composer": "J.S. Bach",
+                    "title": "March: Suite to Bach"
+                },
+                {
+                    "composer": "J.S. Bach",
+                    "title": "Aria: aus Bach Suite"
+                },
+                {
+                    "composer": "Mozart",
+                    "title": "March – Zauberflöte"
+                },
+                {
+                    "composer": "Gluck",
+                    "title": "Einzug der Priester"
+                },
+                {
+                    "composer": "Purcell",
+                    "title": "Rondeau"
+                },
+                {
+                    "composer": "Stone",
+                    "title": "Ash Grove"
+                },
+                {
+                    "composer": "Stone",
+                    "title": "Keltische Tänze"
+                },
+                {
+                    "composer": "Isaac",
+                    "title": "Ouverture Russe"
+                },
+                {
+                    "composer": "Bernstein",
+                    "title": "West Side Story"
+                },
+                {
+                    "composer": "Curzon",
+                    "title": "March of the Bowman"
+                },
+                {
+                    "composer": "Elgar",
+                    "title": "Pomp and Circumstance"
+                },
+                {
+                    "composer": "Fote",
+                    "title": "Blues"
+                },
+                {
+                    "composer": "Gilberti",
+                    "title": "Havah Nagiela"
+                },
+                {
+                    "composer": "Brown",
+                    "title": "Hebraic Dances"
+                }
+            ],
+            "notes": "2. Klarinette"
+        }
+    ]
+}

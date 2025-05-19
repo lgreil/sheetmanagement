@@ -2,8 +2,9 @@ ignoredBuiltDependencies:
   - esbuild
   - sharp
 onlyBuiltDependencies:
-  - '@parcel/watcher'
-  - better-sqlite3
-  - vue-demi
-  - tailwindcss
   - '@nuxt/ui'
+  - '@parcel/watcher'
+  - '@tailwindcss/oxide'
+  - better-sqlite3
+  - tailwindcss
+  - vue-demi
