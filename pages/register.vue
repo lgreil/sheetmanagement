@@ -1,9 +1,9 @@
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 px-6 py-16">
+    <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-teal-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 px-8 py-24">
         <div class="w-full max-w-2xl">
             <!-- Logo and Title -->
             <div class="text-center mb-16">
-                <div class="inline-flex items-center justify-center w-24 h-24 rounded-2xl bg-gradient-to-br from-primary-500 to-primary-600 mb-8 transform hover:scale-105 transition-all duration-300 shadow-xl">
+                <div class="inline-flex items-center justify-center w-28 h-28 rounded-2xl bg-emerald-500 mb-8 shadow-xl shadow-emerald-500/20">
                     <UIcon
                         name="i-heroicons-musical-note-solid"
                         class="text-white text-5xl"
@@ -18,19 +18,19 @@
             </div>
 
             <!-- Register Form -->
-            <UCard class="backdrop-blur-sm bg-white/90 dark:bg-gray-800/90 shadow-2xl border-0 overflow-hidden p-2">
+            <UCard class="backdrop-blur-xl bg-white/90 dark:bg-gray-800/90 shadow-2xl border-0 overflow-hidden p-2">
                 <div class="relative">
                     <!-- Decorative elements -->
-                    <div class="absolute top-0 left-0 w-48 h-48 bg-primary-500/10 rounded-full -translate-x-24 -translate-y-24"></div>
-                    <div class="absolute bottom-0 right-0 w-48 h-48 bg-primary-500/10 rounded-full translate-x-24 translate-y-24"></div>
+                    <div class="absolute top-0 left-0 w-48 h-48 bg-emerald-500/10 rounded-full -translate-x-24 -translate-y-24"></div>
+                    <div class="absolute bottom-0 right-0 w-48 h-48 bg-emerald-500/10 rounded-full translate-x-24 translate-y-24"></div>
 
-                    <form @submit.prevent="handleRegister" class="relative space-y-8 p-6">
+                    <form @submit.prevent="handleRegister" class="relative space-y-8 p-10">
                         <UFormGroup
                             label="Full Name"
                             name="name"
                             required
                             :error="errors.name"
-                            class="mb-6"
+                            class="mb-8"
                         >
                             <UInput
                                 v-model="form.name"
@@ -39,9 +39,9 @@
                                 icon="i-heroicons-user-solid"
                                 size="lg"
                                 :ui="{
-                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 bg-white/50 dark:bg-gray-900/50',
+                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-400/50 bg-white/50 dark:bg-gray-900/50 pl-12 pr-4 py-4 text-base transition-all duration-200',
                                     leading: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4',
-                                    leadingIcon: 'text-primary-500 dark:text-primary-400 h-5 w-5'
+                                    leadingIcon: 'text-emerald-500 dark:text-emerald-400 h-5 w-5'
                                 }"
                             />
                         </UFormGroup>
@@ -51,7 +51,7 @@
                             name="email"
                             required
                             :error="errors.email"
-                            class="mb-6"
+                            class="mb-8"
                         >
                             <UInput
                                 v-model="form.email"
@@ -60,9 +60,9 @@
                                 icon="i-heroicons-envelope-solid"
                                 size="lg"
                                 :ui="{
-                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 bg-white/50 dark:bg-gray-900/50',
+                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-400/50 bg-white/50 dark:bg-gray-900/50 pl-12 pr-4 py-4 text-base transition-all duration-200',
                                     leading: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4',
-                                    leadingIcon: 'text-primary-500 dark:text-primary-400 h-5 w-5'
+                                    leadingIcon: 'text-emerald-500 dark:text-emerald-400 h-5 w-5'
                                 }"
                             />
                         </UFormGroup>
@@ -72,7 +72,7 @@
                             name="password"
                             required
                             :error="errors.password"
-                            class="mb-6"
+                            class="mb-8"
                         >
                             <UInput
                                 v-model="form.password"
@@ -81,9 +81,9 @@
                                 icon="i-heroicons-key-solid"
                                 size="lg"
                                 :ui="{
-                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 bg-white/50 dark:bg-gray-900/50',
+                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-400/50 bg-white/50 dark:bg-gray-900/50 pl-12 pr-12 py-4 text-base transition-all duration-200',
                                     leading: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4',
-                                    leadingIcon: 'text-primary-500 dark:text-primary-400 h-5 w-5'
+                                    leadingIcon: 'text-emerald-500 dark:text-emerald-400 h-5 w-5'
                                 }"
                             >
                                 <template #trailing>
@@ -108,7 +108,7 @@
                             name="confirmPassword"
                             required
                             :error="errors.confirmPassword"
-                            class="mb-6"
+                            class="mb-8"
                         >
                             <UInput
                                 v-model="form.confirmPassword"
@@ -117,9 +117,9 @@
                                 icon="i-heroicons-key-solid"
                                 size="lg"
                                 :ui="{
-                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-primary-500/50 dark:focus:ring-primary-400/50 bg-white/50 dark:bg-gray-900/50',
+                                    base: 'relative block w-full disabled:cursor-not-allowed disabled:opacity-75 focus:outline-none border-0 form-input rounded-xl placeholder-gray-400 dark:placeholder-gray-500 focus:ring-2 focus:ring-emerald-500/50 dark:focus:ring-emerald-400/50 bg-white/50 dark:bg-gray-900/50 pl-12 pr-4 py-4 text-base transition-all duration-200',
                                     leading: 'pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4',
-                                    leadingIcon: 'text-primary-500 dark:text-primary-400 h-5 w-5'
+                                    leadingIcon: 'text-emerald-500 dark:text-emerald-400 h-5 w-5'
                                 }"
                             />
                         </UFormGroup>
@@ -130,7 +130,7 @@
                             block
                             size="lg"
                             :loading="loading"
-                            class="mt-10 rounded-xl bg-gradient-to-r from-primary-600 to-primary-500 hover:from-primary-700 hover:to-primary-600 text-white dark:from-primary-500 dark:to-primary-400 dark:hover:from-primary-600 dark:hover:to-primary-500 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-primary-500/25"
+                            class="mt-12 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white dark:from-emerald-500 dark:to-emerald-400 dark:hover:from-emerald-600 dark:hover:to-emerald-500 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 py-4 text-lg font-medium"
                         >
                             <template #leading>
                                 <UIcon
@@ -141,14 +141,14 @@
                             <span class="text-lg font-semibold">Create Account</span>
                         </UButton>
 
-                        <div class="text-center mt-10">
+                        <div class="text-center mt-12">
                             <p class="text-base text-gray-600 dark:text-gray-400">
                                 Already have an account?
                                 <UButton
                                     color="primary"
                                     variant="link"
                                     :to="{ name: 'login' }"
-                                    class="text-base font-semibold hover:text-primary-600 dark:hover:text-primary-400"
+                                    class="text-base font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
                                 >
                                     Sign in
                                 </UButton>

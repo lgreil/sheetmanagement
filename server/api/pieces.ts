@@ -1,3 +1,4 @@
+import { defineEventHandler, readBody } from 'h3';
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve } from 'path';
 import type { Piece } from '~/types/pieces';
@@ -26,16 +27,16 @@ export default defineEventHandler(async (event) => {
     const method = event.method;
     const pieces = readPieces();
 
-    // GET /api/pieces
+    // GET request - fetch pieces
     if (method === 'GET') {
         return pieces.pieces;
     }
 
-    // POST /api/pieces
+    // POST request - create piece
     if (method === 'POST') {
         const body = await readBody(event);
         const newPiece: Piece = {
-            id: Math.max(0, ...pieces.pieces.map(p => p.id)) + 1,
+            stid: Math.max(0, ...pieces.pieces.map(p => p.stid)) + 1,
             ...body
         };
         pieces.pieces.push(newPiece);
@@ -43,26 +44,25 @@ export default defineEventHandler(async (event) => {
         return newPiece;
     }
 
-    // PUT /api/pieces/:id
+    // PUT request - update piece
     if (method === 'PUT') {
-        const id = parseInt(event.context.params?.id as string);
-        const body = await readBody(event);
-        const index = pieces.pieces.findIndex(p => p.id === id);
+        const { stid, updates } = await readBody(event);
+        const index = pieces.pieces.findIndex(p => p.stid === stid);
         if (index === -1) {
             throw createError({
                 statusCode: 404,
                 message: 'Piece not found'
             });
         }
-        pieces.pieces[index] = { ...pieces.pieces[index], ...body };
+        pieces.pieces[index] = { ...pieces.pieces[index], ...updates };
         writePieces(pieces);
         return pieces.pieces[index];
     }
 
-    // DELETE /api/pieces/:id
+    // DELETE request - delete piece
     if (method === 'DELETE') {
-        const id = parseInt(event.context.params?.id as string);
-        const index = pieces.pieces.findIndex(p => p.id === id);
+        const { stid } = await readBody(event);
+        const index = pieces.pieces.findIndex(p => p.stid === stid);
         if (index === -1) {
             throw createError({
                 statusCode: 404,
@@ -73,4 +73,9 @@ export default defineEventHandler(async (event) => {
         writePieces(pieces);
         return { success: true };
     }
+
+    throw createError({
+        statusCode: 405,
+        message: 'Method not allowed'
+    });
 });

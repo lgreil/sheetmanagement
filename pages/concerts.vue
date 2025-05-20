@@ -37,7 +37,7 @@
             <div class="grid md:grid-cols-4 gap-6">
                 <UCard class="md:col-span-3">
                     <UCalendar
-                        v-model="calendarDate"
+                        v-model="calendarDate as any"
                         :fixed-weeks="true"
                         class="rounded-lg shadow-sm"
                         color="primary"
@@ -51,7 +51,7 @@
                                 <div class="absolute bottom-0 left-0 right-0 p-1">
                                     <template v-for="event in getEventsForDate(day)" :key="event.id">
                                         <div class="flex items-center gap-1 py-0.5 px-1 rounded-sm hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer transition-colors"
-                                            @click="showEventDetails(event)">
+                                            @click="selectedEvent = event; showEditEventModal = true">
                                             <UBadge :color="event.color" size="xs" />
                                             <span class="font-semibold text-xs truncate">{{ event.name }}</span>
                                             <span class="text-xs text-gray-500 dark:text-gray-400">
@@ -83,7 +83,7 @@
                             <USeparator size="lg" />
                             <template v-if="upcomingEvents.length">
                                 <div
-                                    v-for="(event, index) in upcomingEvents"
+                                    v-for="event in upcomingEvents"
                                     :key="event.id"
                                     class="py-2"
                                 >
@@ -113,108 +113,35 @@
                                             />
                                             <span>{{ event.location }}</span>
                                         </div>
-                                        <div v-if="event.program" class="flex items-start gap-2">
-                                            <UIcon
-                                                name="i-heroicons-musical-note"
-                                                class="mr-1"
-                                            />
-                                            <span class="whitespace-pre-line">{{ event.program }}</span>
-                                        </div>
-                                        <div v-if="event.participants?.length" class="flex items-center text-sm text-gray-500 dark:text-gray-400">
-                                            <UIcon
-                                                name="i-heroicons-users"
-                                                class="mr-1"
-                                            />
-                                            {{ event.participants.length }} participants
-                                        </div>
                                     </div>
-                                    <USeparator
-                                        v-if="index < upcomingEvents.length - 1"
-                                        size="lg"
-                                        class="mt-3"
-                                    />
                                 </div>
                             </template>
-                            <div v-else class="py-4 text-center text-gray-500">
-                                <span>No upcoming events</span>
+                            <div v-else class="text-center text-gray-500 py-4">
+                                No upcoming events
                             </div>
                         </div>
-                        <template #footer>
-                            <UButton
-                                color="primary"
-                                variant="ghost"
-                                block
-                                class="mt-2"
-                                @click="showAllEvents"
-                            >
-                                <span>View All Events</span>
-                            </UButton>
-                        </template>
                     </UCard>
                 </div>
             </div>
         </div>
 
-        <!-- Event Details Modal -->
-        <UModal v-model="showEventModal">
+        <!-- Event Modal -->
+        <UModal v-model="showEditEventModal">
             <UCard>
                 <template #header>
                     <div class="flex items-center justify-between">
-                        <h3 class="text-lg font-medium">{{ selectedEvent?.name }}</h3>
-                        <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark" @click="showEventModal = false" />
+                        <h3 class="text-lg font-medium">
+                            {{ selectedEvent ? 'Edit Event' : 'New Event' }}
+                        </h3>
+                        <UButton
+                            color="neutral"
+                            variant="ghost"
+                            icon="i-heroicons-x-mark"
+                            @click="showEditEventModal = false"
+                        />
                     </div>
                 </template>
-                <div v-if="selectedEvent" class="p-4">
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex items-center gap-2 mb-2">
-                                <UBadge :color="selectedEvent.color" size="sm" />
-                                <h3 class="text-lg font-semibold">{{ selectedEvent.name }}</h3>
-                            </div>
-                            <p class="text-gray-600 dark:text-gray-300">{{ selectedEvent.description }}</p>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2">
-                                    <UIcon name="i-heroicons-clock" />
-                                    <span>{{ formatDate(selectedEvent.date) }} {{ formatTime(selectedEvent.time) }}</span>
-                                    <span v-if="selectedEvent.duration">({{ selectedEvent.duration }})</span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <UIcon name="i-heroicons-map-pin" />
-                                    <span>{{ selectedEvent.location }}</span>
-                                </div>
-
-                                <div v-if="selectedEvent.address" class="flex items-start gap-2">
-                                    <UIcon name="i-heroicons-home" />
-                                    <span class="whitespace-pre-line">{{ selectedEvent.address }}</span>
-                                </div>
-                            </div>
-
-                            <div class="space-y-2">
-                                <div v-if="selectedEvent.program" class="flex items-start gap-2">
-                                    <UIcon name="i-heroicons-musical-note" />
-                                    <span class="whitespace-pre-line">{{ selectedEvent.program }}</span>
-                                </div>
-
-                                <div v-if="selectedEvent.participants?.length" class="flex items-start gap-2">
-                                    <UIcon name="i-heroicons-users" />
-                                    <div>
-                                        <div>{{ selectedEvent.participants.length }} participants</div>
-                                        <div class="text-sm text-gray-500">{{ selectedEvent.participants.join(', ') }}</div>
-                                    </div>
-                                </div>
-
-                                <div v-if="selectedEvent.notes" class="flex items-start gap-2">
-                                    <UIcon name="i-heroicons-document-text" />
-                                    <span class="whitespace-pre-line">{{ selectedEvent.notes }}</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <!-- Event form content -->
             </UCard>
         </UModal>
     </UContainer>
@@ -222,43 +149,22 @@
 
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
-import type { Event as CalendarEvent } from '~/types/events';
-
-type DOMEvent = Event & {
-    target: HTMLInputElement;
-};
-
-interface SerializableDate {
-    year: number;
-    month: number;
-    day: number;
-}
-
-type DateValue = SerializableDate;
+import type { Event as CalendarEvent, SerializableDate } from '~/types/events';
 
 const { events, isLoading, fetchEvents, createEvent, updateEvent, deleteEvent, exportEvents, importEvents } = useEvents();
 
-const selectedDate = useState<SerializableDate>('selectedDate', () => ({
-    year: new Date().getFullYear(),
-    month: new Date().getMonth() + 1,
-    day: new Date().getDate()
-}));
-
+// Use Date for calendar
+const selectedDate = useState<Date>('selectedDate', () => new Date());
 const showNewEventModal = ref(false);
 const showEditEventModal = ref(false);
 const selectedEvent = ref<CalendarEvent | null>(null);
 const fileInput = ref<HTMLInputElement | null>(null);
 
-// Convert our serializable date to CalendarDate for the calendar component
 const calendarDate = computed({
     get: () => selectedDate.value,
-    set: (date: DateValue | DateValue[] | null | undefined) => {
-        if (date && !Array.isArray(date)) {
-            selectedDate.value = {
-                year: date.year,
-                month: date.month,
-                day: date.day
-            };
+    set: (date: Date | null) => {
+        if (date && !(date instanceof Array)) {
+            selectedDate.value = date;
         }
     }
 });
@@ -284,34 +190,86 @@ const eventTypes = {
     MISC: { color: "slate", icon: "i-heroicons-calendar", priority: 3 }
 };
 
-// Event interface
-interface SerializableDate {
-    year: number;
-    month: number;
-    day: number;
-}
+// Update the event type colors
+const eventTypeColors = {
+    concert: 'primary' as const,
+    concert_tour: 'primary' as const,
+    rehearsal: 'warning' as const,
+    other: 'neutral' as const
+};
 
-interface Event {
-    id: number;
-    date: SerializableDate;
-    name: string;
-    time: string;
-    location: string;
-    description: string;
-    type: keyof typeof eventTypes;
-    color: string;
-    program?: string;
-    address?: string;
-    participants?: string[];
-    notes?: string;
-    duration?: string;
-}
+// Update the getEventsForDate function
+const getEventsForDate = (day: any) => {
+    let dateObj: Date;
+    if (day instanceof Date) {
+        dateObj = day;
+    } else if (day && typeof day === 'object' && 'year' in day && 'month' in day && 'day' in day) {
+        dateObj = new Date(day.year, day.month - 1, day.day);
+    } else {
+        return [];
+    }
+    return events.value.filter((event) => {
+        const eventDate = new Date(event.date as string);
+        return (
+            eventDate.getDate() === dateObj.getDate() &&
+            eventDate.getMonth() === dateObj.getMonth() &&
+            eventDate.getFullYear() === dateObj.getFullYear()
+        );
+    }).map(event => ({
+        ...event,
+        color: eventTypeColors[event.type as keyof typeof eventTypeColors] || 'neutral'
+    }));
+};
 
-// Sample events (replace with actual data fetching)
-// Load events when component mounts
-onMounted(() => {
-    fetchEvents();
+// Update the onPlaceholderUpdate function
+const onPlaceholderUpdate = (date: any) => {
+    if (date instanceof Date) {
+        selectedDate.value = date;
+    } else if (date && typeof date === 'object' && 'year' in date && 'month' in date && 'day' in date) {
+        // Convert CalendarDate/SerializableDate to Date
+        selectedDate.value = new Date(date.year, date.month - 1, date.day);
+    }
+};
+
+// Update the formatDate function
+const formatDate = (date: string) => {
+    const eventDate = new Date(date);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${eventDate.getDate().toString().padStart(2, '0')} ${months[eventDate.getMonth()]} ${eventDate.getFullYear()}`;
+};
+
+// Update the upcomingEvents computed property
+const upcomingEvents = computed(() => {
+    const now = new Date();
+    return events.value
+        .filter(event => {
+            const eventDate = new Date(event.date as string);
+            return eventDate >= now;
+        })
+        .sort((a, b) => {
+            const dateA = new Date(a.date as string);
+            const dateB = new Date(b.date as string);
+            return dateA.getTime() - dateB.getTime();
+        })
+        .map(event => ({
+            ...event,
+            color: eventTypeColors[event.type as keyof typeof eventTypeColors] || 'neutral'
+        }))
+        .slice(0, 5); // Show next 5 events
 });
+
+// Handle file import
+const handleFileImport = async (event: Event) => {
+    const target = event.target as HTMLInputElement;
+    if (target && target.files?.[0]) {
+        try {
+            await importEvents(target.files[0]);
+            target.value = '';
+        } catch (error) {
+            console.error('Failed to import file:', error);
+        }
+    }
+};
 
 // Export/Import dropdown items
 const exportImportItems = [
@@ -327,132 +285,14 @@ const exportImportItems = [
     }
 ];
 
-// Handle file import
-const handleFileImport = async (event: Event) => {
-    const target = event.target as HTMLInputElement;
-    if (target.files?.[0]) {
-        try {
-            await importEvents(target.files[0]);
-            target.value = ''; // Reset file input
-        } catch (error) {
-            console.error('Failed to import file:', error);
-        }
-    }
-};
-
-// Handle event save
-const handleEventSave = async (eventData: Omit<CalendarEvent, 'id'>) => {
-    try {
-        if (selectedEvent.value) {
-            await updateEvent({ ...eventData, id: selectedEvent.value.id });
-        } else {
-            await createEvent(eventData);
-        }
-    } catch (error) {
-        console.error('Failed to save event:', error);
-    }
-};
-
-// Sample events for testing
-const sampleEvents = [
-    {
-        id: 1,
-        date: { year: 2024, month: 7, day: 15 }, // July (months are 1-based)
-        name: "Summer Concert",
-        time: "19:30",
-        location: "City Hall",
-        description: "Annual summer concert featuring classical masterpieces",
-        type: "CONCERT",
-        color: eventTypes.CONCERT.color
-    },
-    {
-        id: 2,
-        date: { year: 2024, month: 8, day: 5 }, // August
-        name: "Chamber Music Evening",
-        time: "20:00",
-        location: "Community Center",
-        description: "Intimate chamber music performance",
-        type: "CONCERT",
-        color: eventTypes.CONCERT.color
-    },
-    {
-        id: 3,
-        date: { year: 2024, month: 8, day: 20 }, // August
-        name: "Orchestral Rehearsal",
-        time: "18:00",
-        location: "Rehearsal Hall",
-        description: "Weekly orchestra rehearsal",
-        type: "REHEARSAL",
-        color: 'warning'
-    },
-    {
-        id: 4,
-        date: { year: 2024, month: 9, day: 10 }, // September
-        name: "Board Meeting",
-        time: "21:00",
-        location: "Conference Room",
-        description: "Monthly board meeting to discuss upcoming events",
-        type: "MISC",
-        color: 'neutral'
-    },
-    {
-        id: 5,
-        date: { year: 2024, month: 9, day: 25 }, // September
-        name: "Classical Soirée",
-        time: "19:00",
-        location: "Grand Hall",
-        description: "Elegant evening of classical music",
-        type: "CONCERT",
-        color: eventTypes.CONCERT.color
-    },
-];
-
-const upcomingEvents = computed(() => {
-    const now = {
-        year: new Date().getFullYear(),
-        month: new Date().getMonth() + 1,
-        day: new Date().getDate()
-    };
-    return events.value
-        .filter(event => {
-            if (event.date.year !== now.year) return event.date.year > now.year;
-            if (event.date.month !== now.month) return event.date.month > now.month;
-            return event.date.day >= now.day;
-        })
-        .sort((a, b) => {
-            if (a.date.year !== b.date.year) return a.date.year - b.date.year;
-            if (a.date.month !== b.date.month) return a.date.month - b.date.month;
-            return a.date.day - b.date.day;
-        })
-        .slice(0, 5); // Show next 5 events
+// Load events when component mounts
+onMounted(() => {
+    fetchEvents();
 });
 
 const formatTime = (timeString: string) => {
     const [hours, minutes] = timeString.split(':');
     return `${hours}:${minutes}`;
-};
-
-const formatDate = (date: SerializableDate) => {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${date.day.toString().padStart(2, '0')} ${months[date.month - 1]} ${date.year}`;
-};
-
-const getEventsForDate = (day: DateValue) => {
-    return events.value.filter((event) => {
-        return event.date.day === day.day && 
-               event.date.month === day.month && 
-               event.date.year === day.year;
-    });
-};
-
-const onPlaceholderUpdate = (date: DateValue | DateValue[] | null | undefined) => {
-    if (date && !Array.isArray(date)) {
-        selectedDate.value = {
-            year: date.year,
-            month: date.month,
-            day: date.day
-        };
-    }
 };
 
 const showEventDetails = (event: CalendarEvent) => {
