@@ -48,6 +48,86 @@
             </div>
         </div>
 
+        <!-- Search and Filter Section -->
+        <div class="mb-6 space-y-4">
+            <div class="flex flex-col md:flex-row gap-4">
+                <!-- Search Input -->
+                <UInput
+                    v-model="searchQuery"
+                    icon="i-heroicons-magnifying-glass"
+                    placeholder="Stücke suchen..."
+                    class="flex-1"
+                />
+
+                <!-- Genre Filter -->
+                <USelect
+                    v-model="selectedGenre"
+                    :options="genreOptions"
+                    placeholder="Genre filtern"
+                    class="w-full md:w-48"
+                />
+
+                <!-- Difficulty Filter -->
+                <USelect
+                    v-model="selectedDifficulty"
+                    :options="difficultyOptions"
+                    placeholder="Schwierigkeit filtern"
+                    class="w-full md:w-48"
+                />
+
+                <!-- Sort Options -->
+                <USelect
+                    v-model="sortBy"
+                    :options="sortOptions"
+                    placeholder="Sortieren nach"
+                    class="w-full md:w-48"
+                />
+            </div>
+
+            <!-- Active Filters -->
+            <div v-if="hasActiveFilters" class="flex flex-wrap gap-2">
+                <UBadge
+                    v-if="searchQuery"
+                    color="primary"
+                    variant="soft"
+                    class="cursor-pointer"
+                    @click="searchQuery = ''"
+                >
+                    Suche: {{ searchQuery }}
+                    <UIcon name="i-heroicons-x-mark" class="ml-1" />
+                </UBadge>
+                <UBadge
+                    v-if="selectedGenre"
+                    color="primary"
+                    variant="soft"
+                    class="cursor-pointer"
+                    @click="selectedGenre = ''"
+                >
+                    Genre: {{ getGenreLabel(selectedGenre) }}
+                    <UIcon name="i-heroicons-x-mark" class="ml-1" />
+                </UBadge>
+                <UBadge
+                    v-if="selectedDifficulty"
+                    color="primary"
+                    variant="soft"
+                    class="cursor-pointer"
+                    @click="selectedDifficulty = ''"
+                >
+                    Schwierigkeit: {{ getDifficultyLabel(selectedDifficulty) }}
+                    <UIcon name="i-heroicons-x-mark" class="ml-1" />
+                </UBadge>
+                <UButton
+                    v-if="hasActiveFilters"
+                    color="neutral"
+                    variant="soft"
+                    size="xs"
+                    @click="clearFilters"
+                >
+                    Alle Filter zurücksetzen
+                </UButton>
+            </div>
+        </div>
+
         <!-- Loading State -->
         <div v-if="loading" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <USkeleton v-for="n in 6" :key="n" class="h-48 rounded-lg" />
@@ -78,24 +158,40 @@
 
         <!-- Empty State -->
         <UCard
-            v-else-if="pieces.length === 0"
+            v-else-if="filteredPieces.length === 0"
             class="text-center py-8"
         >
             <template #header>
                 <UIcon name="i-heroicons-musical-note" class="text-4xl text-gray-400 mb-2" />
-                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Keine Stücke gefunden</h3>
+                <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">
+                    {{ hasActiveFilters ? 'Keine Stücke gefunden' : 'Keine Stücke vorhanden' }}
+                </h3>
             </template>
             <p class="text-gray-500 dark:text-gray-400 mb-4">
-                Fügen Sie Ihr erstes Stück hinzu, um zu beginnen.
+                {{ hasActiveFilters 
+                    ? 'Versuchen Sie es mit anderen Suchkriterien oder setzen Sie die Filter zurück.'
+                    : 'Fügen Sie Ihr erstes Stück hinzu, um zu beginnen.' 
+                }}
             </p>
-            <UButton
-                to="/stuecke/new"
-                icon="i-heroicons-plus"
-                color="primary"
-                class="font-medium"
-            >
-                Neues Stück hinzufügen
-            </UButton>
+            <div class="space-x-2">
+                <UButton
+                    v-if="hasActiveFilters"
+                    color="neutral"
+                    variant="soft"
+                    @click="clearFilters"
+                >
+                    Filter zurücksetzen
+                </UButton>
+                <UButton
+                    v-if="!hasActiveFilters"
+                    to="/stuecke/new"
+                    icon="i-heroicons-plus"
+                    color="primary"
+                    class="font-medium"
+                >
+                    Neues Stück hinzufügen
+                </UButton>
+            </div>
         </UCard>
 
         <!-- Content -->
@@ -200,13 +296,102 @@ const isUsingDummyData = ref(false);
 const currentPage = ref(1);
 const loadingMore = ref(false);
 
+// Search and Filter State
+const searchQuery = ref('');
+const selectedGenre = ref('');
+const selectedDifficulty = ref('');
+const sortBy = ref('name-asc');
+
 // Computed
+const genreOptions = computed(() => [
+    { label: 'Alle Genres', value: '' },
+    ...Object.entries(GENRE_LABELS).map(([value, label]) => ({
+        label: label.de,
+        value
+    }))
+]);
+
+const difficultyOptions = computed(() => [
+    { label: 'Alle Schwierigkeiten', value: '' },
+    ...Object.entries(DIFFICULTY_LABELS).map(([value, label]) => ({
+        label: label.de,
+        value
+    }))
+]);
+
+const sortOptions = [
+    { label: 'Name (A-Z)', value: 'name-asc' },
+    { label: 'Name (Z-A)', value: 'name-desc' },
+    { label: 'Schwierigkeit (leicht-schwer)', value: 'difficulty-asc' },
+    { label: 'Schwierigkeit (schwer-leicht)', value: 'difficulty-desc' },
+    { label: 'Genre (A-Z)', value: 'genre-asc' },
+    { label: 'Genre (Z-A)', value: 'genre-desc' }
+];
+
+const hasActiveFilters = computed(() => {
+    return searchQuery.value || selectedGenre.value || selectedDifficulty.value;
+});
+
+const filteredPieces = computed(() => {
+    let result = [...pieces.value];
+
+    // Apply search filter
+    if (searchQuery.value) {
+        const query = searchQuery.value.toLowerCase();
+        result = result.filter(piece => 
+            piece.name.toLowerCase().includes(query) ||
+            piece.genre?.toLowerCase().includes(query) ||
+            piece.arrangiert?.some(a => 
+                [a.vorname, a.name].filter(Boolean).join(' ').toLowerCase().includes(query)
+            ) ||
+            piece.komponiert?.some(c => 
+                [c.vorname, c.name].filter(Boolean).join(' ').toLowerCase().includes(query)
+            )
+        );
+    }
+
+    // Apply genre filter
+    if (selectedGenre.value) {
+        result = result.filter(piece => piece.genre === selectedGenre.value);
+    }
+
+    // Apply difficulty filter
+    if (selectedDifficulty.value) {
+        result = result.filter(piece => piece.schwierigkeit === selectedDifficulty.value);
+    }
+
+    // Apply sorting
+    const [sortField, sortDirection] = sortBy.value.split('-');
+    result.sort((a, b) => {
+        let comparison = 0;
+        
+        switch (sortField) {
+            case 'name':
+                comparison = a.name.localeCompare(b.name);
+                break;
+            case 'difficulty':
+                const difficultyOrder = ['very easy', 'easy', 'medium', 'hard', 'very hard'];
+                const aIndex = difficultyOrder.indexOf(a.schwierigkeit || '');
+                const bIndex = difficultyOrder.indexOf(b.schwierigkeit || '');
+                comparison = aIndex - bIndex;
+                break;
+            case 'genre':
+                comparison = (a.genre || '').localeCompare(b.genre || '');
+                break;
+        }
+
+        return sortDirection === 'desc' ? -comparison : comparison;
+    });
+
+    return result;
+});
+
 const visiblePieces = computed(() => {
-    return pieces.value.slice(0, currentPage.value * ITEMS_PER_PAGE);
+    return filteredPieces.value.slice(0, currentPage.value * ITEMS_PER_PAGE);
 });
 
 const hasMorePieces = computed(() => {
-    return pieces.value.length > currentPage.value * ITEMS_PER_PAGE;
+    return filteredPieces.value.length > currentPage.value * ITEMS_PER_PAGE;
 });
 
 // Methods
@@ -238,6 +423,14 @@ const handleFileImport = async (event: Event) => {
     }
 };
 
+const clearFilters = () => {
+    searchQuery.value = '';
+    selectedGenre.value = '';
+    selectedDifficulty.value = '';
+    sortBy.value = 'name-asc';
+    currentPage.value = 1;
+};
+
 // Helper function to get color based on difficulty
 const getDifficultyColor = (difficulty: string) => {
     const normalizedDifficulty = normalizeDifficulty(difficulty);
@@ -252,37 +445,13 @@ const getDifficultyLabel = (difficulty: string) => {
 
 // Helper function to get label based on genre
 const getGenreLabel = (genre: string) => {
-    const normalizedGenre = normalizeGenre(genre);
-    return GENRE_LABELS[normalizedGenre as keyof typeof GENRE_LABELS]?.de || genre;
+    return GENRE_LABELS[genre as keyof typeof GENRE_LABELS]?.de || genre;
 };
 
 // Helper function to normalize difficulty values
-const normalizeDifficulty = (difficulty: string): string => {
-    const difficultyMap: Record<string, string> = {
-        'very easy': 'very_easy',
-        'leicht': 'easy',
-        'sehr leicht': 'very_easy',
-        'mittel': 'medium',
-        'schwer': 'hard',
-        'sehr schwer': 'very_hard',
-        'very hard': 'very_hard',
-        'test': 'medium'
-    };
-    return difficultyMap[difficulty.toLowerCase()] || difficulty;
-};
-
-// Helper function to normalize genre values
-const normalizeGenre = (genre: string): string => {
-    const genreMap: Record<string, string> = {
-        'klassik': 'classical',
-        'barock': 'baroque',
-        'modern': 'modern',
-        'pop / rock / modern': 'pop_rock',
-        'filmmusik': 'film_music',
-        'musical': 'musical',
-        'musicals': 'musical'
-    };
-    return genreMap[genre.toLowerCase()] || genre;
+const normalizeDifficulty = (difficulty: string) => {
+    const normalized = difficulty.toLowerCase().trim();
+    return normalized;
 };
 
 // Lifecycle
