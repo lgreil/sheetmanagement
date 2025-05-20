@@ -2,11 +2,11 @@ import type { Event } from '~/types/events';
 import { readFile, writeFile } from 'fs/promises';
 import { resolve } from 'path';
 import { ref } from 'vue';
+import { useErrorHandler } from '~/composables/useErrorHandler';
 
 export const useEvents = () => {
     const events = ref<Event[]>([]);
-    const isLoading = ref(false);
-    const errorMsg = ref<string | null>(null);
+    const { loading: isLoading, error: errorMsg, handleApiCall, handleFileOperation } = useErrorHandler();
 
     const getEventsFilePath = () => resolve(process.cwd(), 'server/data/events.json');
 
@@ -23,35 +23,32 @@ export const useEvents = () => {
 
     // Load events
     const fetchEvents = async () => {
-        isLoading.value = true;
-        try {
-            const data = await readEventsFile();
-            events.value = data.events;
-        } catch (err: unknown) {
-            errorMsg.value = 'Failed to fetch events';
-            console.error('Error fetching events:', err);
-        } finally {
-            isLoading.value = false;
-        }
+        return handleFileOperation(
+            async () => {
+                const data = await readEventsFile();
+                events.value = data.events;
+                return data.events;
+            },
+            'Failed to fetch events'
+        );
     };
 
     // Create new event
     const createEvent = async (event: Omit<Event, 'id'>) => {
-        try {
-            const data = await readEventsFile();
-            const newEvent: Event = {
-                ...event,
-                id: `${Date.now()}`
-            };
-            data.events.push(newEvent);
-            await writeEventsFile(data);
-            events.value = data.events;
-            return newEvent;
-        } catch (err: unknown) {
-            errorMsg.value = 'Failed to create event';
-            console.error('Error creating event:', err);
-            throw err;
-        }
+        return handleFileOperation(
+            async () => {
+                const data = await readEventsFile();
+                const newEvent: Event = {
+                    ...event,
+                    id: `${Date.now()}`
+                };
+                data.events.push(newEvent);
+                await writeEventsFile(data);
+                events.value = data.events;
+                return newEvent;
+            },
+            'Failed to create event'
+        );
     };
 
     // Get events for a piece
@@ -69,53 +66,36 @@ export const useEvents = () => {
         });
     };
 
-    // Initialize events
-    fetchEvents();
-
-    return {
-        events,
-        isLoading,
-        error: errorMsg,
-        fetchEvents,
-        createEvent,
-        getEventsForPiece
-    };
-};
-            console.error('Failed to create event:', error);
-            throw error;
-        }
-    };
-
     // Update existing event
     const updateEvent = async (event: Event) => {
-        try {
-            const updatedEvent = await $fetch('/api/events', {
-                method: 'PUT',
-                body: event
-            });
-            const index = events.value.findIndex(e => e.id === event.id);
-            if (index !== -1) {
-                events.value[index] = updatedEvent;
-            }
-            return updatedEvent;
-        } catch (error) {
-            console.error('Failed to update event:', error);
-            throw error;
-        }
+        return handleApiCall(
+            async () => {
+                const updatedEvent = await $fetch('/api/events', {
+                    method: 'PUT',
+                    body: event
+                });
+                const index = events.value.findIndex(e => e.id === event.id);
+                if (index !== -1) {
+                    events.value[index] = updatedEvent;
+                }
+                return updatedEvent;
+            },
+            'Failed to update event'
+        );
     };
 
     // Delete event
-    const deleteEvent = async (eventId: number) => {
-        try {
-            await $fetch('/api/events', {
-                method: 'DELETE',
-                body: { id: eventId }
-            });
-            events.value = events.value.filter(e => e.id !== eventId);
-        } catch (error) {
-            console.error('Failed to delete event:', error);
-            throw error;
-        }
+    const deleteEvent = async (eventId: string) => {
+        return handleApiCall(
+            async () => {
+                await $fetch('/api/events', {
+                    method: 'DELETE',
+                    body: { id: eventId }
+                });
+                events.value = events.value.filter(e => e.id !== eventId);
+            },
+            'Failed to delete event'
+        );
     };
 
     // Export events to file
@@ -132,34 +112,37 @@ export const useEvents = () => {
 
     // Import events from file
     const importEvents = async (file: File) => {
-        try {
-            const text = await file.text();
-            const importedEvents = JSON.parse(text);
-            
-            // Validate imported data
-            if (!Array.isArray(importedEvents)) {
-                throw new Error('Invalid file format');
-            }
+        return handleFileOperation(
+            async () => {
+                const text = await file.text();
+                const importedEvents = JSON.parse(text);
+                
+                if (!Array.isArray(importedEvents)) {
+                    throw new Error('Invalid file format');
+                }
 
-            // Replace all events with imported ones
-            for (const event of importedEvents) {
-                await createEvent(event);
-            }
+                for (const event of importedEvents) {
+                    await createEvent(event);
+                }
 
-            await fetchEvents(); // Refresh the events list
-        } catch (error) {
-            console.error('Failed to import events:', error);
-            throw error;
-        }
+                await fetchEvents();
+            },
+            'Failed to import events'
+        );
     };
+
+    // Initialize events
+    fetchEvents();
 
     return {
         events,
         isLoading,
+        error: errorMsg,
         fetchEvents,
         createEvent,
         updateEvent,
         deleteEvent,
+        getEventsForPiece,
         exportEvents,
         importEvents
     };

@@ -3,110 +3,10 @@ import type { Piece } from "~/types/Types";
 import { useFetch, useRuntimeConfig } from "#app";
 import { ref } from "vue";
 import { useDebounceFn } from "@vueuse/core";
+import piecesData from "~/server/data/pieces.json";
 
-// Import dummy data directly
-const dummyMusicData: Piece[] = [
-  {
-    stid: 1,
-    name: "Test",
-    genre: "klassik",
-    jahr: null,
-    schwierigkeit: "easy",
-    isdigitalisiert: null,
-    arrangiert: [],
-    komponiert: [],
-  },
-  {
-    stid: 2,
-    name: "A Michael Jackson Tribute",
-    genre: "Pop / Rock / Modern",
-    jahr: null,
-    schwierigkeit: "hard",
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 2, vorname: "Michael", name: "Story" }],
-    komponiert: [{ pid: 1, vorname: "Michael", name: "Jackson" }],
-  },
-  {
-    stid: 5,
-    name: "Egmont Overtüre",
-    genre: "Klassik",
-    jahr: null,
-    schwierigkeit: null,
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 6, vorname: "Richard", name: "Meyer" }],
-    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }],
-  },
-  {
-    stid: 8,
-    name: "Ode to Joy",
-    genre: "Moderne Klassik",
-    jahr: null,
-    schwierigkeit: null,
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 11, vorname: "Keith", name: "Christopher" }],
-    komponiert: [{ pid: 5, vorname: "Ludwig van", name: "Beethoven" }],
-  },
-  {
-    stid: 14,
-    name: "Highlights from WICKED",
-    genre: "Musicals",
-    jahr: null,
-    schwierigkeit: null,
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 20, vorname: "Ted", name: "Ricketts" }],
-    komponiert: [{ pid: 19, vorname: "Stephen", name: "Schwartz" }],
-  },
-  {
-    stid: 21,
-    name: "Lord of the Rings",
-    genre: "Filmmusik",
-    jahr: null,
-    schwierigkeit: null,
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 29, vorname: "John", name: "Whitney" }],
-    komponiert: [{ pid: 28, vorname: "Howard", name: "Shore" }],
-  },
-  {
-    stid: 32,
-    name: "Die vier Jahreszeiten: der Frühling",
-    genre: "Barock",
-    jahr: null,
-    schwierigkeit: "medium",
-    isdigitalisiert: true,
-    arrangiert: [],
-    komponiert: [{ pid: 42, vorname: "Antonio", name: "Vivaldi" }],
-  },
-  {
-    stid: 43,
-    name: "Lion King",
-    genre: "Filmmusik",
-    jahr: null,
-    schwierigkeit: "test",
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 51, vorname: "Ted", name: "Parson" }],
-    komponiert: [{ pid: 50, vorname: "Hans", name: "Zimmer" }],
-  },
-  {
-    stid: 62,
-    name: "Seven Nation Army",
-    genre: "Pop / Rock / Modern",
-    jahr: null,
-    schwierigkeit: "very hard",
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 67, vorname: "Paul", name: "Murtha" }],
-    komponiert: [{ pid: 66, vorname: "the", name: "White Stripes" }],
-  },
-  {
-    stid: 89,
-    name: "Jesu bleibet meine Freude - Choral",
-    genre: "Barock",
-    jahr: null,
-    schwierigkeit: "very easy",
-    isdigitalisiert: true,
-    arrangiert: [{ pid: 90, vorname: "Barbara", name: "Fritsch" }],
-    komponiert: [{ pid: 15, vorname: "J. S.", name: "Bach" }],
-  },
-];
+// Use actual data from pieces.json
+const actualMusicData: Piece[] = (piecesData as unknown as { pieces: Piece[] }).pieces;
 
 interface PaginatedResponse<T> {
   data: T[];
@@ -145,10 +45,10 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
       console.log("API URL:", apiUrl); // Debug log
 
       if (!apiUrl) {
-        console.info("No API URL configured, using dummy data");
-        pieces.value = dummyMusicData;
-        totalItems.value = dummyMusicData.length;
-        lastPage.value = Math.ceil(dummyMusicData.length / pageSize.value);
+        console.info("No API URL configured, using actual data from pieces.json");
+        pieces.value = actualMusicData;
+        totalItems.value = actualMusicData.length;
+        lastPage.value = Math.ceil(actualMusicData.length / pageSize.value);
         isUsingDummyData.value = true;
         loading.value = false;
         return;
@@ -208,18 +108,18 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
           }
         });
       } else {
-        console.info("No data from API, using dummy data"); // Debug log
-        pieces.value = dummyMusicData;
-        totalItems.value = dummyMusicData.length;
-        lastPage.value = Math.ceil(dummyMusicData.length / pageSize.value);
+        console.info("No data from API, using actual data from pieces.json"); // Debug log
+        pieces.value = actualMusicData;
+        totalItems.value = actualMusicData.length;
+        lastPage.value = Math.ceil(actualMusicData.length / pageSize.value);
         isUsingDummyData.value = true;
       }
     } catch (err) {
       console.error("Error fetching pieces:", err);
       error.value = err as Error;
-      pieces.value = dummyMusicData;
-      totalItems.value = dummyMusicData.length;
-      lastPage.value = Math.ceil(dummyMusicData.length / pageSize.value);
+      pieces.value = actualMusicData;
+      totalItems.value = actualMusicData.length;
+      lastPage.value = Math.ceil(actualMusicData.length / pageSize.value);
       isUsingDummyData.value = true;
     } finally {
       loading.value = false;
@@ -233,12 +133,12 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
     }
 
     if (!config.public.API_URL) {
-      const dummyPiece = dummyMusicData.find(
+      const actualPiece = actualMusicData.find(
         (p: Piece) => p.stid.toString() === id,
       );
-      if (dummyPiece) {
-        pieceCache.value[id] = dummyPiece;
-        return dummyPiece;
+      if (actualPiece) {
+        pieceCache.value[id] = actualPiece;
+        return actualPiece;
       }
       return null;
     }
@@ -259,13 +159,13 @@ export function useMusicData(initialPageIndex = 1, initialPageSize = 10) {
       }
     } catch (err) {
       console.error(`Error fetching piece with ID ${id}:`, err);
-      // Fallback to dummy data in case of error
-      const dummyPiece = dummyMusicData.find(
+      // Fallback to actual data in case of error
+      const actualPiece = actualMusicData.find(
         (p: Piece) => p.stid.toString() === id,
       );
-      if (dummyPiece) {
-        pieceCache.value[id] = dummyPiece;
-        return dummyPiece;
+      if (actualPiece) {
+        pieceCache.value[id] = actualPiece;
+        return actualPiece;
       }
     }
 
