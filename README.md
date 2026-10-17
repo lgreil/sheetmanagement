@@ -1,147 +1,70 @@
-# Bachkreis Sheetmanagement  🎵
+# Sheetmanagement
 
-Welcome to Bachkreis Sheetmanagement, your all-in-one sheet music management system! This hobby project aims to simplify how orchestras and ensembles manage their sheet music collections. Built with Nuxt.js and styled with Tailwind CSS, Bachkreis Sheetmanagement is a work in progress, and we’re excited to share its journey with you.
+A lightweight web app for orchestras and ensembles: the **sheet music archive**, **concerts** and **programmes** in one place. It is built on what many ensembles already use:
 
-## Table of Contents
+- **Google Drive**: one folder per piece, one PDF per part
+- **Google Calendar**: rehearsals and concerts
+- **Google Sheets**: which pieces were played when and where, plus members and rights
 
-- [Features](#features)
-- [Demo](#demo)
-- [Getting Started](#getting-started)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the App](#running-the-app)
-- [Project Structure](#project-structure)
-- [Components Overview](#components-overview)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
+Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-## Features
+> **Status:** early rewrite. Phase 0 (skeleton) is done; connecting Google comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
 
-- 🎼 **Find & Manage Pieces**: Effortlessly organize, search, and access your orchestra's sheet music.
-- 🎻 **Assign Parts with Ease**: Simplify part assignments to orchestra members.
-- 🎶 **Streamline Rehearsals**: Keep everything at your fingertips, from classical masterpieces to modern arrangements.
-- 🌐 **Responsive Design**: Enjoy a seamless experience across devices with a modern and intuitive interface.
-- 🌗 **Light/Dark Mode**: Switch between light and dark themes to suit your environment.
+Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
-## Demo
+## Tech
 
-**[Live Demo](#)** (Link coming soon!)
+- [SvelteKit](https://svelte.dev/docs/kit) on [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- No runtime dependencies besides SvelteKit; Google APIs are called with plain `fetch`
+- Plain CSS with design tokens (`src/app.css`), light and dark mode
 
-## Getting Started
+## Getting started
 
-### Prerequisites
-
-- **Node.js** (v12 or higher)
-- **npm** or **pnpm**
-
-### Installation
-
-1. **Clone the Repository**
-
-   ```bash
-   git clone https://github.com/yourusername/Bachkreis Sheetmanagement.git
-    ```
-
-2. Navigate to the Project Directory
-
-  ```bash
-  cd Bachkreis Sheetmanagement
-  ```
-
-3. Install Dependencies
-
-  ```bash
-  pnpm install
-  # or
-  npm install
-  ```
-
-  Note that you also need to have a PostgresDB running and our SheetbaseStore-Backend up and going.
-
-4. Running the App
-4.1 Development Server
-Start the development server with hot reload at http://localhost:3000:
+Requirements: [Node.js](https://nodejs.org) 22.17 or newer and [pnpm](https://pnpm.io).
 
 ```bash
-npx nuxi dev
+pnpm install
+cp .dev.vars.example .dev.vars   # optional: set ORCHESTRA_NAME
+pnpm dev
 ```
 
-4.2 Production Build
+Open http://localhost:5173.
 
-To build the application for production:
+Other scripts:
 
-```bash
-npx nuxi build
-```
-5. Start the server:
+| Script | What it does |
+|---|---|
+| `pnpm check` | Type-check the project |
+| `pnpm test` | Run unit tests |
+| `pnpm preview` | Build and run the real Worker locally with Wrangler |
+| `pnpm deploy` | Build and deploy to Cloudflare |
 
-```bash
-npx nuxi start
-```
+On Windows, stop a running `pnpm preview` before building again: the running Worker locks the build folder.
 
-# Project Structure
-```
-Bachkreis Sheetmanagement/
-├── components/
-│   ├── AddEntry.vue
-│   ├── Pagination.vue
-│   ├── SearchBar.vue
-│   ├── StueckManager.vue
-│   ├── Table.vue
-│   └── TableEntry.vue
-├── pages/
-│   ├── index.vue
-│   ├── about.vue
-│   └── ...
-├── assets/
-│   └── styles/
-├── static/
-├── plugins/
-├── nuxt.config.js
-├── package.json
-└── README.md
-```
-# Usage
-Navigate to http://localhost:3000 to access the application. From there, you can:
+## Deploying (free)
 
-- View and search through the list of sheet music pieces.
-- Sort the list by different criteria (e.g., name, genre, year).
-- Use pagination controls to navigate through pages.
-- Toggle between light and dark modes using the switch in the interface.
+1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
+2. `pnpm wrangler login`
+3. `pnpm deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
+4. Set deployment values as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
 
-# Contributing
-Contributions are welcome! Since this is a hobby project, any improvements, suggestions, or additions are greatly appreciated.
+**Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 
-1. Fork the Project
-2. Create your Feature Branch
+## Adapting it for your orchestra
 
-```bash
-git checkout -b feature/AmazingFeature
-```
-3. Commit your Changes
+Everything orchestra-specific lives in [`src/lib/config/`](src/lib/config):
 
-```bash
-git commit -m 'Add some AmazingFeature'
-```
+- **Instruments**: names, display order, alternative spellings
+- **Naming rules**: how part files are named (separator, status words like `FEHLT`, the `@` prefix for scores)
+- **Event keywords**: which calendar titles count as concert, rehearsal or dress rehearsal
+- **Name and accent colour**
 
-4. Push to the Branch
+Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`. All texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts).
 
-```bash
-git push origin feature/AmazingFeature
-```
-5. Open a Pull Request
+## Contributing
 
-# License
-This project is licensed under the MIT License - see the LICENSE file for details.
+Issues and pull requests are welcome. Please keep it lightweight: think twice before adding a dependency.
 
-# Acknowledgments
-- Nuxt.js: For providing a powerful and flexible framework.
-- Tailwind CSS: For making styling efficient and enjoyable.
-- Heroicons: For the beautiful icons that enhance the user interface.
-- Lucide Icons: For the versatile icon set used in the app.
-- Vue.jsCommunity: For continuous support and inspiration.
-- You: For taking the time to explore Bachkreis Sheetmanagement!
+## License
 
-Enjoy managing your sheet music with Bachkreis Sheetmanagement! If you have any questions or suggestions, feel free to open an issue or contribute to the project. Let's make music management harmonious together! 🎵✨
+[MIT](LICENSE)

@@ -1,50 +1,38 @@
 {
-  "name": "nuxt-app",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "nuxt build",
-    "dev": "nuxt dev",
-    "generate": "nuxt generate",
-    "preview": "nuxt preview",
-    "postinstall": "nuxt prepare",
-    "test": "vitest"
-  },
-  "dependencies": {
-    "@headlessui/vue": "^1.7.23",
-    "@iconify/vue": "^4.3.0",
-    "@nuxt/ui": "^3.3.7",
-    "@nuxtjs/color-mode": "^3.5.2",
-    "@tanstack/table-core": "^8.21.3",
-    "@tanstack/vue-table": "^8.21.3",
-    "@vueuse/core": "^13.9.0",
-    "date-fns": "^4.4.0",
-    "destr": "^2.0.5",
-    "nuxt": "^3.21.11",
-    "tailwindcss": "^4.3.3",
-    "valibot": "^1.5.0",
-    "vue": "^3.5.43",
-    "vue-router": "^4.6.4",
-    "zod": "^3.25.76"
-  },
-  "packageManager": "pnpm@10.7.0",
-  "devDependencies": {
-    "@formkit/auto-animate": "^0.8.4",
-    "@iconify-json/heroicons": "^1.2.3",
-    "@iconify-json/lucide": "^1.2.140",
-    "@iconify-json/mdi": "^1.2.3",
-    "@nuxt/image": "^1.11.0",
-    "@nuxt/test-utils": "^4.3.3",
-    "@vitest/ui": "^4.1.11",
-    "@vue/test-utils": "^2.5.1",
-    "autoprefixer": "^10.6.1",
-    "happy-dom": "^20.8.9",
-    "playwright-core": "^1.63.0",
-    "vitest": "^4.1.11"
-  },
-  "pnpm": {
-    "overrides": {
-      "sharp": "^0.35.5"
-    }
-  }
+	"name": "sheetmanagement",
+	"version": "0.1.0",
+	"private": true,
+	"license": "MIT",
+	"type": "module",
+	"description": "Sheet music and concert overview for orchestras, built on Google Drive, Google Calendar and Google Sheets.",
+	"scripts": {
+		"dev": "vite dev",
+		"build": "vite build",
+		"preview": "vite build && wrangler dev",
+		"deploy": "vite build && wrangler deploy",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "vitest run"
+	},
+	"imports": {
+		"#lib": "./src/lib/index.ts",
+		"#lib/*": "./src/lib/*"
+	},
+	"devDependencies": {
+		"@sveltejs/adapter-cloudflare": "^8.0.1",
+		"@sveltejs/kit": "^3.1.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"svelte": "^5.57.2",
+		"svelte-check": "^4.7.7",
+		"typescript": "^6.0.0",
+		"vite": "^8.3.4",
+		"vitest": "^5.0.5",
+		"wrangler": "^4.151.1"
+	},
+	"engines": {
+		"node": ">=22.17"
+	},
+	"packageManager": "pnpm@10.7.0",
+	"pnpm": {
+		"onlyBuiltDependencies": ["esbuild", "workerd"]
+	}
 }
