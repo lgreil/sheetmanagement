@@ -37,7 +37,7 @@ Other scripts:
 | `pnpm check` | Type-check the project |
 | `pnpm test` | Run unit tests |
 | `pnpm preview` | Build and run the real Worker locally with Wrangler |
-| `pnpm deploy` | Build and deploy to Cloudflare |
+| `pnpm run deploy` | Build and deploy to Cloudflare (`run` is needed: `pnpm deploy` is a built-in pnpm command) |
 
 On Windows, stop a running `pnpm preview` before building again: the running Worker locks the build folder.
 
@@ -45,7 +45,7 @@ On Windows, stop a running `pnpm preview` before building again: the running Wor
 
 1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
 2. `pnpm wrangler login`
-3. `pnpm deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
+3. `pnpm run deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
 4. Set deployment values as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
