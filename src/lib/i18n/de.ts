@@ -22,7 +22,48 @@ export const de = {
 	pieces: {
 		title: 'Stücke',
 		lead: 'Das komplette Notenarchiv mit allen Stimmen.',
-		empty: 'Sobald Google Drive verbunden ist, erscheinen hier alle Stücke aus dem Notenarchiv.'
+		empty: 'Sobald Google Drive verbunden ist, erscheinen hier alle Stücke aus dem Notenarchiv.',
+		failed: 'Das Notenarchiv konnte gerade nicht geladen werden. Versuch es gleich noch einmal.',
+		checkStatus: 'Verbindung prüfen',
+		search: 'Titel, Komponist oder BWV …',
+		all: 'Alle',
+		archive: 'Archiv',
+		needsWork: 'Mit Lücken',
+		count: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
+		parts: (n: number) => (n === 1 ? '1 Stimme' : `${n} Stimmen`),
+		noResults: 'Nichts gefunden.',
+		status: {
+			ok: '',
+			missing: 'Stimmen fehlen',
+			incomplete: 'Unvollständig',
+			empty: 'Keine Noten'
+		}
+	},
+	piece: {
+		back: 'Alle Stücke',
+		openFolder: 'Ordner in Google Drive',
+		groups: {
+			featured: 'Partitur & Solo',
+			holz: 'Holzbläser',
+			blech: 'Blechbläser',
+			schlagwerk: 'Schlagwerk',
+			tasten: 'Tasten & Harfe',
+			gesang: 'Gesang',
+			streicher: 'Streicher',
+			sonstige: 'Stimmen für alle',
+			other: 'Weitere Dateien'
+		},
+		partStatus: {
+			ok: '',
+			missing: 'fehlt',
+			empty: 'leer',
+			incomplete: 'unvollständig'
+		},
+		missingSummary: (n: number) =>
+			n === 1 ? '1 Stimme fehlt oder ist unvollständig.' : `${n} Stimmen fehlen oder sind unvollständig.`,
+		playedAt: 'Gespielt bei',
+		playedAtSoon: 'Hier steht bald, in welchen Konzerten dieses Stück gespielt wurde.',
+		driveHint: 'Die Noten öffnen sich in Google Drive. Dafür brauchst du Zugriff auf den Noten-Ordner.'
 	},
 	concerts: {
 		title: 'Konzerte',

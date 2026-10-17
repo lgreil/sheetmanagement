@@ -1,0 +1,42 @@
+import { config } from '#lib/config/index.ts';
+import { buildCatalog, type Catalog } from '#lib/music/catalog.ts';
+import type { DriveIndex } from './drive-index.ts';
+import { getArchiveIndex, NotConfiguredError } from './services.ts';
+
+// Parsing ~2000 file names takes a few milliseconds, so it happens once per archive
+// snapshot and Worker instance, not on every request.
+const built = new WeakMap<DriveIndex, Catalog>();
+
+export type CatalogResult =
+	| { ok: true; catalog: Catalog; storedAt: number }
+	| { ok: false; reason: 'not-configured' | 'failed' };
+
+export async function getCatalog(): Promise<CatalogResult> {
+	try {
+		const { value: index, storedAt } = await getArchiveIndex();
+		let catalog = built.get(index);
+		if (!catalog) {
+			catalog = buildCatalog(index, config);
+			built.set(index, catalog);
+		}
+		return { ok: true, catalog, storedAt };
+	} catch (error) {
+		if (error instanceof NotConfiguredError) return { ok: false, reason: 'not-configured' };
+		console.error('Loading the archive failed:', error);
+		return { ok: false, reason: 'failed' };
+	}
+}
+
+const GOOGLE_DOC = 'application/vnd.google-apps.document';
+const GOOGLE_SHEET = 'application/vnd.google-apps.spreadsheet';
+
+/** Opens a file in Google's own viewer, so the visitor's Drive access applies. */
+export function fileUrl(id: string, mimeType: string): string {
+	if (mimeType === GOOGLE_DOC) return `https://docs.google.com/document/d/${id}/edit`;
+	if (mimeType === GOOGLE_SHEET) return `https://docs.google.com/spreadsheets/d/${id}/edit`;
+	return `https://drive.google.com/file/d/${id}/view`;
+}
+
+export function folderUrl(id: string): string {
+	return `https://drive.google.com/drive/folders/${id}`;
+}

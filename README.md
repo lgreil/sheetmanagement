@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** early rewrite. The skeleton and the Google connection (phases 0–1) are done; the piece list comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
+> **Status:** early rewrite. The skeleton, the Google connection and the piece list (phases 0–2) are done; concerts from the calendar come next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
