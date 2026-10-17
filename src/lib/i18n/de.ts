@@ -34,6 +34,19 @@ export const de = {
 		lead: 'Deine Stimmen für das nächste Konzert, in Programmreihenfolge.',
 		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.'
 	},
+	status: {
+		title: 'Status',
+		lead: 'Ob die Verbindung zu Google funktioniert. Hilfreich beim Einrichten.',
+		account: 'Google-Dienstkonto',
+		drive: 'Notenarchiv (Google Drive)',
+		calendar: 'Probenkalender (Google Calendar)',
+		sheet: 'Repertoire-Tabelle (Google Sheets)',
+		ok: 'Verbunden',
+		error: 'Fehler',
+		missing: 'Nicht eingerichtet',
+		refresh: 'Archiv neu einlesen',
+		setupGuide: 'Anleitung zur Einrichtung'
+	},
 	common: {
 		comingSoon: 'Bald verfügbar',
 		backHome: 'Zur Übersicht'

@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** early rewrite. Phase 0 (skeleton) is done; connecting Google comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
+> **Status:** early rewrite. The skeleton and the Google connection (phases 0–1) are done; the piece list comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
@@ -46,7 +46,10 @@ On Windows, stop a running `pnpm preview` before building again: the running Wor
 1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
 2. `pnpm wrangler login`
 3. `pnpm run deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
-4. Set deployment values as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
+4. Connect Google Drive and Calendar: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
+5. Open `/status` on your deployment to check every connection.
+
+The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret.
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 

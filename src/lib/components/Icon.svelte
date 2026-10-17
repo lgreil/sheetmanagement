@@ -9,7 +9,11 @@
 		moon: 'M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z',
 		monitor: 'M3 4h18v12H3zM8 20h8M12 16v4',
 		arrow: 'M5 12h14M13 6l6 6-6 6',
-		sparkle: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6'
+		sparkle: 'M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6',
+		check: 'M20 6 9 17l-5-5',
+		alert: 'M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+		minus: 'M5 12h14',
+		refresh: 'M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5'
 	} as const;
 
 	export type IconName = keyof typeof paths;

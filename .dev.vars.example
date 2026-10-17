@@ -1,21 +1,22 @@
 # Copy to `.dev.vars` for local development (it is git-ignored).
-# In production, set each value with `wrangler secret put <NAME>` — never commit real values.
+# In production, set each value with `wrangler secret put <NAME>`. Never commit real values.
+# Step-by-step instructions for the Google values: docs/setup-google.md
 
 # Display name of the orchestra. Optional; defaults to the name in the active config preset.
 ORCHESTRA_NAME="Mein Orchester"
 # Shorter name for the header on phones. Optional; defaults to ORCHESTRA_NAME.
 # ORCHESTRA_SHORT_NAME="Orchester"
 
-# --- Needed from phase 1 on (Google connection) -------------------------------
-# Service-account key JSON from Google Cloud, on one line.
-# GOOGLE_SERVICE_ACCOUNT_JSON='{"type":"service_account",...}'
-# Calendar id of the rehearsal/concert calendar (Calendar settings → "Integrate calendar").
-# CALENDAR_ID="...@group.calendar.google.com"
+# --- Google connection -----------------------------------------------------------
+# Service-account key: the key file base64-encoded on one line (or its JSON as is).
+GOOGLE_SERVICE_ACCOUNT_JSON=""
 # Drive folder ids (the part after /folders/ in the folder URL).
-# DRIVE_ARCHIVE_FOLDER_ID=""
+DRIVE_ARCHIVE_FOLDER_ID=""
 # DRIVE_CURRENT_PROGRAM_FOLDER_ID=""
+# Calendar id of the rehearsal/concert calendar (Calendar settings → "Integrate calendar").
+CALENDAR_ID=""
 
-# --- Needed from phase 4/5 on --------------------------------------------------
+# --- Needed from phase 4/5 on ------------------------------------------------------
 # REPERTOIRE_SHEET_ID=""
 # GOOGLE_OAUTH_CLIENT_ID=""
 # GOOGLE_OAUTH_CLIENT_SECRET=""

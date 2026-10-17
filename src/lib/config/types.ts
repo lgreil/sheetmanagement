@@ -34,6 +34,11 @@ export interface NamingRules {
 	};
 	/** Catalogue numbers recognised in folder names, e.g. "BWV 147", "KV 492", "Op. 90". */
 	cataloguePatterns: RegExp[];
+	/**
+	 * Folders inside the archive that group pieces instead of being a piece themselves,
+	 * e.g. "00 | Weihnachtsstücke". The first capture group is the category's display name.
+	 */
+	categoryFolderPattern: RegExp;
 }
 
 export interface EventKeywords {

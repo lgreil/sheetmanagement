@@ -1,6 +1,6 @@
 # Redesign plan: Sheetmanagement on Google Calendar + Google Drive
 
-Status: plan only, nothing implemented yet. Written 2026-10-17, decisions added the same day.
+Status: phases 0 (skeleton) and 1 (Google plumbing) are implemented. Written 2026-10-17, decisions added the same day.
 
 ## 1. Where things stand
 

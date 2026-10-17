@@ -61,7 +61,8 @@ export const bachkreis: OrchestraConfig = {
 			/\bHob\.?\s*[IVXL]+:\s*\d+\b/i,
 			/\bD\.?\s*\d{2,4}\b/,
 			/\bOp\.?\s*\d+(?:\s*Nr\.?\s*\d+)?\b/i
-		]
+		],
+		categoryFolderPattern: /^\d+\s*\|\s*(.+)$/
 	},
 
 	events: {

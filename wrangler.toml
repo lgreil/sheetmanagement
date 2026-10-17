@@ -9,6 +9,11 @@ compatibility_flags = ["nodejs_als"]
 # Keep variables set in the Cloudflare dashboard when deploying.
 keep_vars = true
 
+# Cache for the Drive archive index. Wrangler creates the namespace on the first
+# deploy and may write its id below; that id is not secret.
+[[kv_namespaces]]
+binding = "CACHE"
+
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"
