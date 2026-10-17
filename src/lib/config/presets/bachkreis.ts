@@ -9,6 +9,8 @@ export const bachkreis: OrchestraConfig = {
 	name: 'Bachkreis Ehemaligenorchester',
 	shortName: 'Bachkreis',
 	accent: '#2f6fdb',
+	timeZone: 'Europe/Berlin',
+	locale: 'de-DE',
 
 	instruments: [
 		{ name: 'Partitur', family: 'partitur', aliases: ['Score', 'Full Score', 'Direktion', 'Dirigent', 'Conductor', 'Gesamtausgabe', 'Gesammtausgabe', 'Ges', 'Full Orchestra'] },

@@ -79,6 +79,10 @@ export interface OrchestraConfig {
 	shortName: string;
 	/** Accent colour as any CSS colour. */
 	accent: string;
+	/** IANA time zone for showing dates and times, e.g. "Europe/Berlin". */
+	timeZone: string;
+	/** Locale for dates and sorting, e.g. "de-DE". */
+	locale: string;
 	/** Instruments in display order; parts are sorted by this list. */
 	instruments: Instrument[];
 	naming: NamingRules;

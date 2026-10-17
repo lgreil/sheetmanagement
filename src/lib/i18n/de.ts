@@ -17,6 +17,9 @@ export const de = {
 		intro: 'Noten, Konzerte und Programme an einem Ort, direkt aus Google Drive und dem Probenkalender.',
 		nextConcert: 'Nächstes Konzert',
 		nextConcertEmpty: 'Sobald der Kalender verbunden ist, steht hier das nächste Konzert mit Programm.',
+		noNextConcert: 'Gerade ist kein Konzert im Kalender eingetragen.',
+		nextRehearsal: 'Nächste Probe',
+		toConcert: 'Zum Konzert',
 		quickLinks: 'Schnellzugriff'
 	},
 	pieces: {
@@ -67,8 +70,38 @@ export const de = {
 	},
 	concerts: {
 		title: 'Konzerte',
-		lead: 'Kommende und vergangene Konzerte mit Programm.',
-		empty: 'Sobald der Probenkalender verbunden ist, erscheinen hier alle Konzerte und Proben.'
+		lead: 'Kommende Konzerte und Proben, direkt aus dem Probenkalender.',
+		empty: 'Sobald der Probenkalender verbunden ist, erscheinen hier alle Konzerte und Proben.',
+		failed: 'Der Kalender konnte gerade nicht geladen werden. Versuch es gleich noch einmal.',
+		upcoming: 'Demnächst',
+		past: 'Vergangene Konzerte',
+		noUpcoming: 'Gerade stehen keine Termine im Kalender.',
+		subscribe: 'Kalender abonnieren',
+		filters: { all: 'Alle', concerts: 'Konzerte', rehearsals: 'Proben' },
+		types: {
+			konzert: 'Konzert',
+			generalprobe: 'Generalprobe',
+			probe: 'Probe',
+			sonstiges: 'Termin'
+		},
+		tentative: 'noch unsicher',
+		allDay: 'ganztägig',
+		relative: (days: number) =>
+			days === 0 ? 'heute' : days === 1 ? 'morgen' : days > 1 ? `in ${days} Tagen` : days === -1 ? 'gestern' : `vor ${-days} Tagen`,
+		forConcert: (title: string) => `für ${title}`
+	},
+	concert: {
+		back: 'Alle Termine',
+		when: 'Wann',
+		where: 'Wo',
+		map: 'Karte',
+		openInCalendar: 'Im Google Kalender',
+		rehearsals: 'Proben',
+		noRehearsals: 'Für dieses Konzert stehen keine Proben im Kalender.',
+		program: 'Programm',
+		programSoon: 'Hier steht bald das Programm dieses Konzerts, mit direkten Links zu deinen Noten.',
+		preparesFor: 'Probe für',
+		description: 'Notiz aus dem Kalender'
 	},
 	myParts: {
 		title: 'Meine Noten',
