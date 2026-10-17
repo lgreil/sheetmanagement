@@ -218,8 +218,8 @@ The repository is public and the project is FOSS. It should work for any orchest
 
 - **Secrets go into Cloudflare secrets** (`wrangler secret put …`): the service-account key, the OAuth client secret, the session-signing key and `BOOTSTRAP_ADMINS`.
 - **Deployment ids go into environment variables**, also not committed: the calendar id, the Drive folder ids (archive, current programme), the sheet id and the orchestra's display name.
-  - Committed are only `wrangler.example.toml` and `.dev.vars.example`, with placeholders and comments.
-  - `.gitignore` covers `.dev.vars`, `wrangler.toml` and `*.json` key files.
+  - Committed are a generic `wrangler.toml` (no ids, `keep_vars = true`) and `.dev.vars.example`, with placeholders and comments.
+  - `.gitignore` covers `.dev.vars`, `.env*` and service-account key files.
 - **No real member data anywhere in the repo.** Members, emails and instruments live only in the sheet. Tests use invented fixture names (piece titles are fine, they're public works).
 - **Docs in the repo stay generic.** Instance-specific facts (account names, folder ids) live in the deployment config or in Drive, not in markdown files.
 

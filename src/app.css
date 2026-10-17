@@ -1,0 +1,129 @@
+/* Design tokens. Components use only these variables, so a theme is one block here. */
+:root {
+	--accent: #2f6fdb;
+	--accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+	--accent-contrast: #fff;
+
+	--bg: #f6f5f2;
+	--surface: #ffffff;
+	--surface-2: #efede8;
+	--border: #e2dfd8;
+	--text: #1d1c1a;
+	--text-muted: #6b6760;
+
+	--ok: #2e7d4f;
+	--warn: #b7791f;
+	--danger: #c0392b;
+
+	--radius-s: 8px;
+	--radius-m: 14px;
+	--radius-l: 20px;
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
+
+	--space-1: 4px;
+	--space-2: 8px;
+	--space-3: 12px;
+	--space-4: 16px;
+	--space-5: 24px;
+	--space-6: 32px;
+	--space-7: 48px;
+
+	--font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+	--content-width: 1040px;
+	--header-height: 60px;
+	--tabbar-height: 64px;
+
+	color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+	:root:not([data-theme='light']) {
+		--accent-contrast: #0d1117;
+		--bg: #131312;
+		--surface: #1c1c1a;
+		--surface-2: #262523;
+		--border: #33322f;
+		--text: #edebe6;
+		--text-muted: #a19d95;
+		--accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
+		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+		color-scheme: dark;
+	}
+}
+
+:root[data-theme='dark'] {
+	--accent-contrast: #0d1117;
+	--bg: #131312;
+	--surface: #1c1c1a;
+	--surface-2: #262523;
+	--border: #33322f;
+	--text: #edebe6;
+	--text-muted: #a19d95;
+	--accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+	color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html {
+	-webkit-text-size-adjust: 100%;
+}
+
+body {
+	margin: 0;
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font);
+	font-size: 16px;
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+	line-height: 1.2;
+	margin: 0;
+	letter-spacing: -0.01em;
+}
+
+h1 {
+	font-family: var(--font-serif);
+	font-weight: 600;
+	font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+}
+
+h2 {
+	font-size: 1.125rem;
+	font-weight: 600;
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: inherit;
+	text-decoration: none;
+}
+
+:focus-visible {
+	outline: 2px solid var(--accent);
+	outline-offset: 2px;
+	border-radius: var(--radius-s);
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
