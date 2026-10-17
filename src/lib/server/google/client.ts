@@ -23,7 +23,9 @@ export class GoogleClient {
 
 	constructor(
 		private readonly tokens: TokenProvider,
-		private readonly fetchImpl: typeof fetch = fetch
+		// Wrapped so fetch is never called as a method of this class: the Workers
+		// runtime rejects that with "Illegal invocation".
+		private readonly fetchImpl: typeof fetch = (input, init) => fetch(input, init)
 	) {}
 
 	async request<T>(

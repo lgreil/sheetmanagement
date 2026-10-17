@@ -7,6 +7,22 @@ const tokens = () => {
 };
 
 describe('GoogleClient', () => {
+	it('calls the global fetch without binding it to the client', async () => {
+		// Workers throw "Illegal invocation" when fetch runs with a foreign `this`.
+		const original = globalThis.fetch;
+		const seenThis: unknown[] = [];
+		globalThis.fetch = function (this: unknown) {
+			seenThis.push(this);
+			return Promise.resolve(Response.json({ ok: 1 }));
+		} as typeof fetch;
+		try {
+			await new GoogleClient(tokens()).request('https://example.test/x');
+		} finally {
+			globalThis.fetch = original;
+		}
+		expect(seenThis[0]).not.toBeInstanceOf(GoogleClient);
+	});
+
 	it('retries once with a fresh token after a 401', async () => {
 		const provider = tokens();
 		const fetchMock = vi
