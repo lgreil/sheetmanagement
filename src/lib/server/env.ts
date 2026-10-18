@@ -13,6 +13,8 @@ export interface AppEnv {
 	DRIVE_ARCHIVE_FOLDER_ID?: string;
 	DRIVE_CURRENT_PROGRAM_FOLDER_ID?: string;
 	REPERTOIRE_SHEET_ID?: string;
+	/** "true" lets the app mirror problem reports into Drive (comments, status words in file names). Needs the service account as editor. */
+	DRIVE_WRITE?: string;
 	/** Google sign-in (OAuth client of type "Web application"). Without it the app is open and read-only. */
 	GOOGLE_OAUTH_CLIENT_ID?: string;
 	GOOGLE_OAUTH_CLIENT_SECRET?: string;

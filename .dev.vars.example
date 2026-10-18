@@ -18,6 +18,9 @@ DRIVE_ARCHIVE_FOLDER_ID=""
 CALENDAR_ID=""
 # Id of the Repertoire sheet (the part after /spreadsheets/d/ in its URL); shared as editor.
 REPERTOIRE_SHEET_ID=""
+# Mirror problem reports into Drive: comments on the files, status words in file names.
+# Needs the service account as Editor of the archive folder. Default: read-only.
+# DRIVE_WRITE="true"
 
 # --- Sign-in (docs/setup-google.md, step 9) ---------------------------------------
 # Without GOOGLE_OAUTH_CLIENT_ID the app is open to everyone and read-only.
