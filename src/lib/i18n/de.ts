@@ -193,6 +193,11 @@ export const de = {
 		merge: 'Als eine PDF',
 		merging: (done: number, total: number) => `Lade Stimme ${done} von ${total} …`,
 		mergeFailed: 'Die PDF konnte nicht erstellt werden. Die einzelnen Stimmen lassen sich weiter öffnen.',
+		skipped: (n: number) =>
+			n === 1 ? 'Eine Stimme fehlt in der PDF, sie ließ sich nicht laden:' : `${n} Stimmen fehlen in der PDF, sie ließen sich nicht laden:`,
+		skipOffline: 'keine Verbindung',
+		skipHttp: (status: number, text: string) => (status === 403 ? 'nicht angemeldet' : `Fehler ${status}${text ? ` – ${text.slice(0, 120)}` : ''}`),
+		skipUnreadable: 'die Datei ist keine lesbare PDF',
 		mergeHint: 'Fügt deine Stimmen in Programmreihenfolge zu einer Datei zusammen, zum Drucken oder fürs Tablet.',
 		mergeOff: 'Das Zusammenfügen geht nur mit Anmeldung.',
 		fileName: (concert: string, instrument: string) => `Meine Noten – ${concert} – ${instrument}.pdf`

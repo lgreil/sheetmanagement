@@ -15,26 +15,67 @@
 		const ok = (parts: Shown[]) => parts.filter((part) => part.pdf && part.status === 'ok');
 		return ok(piece.own).length ? ok(piece.own) : ok(piece.shared);
 	};
-	const files = $derived(data.pieces.flatMap(playable));
+	const files = $derived(data.pieces.flatMap((piece) => playable(piece).map((part) => ({ ...part, piece: piece.title }))));
 	const found = $derived(data.pieces.filter((piece) => piece.own.length || piece.shared.length).length);
 
 	let progress = $state<string | null>(null);
-	let mergeError = $state(false);
+	let mergeError = $state<string | null>(null);
+	/** Parts left out of the last merge, and why, so a broken file can be found and fixed. */
+	let skipped = $state<{ piece: string; label: string; reason: string }[]>([]);
+
+	/** The part's pages, or why it couldn't be added. */
+	async function loadPart(PDFDocument: typeof import('pdf-lib').PDFDocument, id: string) {
+		let response: Response;
+		try {
+			response = await fetch(`/api/noten/${encodeURIComponent(id)}`);
+		} catch {
+			return { reason: t.myParts.skipOffline };
+		}
+		if (!response.ok) {
+			const body = await response.text().catch(() => '');
+			let message = '';
+			try {
+				message = JSON.parse(body).message ?? '';
+			} catch {
+				// Not SvelteKit's JSON error, e.g. a Cloudflare error page: the status says enough.
+			}
+			return { reason: t.myParts.skipHttp(response.status, message) };
+		}
+		try {
+			return { doc: await PDFDocument.load(await response.arrayBuffer(), { ignoreEncryption: true }) };
+		} catch (error) {
+			console.error(error);
+			return { reason: t.myParts.skipUnreadable };
+		}
+	}
 
 	/** Merges the parts in the browser: Workers on the free plan have too little CPU time for it. */
 	async function merge() {
 		if (!data.concert || !data.choice) return;
-		mergeError = false;
+		mergeError = null;
+		skipped = [];
 		try {
 			progress = t.myParts.merging(0, files.length);
 			const { PDFDocument } = await import('pdf-lib');
 			const merged = await PDFDocument.create();
+			// One broken file shouldn't cost the whole PDF: it's left out and named.
 			for (const [i, file] of files.entries()) {
 				progress = t.myParts.merging(i + 1, files.length);
-				const response = await fetch(`/api/noten/${encodeURIComponent(file.id)}`);
-				if (!response.ok) throw new Error(`${response.status} for ${file.label}`);
-				const part = await PDFDocument.load(await response.arrayBuffer(), { ignoreEncryption: true });
-				for (const page of await merged.copyPages(part, part.getPageIndices())) merged.addPage(page);
+				const part = await loadPart(PDFDocument, file.id);
+				if (!part.doc) {
+					skipped.push({ piece: file.piece, label: file.label, reason: part.reason });
+					continue;
+				}
+				try {
+					for (const page of await merged.copyPages(part.doc, part.doc.getPageIndices())) merged.addPage(page);
+				} catch (error) {
+					console.error(error);
+					skipped.push({ piece: file.piece, label: file.label, reason: t.myParts.skipUnreadable });
+				}
+			}
+			if (merged.getPageCount() === 0) {
+				mergeError = t.myParts.mergeFailed;
+				return;
 			}
 			const blob = new Blob([(await merged.save()) as BlobPart], { type: 'application/pdf' });
 			const link = document.createElement('a');
@@ -43,8 +84,9 @@
 			link.click();
 			setTimeout(() => URL.revokeObjectURL(link.href), 60_000);
 		} catch (error) {
+			// Loading pdf-lib failed (offline, or an old cached page after a deploy).
 			console.error(error);
-			mergeError = true;
+			mergeError = `${t.myParts.mergeFailed} ${error instanceof Error ? `(${error.message})` : ''}`;
 		} finally {
 			progress = null;
 		}
@@ -132,7 +174,15 @@
 				</div>
 			{/if}
 		</div>
-		{#if mergeError}<p class="msg error" role="alert">{t.myParts.mergeFailed}</p>{/if}
+		{#if mergeError}<p class="msg error" role="alert">{mergeError}</p>{/if}
+		{#if skipped.length}
+			<div class="msg error skipped" role="alert">
+				<p>{t.myParts.skipped(skipped.length)}</p>
+				<ul>
+					{#each skipped as part, i (i)}<li><strong>{part.piece}</strong> – {part.label}: {part.reason}</li>{/each}
+				</ul>
+			</div>
+		{/if}
 
 		{#if !data.pieces.length}
 			<p class="msg info">{t.myParts.noProgram}</p>
@@ -253,6 +303,17 @@
 
 	.msg {
 		margin-bottom: var(--space-4);
+	}
+
+	.skipped {
+		display: grid;
+		gap: var(--space-1);
+	}
+
+	.skipped ul {
+		margin: 0;
+		padding-left: var(--space-4);
+		font-size: 0.875rem;
 	}
 
 	.pieces {

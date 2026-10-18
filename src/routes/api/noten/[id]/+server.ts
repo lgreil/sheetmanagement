@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { Catalog } from '#lib/music/catalog.ts';
 import { getCatalog } from '#lib/server/catalog.ts';
+import { GoogleApiError } from '#lib/server/google/client.ts';
 import { downloadFile } from '#lib/server/google/drive.ts';
 import { getGoogle } from '#lib/server/services.ts';
 import type { RequestHandler } from './$types';
@@ -31,8 +32,10 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	if (!archivePdfs(catalog.catalog).has(params.id)) error(404, 'Diese Datei gibt es nicht im Notenarchiv.');
 
 	const file = await downloadFile(getGoogle().client, params.id).catch((cause) => {
-		console.error('Downloading a part failed:', cause);
-		error(502, 'Die Datei konnte gerade nicht aus Drive geladen werden.');
+		// Drive's status and message tell "not shared" (403/404) from "try again" (429/5xx).
+		const status = cause instanceof GoogleApiError ? cause.status : 0;
+		console.error(`Downloading part ${params.id} failed (${status || 'no status'}):`, cause instanceof Error ? cause.message : cause);
+		error(502, `Die Datei konnte nicht aus Drive geladen werden (Drive: ${status || 'keine Antwort'}).`);
 	});
 	return new Response(file.body, {
 		headers: {

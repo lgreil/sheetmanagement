@@ -85,7 +85,12 @@ export class GoogleClient {
 			const response = await this.fetchImpl(target, { headers: { authorization: `Bearer ${token}` } });
 			if (response.ok) return response;
 			if (response.status === 401 && attempt === 0) continue;
-			throw new GoogleApiError(response.status, response.statusText || 'Request failed', target.origin + target.pathname);
+			const detail = (await response.json().catch(() => null)) as { error?: { message?: string } } | null;
+			throw new GoogleApiError(
+				response.status,
+				detail?.error?.message ?? (response.statusText || 'Request failed'),
+				target.origin + target.pathname
+			);
 		}
 	}
 
