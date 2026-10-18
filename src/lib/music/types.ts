@@ -1,3 +1,4 @@
+import type { SectionKind } from './sections.ts';
 import type { InstrumentFamily } from '#lib/config/index.ts';
 
 export type PartStatus = 'ok' | 'missing' | 'empty' | 'incomplete';
@@ -29,8 +30,25 @@ export interface Part {
 	status: PartStatus;
 	mimeType: string;
 	subfolder?: string;
+	/** Key of the section it belongs to (see PieceDetail.sections). */
+	section: string;
 	/** For sorting within a piece. */
 	order: number;
+}
+
+/**
+ * A set of parts within one piece folder: what is played, a movement, the complete
+ * work. Most pieces have one section; the piece page shows tabs when there are more.
+ */
+export interface Section {
+	/** "" for the files directly in the piece folder, else the subfolder's id. */
+	key: string;
+	/** "2. Satz", "Komplett", or empty for a piece with only one section. */
+	label: string;
+	kind: SectionKind;
+	/** The Drive folder to open for this section. */
+	folderId: string;
+	partCount: number;
 }
 
 /** 'none': a piece known only from the sheet, without sheet music in Drive. */
@@ -42,6 +60,8 @@ export interface PieceSummary {
 	composer?: string;
 	catalogue?: string;
 	category?: string;
+	/** Current programmes it's in, e.g. ["A-Orchester", "Ehemaligenorchester"]. */
+	programs: string[];
 	partCount: number;
 	status: PieceStatus;
 	/** Lower-case text without accents, for instant search on the client. */
@@ -51,4 +71,6 @@ export interface PieceSummary {
 export interface PieceDetail extends PieceSummary {
 	folderName: string;
 	parts: Part[];
+	/** In display order; the first is what is played and opens first. */
+	sections: Section[];
 }

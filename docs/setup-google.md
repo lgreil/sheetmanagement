@@ -36,7 +36,7 @@ Share with the service account's email, like you would with a person:
 | What | Where | Access |
 |---|---|---|
 | The sheet-music archive folder | Drive → right-click the folder → **Share** | Viewer |
-| The "current programme" folder (if separate) | same | Viewer |
+| The current-programme folders ("Programm A-Orchester" …) | same | Viewer |
 | The rehearsal/concert calendar | Calendar → ⋮ next to the calendar → **Settings and sharing → Share with specific people** | See all event details |
 | The Repertoire sheet (create it first, see below) | Sheets → **Share** | Editor |
 
@@ -46,7 +46,8 @@ Drive may warn that the address is outside your organisation. That's expected.
 
 ## 5. Collect the ids
 
-- **Folder id:** open the folder in Drive. The id is the last part of the URL: `drive.google.com/drive/folders/<this part>`. If the "current programme" folder is separate, note its id too (`DRIVE_CURRENT_PROGRAM_FOLDER_ID`, optional).
+- **Folder id:** open the folder in Drive. The id is the last part of the URL: `drive.google.com/drive/folders/<this part>`.
+- **Current programmes** (optional): the ids of the folders with what each orchestra is playing now, e.g. "Programm A-Orchester", "Programm Ehemaligenorchester". Put them into `DRIVE_CURRENT_PROGRAM_FOLDER_ID`, separated by commas. Their pieces show up in the app with a tag per programme, taken from the folder name ("Programm A-Orchester" → "A-Orchester"). A "Programm …" folder (or a shortcut to one) inside another programme folder counts for both: if the Ehemaligenorchester's folder links to the A-Orchester's, those pieces get both tags.
 - **Calendar id:** Calendar → **Settings and sharing → Integrate calendar → Calendar ID**. For a Gmail account's main calendar, it's the email address.
 - **Sheet id:** open the sheet. The id is the long part of the URL: `docs.google.com/spreadsheets/d/<this part>/edit`.
 
@@ -88,7 +89,7 @@ pnpm wrangler secret put REPERTOIRE_SHEET_ID
 ```
 
 
-If you deploy under a different name (`pnpm run deploy -- --name …`), add the same `--name …` to each `secret put`.
+The secrets go to the worker named in `wrangler.toml` (`name = "noten"`). If you deploy under another name, change it there, so deploys and secrets always go to the same worker. (Passing `--name` on the command line works for `wrangler` directly, but `pnpm run deploy -- --name …` does not reach it.)
 
 ## 7. Check
 
@@ -113,6 +114,61 @@ The grey id columns are what the app uses to recognise rows. Don't edit them. Co
 
 If the setup page lists **Hinweise zur Tabelle** (e.g. a piece name in "Programm" that isn't in "Stücke"), fix those rows in the sheet.
 
+## 9. Turn on sign-in
+
+Until this step, the app is open to anyone with the link and nobody can change anything in it. With sign-in on, only members see the app, and admins hand out rights. Members sign in with their own Google account. This is free too.
+
+**Run `/setup` once more first** if your sheet is from before sign-in existed. It adds the tabs **Mitglieder**, **Gruppen**, **Rechte** and **Zugangsanfragen**.
+
+1. In the Cloud console (same project as in step 1): **APIs & Services → OAuth consent screen**.
+   - User type **External**. App name e.g. "Notenarchiv", your email as support and developer contact.
+   - **Branding:** leave out the logo and the app-domain fields (home page, privacy policy, terms, authorized domains). They're only needed for *brand verification*, which shows your app name and logo on Google's sign-in screen. Brand verification needs a domain you own, which a free `workers.dev` address isn't. Without it, sign-in works the same; Google just shows a plainer screen.
+     - The app still has its own privacy notice and terms (`/datenschutz`, `/nutzungsbedingungen`), linked on every page. Fill in who is responsible, as secrets like in step 6: `LEGAL_NAME` (defaults to `ORCHESTRA_NAME`) and `LEGAL_EMAIL`, optionally `LEGAL_ADDRESS`. The texts describe what the app does, but they're a template, not legal advice: have someone in the club check them.
+     - With your own domain later, you can fill in the fields with these pages and verify the brand.
+   - Scopes: add none. The app only asks for name and email (`openid email profile`), which are non-sensitive: Google requires no verification for them.
+   - Under **Audience** (or **Publishing status**), click **Publish app** so the status is **In production**. Brand verification isn't needed for that. While the app is in "Testing", only the test users listed there (at most 100) can sign in.
+2. **APIs & Services → Credentials → Create credentials → OAuth client ID**, type **Web application**.
+   - **Authorized redirect URIs:** your app's address plus `/auth/callback`, e.g. `https://notenarchiv.<account>.workers.dev/auth/callback`. For local development also add `http://localhost:5173/auth/callback`. The status page shows the exact address.
+   - Note the **Client ID** and **Client secret**.
+3. Make a random session secret (at least 32 characters):
+
+   ```powershell
+   # Windows PowerShell
+   [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+   ```
+
+   ```bash
+   # macOS / Linux
+   openssl rand -base64 32
+   ```
+
+4. Add the values like in step 6 (`.dev.vars` locally, `pnpm wrangler secret put …` for the deployed app):
+
+   ```
+   GOOGLE_OAUTH_CLIENT_ID="<client id>"
+   GOOGLE_OAUTH_CLIENT_SECRET="<client secret>"
+   SESSION_SECRET="<the random string>"
+   BOOTSTRAP_ADMINS="you@example.org,second-admin@example.org"
+   ```
+
+   **BOOTSTRAP_ADMINS** always have every right, whatever the sheet says, so the app can't lock everyone out. Use two accounts, e.g. the orchestra's and your own.
+
+5. Open the app and sign in with a bootstrap admin account. **Verwaltung** (`/admin`) now appears in the menu.
+
+**How access works:**
+
+- Anyone listed in **Mitglieder** can see everything. Someone who signs in but isn't listed can click **Zugang beantragen**; the request shows up under Verwaltung, where an admin approves it with one click.
+- Extra rights are given in **Rechte**, to an email address or to a group from the **Gruppen** column in Mitglieder (e.g. `Vorstand`):
+
+  | Right | Allows |
+  |---|---|
+  | `programme.bearbeiten` | Edit concert programmes in the app |
+  | `mitglieder.verwalten` | Approve members and give rights (Verwaltung) |
+  | `stuecke.bearbeiten`, `archiv.bearbeiten` | Reserved for upcoming features; edit the sheet directly for now |
+
+- Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.
+- App access and Drive access are separate: to open the PDFs, members still need access to the sheet-music folder in Drive.
+
 ## Troubleshooting
 
 | Message | Cause |
@@ -123,3 +179,5 @@ If the setup page lists **Hinweise zur Tabelle** (e.g. a piece name in "Programm
 | `Kein Zugriff auf … (404)` or `(403)` | Wrong id, or not shared with the service account's email (step 4). |
 | API "has not been used in project … or it is disabled" | Step 2 is missing for that API. Enabling can take a minute to apply. |
 | `The caller does not have permission (403)` on `/setup` | The sheet is shared as Viewer. The service account needs Editor. |
+| Google says `redirect_uri_mismatch` when signing in | The address under **Authorized redirect URIs** (step 9) doesn't match exactly. Copy it from the status page. |
+| Signed in, but always back on "Zugang beantragen" | The email isn't in **Mitglieder**, or is spelled differently there. |

@@ -13,6 +13,19 @@ export interface AppEnv {
 	DRIVE_ARCHIVE_FOLDER_ID?: string;
 	DRIVE_CURRENT_PROGRAM_FOLDER_ID?: string;
 	REPERTOIRE_SHEET_ID?: string;
+	/** Google sign-in (OAuth client of type "Web application"). Without it the app is open and read-only. */
+	GOOGLE_OAUTH_CLIENT_ID?: string;
+	GOOGLE_OAUTH_CLIENT_SECRET?: string;
+	/** At least 32 random characters; signs the session cookies. */
+	SESSION_SECRET?: string;
+	/** Comma-separated emails that always have every right. */
+	BOOTSTRAP_ADMINS?: string;
+	/** Who is responsible for the app, for the privacy notice (defaults to ORCHESTRA_NAME). */
+	LEGAL_NAME?: string;
+	/** Postal address of the responsible person or club, e.g. "Musterstraße 1, 12345 Musterstadt". */
+	LEGAL_ADDRESS?: string;
+	/** Contact email for privacy questions. */
+	LEGAL_EMAIL?: string;
 	/** KV namespace binding from wrangler.toml; optional, memory is used without it. */
 	CACHE?: KvStore;
 }

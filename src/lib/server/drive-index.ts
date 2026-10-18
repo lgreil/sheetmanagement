@@ -1,18 +1,23 @@
 import type { GoogleClient } from './google/client.ts';
-import { contentId, isFolderLike, listChildren, SHORTCUT_MIME, type DriveFile } from './google/drive.ts';
+import { contentId, getFile, isFolderLike, listChildren, SHORTCUT_MIME, type DriveFile } from './google/drive.ts';
 
 /**
- * A snapshot of the sheet-music archive: one entry per piece folder with its files.
- * File and folder names are kept raw here; parsing them (title, composer, part) is a
- * separate step, so the index stays valid when the parsing rules change.
+ * A snapshot of the sheet music in Drive: one entry per piece folder with its files,
+ * from the archive and from the current-programme folders. File and folder names are
+ * kept raw here; parsing them (title, composer, part) is a separate step, so the index
+ * stays valid when the parsing rules change.
  */
 export interface DriveIndex {
-	version: 1;
+	version: 3;
 	archiveFolderId: string;
 	builtAt: string;
 	/** Google API requests the crawl needed (free Workers allow 50 per invocation). */
 	requestCount: number;
 	pieces: IndexedPiece[];
+	/** Programme names in the order of the configured folders, e.g. ["A-Orchester", "Ehemaligenorchester"]. */
+	programs: string[];
+	/** Files lying directly in a category folder, e.g. a running order for the Christmas pieces. */
+	categoryFiles: { category: string; files: IndexedFile[] }[];
 }
 
 export interface IndexedPiece {
@@ -20,6 +25,8 @@ export interface IndexedPiece {
 	name: string;
 	/** Display name of the category folder it sits in, e.g. "Weihnachtsstücke". */
 	category?: string;
+	/** Current programmes it's in, e.g. ["Ehemaligenorchester", "A-Orchester"]. */
+	programs?: string[];
 	files: IndexedFile[];
 }
 
@@ -31,11 +38,25 @@ export interface IndexedFile {
 	size?: number;
 	/** Name of the subfolder inside the piece folder, if the file is not directly in it. */
 	subfolder?: string;
+	subfolderId?: string;
 }
 
-export const INDEX_VERSION = 1;
+export const INDEX_VERSION = 3;
 
-function toIndexedFile(file: DriveFile, subfolder?: string): IndexedFile {
+/** Programme folders can link to each other ("Programm A-Orchester" inside the EO's); this deep at most. */
+const MAX_PROGRAM_DEPTH = 3;
+
+export interface IndexOptions {
+	archiveFolderId: string;
+	/** Folders inside the archive that group pieces; the first group is the category name. */
+	categoryFolderPattern: RegExp;
+	/** Current-programme folders, one per orchestra or ensemble. */
+	programFolderIds?: string[];
+	/** Folder names that are a programme rather than a piece; the first group is its name. */
+	programFolderPattern?: RegExp;
+}
+
+function toIndexedFile(file: DriveFile, subfolder?: { id: string; name: string }): IndexedFile {
 	const isShortcut = file.mimeType === SHORTCUT_MIME && file.shortcutDetails;
 	return {
 		id: contentId(file),
@@ -43,7 +64,7 @@ function toIndexedFile(file: DriveFile, subfolder?: string): IndexedFile {
 		mimeType: isShortcut ? file.shortcutDetails!.targetMimeType : file.mimeType,
 		modifiedTime: file.modifiedTime,
 		size: file.size ? Number(file.size) : undefined,
-		...(subfolder ? { subfolder } : {})
+		...(subfolder ? { subfolder: subfolder.name, subfolderId: subfolder.id } : {})
 	};
 }
 
@@ -57,22 +78,22 @@ function parentIn<T>(file: DriveFile, folders: Map<string, T>): T | undefined {
 }
 
 /**
- * Crawls the archive in a fixed, small number of batched requests:
- * archive → category folders → piece folders → one level of subfolders.
+ * Crawls in a fixed, small number of batched requests:
+ * archive → category folders, programme folders (→ linked programmes), then the files
+ * of all pieces → one level of subfolders.
  */
-export async function buildDriveIndex(
-	client: GoogleClient,
-	archiveFolderId: string,
-	categoryFolderPattern: RegExp
-): Promise<DriveIndex> {
+export async function buildDriveIndex(client: GoogleClient, options: IndexOptions): Promise<DriveIndex> {
+	const { archiveFolderId, categoryFolderPattern, programFolderIds = [], programFolderPattern } = options;
 	const before = client.requestCount;
 	const pieces = new Map<string, IndexedPiece>();
-	const addPiece = (folder: DriveFile, category?: string) => {
+	const addPiece = (folder: DriveFile, category?: string, programs: string[] = []) => {
 		const id = contentId(folder);
-		if (!pieces.has(id)) pieces.set(id, { folderId: id, name: folder.name, category, files: [] });
+		const piece = pieces.get(id) ?? { folderId: id, name: folder.name, category, files: [] };
+		if (programs.length) piece.programs = [...new Set([...(piece.programs ?? []), ...programs])];
+		pieces.set(id, piece);
 	};
 
-	// 1. Top level: piece folders and category folders.
+	// 1. Archive top level: piece folders and category folders.
 	const categories = new Map<string, string>();
 	for (const entry of await listChildren(client, [archiveFolderId])) {
 		if (!isFolderLike(entry)) continue;
@@ -81,31 +102,77 @@ export async function buildDriveIndex(
 		else addPiece(entry);
 	}
 
-	// 2. Piece folders inside category folders.
+	// 2. Piece folders inside category folders, and loose files there (e.g. a running order).
+	const categoryFiles = new Map<string, IndexedFile[]>();
 	if (categories.size > 0) {
 		for (const entry of await listChildren(client, [...categories.keys()])) {
 			const category = parentIn(entry, categories);
-			if (category && isFolderLike(entry)) addPiece(entry, category);
+			if (!category) continue;
+			if (isFolderLike(entry)) addPiece(entry, category);
+			else categoryFiles.set(category, [...(categoryFiles.get(category) ?? []), toIndexedFile(entry)]);
 		}
 	}
 
-	// 3. Files of all pieces; remember subfolders for one more level.
-	const subfolders = new Map<string, { piece: IndexedPiece; name: string }>();
+	// 3. Current programmes. A folder's programme name comes from "Programm <Name>", or for a
+	//    configured folder from its whole name ("01 | Aktuelles Programm" → "Aktuelles Programm").
+	//    A programme folder inside another (often a shortcut) passes its pieces on: they're
+	//    in both programmes.
+	//    A configured folder that isn't itself a programme (the "Aktuelles Programm" parent)
+	//    only names the pieces lying directly in it, not those of the programmes inside it.
+	const programName = (name: string) => programFolderPattern?.exec(name)?.[1]?.trim();
+	const order: string[] = [];
+	/** Per folder: names for its own pieces, and names it passes on to programmes inside it. */
+	let frontier = new Map<string, { own: string[]; passOn: string[] }>();
+	for (const id of [...new Set(programFolderIds)]) {
+		const folder = await getFile(client, id);
+		const program = programName(folder.name);
+		const name = program ?? folder.name.match(categoryFolderPattern)?.[1]?.trim() ?? folder.name;
+		order.push(name);
+		frontier.set(id, { own: [name], passOn: program ? [name] : [] });
+	}
+	const reached = new Map<string, Set<string>>();
+	for (let depth = 0; depth < MAX_PROGRAM_DEPTH && frontier.size > 0; depth++) {
+		const next = new Map<string, { own: string[]; passOn: string[] }>();
+		for (const entry of await listChildren(client, [...frontier.keys()])) {
+			const parent = parentIn(entry, frontier);
+			if (!parent || !isFolderLike(entry)) continue;
+			const nested = programName(entry.name);
+			if (!nested) {
+				addPiece(entry, undefined, parent.own);
+				continue;
+			}
+			if (!order.includes(nested)) order.push(nested);
+			// Visit a programme again only if it brings new names, so links in circles end.
+			const id = contentId(entry);
+			const known = reached.get(id) ?? new Set();
+			const names = [...new Set([...(next.get(id)?.own ?? []), ...parent.passOn, nested])];
+			if (names.some((name) => !known.has(name))) {
+				next.set(id, { own: names, passOn: names });
+				reached.set(id, new Set([...known, ...names]));
+			}
+		}
+		frontier = next;
+	}
+	const used = new Set([...pieces.values()].flatMap((piece) => piece.programs ?? []));
+	const programs = order.filter((name) => used.has(name));
+
+	// 4. Files of all pieces; remember subfolders for one more level.
+	const subfolders = new Map<string, { piece: IndexedPiece; id: string; name: string }>();
 	if (pieces.size > 0) {
 		for (const entry of await listChildren(client, [...pieces.keys()])) {
 			const piece = parentIn(entry, pieces);
 			if (!piece) continue;
-			if (isFolderLike(entry)) subfolders.set(contentId(entry), { piece, name: entry.name });
+			if (isFolderLike(entry)) subfolders.set(contentId(entry), { piece, id: contentId(entry), name: entry.name });
 			else piece.files.push(toIndexedFile(entry));
 		}
 	}
 
-	// 4. Files in subfolders (e.g. "Sections"). Deeper levels are ignored.
+	// 5. Files in subfolders (e.g. "Sections"). Deeper levels are ignored.
 	if (subfolders.size > 0) {
 		for (const entry of await listChildren(client, [...subfolders.keys()])) {
 			const subfolder = parentIn(entry, subfolders);
 			if (subfolder && !isFolderLike(entry)) {
-				subfolder.piece.files.push(toIndexedFile(entry, subfolder.name));
+				subfolder.piece.files.push(toIndexedFile(entry, subfolder));
 			}
 		}
 	}
@@ -119,6 +186,8 @@ export async function buildDriveIndex(
 		archiveFolderId,
 		builtAt: new Date().toISOString(),
 		requestCount: client.requestCount - before,
-		pieces: sorted
+		pieces: sorted,
+		programs,
+		categoryFiles: [...categoryFiles].map(([category, files]) => ({ category, files }))
 	};
 }

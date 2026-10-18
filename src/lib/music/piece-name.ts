@@ -1,3 +1,4 @@
+import { searchText } from './text.ts';
 import type { NamingRules } from '#lib/config/index.ts';
 
 export interface PieceName {
@@ -68,4 +69,16 @@ export function parsePieceName(folderName: string, naming: NamingRules): PieceNa
 	}
 
 	return { title: name };
+}
+
+/**
+ * Which numbered work a title names, so separate folders of one work can be shown
+ * together: "Sinfonie Nr. 4 Italienische" and "Sinfonie Nr4 Satz 2 - Streicherbesetzung"
+ * both give "sinfonie 4". Undefined for titles without "Nr.".
+ */
+export function workKey(title: string): string | undefined {
+	const match = searchText(title).match(/^(.*?)\bnr\.?\s*(\d+)/);
+	if (!match) return undefined;
+	const kind = match[1].replace(/[^a-z]+/g, ' ').trim();
+	return kind ? `${kind} ${match[2]}` : undefined;
 }

@@ -1,6 +1,6 @@
 # Redesign plan: Sheetmanagement on Google Calendar + Google Drive
 
-Status: phases 0 (skeleton), 1 (Google plumbing), 2 (repertoire from Drive), 3 (concerts from Calendar) and 4 (sheet + linking) are implemented. Written 2026-10-17, decisions added the same day.
+Status: phases 0 (skeleton), 1 (Google plumbing), 2 (repertoire from Drive), 3 (concerts from Calendar), 4 (sheet + linking) and 5 (login + rights) are implemented. Written 2026-10-17, decisions added the same day.
 
 ## 1. Where things stand
 
@@ -42,7 +42,7 @@ Very little real logic exists, so a rewrite costs almost nothing.
 ### Cost check: everything stays free
 
 - **Google Cloud project + service account:** free, and no billing account or credit card needed. The Drive, Calendar and Sheets APIs have no charge, only per-minute quotas far above what an orchestra uses.
-- **Google sign-in (OAuth) for members:** free. Only the basic scopes (`openid email profile`) are requested, and those need no Google verification. The app must be switched from "Testing" to "In production" in the consent screen, otherwise logins expire after 7 days and only 100 test users are allowed.
+- **Google sign-in (OAuth) for members:** free. Only the basic scopes (`openid email profile`) are requested, and those need no Google verification. The app must be switched from "Testing" to "In production" in the consent screen, otherwise only listed test users (at most 100) can sign in. Publishing needs no brand verification, which is good: that needs an own domain, and a `workers.dev` address doesn't count. Without it, Google's sign-in screen just doesn't show the app's name and logo. (Testing mode's 7-day limit applies to Google refresh tokens, which this app doesn't keep; its sessions are its own 30-day cookies.)
 - **Cloudflare Workers free plan:** 100,000 requests/day, plenty. The one tight limit is **10 ms CPU per request** (waiting on Google doesn't count), so heavy work like merging PDFs runs in the browser instead (§7, feature 6).
 - **Cloudflare KV** (small key/value cache) free tier: 100,000 reads and 1,000 writes per day. Used only for the Drive index cache, which is refreshed every few minutes, so it stays well under the limit.
 
@@ -168,6 +168,7 @@ Rights, kept deliberately few:
 | `archiv.bearbeiten` | Add historical concerts and pieces. |
 | `mitglieder.verwalten` | Add members, groups and rights. This is the admin right. |
 
+- **Before sign-in is configured** (no `GOOGLE_OAUTH_CLIENT_ID`), the app stays open and read-only as in phases 0–4, and `/setup` and `/status` are open so a new deployment can be set up. As soon as the client id is set, everything except the sign-in pages needs a member, and `/setup`, `/status` and `/admin` need `mitglieder.verwalten`.
 - **Who counts as a member?** Anyone listed in "Mitglieder". New sign-ins that aren't listed see "Zugang beantragen", and an admin approves them with one click.
 - **The first admins come from a Cloudflare secret, `BOOTSTRAP_ADMINS`** (comma-separated emails), never from the code. For this deployment that's the orchestra account plus a second admin account as a backup. Bootstrap admins always have every right, so the app can't be locked out by a broken sheet. All other admins are managed in the sheet.
 - **Note: the app's rights and Drive's own sharing are separate.** App rights decide what you can do *in the app*. Opening a PDF still needs Drive access to `Noten Upload`, as today. The app shows a clear hint ("Bitte Zugriff auf den Noten-Ordner anfragen") when Drive refuses. Syncing the two automatically would need the app to change Drive sharing, which is left out on purpose.

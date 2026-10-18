@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
 	import type { PieceSummary } from '#lib/music/types.ts';
@@ -22,21 +23,28 @@
 		restore: (value: { query: string; filter: string }) => ({ query, filter } = value)
 	};
 
+	// Programmes first ("A-Orchester", "Ehemaligenorchester"), then categories like "Weihnachtsstücke".
 	const filters = $derived([
 		{ value: '', label: t.pieces.all },
-		...(data.categories.length ? [{ value: '__archive', label: t.pieces.archive }] : []),
-		...data.categories.map((category) => ({ value: category, label: category })),
+		...data.programs.map((program) => ({ value: `program:${program}`, label: program })),
+		...data.categories.map((category) => ({ value: `category:${category}`, label: category })),
 		{ value: NEEDS_WORK, label: t.pieces.needsWork },
 		...(data.pieces.some((piece) => piece.status === 'none') ? [{ value: NO_MUSIC, label: t.pieces.noMusic }] : [])
 	]);
 
+	// "/stuecke?komponist=Bach", linked from a piece page: all works by one composer.
+	const composer = $derived(page.url.searchParams.get('komponist')?.trim() || null);
+	const activeCategory = $derived(filter.startsWith('category:') ? filter.slice('category:'.length) : null);
+
 	const visible = $derived.by(() => {
 		const words = searchText(query).split(/\s+/).filter(Boolean);
+		const byComposer = composer ? searchText(composer) : null;
 		return data.pieces.filter((piece) => {
+			if (byComposer && searchText(piece.composer) !== byComposer) return false;
 			if (filter === NEEDS_WORK && (piece.status === 'ok' || piece.status === 'none')) return false;
 			if (filter === NO_MUSIC && piece.status !== 'none') return false;
-			if (filter === '__archive' && (piece.category || piece.status === 'none')) return false;
-			if (filter && !filter.startsWith('__') && piece.category !== filter) return false;
+			if (filter.startsWith('program:') && !piece.programs.includes(filter.slice('program:'.length))) return false;
+			if (filter.startsWith('category:') && piece.category !== filter.slice('category:'.length)) return false;
 			return words.every((word) => piece.search.includes(word));
 		});
 	});
@@ -99,6 +107,13 @@
 			{/if}
 		</label>
 
+		{#if composer}
+			<a class="composer" href="/stuecke" aria-label={t.pieces.clearComposer} title={t.pieces.clearComposer}>
+				{t.pieces.byComposer(composer)}
+				<Icon name="x" size={14} />
+			</a>
+		{/if}
+
 		<div class="chips" role="radiogroup" aria-label="Filter">
 			{#each filters as option (option.value)}
 				<button
@@ -114,6 +129,15 @@
 		</div>
 	</div>
 
+	{#if activeCategory && data.categoryFiles[activeCategory]?.length}
+		<div class="category-files">
+			<span class="label">{t.pieces.categoryFiles}</span>
+			{#each data.categoryFiles[activeCategory] as file (file.id)}
+				<a href={file.url} target="_blank" rel="noopener noreferrer"><Icon name="file" size={16} />{file.name}</a>
+			{/each}
+		</div>
+	{/if}
+
 	<p class="count" aria-live="polite">{t.pieces.count(visible.length)}</p>
 
 	{#if visible.length === 0}
@@ -128,9 +152,10 @@
 							<a class="row" href="/stuecke/{piece.id}">
 								<span class="main">
 									<span class="title">{piece.title}</span>
-									{#if piece.composer || piece.catalogue || piece.category}
+									{#if piece.composer || piece.catalogue || piece.category || piece.programs.length}
 										<span class="meta">
 											{[piece.composer, piece.catalogue].filter(Boolean).join(' · ')}
+											{#each piece.programs as program (program)}<span class="tag program">{program}</span>{/each}
 											{#if piece.category}<span class="tag">{piece.category}</span>{/if}
 										</span>
 									{/if}
@@ -254,6 +279,52 @@
 		color: var(--accent-contrast);
 	}
 
+	.composer {
+		display: inline-flex;
+		align-items: center;
+		justify-self: start;
+		gap: var(--space-2);
+		padding: 6px 12px 6px 14px;
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.composer:hover {
+		background: color-mix(in oklab, var(--accent) 22%, transparent);
+	}
+
+	.category-files {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+		margin-top: var(--space-3);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		font-size: 0.9375rem;
+	}
+
+	.category-files .label {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.category-files a {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--accent);
+		font-weight: 600;
+	}
+
 	.count {
 		margin: var(--space-3) 0 var(--space-2);
 		color: var(--text-muted);
@@ -326,6 +397,12 @@
 		color: var(--accent);
 		font-size: 0.75rem;
 		font-weight: 600;
+	}
+
+	/* Pieces in a current programme stand out. */
+	.tag.program {
+		background: var(--accent);
+		color: var(--accent-contrast);
 	}
 
 	.side {

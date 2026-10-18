@@ -27,8 +27,17 @@
 		return part.family;
 	};
 
+	// A symphony may have sections: what is played, single movements, the complete work.
+	// The chosen tab belongs to one piece, so another piece opens on its own first section.
+	let chosen = $state<{ piece: string; key: string } | null>(null);
+	const sections = $derived(piece.sections);
+	const current = $derived(
+		sections.find((section) => chosen?.piece === piece.id && section.key === chosen.key) ?? sections[0]
+	);
+	const shown = $derived(current ? piece.parts.filter((part) => part.section === current.key) : piece.parts);
+
 	const groups = $derived(
-		GROUP_ORDER.map((key) => ({ key, parts: piece.parts.filter((part) => groupOf(part) === key) })).filter(
+		GROUP_ORDER.map((key) => ({ key, parts: shown.filter((part) => groupOf(part) === key) })).filter(
 			(group) => group.parts.length > 0
 		)
 	);
@@ -50,7 +59,13 @@
 
 <header class="head">
 	{#if piece.composer || piece.catalogue}
-		<p class="eyebrow">{[piece.composer, piece.catalogue].filter(Boolean).join(' · ')}</p>
+		<p class="eyebrow">
+			{#if piece.composer}
+				<a href="/stuecke?komponist={encodeURIComponent(piece.composer)}" title={t.piece.allBy(piece.composer)}>{piece.composer}</a>
+			{/if}
+			{#if piece.composer && piece.catalogue}·{/if}
+			{piece.catalogue ?? ''}
+		</p>
 	{/if}
 	<h1>{piece.title}</h1>
 	<div class="facts">
@@ -59,6 +74,7 @@
 		{:else}
 			<span>{t.pieces.parts(piece.partCount)}</span>
 		{/if}
+		{#each piece.programs as program (program)}<span class="tag program">{program}</span>{/each}
 		{#if piece.category}<span class="tag">{piece.category}</span>{/if}
 		{#if piece.folderUrl}
 			<a class="drive" href={piece.folderUrl} target="_blank" rel="noopener noreferrer">
@@ -87,7 +103,36 @@
 	</dl>
 {/if}
 
-{#each groups as group (group.key)}
+{#if sections.length > 1 && current}
+	<div class="sections" role="tablist" aria-label={t.piece.sections}>
+		{#each sections as section (section.key)}
+			<button
+				role="tab"
+				class="section-tab"
+				class:active={section.key === current.key}
+				class:complete={section.kind === 'complete'}
+				aria-selected={section.key === current.key}
+				onclick={() => (chosen = { piece: piece.id, key: section.key })}
+			>
+				<span>{section.label}</span>
+				{#if section.kind === 'played'}<span class="badge">{t.piece.playedBadge}</span>{/if}
+				<span class="count">{section.partCount}</span>
+			</button>
+		{/each}
+	</div>
+	{#if t.piece.sectionHint[current.kind] || current.key}
+		<p class="section-hint">
+			{t.piece.sectionHint[current.kind]}
+			{#if current.key}
+				<a href={current.folderUrl} target="_blank" rel="noopener noreferrer">
+					<Icon name="folder" size={14} />{t.piece.sectionFolder}
+				</a>
+			{/if}
+		</p>
+	{/if}
+{/if}
+
+{#each groups as group (`${current?.key}:${group.key}`)}
 	<section class="group">
 		<h2>{t.piece.groups[group.key]}</h2>
 		<ul class="parts">
@@ -106,10 +151,11 @@
 						</span>
 						<span class="label">
 							<span class="name">{part.label}</span>
-							{#if part.notes.length || part.subfolder}
+							{#if part.notes.length || (part.subfolder && sections.length < 2)}
 								<span class="notes">
 									{#each part.notes as note (note)}<span class="note">{note}</span>{/each}
-									{#if part.subfolder}<span class="note">{part.subfolder}</span>{/if}
+									<!-- With tabs, the subfolder is the tab; a lone subfolder is still worth naming. -->
+									{#if part.subfolder && sections.length < 2}<span class="note">{part.subfolder}</span>{/if}
 								</span>
 							{/if}
 						</span>
@@ -123,6 +169,30 @@
 		</ul>
 	</section>
 {/each}
+
+{#snippet pieceLinks(title: string, pieces: typeof data.moreByComposer)}
+	<section class="more">
+		<h2>{title}</h2>
+		<ul class="more-list">
+			{#each pieces as other (other.id)}
+				<li>
+					<a href="/stuecke/{other.id}">
+						<span class="more-title">{other.title}</span>
+						{#if other.catalogue}<span class="muted">{other.catalogue}</span>{/if}
+						{#each other.programs as program (program)}<span class="tag program">{program}</span>{/each}
+					</a>
+				</li>
+			{/each}
+		</ul>
+	</section>
+{/snippet}
+
+{#if data.otherVersions.length}
+	{@render pieceLinks(t.piece.otherVersions, data.otherVersions)}
+{/if}
+{#if piece.composer && data.moreByComposer.length}
+	{@render pieceLinks(t.piece.moreBy(piece.composer), data.moreByComposer)}
+{/if}
 
 <section class="played">
 	<h2>{t.piece.playedAt}</h2>
@@ -164,6 +234,152 @@
 		font-weight: 600;
 	}
 
+	.eyebrow a {
+		text-decoration: underline;
+		text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent);
+		text-underline-offset: 3px;
+	}
+
+	.eyebrow a:hover {
+		text-decoration-color: var(--accent);
+	}
+
+	.sections {
+		display: flex;
+		gap: var(--space-2);
+		margin-bottom: var(--space-2);
+		overflow-x: auto;
+		scrollbar-width: none;
+	}
+
+	.section-tab {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		gap: var(--space-2);
+		padding: 8px 14px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text);
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			background 0.15s,
+			border-color 0.15s,
+			color 0.15s;
+	}
+
+	.section-tab:hover {
+		border-color: var(--accent);
+	}
+
+	/* The complete work is for looking things up, so it's quieter until chosen. */
+	.section-tab.complete:not(.active) {
+		border-style: dashed;
+		color: var(--text-muted);
+	}
+
+	.section-tab.active {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--accent-contrast);
+	}
+
+	.badge {
+		padding: 0 6px;
+		border-radius: 6px;
+		background: color-mix(in oklab, var(--ok) 18%, transparent);
+		color: var(--ok);
+		font-size: 0.6875rem;
+		font-weight: 700;
+		text-transform: uppercase;
+		letter-spacing: 0.04em;
+	}
+
+	.section-tab.active .badge {
+		background: color-mix(in oklab, var(--accent-contrast) 25%, transparent);
+		color: var(--accent-contrast);
+	}
+
+	.count {
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 500;
+	}
+
+	.section-tab.active .count {
+		color: color-mix(in oklab, var(--accent-contrast) 80%, transparent);
+	}
+
+	.section-hint {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-3);
+		margin: 0 0 var(--space-4) var(--space-1);
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.section-hint a {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.more {
+		margin-top: var(--space-6);
+	}
+
+	.more h2 {
+		margin: 0 0 var(--space-2) var(--space-1);
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.more-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.more-list a {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		height: 100%;
+		padding: var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		transition: border-color 0.15s;
+	}
+
+	.more-list a:hover {
+		border-color: var(--accent);
+	}
+
+	.more-title {
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.muted {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
 	.facts {
 		display: flex;
 		flex-wrap: wrap;
@@ -179,6 +395,11 @@
 		color: var(--accent);
 		font-size: 0.8125rem;
 		font-weight: 600;
+	}
+
+	.tag.program {
+		background: var(--accent);
+		color: var(--accent-contrast);
 	}
 
 	.drive {

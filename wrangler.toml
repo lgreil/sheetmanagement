@@ -1,7 +1,7 @@
 # Generic Cloudflare Workers config. Safe to commit: it contains no ids or secrets.
 # Deployment-specific values (orchestra name, Google ids, keys) are set per
 # deployment with `wrangler secret put <NAME>`; see .dev.vars.example for the list.
-name = "sheetmanagement"
+name = "noten"
 main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_als"]

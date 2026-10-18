@@ -1,3 +1,4 @@
+import { RIGHTS } from '#lib/access/access.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
 import type { GoogleClient } from './google/client.ts';
 import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
@@ -6,7 +7,7 @@ import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues }
 const ID_PROTECTION = 'sheetmanagement: id column';
 const TAB_KEYS = Object.keys(LAYOUT) as TabKey[];
 const ID_COLUMNS: Partial<Record<TabKey, string>> = { pieces: 'driveFolderId', concerts: 'eventId' };
-const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = { pieces: ['reviewedAt'], concerts: ['date'] };
+const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = { pieces: ['reviewedAt'], concerts: ['date'], requests: ['requestedAt'] };
 const WIDTHS: Record<string, number> = { title: 280, concert: 240, piece: 280, notes: 240, position: 60, date: 110 };
 
 const HEADER_BACKGROUND = { red: 0.93, green: 0.94, blue: 0.96 };
@@ -140,7 +141,8 @@ export async function setUpSheet(
 	});
 	const dropdowns: [TabKey, string, object][] = [
 		['program', 'concert', fromColumn('concerts', 'title')],
-		['program', 'piece', fromColumn('pieces', 'title')]
+		['program', 'piece', fromColumn('pieces', 'title')],
+		['rights', 'right', { type: 'ONE_OF_LIST', values: RIGHTS.map((right) => ({ userEnteredValue: right })) }]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

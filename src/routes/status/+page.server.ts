@@ -1,7 +1,9 @@
 import type { PageServerLoad } from './$types';
+import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
-import { LAYOUT } from '#lib/repertoire/sheet.ts';
+import { ACCESS_TABS } from '#lib/access/access.ts';
+import { LAYOUT, REPERTOIRE_TABS, type TabKey } from '#lib/repertoire/sheet.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
 import { getArchiveIndex, getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
@@ -41,7 +43,8 @@ function describeError(error: unknown, what: string, serviceAccountEmail?: strin
 const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
 const dateOnly = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'UTC' });
 
-export const load: PageServerLoad = async ({ url }) => {
+export const load: PageServerLoad = async ({ url, locals }) => {
+	requireAdminWhenSignInIsOn(locals);
 	let serviceAccountEmail: string | undefined;
 	const account: Check = await (async () => {
 		try {
@@ -79,6 +82,13 @@ export const load: PageServerLoad = async ({ url }) => {
 							details: [
 								`${index.pieces.length} Stücke mit ${files} Dateien`,
 								...(categories.length ? [`Kategorien: ${categories.join(', ')}`] : []),
+							...(index.programs.length
+								? [
+										`Aktuelle Programme: ${index.programs
+											.map((program) => `${program} (${index.pieces.filter((p) => p.programs?.includes(program)).length})`)
+											.join(', ')}`
+									]
+								: []),
 								`Stand: ${dateTime.format(new Date(result.storedAt))} (${result.source === 'fresh' ? 'gerade geladen' : 'aus dem Cache'}, ${index.requestCount} Google-Anfragen)`
 							]
 						};
@@ -118,27 +128,33 @@ export const load: PageServerLoad = async ({ url }) => {
 					try {
 						const info = await getSpreadsheetInfo(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'));
 						const title = `„${info.title}"`;
-						const missingTabs = Object.values(LAYOUT)
-							.map(({ tab }) => tab)
-							.filter((tab) => !info.tabs.includes(tab));
-						if (missingTabs.length) {
+						const missing = (keys: readonly TabKey[]) =>
+							keys.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
+						const setupHint = 'Auf der Seite „Tabelle einrichten“ werden sie angelegt.';
+						const missingRepertoire = missing(REPERTOIRE_TABS);
+						if (missingRepertoire.length) {
 							return {
 								state: 'missing',
 								details: [title],
-								problem: `Es fehlen die Blätter ${missingTabs.join(', ')}.`,
-								hint: 'Auf der Seite „Tabelle einrichten“ werden sie angelegt.'
+								problem: `Es fehlen die Blätter ${missingRepertoire.join(', ')}.`,
+								hint: setupHint
 							};
 						}
 						const result = await getRepertoire();
 						if (!result.ok) return { state: 'error', details: [title], problem: 'Die Tabelle konnte nicht gelesen werden.' };
 						const { pieces, concerts, problems } = result.repertoire;
+						// Without the access tabs the repertoire works; only sign-in needs them.
+						const missingAccess = missing(ACCESS_TABS);
 						return {
 							state: 'ok',
 							details: [
 								title,
 								`${pieces.length} Stücke, ${concerts.length} Konzerte`,
 								...(problems.length ? [`${problems.length} Hinweise, siehe „Tabelle einrichten“`] : [])
-							]
+							],
+							...(missingAccess.length
+								? { problem: `Für die Anmeldung fehlen die Blätter ${missingAccess.join(', ')}.`, hint: setupHint }
+								: {})
 						};
 					} catch (error) {
 						const check = describeError(error, 'die Repertoire-Tabelle', serviceAccountEmail);
@@ -152,5 +168,23 @@ export const load: PageServerLoad = async ({ url }) => {
 			: skipped
 	]);
 
-	return { checks: { account, drive, calendar, sheet } };
+	const auth = authConfig();
+	const signIn: Check =
+		auth.mode === 'off'
+			? {
+					state: 'missing',
+					details: [],
+					problem: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
+					hint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.'
+				}
+			: {
+					state: auth.problems.length ? 'error' : 'ok',
+					details: [
+						`Weiterleitungs-URI: ${url.origin}/auth/callback`,
+						`${auth.bootstrapAdmins.length} Bootstrap-Admins`
+					],
+					problem: auth.problems.join(' ') || undefined
+				};
+
+	return { checks: { account, drive, calendar, sheet, signIn } };
 };

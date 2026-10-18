@@ -1,6 +1,7 @@
 import { config } from '#lib/config/index.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
-import { buildRepertoire, LAYOUT, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
+import { ACCESS_TABS, buildAccessList, type AccessList, type AccessValues } from '#lib/access/access.ts';
+import { buildRepertoire, LAYOUT, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
 import { cached } from './cache.ts';
 import { getCatalog } from './catalog.ts';
 import { runInBackground } from './env.ts';
@@ -11,9 +12,8 @@ import { getGoogle, NotConfiguredError, requireSetting } from './services.ts';
 
 /** People edit the sheet by hand, so changes should show up quickly. */
 const SHEET_MAX_AGE_MS = 60 * 1000;
-const TAB_KEYS = Object.keys(LAYOUT) as TabKey[];
 
-/** The sheet exists but /setup hasn't created all tabs yet. */
+/** The sheet exists but /setup hasn't created the repertoire tabs yet. */
 export class SheetNotSetUpError extends Error {
 	constructor(readonly missingTabs: string[]) {
 		super(`Missing tabs: ${missingTabs.join(', ')}`);
@@ -21,13 +21,23 @@ export class SheetNotSetUpError extends Error {
 	}
 }
 
-export async function readSheet(client: GoogleClient, spreadsheetId: string): Promise<SheetValues> {
+/**
+ * Reads all tabs in one request. The repertoire tabs are required; the access tabs
+ * are read when present, so a sheet from before phase 5 keeps working.
+ */
+export async function readSheet(
+	client: GoogleClient,
+	spreadsheetId: string
+): Promise<{ values: SheetValues; access: AccessValues }> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
-	const missing = TAB_KEYS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
+	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const ranges = TAB_KEYS.map((key) => tabRange(LAYOUT[key].tab));
-	const values = await getValues(client, spreadsheetId, ranges);
-	return Object.fromEntries(TAB_KEYS.map((key, i) => [key, values[ranges[i]]])) as SheetValues;
+	const keys = [...REPERTOIRE_TABS, ...ACCESS_TABS.filter((key) => info.tabs.includes(LAYOUT[key].tab))];
+	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
+	const result = await getValues(client, spreadsheetId, ranges);
+	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
+	const { pieces, concerts, program, ...access } = all;
+	return { values: { pieces, concerts, program }, access };
 }
 
 export interface Sources {
@@ -78,44 +88,63 @@ export type RepertoireResult =
 
 let lastSyncFailure = 0;
 
+interface SheetSnapshot {
+	repertoire: Repertoire;
+	access: AccessList;
+}
+
+function loadSheet(force: boolean) {
+	const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
+	const { client } = getGoogle();
+	return cached<SheetSnapshot>({
+		key: `repertoire:v2:${spreadsheetId}`,
+		maxAgeMs: SHEET_MAX_AGE_MS,
+		// Memory only: a KV write per minute would use up the free tier's 1,000 writes a day.
+		build: async () => {
+			let sheet = await readSheet(client, spreadsheetId);
+			let repertoire = buildRepertoire(sheet.values);
+			// Syncing needs both sources, otherwise rows the sheet already has look new.
+			const sources = await loadSources();
+			if (sources.complete && Date.now() - lastSyncFailure > 10 * SHEET_MAX_AGE_MS) {
+				try {
+					if (await syncSheet(client, spreadsheetId, repertoire, sources)) {
+						sheet = await readSheet(client, spreadsheetId);
+						repertoire = buildRepertoire(sheet.values);
+					}
+				} catch (error) {
+					// Probably read-only access to the sheet. Reading still works; retry later.
+					lastSyncFailure = Date.now();
+					console.error('Adding new pieces and concerts to the sheet failed:', error);
+				}
+			}
+			return { repertoire, access: buildAccessList(sheet.access) };
+		},
+		waitUntil: runInBackground,
+		force
+	});
+}
+
 export async function getRepertoire({ force = false } = {}): Promise<RepertoireResult> {
 	try {
-		const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
-		const { client } = getGoogle();
-		const [{ value: repertoire, storedAt }, sources] = await Promise.all([
-			cached({
-				key: `repertoire:v1:${spreadsheetId}`,
-				maxAgeMs: SHEET_MAX_AGE_MS,
-				// Memory only: a KV write per minute would use up the free tier's 1,000 writes a day.
-				build: async () => {
-					const values = await readSheet(client, spreadsheetId);
-					let repertoire = buildRepertoire(values);
-					// Syncing needs both sources, otherwise rows the sheet already has look new.
-					const sources = await loadSources();
-					if (sources.complete && Date.now() - lastSyncFailure > 10 * SHEET_MAX_AGE_MS) {
-						try {
-							if (await syncSheet(client, spreadsheetId, repertoire, sources)) {
-								repertoire = buildRepertoire(await readSheet(client, spreadsheetId));
-							}
-						} catch (error) {
-							// Probably read-only access to the sheet. Reading still works; retry later.
-							lastSyncFailure = Date.now();
-							console.error('Adding new pieces and concerts to the sheet failed:', error);
-						}
-					}
-					return repertoire;
-				},
-				waitUntil: runInBackground,
-				force
-			}),
-			loadSources()
-		]);
-		const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
-		return { ok: true, repertoire, links, storedAt };
+		const [{ value, storedAt }, sources] = await Promise.all([loadSheet(force), loadSources()]);
+		const links = linkSources(value.repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
+		return { ok: true, repertoire: value.repertoire, links, storedAt };
 	} catch (error) {
 		if (error instanceof NotConfiguredError) return { ok: false, reason: 'not-configured' };
 		if (error instanceof SheetNotSetUpError) return { ok: false, reason: 'not-set-up', missingTabs: error.missingTabs };
 		console.error('Loading the Repertoire sheet failed:', error);
 		return { ok: false, reason: 'failed' };
+	}
+}
+
+/** Members, groups, rights and access requests; null when the sheet can't be read. */
+export async function getAccessList({ force = false } = {}): Promise<AccessList | null> {
+	try {
+		return (await loadSheet(force)).value.access;
+	} catch (error) {
+		if (!(error instanceof NotConfiguredError) && !(error instanceof SheetNotSetUpError)) {
+			console.error('Loading the member list failed:', error);
+		}
+		return null;
 	}
 }

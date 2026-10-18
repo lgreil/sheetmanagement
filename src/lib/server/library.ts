@@ -96,6 +96,7 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 			title: row.title,
 			composer: row.composer,
 			catalogue: row.catalogue,
+			programs: [],
 			partCount: 0,
 			status: 'none',
 			search: searchText(row.title, row.composer, row.catalogue, row.arranger, row.genre),
@@ -168,8 +169,8 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 	};
 }
 
-function summary({ id, title, composer, catalogue, category, partCount, status, search }: PieceDetail): PieceSummary {
-	return { id, title, composer, catalogue, category, partCount, status, search };
+function summary({ id, title, composer, catalogue, category, programs, partCount, status, search }: PieceDetail): PieceSummary {
+	return { id, title, composer, catalogue, category, programs, partCount, status, search };
 }
 
 function eventDate(event: ShownEvent): FuzzyDate {

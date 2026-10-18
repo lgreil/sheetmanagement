@@ -12,16 +12,24 @@ ORCHESTRA_NAME="Mein Orchester"
 GOOGLE_SERVICE_ACCOUNT_JSON=""
 # Drive folder ids (the part after /folders/ in the folder URL).
 DRIVE_ARCHIVE_FOLDER_ID=""
-# DRIVE_CURRENT_PROGRAM_FOLDER_ID=""
+# Current-programme folders ("Programm A-Orchester" …), several separated by commas. Optional.
+# DRIVE_CURRENT_PROGRAM_FOLDER_ID="id-a,id-b"
 # Calendar id of the rehearsal/concert calendar (Calendar settings → "Integrate calendar").
 CALENDAR_ID=""
 # Id of the Repertoire sheet (the part after /spreadsheets/d/ in its URL); shared as editor.
 REPERTOIRE_SHEET_ID=""
 
-# --- Needed from phase 5 on --------------------------------------------------------
+# --- Sign-in (docs/setup-google.md, step 9) ---------------------------------------
+# Without GOOGLE_OAUTH_CLIENT_ID the app is open to everyone and read-only.
 # GOOGLE_OAUTH_CLIENT_ID=""
 # GOOGLE_OAUTH_CLIENT_SECRET=""
 # Random string, at least 32 characters, for signing session cookies.
 # SESSION_SECRET=""
 # Comma-separated emails that always have every right (the first admins).
 # BOOTSTRAP_ADMINS="admin@example.org,second-admin@example.org"
+
+# --- Privacy notice (/datenschutz) and terms (/nutzungsbedingungen) -----------------
+# Who is responsible for the app. LEGAL_NAME defaults to ORCHESTRA_NAME; LEGAL_ADDRESS is optional.
+# LEGAL_NAME="Musterorchester e. V."
+# LEGAL_ADDRESS="Musterstraße 1, 12345 Musterstadt"
+# LEGAL_EMAIL="vorstand@example.org"

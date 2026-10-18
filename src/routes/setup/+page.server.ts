@@ -1,16 +1,17 @@
 import { fail } from '@sveltejs/kit';
 import { config } from '#lib/config/index.ts';
-import { LAYOUT } from '#lib/repertoire/sheet.ts';
+import { requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
+import { LAYOUT, REPERTOIRE_TABS } from '#lib/repertoire/sheet.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
-import { getRepertoire } from '#lib/server/repertoire.ts';
+import { getAccessList, getRepertoire } from '#lib/server/repertoire.ts';
 import { setUpSheet } from '#lib/server/repertoire-setup.ts';
 import { getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-// Until sign-in exists (phase 5), anyone who can open the app can run this. That's
-// acceptable because setup only adds missing tabs, columns, formatting and dropdowns
-// and never changes or removes entries. Phase 5 limits it to bootstrap admins.
+// While sign-in is off (no GOOGLE_OAUTH_CLIENT_ID), anyone who can open the app can run
+// this, which is how a new deployment gets set up. It only adds missing tabs, columns,
+// formatting and dropdowns. Once sign-in is on, it's for admins only.
 
 function describe(error: unknown): string {
 	if (error instanceof NotConfiguredError) return `${error.variable} ist nicht gesetzt.`;
@@ -18,7 +19,8 @@ function describe(error: unknown): string {
 	return error instanceof Error ? error.message : String(error);
 }
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
+	requireAdminWhenSignInIsOn(locals);
 	let serviceAccountEmail: string | undefined;
 	try {
 		const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
@@ -26,7 +28,8 @@ export const load: PageServerLoad = async () => {
 		serviceAccountEmail = email;
 		const info = await getSpreadsheetInfo(client, spreadsheetId);
 		const tabs = Object.values(LAYOUT).map(({ tab }) => ({ name: tab, present: info.tabs.includes(tab) }));
-		const repertoire = tabs.every((tab) => tab.present) ? await getRepertoire() : null;
+		const ready = REPERTOIRE_TABS.every((key) => info.tabs.includes(LAYOUT[key].tab));
+		const [repertoire, access] = ready ? await Promise.all([getRepertoire(), getAccessList()]) : [null, null];
 		return {
 			state: 'ready' as const,
 			serviceAccountEmail,
@@ -40,7 +43,7 @@ export const load: PageServerLoad = async () => {
 						program: repertoire.repertoire.concerts.reduce((sum, c) => sum + c.program.length, 0)
 					}
 				: null,
-			problems: repertoire?.ok ? repertoire.repertoire.problems : []
+			problems: [...(repertoire?.ok ? repertoire.repertoire.problems : []), ...(access?.problems ?? [])]
 		};
 	} catch (error) {
 		if (error instanceof NotConfiguredError && error.variable === 'REPERTOIRE_SHEET_ID') {
@@ -51,7 +54,8 @@ export const load: PageServerLoad = async () => {
 };
 
 export const actions: Actions = {
-	default: async () => {
+	default: async ({ locals }) => {
+		requireAdminWhenSignInIsOn(locals);
 		try {
 			const result = await setUpSheet(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'), {
 				orchestras: config.orchestras

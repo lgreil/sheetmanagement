@@ -99,6 +99,8 @@ export const bachkreis: OrchestraConfig = {
 			/\bOp\.?\s*\d+[a-z]?(?:\s*Nr\.?\s*\d+)?\b/i
 		],
 		categoryFolderPattern: /^\d+\s*\|\s*(.+)$/,
+		// "Programm A-Orchester" → tag "A-Orchester"
+		programFolderPattern: /^Programm\s+(.+)$/i,
 		knownComposers: [
 			'Andrew Lloyd Webber',
 			'Anderson',

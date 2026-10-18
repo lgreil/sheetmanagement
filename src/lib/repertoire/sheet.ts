@@ -5,10 +5,13 @@ import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
 /** Tab and column names of the Repertoire sheet, in the order /setup creates them. */
 export const LAYOUT = t.sheet;
 export type TabKey = keyof typeof LAYOUT;
-type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
+/** The tabs the app can't work without; the access tabs (members, rights …) are optional. */
+export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
+export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
+export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
 
-/** The raw cell values of the three tabs, header row included. */
-export type SheetValues = Record<TabKey, string[][]>;
+/** The raw cell values of the repertoire tabs, header row included. */
+export type SheetValues = Record<RepertoireTab, string[][]>;
 
 export interface TableRow<K extends string> {
 	/** Row number in the sheet, starting at 1 for the header. */
@@ -101,7 +104,9 @@ export type ProblemKind =
 	| 'duplicate-concert'
 	| 'unknown-piece'
 	| 'unknown-concert'
-	| 'bad-date';
+	| 'bad-date'
+	| 'duplicate-member'
+	| 'unknown-right';
 
 export interface Problem {
 	kind: ProblemKind;
@@ -123,7 +128,7 @@ export interface Repertoire {
 	concertsByTitle: Map<string, SheetConcert>;
 	/** Concert keys per piece key, in date order. */
 	playedAt: Map<string, string[]>;
-	tables: { [K in TabKey]: Table<ColumnKey<K> & string> };
+	tables: { [K in RepertoireTab]: Table<ColumnKey<K> & string> };
 	problems: Problem[];
 }
 
@@ -148,7 +153,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 		concerts: readTable(values.concerts, LAYOUT.concerts.columns),
 		program: readTable(values.program, LAYOUT.program.columns)
 	};
-	for (const key of Object.keys(tables) as TabKey[]) {
+	for (const key of REPERTOIRE_TABS) {
 		for (const column of tables[key].missing) {
 			const name = (LAYOUT[key].columns as Record<string, string>)[column];
 			problems.push({ kind: 'missing-column', tab: LAYOUT[key].tab, value: name });

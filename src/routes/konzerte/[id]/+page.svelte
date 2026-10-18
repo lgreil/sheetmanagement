@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -68,7 +69,15 @@
 
 {#if isConcert}
 	<section class="block">
-		<h2>{t.concert.program}</h2>
+		<div class="block-head">
+			<h2>{t.concert.program}</h2>
+			{#if data.program.canEdit}
+				<a class="edit" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
+					<Icon name="file" size={16} />{t.editor.edit}
+				</a>
+			{/if}
+		</div>
+		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
 		{#if data.program.items.length}
 			<ProgramList items={data.program.items} />
 			<p class="hint">{t.concert.programHint}</p>
@@ -254,6 +263,32 @@
 		margin: var(--space-2) var(--space-1) 0;
 		color: var(--text-muted);
 		font-size: 0.8125rem;
+	}
+
+	.block-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	.edit {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.saved {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin-bottom: var(--space-2);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-m);
+		background: color-mix(in oklab, var(--ok) 12%, transparent);
 	}
 
 	.calendar {

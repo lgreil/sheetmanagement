@@ -35,14 +35,32 @@ export function requireSetting(
 	return value;
 }
 
+/**
+ * Current-programme folders: DRIVE_CURRENT_PROGRAM_FOLDER_ID, one id or several separated
+ * by commas (or full folder links). Optional.
+ */
+export function programFolderIds(): string[] {
+	return (appEnv().DRIVE_CURRENT_PROGRAM_FOLDER_ID ?? '')
+		.split(/[,;\s]+/)
+		.map((value) => value.match(/folders\/([\w-]+)/)?.[1] ?? value)
+		.filter((id) => /^[\w-]{10,}$/.test(id));
+}
+
 /** The archive index, served from cache and refreshed in the background every few minutes. */
 export function getArchiveIndex({ force = false } = {}): Promise<CachedResult<DriveIndex>> {
 	const archiveFolderId = requireSetting('DRIVE_ARCHIVE_FOLDER_ID');
+	const programs = programFolderIds();
 	const { client } = getGoogle();
 	return cached({
-		key: `drive-index:v${INDEX_VERSION}:${archiveFolderId}`,
+		key: `drive-index:v${INDEX_VERSION}:${[archiveFolderId, ...programs].join(',')}`,
 		maxAgeMs: INDEX_MAX_AGE_MS,
-		build: () => buildDriveIndex(client, archiveFolderId, config.naming.categoryFolderPattern),
+		build: () =>
+			buildDriveIndex(client, {
+				archiveFolderId,
+				categoryFolderPattern: config.naming.categoryFolderPattern,
+				programFolderIds: programs,
+				programFolderPattern: config.naming.programFolderPattern
+			}),
 		kv: appEnv().CACHE,
 		waitUntil: runInBackground,
 		force

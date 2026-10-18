@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { RIGHTS } from '#lib/access/access.ts';
 import type { GoogleClient } from './google/client.ts';
 import { columnLetter } from './google/sheets.ts';
 import { setUpSheet } from './repertoire-setup.ts';
@@ -67,12 +68,13 @@ function fakeSheets(tabs: FakeTab[]) {
 const kinds = (requests: Record<string, unknown>[]) => requests.map((request) => Object.keys(request)[0]);
 
 describe('setUpSheet', () => {
-	it('turns a new, empty spreadsheet into the three tabs', async () => {
+	it('turns a new, empty spreadsheet into all tabs', async () => {
 		const fake = fakeSheets([{ sheetId: 0, title: 'Tabellenblatt1', values: [], protections: [] }]);
 		const result = await setUpSheet(fake.client, 'sheet', { orchestras: ['EO', 'A'] });
 
-		expect(result).toEqual({ createdTabs: ['Stücke', 'Konzerte', 'Programm'], addedColumns: [], removedTab: 'Tabellenblatt1' });
-		expect(fake.tabs.map((tab) => tab.title)).toEqual(['Stücke', 'Konzerte', 'Programm']);
+		const all = ['Stücke', 'Konzerte', 'Programm', 'Mitglieder', 'Gruppen', 'Rechte', 'Zugangsanfragen'];
+		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
+		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
 		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Kalender-Event-ID']);
 		expect(fake.tabs[2].values[0]).toEqual(['Konzert', 'Nr.', 'Stück', 'Notiz']);
 
@@ -80,6 +82,7 @@ describe('setUpSheet', () => {
 		expect(dropdowns.map((r) => r.setDataValidation.rule.condition.values)).toEqual([
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
+			RIGHTS.map((right) => ({ userEnteredValue: right })),
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
 		expect(kinds(fake.requests).filter((k) => k === 'addProtectedRange')).toHaveLength(2);
@@ -96,7 +99,7 @@ describe('setUpSheet', () => {
 
 		expect(result.createdTabs).toEqual([]);
 		expect(result.addedColumns).toEqual([]);
-		expect(fake.tabs.map((tab) => tab.title)).toEqual(['Notizen', 'Stücke', 'Konzerte', 'Programm']);
+		expect(fake.tabs.map((tab) => tab.title).slice(0, 4)).toEqual(['Notizen', 'Stücke', 'Konzerte', 'Programm']);
 		// Existing columns stay where they are; missing ones follow.
 		expect(fake.tabs[1].values[0].slice(0, 3)).toEqual(['Drive-Ordner-ID', 'Titel', 'Komponist']);
 		expect(fake.tabs[1].values[1]).toEqual(['abc', 'Bolero']);

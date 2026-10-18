@@ -50,6 +50,12 @@ export interface NamingRules {
 	 */
 	categoryFolderPattern: RegExp;
 	/**
+	 * Folders in the current-programme folders that are a programme rather than a piece,
+	 * e.g. "Programm A-Orchester". The first capture group is the programme's name, shown
+	 * as a tag on its pieces.
+	 */
+	programFolderPattern: RegExp;
+	/**
 	 * Composer names recognised at the start (or end) of a folder name without a
 	 * catalogue number, e.g. "Bizet - Carmen". Unknown names are left in the title.
 	 */

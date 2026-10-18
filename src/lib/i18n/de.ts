@@ -1,10 +1,13 @@
+import { legal } from './legal.de.ts';
+
 /** All user-facing texts. To translate the app, copy this file and change the strings. */
 export const de = {
 	nav: {
 		home: 'Übersicht',
 		pieces: 'Stücke',
 		concerts: 'Konzerte',
-		myParts: 'Meine Noten'
+		myParts: 'Meine Noten',
+		admin: 'Verwaltung'
 	},
 	theme: {
 		label: 'Farbschema',
@@ -31,9 +34,11 @@ export const de = {
 		checkStatus: 'Verbindung prüfen',
 		search: 'Titel, Komponist oder BWV …',
 		all: 'Alle',
-		archive: 'Archiv',
 		needsWork: 'Mit Lücken',
 		noMusic: 'Ohne Noten',
+		byComposer: (composer: string) => `Werke von ${composer}`,
+		clearComposer: 'Komponisten-Filter entfernen',
+		categoryFiles: 'Dateien zu dieser Kategorie',
 		count: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
 		parts: (n: number) => (n === 1 ? '1 Stimme' : `${n} Stimmen`),
 		noResults: 'Nichts gefunden.',
@@ -68,6 +73,18 @@ export const de = {
 		missingSummary: (n: number) =>
 			n === 1 ? '1 Stimme fehlt oder ist unvollständig.' : `${n} Stimmen fehlen oder sind unvollständig.`,
 		playedAt: 'Gespielt bei',
+		sections: 'Fassungen',
+		playedBadge: 'gespielt',
+		sectionHint: {
+			played: 'Die Stimmen, die gespielt werden.',
+			complete: 'Das komplette Werk, zum Nachschlagen.',
+			movement: '',
+			other: ''
+		},
+		sectionFolder: 'Diesen Ordner in Google Drive',
+		otherVersions: 'Weitere Fassungen dieses Werks',
+		moreBy: (composer: string) => `Weitere Werke von ${composer}`,
+		allBy: (composer: string) => `Alle Werke von ${composer}`,
 		playedAtNone: 'In der Repertoire-Tabelle steht noch kein Konzert mit diesem Stück.',
 		playedAtNoSheet: 'Sobald die Repertoire-Tabelle eingerichtet ist, steht hier, in welchen Konzerten dieses Stück gespielt wurde.',
 		noMusic: 'Für dieses Stück gibt es keine Noten im Archiv. Es steht nur in der Repertoire-Tabelle.',
@@ -125,6 +142,89 @@ export const de = {
 		lead: 'Deine Stimmen für das nächste Konzert, in Programmreihenfolge.',
 		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.'
 	},
+	auth: {
+		title: 'Anmelden',
+		lead: 'Melde dich mit deinem Google-Konto an, um Noten, Konzerte und Programme zu sehen.',
+		button: 'Mit Google anmelden',
+		privacy: 'Die App erfährt dabei nur deinen Namen und deine E-Mail-Adresse.',
+		notReady: 'Die Anmeldung ist noch nicht fertig eingerichtet:',
+		errors: {
+			abgebrochen: 'Die Anmeldung wurde abgebrochen.',
+			abgelaufen: 'Die Anmeldung ist abgelaufen. Bitte versuch es noch einmal.',
+			konto: 'Dieses Google-Konto hat keine bestätigte E-Mail-Adresse.',
+			google: 'Google hat die Anmeldung gerade nicht bestätigt. Bitte versuch es noch einmal.'
+		} as Record<string, string>,
+		signedInAs: (email: string) => `Angemeldet als ${email}`,
+		logout: 'Abmelden',
+		switchAccount: 'Mit einem anderen Konto anmelden'
+	},
+	access: {
+		title: 'Zugang beantragen',
+		hello: (name: string) => `Hallo ${name}!`,
+		lead: 'Du bist angemeldet, aber noch nicht als Mitglied freigeschaltet.',
+		request: 'Zugang beantragen',
+		requested: 'Deine Anfrage ist angekommen. Sobald sie bestätigt ist, kannst du die App nutzen. Lade die Seite dann neu.',
+		unavailable: 'Anfragen sind gerade nicht möglich. Bitte melde dich direkt beim Vorstand.'
+	},
+	rights: {
+		ansehen: 'Stücke, Konzerte und Noten ansehen (hat jedes Mitglied)',
+		'programme.bearbeiten': 'Konzertprogramme bearbeiten',
+		'stuecke.bearbeiten': 'Angaben zu Stücken bearbeiten',
+		'archiv.bearbeiten': 'Frühere Konzerte und Stücke eintragen',
+		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
+	},
+	admin: {
+		title: 'Verwaltung',
+		lead: 'Mitglieder freischalten und Rechte vergeben. Alles steht auch in der Repertoire-Tabelle.',
+		openSheet: 'Tabelle öffnen',
+		notSetUp: 'In der Repertoire-Tabelle fehlen die Blätter für Mitglieder und Rechte.',
+		runSetup: 'Tabelle einrichten',
+		requests: 'Zugangsanfragen',
+		noRequests: 'Keine offenen Anfragen.',
+		approve: 'Freischalten',
+		decline: 'Ablehnen',
+		members: 'Mitglieder',
+		noMembers: 'Noch keine Mitglieder eingetragen.',
+		addMember: 'Mitglied hinzufügen',
+		email: 'E-Mail',
+		name: 'Name',
+		instrument: 'Instrument',
+		groups: 'Gruppen',
+		groupsHint: 'mehrere mit Komma trennen',
+		add: 'Hinzufügen',
+		remove: 'Entfernen',
+		confirmRemove: (name: string) => `${name} wirklich entfernen?`,
+		rightsTitle: 'Rechte',
+		rightsLead: 'Rechte gelten für eine E-Mail-Adresse oder eine Gruppe.',
+		who: 'Wer',
+		right: 'Recht',
+		grant: 'Vergeben',
+		revoke: 'Entziehen',
+		noGrants: 'Noch keine Rechte vergeben. Bootstrap-Admins haben immer alle Rechte.',
+		bootstrap: (emails: string) => `Immer alle Rechte (BOOTSTRAP_ADMINS): ${emails}`,
+		saved: 'Gespeichert.',
+		invalidEmail: 'Bitte eine gültige E-Mail-Adresse eingeben.',
+		exists: 'Diese E-Mail-Adresse ist schon eingetragen.',
+		grantExists: 'Dieses Recht ist schon vergeben.'
+	},
+	editor: {
+		edit: 'Programm bearbeiten',
+		title: (concert: string) => `Programm: ${concert}`,
+		lead: 'Stücke hinzufügen, sortieren und speichern. Das Programm landet im Blatt „Programm“ der Repertoire-Tabelle.',
+		search: 'Stück suchen und hinzufügen …',
+		empty: 'Noch keine Stücke im Programm.',
+		noteLabel: 'Notiz',
+		notePlaceholder: 'z. B. Zugabe',
+		up: 'Nach oben',
+		down: 'Nach unten',
+		remove: 'Entfernen',
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		saved: 'Programm gespeichert.',
+		conflict: 'Jemand hat das Programm inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
+		notInSheet: 'Dieses Konzert steht noch nicht in der Repertoire-Tabelle. Bestätigte Konzerte aus dem Kalender werden automatisch eingetragen, unsichere („(?)“) erst später.',
+		noResults: 'Kein Stück gefunden.'
+	},
 	status: {
 		title: 'Status',
 		lead: 'Ob die Verbindung zu Google funktioniert. Hilfreich beim Einrichten.',
@@ -132,6 +232,7 @@ export const de = {
 		drive: 'Notenarchiv (Google Drive)',
 		calendar: 'Probenkalender (Google Calendar)',
 		sheet: 'Repertoire-Tabelle (Google Sheets)',
+		signIn: 'Anmeldung (Google)',
 		ok: 'Verbunden',
 		error: 'Fehler',
 		missing: 'Nicht eingerichtet',
@@ -165,7 +266,9 @@ export const de = {
 			'duplicate-concert': 'Konzert doppelt',
 			'unknown-piece': 'Stück nicht in „Stücke“',
 			'unknown-concert': 'Konzert nicht in „Konzerte“',
-			'bad-date': 'Datum nicht lesbar'
+			'bad-date': 'Datum nicht lesbar',
+			'duplicate-member': 'Mitglied doppelt',
+			'unknown-right': 'Unbekanntes Recht'
 		},
 		row: (n: number) => `Zeile ${n}`,
 		counts: (pieces: number, concerts: number, entries: number) =>
@@ -209,8 +312,40 @@ export const de = {
 				piece: 'Stück',
 				notes: 'Notiz'
 			}
+		},
+		members: {
+			tab: 'Mitglieder',
+			columns: {
+				email: 'E-Mail',
+				name: 'Name',
+				instrument: 'Instrument',
+				groups: 'Gruppen'
+			}
+		},
+		groups: {
+			tab: 'Gruppen',
+			columns: {
+				name: 'Gruppe',
+				description: 'Beschreibung'
+			}
+		},
+		rights: {
+			tab: 'Rechte',
+			columns: {
+				who: 'Wer',
+				right: 'Recht'
+			}
+		},
+		requests: {
+			tab: 'Zugangsanfragen',
+			columns: {
+				email: 'E-Mail',
+				name: 'Name',
+				requestedAt: 'Angefragt am'
+			}
 		}
 	},
+	legal,
 	common: {
 		comingSoon: 'Bald verfügbar',
 		backHome: 'Zur Übersicht'

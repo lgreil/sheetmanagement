@@ -23,7 +23,7 @@ function plainText(html: string | undefined): string | undefined {
 const mapUrl = (location: string | undefined) =>
 	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const library = await getLibrary();
 	const schedule = library.schedule;
 	const event = schedule.ok ? schedule.byId.get(params.id) : undefined;
@@ -37,6 +37,8 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	const program = {
 		items: concert?.program ?? [],
+		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
+		saved: url.searchParams.has('gespeichert'),
 		sheet: library.sheet
 	};
 
