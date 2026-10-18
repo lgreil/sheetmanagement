@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFeedback, newId, parseVotes, safeLink, sortWishes, toggleVote } from './feedback.ts';
+import { buildFeedback, markedStatus, newId, parseVotes, safeLink, sortWishes, toggleVote } from './feedback.ts';
 
 const REPORT_HEADER = ['Stück', 'Drive-Ordner-ID', 'Stimme', 'Datei-ID', 'Art', 'Kommentar', 'Status', 'Notiz', 'Gemeldet von', 'Gemeldet am', 'Meldungs-ID'];
 const WISH_HEADER = ['Art', 'Titel', 'Komponist', 'Link', 'Beschreibung', 'Status', 'Antwort', 'Eingereicht von', 'Datum', '+1', 'Wunsch-ID'];
@@ -27,6 +27,27 @@ describe('reports', () => {
 			reports: [REPORT_HEADER, ['X', 'f', '', '', 'Kaffeefleck', '', '', '', '', '', 'r1']]
 		});
 		expect(reports[0]).toMatchObject({ kind: 'other', status: 'open' });
+	});
+
+	it('reads what was mirrored into Drive, and tabs from before that', () => {
+		const header = [...REPORT_HEADER, 'Im Dateinamen', 'Drive-Kommentar-ID'];
+		const { reports } = buildFeedback({
+			reports: [header, ['X', 'f', 'Viola', 'file-1', 'Seiten fehlen', '', 'offen', '', '', '', 'r1', 'unvollständig', 'c-1']]
+		});
+		expect(reports[0]).toMatchObject({ marked: 'incomplete', driveComment: 'c-1' });
+		const old = buildFeedback({ reports: [REPORT_HEADER, ['X', 'f', '', '', '', '', '', '', '', '', 'r1']] });
+		expect(old.reports[0]).toMatchObject({ marked: undefined, driveComment: '' });
+		expect(old.tables.reports?.missing).toEqual(['marked', 'driveComment']);
+	});
+
+	it('maps status words back like the naming convention', () => {
+		expect(['FEHLT', 'leer', 'Unvollständig', 'kaputt', ''].map(markedStatus)).toEqual([
+			'missing',
+			'empty',
+			'incomplete',
+			undefined,
+			undefined
+		]);
 	});
 
 	it('works without the tabs', () => {

@@ -412,6 +412,8 @@ export const de = {
 				note: 'Notiz',
 				reportedBy: 'Gemeldet von',
 				reportedAt: 'Gemeldet am',
+				marked: 'Im Dateinamen',
+				driveComment: 'Drive-Kommentar-ID',
 				id: 'Meldungs-ID'
 			}
 		},
@@ -487,7 +489,18 @@ export const de = {
 		toPiece: 'Zum Stück',
 		openCount: (n: number) => (n === 1 ? '1 offene Meldung' : `${n} offene Meldungen`),
 		gone: 'Diese Meldung gibt es nicht mehr.',
-		unknownPart: 'Diese Stimme gibt es in dem Stück nicht.'
+		unknownPart: 'Diese Stimme gibt es in dem Stück nicht.',
+		// Mirrored into Drive (DRIVE_WRITE=true): a comment on the file, the status word in its name.
+		driveComment: (kind: string, comment: string) => `Über die Noten-App gemeldet: ${kind}${comment ? ` – ${comment}` : ''}`,
+		driveResolved: 'Erledigt.',
+		driveReopened: 'Wieder offen.',
+		inDrive: 'In Drive kommentiert',
+		mark: 'Im Dateinamen markieren',
+		markLabel: 'Status',
+		marked: (word: string) => `Im Dateinamen: ${word}`,
+		markHint: 'Hängt das Statuswort an den Dateinamen in Drive an. „Erledigt“ entfernt es wieder.',
+		noFile: 'Diese Meldung betrifft keine einzelne Datei.',
+		driveFailed: 'Gespeichert, aber in Drive konnte nichts geändert werden. Ist das Dienstkonto Bearbeiter des Noten-Ordners?'
 	},
 	wishes: {
 		title: 'Wünsche',

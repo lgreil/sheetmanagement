@@ -15,6 +15,11 @@ export const SCOPES = [
 	'https://www.googleapis.com/auth/spreadsheets'
 ];
 
+/** With DRIVE_WRITE the app may comment on and rename files; Drive's sharing still limits it to what the account can edit. */
+export const WRITE_SCOPES = SCOPES.map((scope) =>
+	scope.endsWith('/drive.readonly') ? 'https://www.googleapis.com/auth/drive' : scope
+);
+
 const DEFAULT_TOKEN_URI = 'https://oauth2.googleapis.com/token';
 /** Renew a little before Google's expiry so in-flight requests don't fail. */
 const EXPIRY_MARGIN_S = 120;
