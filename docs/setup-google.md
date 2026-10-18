@@ -164,8 +164,10 @@ Until this step, the app is open to anyone with the link and nobody can change a
   |---|---|
   | `programme.bearbeiten` | Edit concert programmes in the app |
   | `mitglieder.verwalten` | Approve members and give rights (Verwaltung); set the status of wishes and answer them |
-  | `stuecke.bearbeiten` | Look after problem reports on sheet music (**Meldungen**) and mark them as done |
-  | `archiv.bearbeiten` | Reserved for an upcoming feature; edit the sheet directly for now |
+  | `stuecke.bearbeiten` | Edit a piece's details on its page (title, composer, notes, **Hörbeispiel** link …); look after problem reports (**Meldungen**) |
+  | `archiv.bearbeiten` | Add past concerts (on **Konzerte**) and pieces without sheet music (on **Stücke**) for the orchestra's history |
+
+- Renaming a piece in the app also renames it in every programme row of **Programm**, since programmes find pieces by title.
 
 - The **Instrument** column in Mitglieder drives **Meine Noten**: write it like a part name (`Geige 2`, `2. Violine`, `Klarinette`, `Cello`). Members without one pick it once on the page, which saves it there. Which shared parts (`B-Stimmen`, `Holz` …) an instrument reads from is set in the config preset (`sharedParts`).
 - Every member can report a problem with a part (flag button on the piece page) and add wishes and +1s on **Wünsche**. Both are stored in their own tabs, **Meldungen** and **Wünsche**; an older sheet gets them when you run **Tabelle einrichten** again.

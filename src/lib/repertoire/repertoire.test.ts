@@ -54,7 +54,7 @@ describe('readTable', () => {
 	});
 });
 
-const PIECES_HEADER = ['Titel', 'Komponist', 'Werkverzeichnis', 'Arrangeur', 'Genre', 'Schwierigkeit', 'Notiz', 'Geprüft am', 'Drive-Ordner-ID'];
+const PIECES_HEADER = ['Titel', 'Komponist', 'Werkverzeichnis', 'Arrangeur', 'Genre', 'Schwierigkeit', 'Notiz', 'Geprüft am', 'Drive-Ordner-ID', 'Hörbeispiel'];
 const CONCERTS_HEADER = ['Datum', 'Anlass', 'Ort', 'Orchester', 'Kalender-Event-ID'];
 const PROGRAM_HEADER = ['Konzert', 'Nr.', 'Stück', 'Notiz'];
 
@@ -117,6 +117,15 @@ describe('buildRepertoire', () => {
 			['unknown-concert', 5, 'Unbekanntes Konzert'],
 			['unknown-piece', 6, 'Gibt es nicht']
 		]);
+	});
+
+	it('keeps only web links as recordings', () => {
+		const result = buildRepertoire({
+			pieces: [PIECES_HEADER, ['Bolero', '', '', '', '', '', '', '', '', 'https://youtu.be/x'], ['Carmen', '', '', '', '', '', '', '', '', 'javascript:alert(1)']],
+			concerts: [CONCERTS_HEADER],
+			program: [PROGRAM_HEADER]
+		});
+		expect(result.pieces.map((p) => p.recording)).toEqual(['https://youtu.be/x', undefined]);
 	});
 
 	it('reports missing columns', () => {

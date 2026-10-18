@@ -1,5 +1,6 @@
 import { normalizeEmail } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
+import { safeLink } from '#lib/links.ts';
 import type { MarkableStatus } from '#lib/music/status-word.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, readTable, type ColumnKey, type Table } from '#lib/repertoire/sheet.ts';
@@ -91,17 +92,7 @@ export const SUGGESTED_STATUS: Record<ReportKind, MarkableStatus> = {
 	other: 'incomplete'
 };
 
-/** "https://…" stays, anything else (javascript:, mailto:, plain text) is undefined. */
-export function safeLink(text: string): string | undefined {
-	const value = text.trim();
-	if (!value) return undefined;
-	try {
-		const url = new URL(value);
-		return url.protocol === 'https:' || url.protocol === 'http:' ? url.toString() : undefined;
-	} catch {
-		return undefined;
-	}
-}
+export { safeLink } from '#lib/links.ts';
 
 /** "a@x.org, B@x.org, a@x.org" → ["a@x.org", "b@x.org"] */
 export function parseVotes(text: string): string[] {

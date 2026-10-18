@@ -1,12 +1,15 @@
 import { fileUrl } from '#lib/server/catalog.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import type { PieceSummary } from '#lib/music/types.ts';
-import type { PageServerLoad } from './$types';
+import { addPiece } from '#lib/server/archive.ts';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async () => {
+export const load: PageServerLoad = async ({ locals }) => {
 	const library = await getLibrary();
+	const canAdd = locals.access.rights.has('archiv.bearbeiten') && library.sheet === 'ok';
 	if (!library.catalog.ok) {
 		return {
+			canAdd,
 			error: library.catalog.reason,
 			pieces: [] as PieceSummary[],
 			categories: [] as string[],
@@ -37,5 +40,9 @@ export const load: PageServerLoad = async () => {
 			files.map((file) => ({ id: file.id, name: file.name.replace(/\.pdf$/i, ''), url: fileUrl(file.id, file.mimeType) }))
 		])
 	);
-	return { error: null, pieces, categories, programs: library.catalog.catalog.programs, categoryFiles };
+	return { error: null, pieces, categories, programs: library.catalog.catalog.programs, categoryFiles, canAdd };
+};
+
+export const actions: Actions = {
+	addPiece: ({ locals, request }) => addPiece(locals, request)
 };

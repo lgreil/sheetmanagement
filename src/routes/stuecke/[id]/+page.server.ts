@@ -10,7 +10,7 @@ import { workKey } from '#lib/music/piece-name.ts';
 import { concertSummary, getLibrary, type LibraryPiece } from '#lib/server/library.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const [library, feedback] = await Promise.all([getLibrary(), getFeedback()]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
@@ -25,6 +25,10 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const work = workKey(piece.title);
 	const canClose = locals.access.rights.has('stuecke.bearbeiten');
 	return {
+		canEdit: locals.access.rights.has('stuecke.bearbeiten') && !!sheet,
+		saved: url.searchParams.has('gespeichert'),
+		// How many programmes followed a rename.
+		renamedIn: Number(url.searchParams.get('gespeichert')) || 0,
 		// Open problem reports, so nobody reports the same thing twice. Who reported is for admins only.
 		reports: {
 			open: (feedback?.reports ?? [])
@@ -57,6 +61,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			partCount: piece.partCount,
 			status: piece.status,
 			folderUrl: detail ? folderUrl(detail.id) : undefined,
+			recording: sheet?.recording,
 			parts: (detail?.parts ?? []).map((part) => ({ ...part, url: fileUrl(part.id, part.mimeType) })),
 			sections: (detail?.sections ?? []).map((section) => ({ ...section, folderUrl: folderUrl(section.folderId) })),
 			info: {

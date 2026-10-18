@@ -72,6 +72,11 @@
 	<section class="block">
 		<div class="block-head">
 			<h2>{t.concert.program}</h2>
+			{#if data.program.items.length}
+				<a class="edit print" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/drucken">
+					<Icon name="file" size={16} />{t.print.link}
+				</a>
+			{/if}
 			{#if data.program.canEdit}
 				<a class="edit" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
 					<Icon name="file" size={16} />{t.editor.edit}
@@ -285,6 +290,14 @@
 	.my-parts {
 		justify-self: start;
 		margin-top: var(--space-3);
+	}
+
+	.print {
+		margin-left: auto;
+	}
+
+	.print + .edit {
+		margin-left: var(--space-3);
 	}
 
 	.edit {
