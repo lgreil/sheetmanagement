@@ -49,6 +49,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 			subtitle: item.subtitle,
 			pieceId: item.pieceId,
 			hasMusic: parts.length > 0,
+			recording: piece?.sheet?.recording,
 			own: match.own.map(shown),
 			shared: match.shared.map(shown)
 		};

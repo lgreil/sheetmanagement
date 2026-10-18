@@ -55,6 +55,9 @@ export const de = {
 	piece: {
 		back: 'Alle Stücke',
 		openFolder: 'Ordner in Google Drive',
+		recording: 'Hörbeispiel',
+		edit: 'Angaben bearbeiten',
+		saved: 'Gespeichert.',
 		groups: {
 			featured: 'Partitur & Solo',
 			holz: 'Holzbläser',
@@ -260,6 +263,22 @@ export const de = {
 		exists: 'Diese E-Mail-Adresse ist schon eingetragen.',
 		grantExists: 'Dieses Recht ist schon vergeben.'
 	},
+	pieceEditor: {
+		title: (piece: string) => `Bearbeiten: ${piece}`,
+		lead: 'Die Angaben stehen im Blatt „Stücke“ der Repertoire-Tabelle. Was hier steht, gilt statt dem, was die App aus dem Ordnernamen liest.',
+		recordingHint: 'Link zu einer Aufnahme, z. B. YouTube',
+		reviewedHint: 'z. B. 2026-10-18',
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		conflict: 'Jemand hat das Stück inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
+		notInSheet: 'Dieses Stück steht noch nicht in der Repertoire-Tabelle. Neue Ordner werden innerhalb einer Minute eingetragen.',
+		renamed: (n: number) => (n === 1 ? 'Der neue Titel wurde auch in 1 Programm übernommen.' : `Der neue Titel wurde auch in ${n} Programmen übernommen.`),
+		problems: {
+			'title-missing': 'Bitte einen Titel angeben.',
+			'title-taken': 'Diesen Titel hat schon ein anderes Stück. Programme finden Stücke über den Titel, er muss eindeutig sein.',
+			'bad-link': 'Das Hörbeispiel muss ein Link sein, der mit http:// oder https:// beginnt.'
+		}
+	},
 	editor: {
 		edit: 'Programm bearbeiten',
 		title: (concert: string) => `Programm: ${concert}`,
@@ -344,6 +363,7 @@ export const de = {
 				difficulty: 'Schwierigkeit',
 				notes: 'Notiz',
 				reviewedAt: 'Geprüft am',
+				recording: 'Hörbeispiel',
 				driveFolderId: 'Drive-Ordner-ID'
 			}
 		},

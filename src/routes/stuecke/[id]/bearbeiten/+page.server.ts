@@ -1,0 +1,74 @@
+import { error, fail, redirect } from '@sveltejs/kit';
+import { t } from '#lib/i18n/index.ts';
+import { searchText } from '#lib/music/text.ts';
+import { checkPieceValues, EDITABLE, findPieceRow, pieceValues, pieceVersion, renameInProgram, type PieceValues } from '#lib/repertoire/piece-edit.ts';
+import { requireRight } from '#lib/server/auth/index.ts';
+import { getLibrary } from '#lib/server/library.ts';
+import { getRepertoire } from '#lib/server/repertoire.ts';
+import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord, updateRecords } from '#lib/server/sheet-writes.ts';
+import type { Actions, PageServerLoad } from './$types';
+
+const RIGHT = 'stuecke.bearbeiten';
+
+export const load: PageServerLoad = async ({ params, locals }) => {
+	requireRight(locals, RIGHT);
+	const [library, repertoire] = await Promise.all([getLibrary(), getRepertoire()]);
+	const piece = library.piecesById.get(params.id);
+	if (!piece) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+	const row = piece.sheet && repertoire.ok ? findPieceRow(repertoire.repertoire.tables.pieces, piece.sheet) : undefined;
+	if (!row) return { state: 'not-in-sheet' as const, piece: { id: piece.id, title: piece.title } };
+
+	const values = pieceValues(row);
+	// A Drive piece without its own title in the sheet shows what the folder name says; start from that.
+	if (!values.title) values.title = piece.title;
+	return {
+		state: 'ready' as const,
+		piece: { id: piece.id, title: piece.title, folderName: piece.detail?.folderName },
+		values,
+		version: pieceVersion(row)
+	};
+};
+
+export const actions: Actions = {
+	default: async ({ params, request, locals }) => {
+		requireRight(locals, RIGHT);
+		const data = await request.formData();
+		const submitted = Object.fromEntries(EDITABLE.map((column) => [column, String(data.get(column) ?? '').slice(0, 1000)])) as PieceValues;
+
+		const library = await getLibrary();
+		const sheetPiece = library.piecesById.get(params.id)?.sheet;
+		if (!sheetPiece) return fail(409, { message: t.pieceEditor.notInSheet, values: submitted });
+
+		let renamed = 0;
+		try {
+			const table = await readTab('pieces');
+			const row = findPieceRow(table, sheetPiece);
+			if (!row) return fail(409, { message: t.pieceEditor.notInSheet, values: submitted });
+			if (pieceVersion(row) !== String(data.get('version'))) return fail(409, { message: t.pieceEditor.conflict, values: submitted });
+			const checked = checkPieceValues(submitted, table, row.row);
+			if ('problem' in checked) return fail(400, { message: t.pieceEditor.problems[checked.problem], values: submitted });
+
+			await updateRecord('pieces', table, row.row, checked.values);
+			// Programme rows name pieces by title: a rename has to follow there, or they lose the piece.
+			const oldTitle = row.values.title;
+			if (oldTitle && oldTitle !== checked.values.title) {
+				const program = await readTab('program');
+				const updates = renameInProgram(program, oldTitle, checked.values.title);
+				await updateRecords('program', program, updates);
+				renamed = updates.length;
+			}
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { message: cause.message, values: submitted });
+			console.error('Saving a piece failed:', cause);
+			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.', values: submitted });
+		}
+
+		// Pieces without sheet music are keyed by title, so a rename gives them a new address.
+		const id = sheetPiece.driveFolderId
+			? params.id
+			: ((await getLibrary()).pieces.find((piece) => !piece.detail && searchText(piece.title) === searchText(submitted.title.trim()))?.id ??
+				params.id);
+		redirect(303, `/stuecke/${encodeURIComponent(id)}?gespeichert=${renamed}`);
+	}
+};
