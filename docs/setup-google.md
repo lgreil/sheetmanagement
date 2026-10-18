@@ -169,6 +169,7 @@ Until this step, the app is open to anyone with the link and nobody can change a
 
 - The **Instrument** column in Mitglieder drives **Meine Noten**: write it like a part name (`Geige 2`, `2. Violine`, `Klarinette`, `Cello`). Members without one pick it once on the page, which saves it there. Which shared parts (`B-Stimmen`, `Holz` …) an instrument reads from is set in the config preset (`sharedParts`).
 - Every member can report a problem with a part (flag button on the piece page) and add wishes and +1s on **Wünsche**. Both are stored in their own tabs, **Meldungen** and **Wünsche**; an older sheet gets them when you run **Tabelle einrichten** again.
+- The tab **Fehlende Stimmen** mirrors `/fehlende-stimmen`: one row per part whose file name says `FEHLT`, `LEER` or `UNVOLLSTÄNDIG`. The app rewrites it when it syncs the sheet (at most once a minute), so only tick **erledigt** there; other edits are overwritten. A row disappears once its file is renamed, and a tick stays while the gap is still listed. Like Meldungen and Wünsche, an older sheet gets the tab from **Tabelle einrichten**.
 
 - Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.
 - App access and Drive access are separate: to open the PDFs, members still need access to the sheet-music folder in Drive.

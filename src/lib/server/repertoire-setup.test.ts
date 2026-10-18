@@ -75,7 +75,18 @@ describe('setUpSheet', () => {
 		const fake = fakeSheets([{ sheetId: 0, title: 'Tabellenblatt1', values: [], protections: [] }]);
 		const result = await setUpSheet(fake.client, 'sheet', { orchestras: ['EO', 'A'] });
 
-		const all = ['Stücke', 'Konzerte', 'Programm', 'Mitglieder', 'Gruppen', 'Rechte', 'Zugangsanfragen', 'Meldungen', 'Wünsche'];
+		const all = [
+			'Stücke',
+			'Konzerte',
+			'Programm',
+			'Mitglieder',
+			'Gruppen',
+			'Rechte',
+			'Zugangsanfragen',
+			'Meldungen',
+			'Wünsche',
+			'Fehlende Stimmen'
+		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
 		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Kalender-Event-ID']);
@@ -90,10 +101,21 @@ describe('setUpSheet', () => {
 			labels(t.feedbackValues.reportStatus),
 			labels(t.feedbackValues.wishKind),
 			labels(t.feedbackValues.wishStatus),
+			undefined,
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
-		// Drive folder id, event id, report id and wish id.
-		expect(kinds(fake.requests).filter((k) => k === 'addProtectedRange')).toHaveLength(4);
+		expect(fake.tabs[9].values[0]).toEqual(['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt']);
+		// "erledigt" is a checkbox column.
+		const checkbox = dropdowns.find((r) => r.setDataValidation.rule.condition.type === 'BOOLEAN');
+		expect(checkbox.setDataValidation.range).toMatchObject({ sheetId: fake.tabs[9].sheetId, startColumnIndex: 4 });
+
+		const protections = (fake.requests as any[]).filter((r) => r.addProtectedRange).map((r) => r.addProtectedRange.protectedRange);
+		// Drive folder id, event id, report id, wish id and file id …
+		expect(protections.filter((p) => p.description === 'sheetmanagement: id column')).toHaveLength(5);
+		// … and piece, part and status of "Fehlende Stimmen", all warning only.
+		const generated = protections.filter((p) => p.description === 'sheetmanagement: generated column');
+		expect(generated.map((p) => p.range.startColumnIndex)).toEqual([0, 1, 2]);
+		expect(protections.every((p) => p.warningOnly)).toBe(true);
 	});
 
 	it('only adds what is missing when run again, and keeps other tabs', async () => {

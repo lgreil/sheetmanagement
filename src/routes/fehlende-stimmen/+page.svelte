@@ -61,6 +61,7 @@
 							<li>
 								<a href={gap.url} target="_blank" rel="noopener noreferrer">{gap.label}</a>
 								<span class="status {gap.status}">{t.piece.partStatus[gap.status]}</span>
+								{#if gap.done}<span class="status done" title={t.gaps.doneHint}><Icon name="check" size={12} />{t.gaps.done}</span>{/if}
 							</li>
 						{/each}
 						{#each piece.reports as report (report.id)}
@@ -226,6 +227,11 @@
 	.status.reported {
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
+	}
+
+	.status.done {
+		background: color-mix(in oklab, var(--ok) 14%, transparent);
+		color: var(--ok);
 	}
 
 	.muted {
