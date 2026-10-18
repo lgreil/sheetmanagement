@@ -138,7 +138,10 @@
 		</div>
 	{/if}
 
-	<p class="count" aria-live="polite">{t.pieces.count(visible.length)}</p>
+	<p class="count" aria-live="polite">
+		{t.pieces.count(visible.length)}
+		{#if filter === NEEDS_WORK}· <a class="gaps-link" href="/fehlende-stimmen">{t.gaps.link} →</a>{/if}
+	</p>
 
 	{#if visible.length === 0}
 		<p class="none">{t.pieces.noResults}</p>
@@ -177,6 +180,11 @@
 {/if}
 
 <style>
+	.gaps-link {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
 	.tools {
 		position: sticky;
 		top: var(--header-height);

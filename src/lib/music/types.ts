@@ -1,5 +1,6 @@
 import type { SectionKind } from './sections.ts';
 import type { InstrumentFamily } from '#lib/config/index.ts';
+import type { Voice } from './part-name.ts';
 
 export type PartStatus = 'ok' | 'missing' | 'empty' | 'incomplete';
 
@@ -26,6 +27,8 @@ export interface Part {
 	family?: InstrumentFamily;
 	/** Canonical names of the instruments in this file. */
 	instruments: string[];
+	/** The instruments with their part numbers, for finding a member's part. */
+	voices: Voice[];
 	notes: string[];
 	status: PartStatus;
 	mimeType: string;

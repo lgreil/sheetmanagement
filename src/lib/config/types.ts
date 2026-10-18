@@ -98,4 +98,10 @@ export interface OrchestraConfig {
 	 * "Orchester" column. The first one is used for concerts added from the calendar.
 	 */
 	orchestras: string[];
+	/**
+	 * Parts written for a group rather than one instrument, and who plays from them:
+	 * { "B-Stimmen": ["Klarinette", "Trompete"] }. Used for "Meine Noten" and the
+	 * instrumentation check, so a clarinettist also gets the B part. Instrument names as above.
+	 */
+	sharedParts?: Record<string, string[]>;
 }

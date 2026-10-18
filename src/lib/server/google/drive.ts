@@ -112,3 +112,8 @@ export function renameFile(client: GoogleClient, fileId: string, name: string): 
 		body: { name }
 	});
 }
+
+/** A file's content (e.g. a PDF), as a response to stream on. */
+export function downloadFile(client: GoogleClient, fileId: string): Promise<Response> {
+	return client.fetchRaw(`${FILES_URL}/${encodeURIComponent(fileId)}`, { alt: 'media', supportsAllDrives: true });
+}

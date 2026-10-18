@@ -42,11 +42,19 @@ export interface ParsedPart {
 	kind: PartKind;
 	family?: InstrumentFamily;
 	instruments: string[];
+	/** Each instrument with its part numbers: "Geige I & II" → [{ instrument: "Geige", numbers: [1, 2] }]. */
+	voices: Voice[];
 	notes: string[];
 	status: PartStatus;
 	featured: boolean;
 	/** Sort position: instrument order, then part number. */
 	order: number;
+}
+
+export interface Voice {
+	instrument: string;
+	/** Empty when the file has no number, i.e. it's for every player of the instrument. */
+	numbers: number[];
 }
 
 const JOINERS = new Set(['+', '&', '/', ',', 'und', 'and', '–']);
@@ -276,6 +284,9 @@ export function parsePartName(
 		kind,
 		family: first?.instrument.family,
 		instruments: [...new Set(items.filter((i) => !i.instrument.voice).map((i) => i.instrument.name))],
+		voices: items
+			.filter((i) => !i.instrument.voice)
+			.map((i) => ({ instrument: i.instrument.name, numbers: [...i.numbers] })),
 		notes,
 		status,
 		featured,

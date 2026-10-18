@@ -139,10 +139,61 @@ export const de = {
 		preparesFor: 'Probe für',
 		description: 'Notiz aus dem Kalender'
 	},
+	gaps: {
+		title: 'Fehlende Stimmen',
+		lead: 'Alle Lücken im Notenarchiv, aus den Dateinamen (FEHLT, LEER, UNVOLLSTÄNDIG) und den offenen Meldungen. Ersetzt die Listen in Drive.',
+		all: 'Alle',
+		current: 'Aktuelle Programme',
+		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'unvollständig', reports: 'Meldungen' },
+		reported: 'Gemeldet',
+		none: 'Keine Lücken im Archiv.',
+		noneHere: 'In dieser Auswahl gibt es keine Lücken.',
+		failed: 'Das Notenarchiv konnte gerade nicht geladen werden.',
+		manage: 'Meldungen bearbeiten',
+		link: 'Alle fehlenden Stimmen'
+	},
+	instrumentation: {
+		title: 'Besetzung',
+		lead: 'Welche Stimmen für dieses Programm da sind. Lücken fallen so vor der ersten Probe auf.',
+		onlyPlayed: 'Nur Instrumente der Mitglieder',
+		piece: 'Stück',
+		legend: {
+			own: 'Stimme da',
+			shared: 'Gemeinsame Stimme',
+			problem: 'Fehlt, leer oder unvollständig',
+			none: 'Keine Stimme'
+		},
+		noMusic: 'keine Noten',
+		gaps: (n: number) => (n === 1 ? '1 Lücke bei Instrumenten der Mitglieder' : `${n} Lücken bei Instrumenten der Mitglieder`)
+	},
 	myParts: {
 		title: 'Meine Noten',
 		lead: 'Deine Stimmen für das nächste Konzert, in Programmreihenfolge.',
-		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.'
+		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.',
+		forConcert: (concert: string) => `Meine Noten fürs ${concert}`,
+		concert: 'Konzert',
+		instrument: 'Instrument',
+		number: 'Stimme',
+		anyNumber: 'alle',
+		pickInstrument: 'Was spielst du? Einmal auswählen, dann sind deine Noten immer hier.',
+		unknownInstrument: (text: string) => `„${text}“ kennt die App nicht als Instrument. Bitte einmal auswählen.`,
+		save: 'Merken',
+		saved: 'Gemerkt.',
+		change: 'Ändern',
+		show: 'Anzeigen',
+		noConcert: 'Gerade steht kein Konzert mit Programm an.',
+		noProgram: 'Für dieses Konzert ist noch kein Programm eingetragen.',
+		shared: 'Gemeinsame Stimme',
+		noPart: (instrument: string) => `Keine Stimme für ${instrument}`,
+		noMusic: 'Keine Noten im Archiv',
+		missing: 'fehlt im Archiv',
+		summary: (found: number, total: number) => `${found} von ${total} Stücken mit Stimme`,
+		merge: 'Als eine PDF',
+		merging: (done: number, total: number) => `Lade Stimme ${done} von ${total} …`,
+		mergeFailed: 'Die PDF konnte nicht erstellt werden. Die einzelnen Stimmen lassen sich weiter öffnen.',
+		mergeHint: 'Fügt deine Stimmen in Programmreihenfolge zu einer Datei zusammen, zum Drucken oder fürs Tablet.',
+		mergeOff: 'Das Zusammenfügen geht nur mit Anmeldung.',
+		fileName: (concert: string, instrument: string) => `Meine Noten – ${concert} – ${instrument}.pdf`
 	},
 	auth: {
 		title: 'Anmelden',

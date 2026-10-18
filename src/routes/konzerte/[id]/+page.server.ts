@@ -1,5 +1,8 @@
 import { error } from '@sveltejs/kit';
-import { getLibrary } from '#lib/server/library.ts';
+import { config } from '#lib/config/index.ts';
+import { coverage, parseInstrument, playedParts, programInstruments } from '#lib/music/my-parts.ts';
+import { getLibrary, type Library, type ProgramItem } from '#lib/server/library.ts';
+import { getAccessList } from '#lib/server/repertoire.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { PageServerLoad } from './$types';
 
@@ -22,6 +25,38 @@ function plainText(html: string | undefined): string | undefined {
 
 const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" };
 
+/**
+ * Pieces × instruments for the programme, so missing parts are found before the first
+ * rehearsal. Columns: every instrument with a part in the programme, plus the ones
+ * members play (from "Mitglieder"), which the page can filter down to.
+ */
+async function instrumentation(items: ProgramItem[], library: Library) {
+	const rows = items.map((item) => {
+		const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
+		return { item, parts: piece?.detail ? playedParts(piece.detail) : [] };
+	});
+	const withMusic = rows.filter((row) => row.parts.length);
+	if (!withMusic.length) return null;
+
+	const access = await getAccessList();
+	const played = new Set(
+		(access?.members ?? []).flatMap((member) => parseInstrument(member.instrument ?? '', config)?.instrument ?? [])
+	);
+	const needed = new Set(programInstruments(withMusic.map((row) => row.parts), config));
+	const instruments = config.instruments
+		.map((instrument) => instrument.name)
+		.filter((name) => needed.has(name) || (played.has(name) && name !== 'Partitur'));
+	return {
+		instruments: instruments.map((name) => ({ name, played: played.has(name) })),
+		rows: rows.map(({ item, parts }) => ({
+			title: item.title,
+			pieceId: item.pieceId,
+			hasMusic: parts.length > 0,
+			cells: instruments.map((name) => (parts.length ? coverage(parts, name, config) : ('none' as const)))
+		}))
+	};
+}
+
 const mapUrl = (location: string | undefined) =>
 	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;
 
@@ -37,9 +72,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
 	}
 
+	const items = concert?.program ?? [];
 	const program = {
-		items: concert?.program ?? [],
+		items,
 		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
+		// For whoever plans programmes; it reads every piece's parts.
+		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library) : null,
 		saved: url.searchParams.has('gespeichert'),
 		sheet: library.sheet
 	};
