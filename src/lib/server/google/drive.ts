@@ -80,3 +80,35 @@ export function getFile(client: GoogleClient, fileId: string): Promise<DriveFile
 		params: { fields: 'id, name, mimeType, modifiedTime', supportsAllDrives: true }
 	});
 }
+
+/** Adds a comment to a file (shown in Drive's comment panel). Returns the comment id. */
+export async function createComment(client: GoogleClient, fileId: string, content: string): Promise<string> {
+	const comment = await client.request<{ id: string }>(`${FILES_URL}/${encodeURIComponent(fileId)}/comments`, {
+		method: 'POST',
+		params: { fields: 'id' },
+		body: { content }
+	});
+	return comment.id;
+}
+
+/** Resolves or reopens a comment with a reply, as a person would in Drive. */
+export async function replyToComment(
+	client: GoogleClient,
+	fileId: string,
+	commentId: string,
+	action: 'resolve' | 'reopen',
+	content: string
+): Promise<void> {
+	await client.request(
+		`${FILES_URL}/${encodeURIComponent(fileId)}/comments/${encodeURIComponent(commentId)}/replies`,
+		{ method: 'POST', params: { fields: 'id' }, body: { action, content } }
+	);
+}
+
+export function renameFile(client: GoogleClient, fileId: string, name: string): Promise<DriveFile> {
+	return client.request<DriveFile>(`${FILES_URL}/${encodeURIComponent(fileId)}`, {
+		method: 'PATCH',
+		params: { fields: 'id, name', supportsAllDrives: true },
+		body: { name }
+	});
+}

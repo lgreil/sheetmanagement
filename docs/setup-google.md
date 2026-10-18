@@ -35,7 +35,7 @@ Share with the service account's email, like you would with a person:
 
 | What | Where | Access |
 |---|---|---|
-| The sheet-music archive folder | Drive → right-click the folder → **Share** | Viewer |
+| The sheet-music archive folder | Drive → right-click the folder → **Share** | Viewer (Editor for `DRIVE_WRITE`, see step 9) |
 | The current-programme folders ("Programm A-Orchester" …) | same | Viewer |
 | The rehearsal/concert calendar | Calendar → ⋮ next to the calendar → **Settings and sharing → Share with specific people** | See all event details |
 | The Repertoire sheet (create it first, see below) | Sheets → **Share** | Editor |
@@ -171,6 +171,10 @@ Until this step, the app is open to anyone with the link and nobody can change a
 
 - Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.
 - App access and Drive access are separate: to open the PDFs, members still need access to the sheet-music folder in Drive.
+- **Problem reports in Drive (optional):** with `DRIVE_WRITE=true` and the service account as **Editor** of the sheet-music folder, reports also show up in Drive:
+  - Each report on a part becomes a comment on that file ("Über die Noten-App gemeldet: Seiten fehlen – Seite 3"), without the reporter's name. Closing the report on **Meldungen** resolves the comment, and reopening it reopens it.
+  - On **Meldungen**, **Im Dateinamen markieren** adds the status word from the naming convention to the file name (`Elegie - Viola - UNVOLLSTÄNDIG.pdf`). Closing the report removes it again, unless someone changed the name in the meantime. The app never renames files on a member's report alone.
+  - Without `DRIVE_WRITE` the app only asks Google for read access to Drive, whatever the folder's sharing allows. If Drive refuses a change, the report is still saved and **Meldungen** says so.
 - **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
 ## Troubleshooting

@@ -1,4 +1,6 @@
 import { normalizeEmail } from '#lib/access/access.ts';
+import { config } from '#lib/config/index.ts';
+import type { MarkableStatus } from '#lib/music/status-word.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, readTable, type ColumnKey, type Table } from '#lib/repertoire/sheet.ts';
 
@@ -43,6 +45,10 @@ export interface Report {
 	note: string;
 	reportedBy: string;
 	reportedAt: string;
+	/** The status word the app put in the file's name in Drive, to take out again when done. */
+	marked?: MarkableStatus;
+	/** The comment the app added to the file in Drive. */
+	driveComment: string;
 }
 
 export interface Wish {
@@ -67,6 +73,23 @@ export interface Feedback {
 	wishes: Wish[];
 	tables: { [K in FeedbackTab]?: Table<ColumnKey<K> & string> };
 }
+
+/** "UNVOLLSTÄNDIG" → "incomplete", as in the naming convention. */
+export function markedStatus(word: string): MarkableStatus | undefined {
+	const wanted = normalize(word);
+	if (!wanted) return undefined;
+	const status = config.naming.status;
+	return (Object.keys(status) as MarkableStatus[]).find((key) => normalize(status[key]) === wanted);
+}
+
+/** Which status word fits a kind of problem, as a suggestion when marking the file. */
+export const SUGGESTED_STATUS: Record<ReportKind, MarkableStatus> = {
+	missing: 'empty',
+	scan: 'incomplete',
+	pages: 'incomplete',
+	wrong: 'incomplete',
+	other: 'incomplete'
+};
 
 /** "https://…" stays, anything else (javascript:, mailto:, plain text) is undefined. */
 export function safeLink(text: string): string | undefined {
@@ -110,7 +133,9 @@ export function buildFeedback(values: FeedbackValues): Feedback {
 			status: fromLabel(VALUES.reportStatus, v.status, 'open'),
 			note: v.note,
 			reportedBy: v.reportedBy,
-			reportedAt: v.reportedAt
+			reportedAt: v.reportedAt,
+			marked: markedStatus(v.marked),
+			driveComment: v.driveComment
 		}));
 
 	const wishes: Wish[] = (tables.wishes?.rows ?? [])
