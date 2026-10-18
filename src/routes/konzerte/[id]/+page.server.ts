@@ -6,19 +6,21 @@ import type { PageServerLoad } from './$types';
 /** Calendar descriptions may contain simple HTML; the page shows plain text. */
 function plainText(html: string | undefined): string | undefined {
 	if (!html) return undefined;
-	const text = html
-		.replace(/<br\s*\/?>/gi, '\n')
-		.replace(/<\/(p|div|li)>/gi, '\n')
-		.replace(/<[^>]+>/g, '')
-		.replace(/&nbsp;/g, ' ')
-		.replace(/&amp;/g, '&')
-		.replace(/&lt;/g, '<')
-		.replace(/&gt;/g, '>')
-		.replace(/&quot;/g, '"')
+	let text = html.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li)>/gi, '\n');
+	// Repeated, so nested leftovers like "<scr<b>ipt>" don't survive as a tag.
+	for (let previous = ''; previous !== text; ) {
+		previous = text;
+		text = text.replace(/<[^<>]*>/g, '');
+	}
+	text = text
+		// One pass, so "&amp;lt;" stays "&lt;" instead of becoming "<".
+		.replace(/&(nbsp|amp|lt|gt|quot|#39);/g, (_, name: keyof typeof ENTITIES) => ENTITIES[name])
 		.replace(/\n{3,}/g, '\n\n')
 		.trim();
 	return text || undefined;
 }
+
+const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" };
 
 const mapUrl = (location: string | undefined) =>
 	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;

@@ -61,7 +61,7 @@ export function isPublicPath(path: string): boolean {
 		path === '/datenschutz' ||
 		path === '/nutzungsbedingungen' ||
 		path.startsWith('/auth/') ||
-		path.startsWith('/api/health')
+		path === '/api/health'
 	);
 }
 

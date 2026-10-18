@@ -1,5 +1,5 @@
 import { config } from '#lib/config/index.ts';
-import { dateParts, daysUntil, isPast } from '#lib/events/format.ts';
+import { dateParts, daysUntil, isPast, type DateParts } from '#lib/events/format.ts';
 import { buildSchedule, type ScheduleEvent, type ShownEvent } from '#lib/events/schedule.ts';
 import { cached } from './cache.ts';
 import { appEnv, runInBackground } from './env.ts';
@@ -19,7 +19,7 @@ export type ScheduleResult =
 	  }
 	| { ok: false; reason: 'not-configured' | 'failed' };
 
-const built = new WeakMap<CalendarEvent[], ScheduleEvent[]>();
+const built = new WeakMap<CalendarEvent[], (ScheduleEvent & { date: DateParts })[]>();
 
 export async function getSchedule(now = Date.now()): Promise<ScheduleResult> {
 	try {
@@ -38,15 +38,19 @@ export async function getSchedule(now = Date.now()): Promise<ScheduleResult> {
 			waitUntil: runInBackground
 		});
 
+		// Building and formatting happen once per calendar snapshot; only what depends on
+		// the current time is computed per request.
 		let schedule = built.get(raw);
 		if (!schedule) {
-			schedule = buildSchedule(raw, config.events);
+			schedule = buildSchedule(raw, config.events).map((event) => ({
+				...event,
+				date: dateParts(event, config.locale, config.timeZone)
+			}));
 			built.set(raw, schedule);
 		}
 
 		const events = schedule.map((event) => ({
 			...event,
-			date: dateParts(event, config.locale, config.timeZone),
 			daysUntil: daysUntil(event, now, config.timeZone),
 			past: isPast(event, now)
 		}));

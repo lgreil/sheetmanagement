@@ -20,6 +20,22 @@ export interface DateParts {
 	monthLabel: string;
 }
 
+const formats = new Map<string, Intl.DateTimeFormat>();
+
+/**
+ * One shared formatter per locale and options. Creating an Intl.DateTimeFormat costs
+ * far more than using one, and pages format hundreds of dates per request.
+ */
+export function dateFormat(locale: string, options: Intl.DateTimeFormatOptions): Intl.DateTimeFormat {
+	const key = `${locale}|${JSON.stringify(options)}`;
+	let format = formats.get(key);
+	if (!format) {
+		format = new Intl.DateTimeFormat(locale, options);
+		formats.set(key, format);
+	}
+	return format;
+}
+
 export function dateParts(
 	event: { start: string; end: string; allDay: boolean },
 	locale: string,
@@ -29,9 +45,8 @@ export function dateParts(
 	const zone = event.allDay ? 'UTC' : timeZone;
 	const start = new Date(event.start);
 	const format = (options: Intl.DateTimeFormatOptions) =>
-		new Intl.DateTimeFormat(locale, { timeZone: zone, ...options }).format(start);
-	const time = (date: Date) =>
-		new Intl.DateTimeFormat(locale, { timeZone: zone, hour: '2-digit', minute: '2-digit' }).format(date);
+		dateFormat(locale, { timeZone: zone, ...options }).format(start);
+	const time = (date: Date) => dateFormat(locale, { timeZone: zone, hour: '2-digit', minute: '2-digit' }).format(date);
 
 	const year = format({ year: 'numeric' });
 	const monthNumber = format({ month: '2-digit' });
@@ -49,7 +64,7 @@ export function dateParts(
 /** Whole days from `now` to the event's day, in the orchestra's time zone. 0 = today. */
 export function daysUntil(event: { start: string; allDay: boolean }, now: number, timeZone: string): number {
 	const dayOf = (date: Date, zone: string) =>
-		new Intl.DateTimeFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
+		dateFormat('en-CA', { timeZone: zone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(date);
 	const eventDay = event.allDay ? event.start.slice(0, 10) : dayOf(new Date(event.start), timeZone);
 	const today = dayOf(new Date(now), timeZone);
 	return Math.round((Date.parse(eventDay) - Date.parse(today)) / 86_400_000);
