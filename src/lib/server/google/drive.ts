@@ -30,12 +30,20 @@ const FIELDS =
  */
 export const PARENTS_PER_QUERY = 40;
 
+/**
+ * A string literal for Drive's query language. Backslashes are escaped first, then
+ * quotes; otherwise a trailing backslash would escape the closing quote.
+ */
+export function queryString(value: string): string {
+	return `'${value.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
+}
+
 /** Lists the direct children of many folders with as few requests as possible. */
 export async function listChildren(client: GoogleClient, folderIds: string[]): Promise<DriveFile[]> {
 	const files: DriveFile[] = [];
 	for (let i = 0; i < folderIds.length; i += PARENTS_PER_QUERY) {
 		const batch = folderIds.slice(i, i + PARENTS_PER_QUERY);
-		const parents = batch.map((id) => `'${id.replace(/'/g, "\\'")}' in parents`).join(' or ');
+		const parents = batch.map((id) => `${queryString(id)} in parents`).join(' or ');
 		files.push(
 			...(await client.paginate<FileListPage, DriveFile>(
 				FILES_URL,
