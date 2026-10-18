@@ -44,8 +44,10 @@ Drive may warn that the address is outside your organisation. That's expected.
 
 ## 5. Collect the ids
 
-- **Folder id:** open the folder in Drive. The id is the last part of the URL: `drive.google.com/drive/folders/<this part>`.
+- **Folder id:** open the folder in Drive. The id is the last part of the URL: `drive.google.com/drive/folders/<this part>`. If the "current programme" folder is separate, note its id too (`DRIVE_CURRENT_PROGRAM_FOLDER_ID`, optional).
 - **Calendar id:** Calendar → **Settings and sharing → Integrate calendar → Calendar ID**. For a Gmail account's main calendar, it's the email address.
+
+The **Kalender abonnieren** link on the concerts page opens this calendar in the member's own Google Calendar. That only works if they can see the calendar: either make it public (**Settings and sharing → Access permissions → Make available to public**) or share it with each member. The app itself only needs the service-account share from step 4.
 
 ## 6. Give the app the key and the ids
 
@@ -68,6 +70,7 @@ base64 -w0 path/to/key.json   # macOS: base64 -i path/to/key.json
 ```
 GOOGLE_SERVICE_ACCOUNT_JSON="<the base64 line>"
 DRIVE_ARCHIVE_FOLDER_ID="<folder id>"
+# DRIVE_CURRENT_PROGRAM_FOLDER_ID="<folder id>"   (optional)
 CALENDAR_ID="<calendar id>"
 ```
 
