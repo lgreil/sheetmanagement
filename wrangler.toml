@@ -1,13 +1,18 @@
 # Generic Cloudflare Workers config. Safe to commit: it contains no ids or secrets.
 # Deployment-specific values (orchestra name, Google ids, keys) are set per
 # deployment with `wrangler secret put <NAME>`; see .dev.vars.example for the list.
-name = "sheetmanagement"
+name = "noten"
 main = ".svelte-kit/cloudflare/_worker.js"
 compatibility_date = "2026-10-01"
 compatibility_flags = ["nodejs_als"]
 
 # Keep variables set in the Cloudflare dashboard when deploying.
 keep_vars = true
+
+# Cache for the Drive archive index. Wrangler creates the namespace on the first
+# deploy and may write its id below; that id is not secret.
+[[kv_namespaces]]
+binding = "CACHE"
 
 [assets]
 binding = "ASSETS"

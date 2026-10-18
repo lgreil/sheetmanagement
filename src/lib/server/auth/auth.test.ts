@@ -1,0 +1,98 @@
+import { describe, expect, it } from 'vitest';
+import { isRedirect, redirect } from '@sveltejs/kit';
+import { authorizationUrl, GOOGLE_SIGN_IN_ORIGIN, readIdToken, signIn, SignInError } from './google.ts';
+import { safeReturnPath } from './redirect.ts';
+import { base64url, signSession, verifySession } from './session.ts';
+
+const SECRET = 'x'.repeat(40);
+const NOW = Date.UTC(2026, 9, 18);
+const session = { email: 'anna@example.org', name: 'Anna', exp: NOW / 1000 + 3600 };
+
+describe('session cookies', () => {
+	it('round-trips a valid session', async () => {
+		const cookie = await signSession(session, SECRET);
+		expect(await verifySession(cookie, SECRET, NOW)).toEqual(session);
+	});
+
+	it('rejects a changed payload, another secret, expiry and garbage', async () => {
+		const cookie = await signSession(session, SECRET);
+		const [, signature] = cookie.split('.');
+		const forged = `${base64url(new TextEncoder().encode(JSON.stringify({ ...session, email: 'boss@example.org' })))}.${signature}`;
+		expect(await verifySession(forged, SECRET, NOW)).toBeNull();
+		expect(await verifySession(cookie, 'y'.repeat(40), NOW)).toBeNull();
+		expect(await verifySession(cookie, SECRET, NOW + 2 * 3600 * 1000)).toBeNull();
+		expect(await verifySession('nonsense', SECRET, NOW)).toBeNull();
+		expect(await verifySession('a.b.c', SECRET, NOW)).toBeNull();
+		expect(await verifySession(undefined, SECRET, NOW)).toBeNull();
+	});
+});
+
+const token = (claims: Record<string, unknown>) =>
+	`header.${base64url(new TextEncoder().encode(JSON.stringify(claims)))}.signature`;
+const good = {
+	iss: 'https://accounts.google.com',
+	aud: 'client-1',
+	exp: NOW / 1000 + 600,
+	email: 'Anna@Example.org',
+	email_verified: true,
+	name: 'Anna Beispiel'
+};
+
+describe('Google sign-in', () => {
+	it('builds the authorization URL with the basic scopes', () => {
+		const url = new URL(authorizationUrl({ clientId: 'client-1', redirectUri: 'https://app.example/auth/callback' }, 'st'));
+		expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth');
+		expect(url.searchParams.get('scope')).toBe('openid email profile');
+		expect(url.searchParams.get('state')).toBe('st');
+		expect(url.searchParams.get('redirect_uri')).toBe('https://app.example/auth/callback');
+	});
+
+	// SvelteKit 3 refuses external redirects unless allowed; that once broke sign-in with a 500.
+	it('redirects to Google with the allowed origin', () => {
+		const target = authorizationUrl({ clientId: 'client-1', redirectUri: 'https://app.example/auth/callback' }, 'st');
+		let thrown: unknown;
+		try {
+			redirect(303, target, { external: [GOOGLE_SIGN_IN_ORIGIN] });
+		} catch (error) {
+			thrown = error;
+		}
+		expect(isRedirect(thrown)).toBe(true);
+	});
+
+	it('reads a valid ID token and lower-cases the email', () => {
+		expect(readIdToken(token(good), 'client-1', NOW)).toEqual({ email: 'anna@example.org', name: 'Anna Beispiel' });
+	});
+
+	it.each([
+		['another audience', { aud: 'client-2' }],
+		['another issuer', { iss: 'https://evil.example' }],
+		['an expired token', { exp: NOW / 1000 - 1 }],
+		['an unverified email', { email_verified: false }]
+	])('rejects %s', (_, change) => {
+		expect(() => readIdToken(token({ ...good, ...change }), 'client-1', NOW)).toThrow(SignInError);
+	});
+
+	it('exchanges the code at the token endpoint', async () => {
+		let body = '';
+		const fakeFetch = (async (_url: string, init: RequestInit) => {
+			body = String(init.body);
+			return new Response(JSON.stringify({ id_token: token(good) }));
+		}) as typeof fetch;
+		const user = await signIn({ clientId: 'client-1', clientSecret: 's', redirectUri: 'https://app.example/auth/callback' }, 'code-1', fakeFetch, NOW);
+		expect(user.email).toBe('anna@example.org');
+		expect(new URLSearchParams(body).get('code')).toBe('code-1');
+		expect(new URLSearchParams(body).get('grant_type')).toBe('authorization_code');
+	});
+});
+
+describe('safeReturnPath', () => {
+	it.each([
+		['/konzerte/abc?x=1', '/konzerte/abc?x=1'],
+		['https://evil.example', '/'],
+		['//evil.example', '/'],
+		['/\\evil.example', '/'],
+		[null, '/']
+	])('%j → %j', (input, expected) => {
+		expect(safeReturnPath(input)).toBe(expected);
+	});
+});

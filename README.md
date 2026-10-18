@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** early rewrite. Phase 0 (skeleton) is done; connecting Google comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
+> **Status:** early rewrite. The skeleton, the Google connection, the piece list, concerts from the calendar, the Repertoire sheet with programmes, and sign-in with rights and a programme editor (phases 0–5) are done; "Meine Noten" and the other extras come next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
@@ -37,7 +37,7 @@ Other scripts:
 | `pnpm check` | Type-check the project |
 | `pnpm test` | Run unit tests |
 | `pnpm preview` | Build and run the real Worker locally with Wrangler |
-| `pnpm deploy` | Build and deploy to Cloudflare |
+| `pnpm run deploy` | Build and deploy to Cloudflare (`run` is needed: `pnpm deploy` is a built-in pnpm command) |
 
 On Windows, stop a running `pnpm preview` before building again: the running Worker locks the build folder.
 
@@ -45,8 +45,11 @@ On Windows, stop a running `pnpm preview` before building again: the running Wor
 
 1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
 2. `pnpm wrangler login`
-3. `pnpm deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
-4. Set deployment values as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
+3. `pnpm run deploy`. The app is then live at `https://noten.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
+4. Connect Google Drive, Calendar and Sheets, and turn on sign-in: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
+5. Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
+
+The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret.
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 

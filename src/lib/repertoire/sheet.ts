@@ -1,0 +1,280 @@
+import { t } from '#lib/i18n/index.ts';
+import { searchText } from '#lib/music/text.ts';
+import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
+
+/** Tab and column names of the Repertoire sheet, in the order /setup creates them. */
+export const LAYOUT = t.sheet;
+export type TabKey = keyof typeof LAYOUT;
+/** The tabs the app can't work without; the access tabs (members, rights …) are optional. */
+export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
+export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
+export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
+
+/** The raw cell values of the repertoire tabs, header row included. */
+export type SheetValues = Record<RepertoireTab, string[][]>;
+
+export interface TableRow<K extends string> {
+	/** Row number in the sheet, starting at 1 for the header. */
+	row: number;
+	values: Record<K, string>;
+}
+
+export interface Table<K extends string> {
+	rows: TableRow<K>[];
+	/** Column keys whose header was not found. */
+	missing: K[];
+	/** Column index per key, for writing rows in the sheet's own column order. */
+	indexes: Partial<Record<K, number>>;
+	/** Number of header cells, so new columns can be added after them. */
+	width: number;
+}
+
+/** Headers are matched ignoring case, accents and surrounding spaces. */
+export const normalize = (text: string) => searchText(text.replace(/\s+/g, ' ').trim());
+
+/** Reads a tab by its header row, so columns can be in any order. Empty rows are skipped. */
+export function readTable<K extends string>(values: string[][], columns: Record<K, string>): Table<K> {
+	const header = (values[0] ?? []).map(normalize);
+	const indexes: Partial<Record<K, number>> = {};
+	const missing: K[] = [];
+	for (const [key, name] of Object.entries(columns) as [K, string][]) {
+		const index = header.indexOf(normalize(name));
+		if (index === -1) missing.push(key);
+		else indexes[key] = index;
+	}
+
+	const rows: TableRow<K>[] = [];
+	values.slice(1).forEach((cells, i) => {
+		const row = {} as Record<K, string>;
+		let empty = true;
+		for (const key of Object.keys(columns) as K[]) {
+			const index = indexes[key];
+			const value = index === undefined ? '' : String(cells[index] ?? '').trim();
+			row[key] = value;
+			if (value) empty = false;
+		}
+		if (!empty) rows.push({ row: i + 2, values: row });
+	});
+	return { rows, missing, indexes, width: values[0]?.length ?? 0 };
+}
+
+export interface SheetPiece {
+	row: number;
+	/** Stable key: the Drive folder id, or "s-<title>" for pieces without sheet music. */
+	key: string;
+	title: string;
+	composer?: string;
+	catalogue?: string;
+	arranger?: string;
+	genre?: string;
+	difficulty?: string;
+	notes?: string;
+	reviewedAt?: string;
+	driveFolderId?: string;
+}
+
+export interface ProgramEntry {
+	row: number;
+	position?: number;
+	/** Key of the piece, if the name matches a row in "Stücke". */
+	pieceKey?: string;
+	/** The name as entered. */
+	pieceName: string;
+	notes?: string;
+}
+
+export interface SheetConcert {
+	row: number;
+	/** Stable key: the calendar event id, or "s-<Anlass>" for concerts only in the sheet. */
+	key: string;
+	title: string;
+	date: FuzzyDate | null;
+	/** As entered, shown when it can't be read as a date. */
+	dateText: string;
+	location?: string;
+	orchestra?: string;
+	eventId?: string;
+	/** In programme order; entries without a number keep their row order at the end. */
+	program: ProgramEntry[];
+}
+
+export type ProblemKind =
+	| 'missing-column'
+	| 'duplicate-piece'
+	| 'duplicate-concert'
+	| 'unknown-piece'
+	| 'unknown-concert'
+	| 'bad-date'
+	| 'duplicate-member'
+	| 'unknown-right';
+
+export interface Problem {
+	kind: ProblemKind;
+	tab: string;
+	row?: number;
+	/** The name or value concerned. */
+	value: string;
+}
+
+export interface Repertoire {
+	pieces: SheetPiece[];
+	concerts: SheetConcert[];
+	piecesByKey: Map<string, SheetPiece>;
+	piecesByFolder: Map<string, SheetPiece>;
+	/** Pieces by normalised title, for matching programme rows. */
+	piecesByTitle: Map<string, SheetPiece>;
+	concertsByKey: Map<string, SheetConcert>;
+	concertsByEvent: Map<string, SheetConcert>;
+	concertsByTitle: Map<string, SheetConcert>;
+	/** Concert keys per piece key, in date order. */
+	playedAt: Map<string, string[]>;
+	tables: { [K in RepertoireTab]: Table<ColumnKey<K> & string> };
+	problems: Problem[];
+}
+
+const slug = (text: string) =>
+	normalize(text)
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-|-$/g, '') || 'x';
+
+/** Adds "-2", "-3" … until the key is free. */
+function uniqueKey(key: string, taken: Map<string, unknown>): string {
+	let candidate = key;
+	for (let n = 2; taken.has(candidate); n++) candidate = `${key}-${n}`;
+	return candidate;
+}
+
+const optional = (value: string) => value || undefined;
+
+export function buildRepertoire(values: SheetValues): Repertoire {
+	const problems: Problem[] = [];
+	const tables = {
+		pieces: readTable(values.pieces, LAYOUT.pieces.columns),
+		concerts: readTable(values.concerts, LAYOUT.concerts.columns),
+		program: readTable(values.program, LAYOUT.program.columns)
+	};
+	for (const key of REPERTOIRE_TABS) {
+		for (const column of tables[key].missing) {
+			const name = (LAYOUT[key].columns as Record<string, string>)[column];
+			problems.push({ kind: 'missing-column', tab: LAYOUT[key].tab, value: name });
+		}
+	}
+
+	// Pieces. A Drive folder listed twice: the first row wins.
+	const pieces: SheetPiece[] = [];
+	const piecesByKey = new Map<string, SheetPiece>();
+	const piecesByFolder = new Map<string, SheetPiece>();
+	const piecesByTitle = new Map<string, SheetPiece>();
+	for (const { row, values: v } of tables.pieces.rows) {
+		if (!v.title && !v.driveFolderId) continue;
+		const folder = v.driveFolderId;
+		if (folder && piecesByFolder.has(folder)) {
+			problems.push({ kind: 'duplicate-piece', tab: LAYOUT.pieces.tab, row, value: v.title || folder });
+			continue;
+		}
+		const piece: SheetPiece = {
+			row,
+			key: folder || uniqueKey(`s-${slug(v.title)}`, piecesByKey),
+			title: v.title,
+			composer: optional(v.composer),
+			catalogue: optional(v.catalogue),
+			arranger: optional(v.arranger),
+			genre: optional(v.genre),
+			difficulty: optional(v.difficulty),
+			notes: optional(v.notes),
+			reviewedAt: optional(v.reviewedAt),
+			driveFolderId: optional(folder)
+		};
+		pieces.push(piece);
+		piecesByKey.set(piece.key, piece);
+		if (folder) piecesByFolder.set(folder, piece);
+		if (v.title) {
+			const title = normalize(v.title);
+			if (piecesByTitle.has(title)) {
+				problems.push({ kind: 'duplicate-piece', tab: LAYOUT.pieces.tab, row, value: v.title });
+			} else piecesByTitle.set(title, piece);
+		}
+	}
+
+	// Concerts. Programme rows refer to them by "Anlass", so that has to be unique.
+	const concerts: SheetConcert[] = [];
+	const concertsByKey = new Map<string, SheetConcert>();
+	const concertsByEvent = new Map<string, SheetConcert>();
+	const concertsByTitle = new Map<string, SheetConcert>();
+	for (const { row, values: v } of tables.concerts.rows) {
+		if (!v.title && !v.eventId) continue;
+		const event = v.eventId;
+		const title = normalize(v.title);
+		if ((event && concertsByEvent.has(event)) || (title && concertsByTitle.has(title))) {
+			problems.push({ kind: 'duplicate-concert', tab: LAYOUT.concerts.tab, row, value: v.title || event });
+			continue;
+		}
+		const date = v.date ? parseFuzzyDate(v.date) : null;
+		if (v.date && !date) problems.push({ kind: 'bad-date', tab: LAYOUT.concerts.tab, row, value: v.date });
+		const concert: SheetConcert = {
+			row,
+			key: event || uniqueKey(`s-${slug(v.title)}`, concertsByKey),
+			title: v.title,
+			date,
+			dateText: v.date,
+			location: optional(v.location),
+			orchestra: optional(v.orchestra),
+			eventId: optional(event),
+			program: []
+		};
+		concerts.push(concert);
+		concertsByKey.set(concert.key, concert);
+		if (event) concertsByEvent.set(event, concert);
+		if (title) concertsByTitle.set(title, concert);
+	}
+
+	// Programme rows.
+	for (const { row, values: v } of tables.program.rows) {
+		if (!v.concert && !v.piece) continue;
+		const concert = concertsByTitle.get(normalize(v.concert));
+		if (!concert) {
+			problems.push({ kind: 'unknown-concert', tab: LAYOUT.program.tab, row, value: v.concert });
+			continue;
+		}
+		const piece = v.piece ? piecesByTitle.get(normalize(v.piece)) : undefined;
+		if (v.piece && !piece) problems.push({ kind: 'unknown-piece', tab: LAYOUT.program.tab, row, value: v.piece });
+		const position = Number.parseFloat(v.position.replace(',', '.'));
+		concert.program.push({
+			row,
+			position: Number.isFinite(position) ? position : undefined,
+			pieceKey: piece?.key,
+			pieceName: v.piece,
+			notes: optional(v.notes)
+		});
+	}
+
+	const playedAt = new Map<string, string[]>();
+	const byDate = [...concerts].sort((a, b) =>
+		(a.date ? fuzzyDateKey(a.date) : '~').localeCompare(b.date ? fuzzyDateKey(b.date) : '~')
+	);
+	for (const concert of byDate) {
+		concert.program.sort(
+			(a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.row - b.row
+		);
+		for (const entry of concert.program) {
+			if (!entry.pieceKey) continue;
+			const list = playedAt.get(entry.pieceKey) ?? [];
+			if (!list.includes(concert.key)) list.push(concert.key);
+			playedAt.set(entry.pieceKey, list);
+		}
+	}
+
+	return {
+		pieces,
+		concerts,
+		piecesByKey,
+		piecesByFolder,
+		piecesByTitle,
+		concertsByKey,
+		concertsByEvent,
+		concertsByTitle,
+		playedAt,
+		tables,
+		problems
+	};
+}

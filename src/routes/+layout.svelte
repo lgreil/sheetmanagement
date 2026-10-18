@@ -8,12 +8,15 @@
 
 	let { data, children } = $props();
 
-	const nav: { href: string; label: string; icon: IconName }[] = [
+	const nav: { href: string; label: string; icon: IconName }[] = $derived([
 		{ href: '/', label: t.nav.home, icon: 'home' },
 		{ href: '/stuecke', label: t.nav.pieces, icon: 'music' },
 		{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar' },
-		{ href: '/meine-noten', label: t.nav.myParts, icon: 'user' }
-	];
+		{ href: '/meine-noten', label: t.nav.myParts, icon: 'user' },
+		...(data.rights.includes('mitglieder.verwalten') && data.auth === 'on'
+			? [{ href: '/admin', label: t.nav.admin, icon: 'shield' as const }]
+			: [])
+	]);
 
 	function isActive(href: string) {
 		const path = page.url.pathname;
@@ -28,7 +31,7 @@
 <div class="app" style:--accent={config.accent}>
 	<header class="topbar">
 		<div class="topbar-inner">
-			<a href="/" class="brand">
+			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>
 				<span class="logo"><Icon name="music" size={18} /></span>
 				<span class="brand-full">{data.orchestraName}</span>
 				<span class="brand-short">{data.orchestraShortName}</span>
@@ -43,11 +46,21 @@
 			</nav>
 
 			<ThemeToggle />
+			{#if data.user}
+				<form class="account" method="POST" action="/auth/logout">
+					<span class="avatar" title={t.auth.signedInAs(data.user.email)}>{data.user.name.charAt(0).toUpperCase()}</span>
+					<button class="logout" title={t.auth.logout} aria-label={t.auth.logout}><Icon name="logout" size={18} /></button>
+				</form>
+			{/if}
 		</div>
 	</header>
 
 	<main>
 		{@render children()}
+		<footer class="legal">
+			<a href="/datenschutz">{t.legal.links.privacy}</a>
+			<a href="/nutzungsbedingungen">{t.legal.links.terms}</a>
+		</footer>
 	</main>
 
 	<nav class="tabbar" aria-label="Hauptnavigation">
@@ -128,6 +141,7 @@
 
 	.nav-desktop a {
 		padding: var(--space-2) var(--space-3);
+		white-space: nowrap;
 		border-radius: 999px;
 		color: var(--text-muted);
 		font-weight: 500;
@@ -158,6 +172,18 @@
 		display: none;
 	}
 
+	/* Five menu items and the account leave no room for the name: the logo alone links home.
+	   Below 720px the menu moves to the bottom bar and the short name comes back. */
+	@media (max-width: 960px) {
+		.brand-full {
+			display: none;
+		}
+
+		.nav-desktop a {
+			padding: var(--space-2) 10px;
+		}
+	}
+
 	@media (max-width: 720px) {
 		.nav-desktop {
 			display: none;
@@ -185,7 +211,9 @@
 			inset: auto 0 0 0;
 			z-index: 10;
 			display: grid;
-			grid-template-columns: repeat(4, 1fr);
+			/* As many columns as entries: admins get a fifth, "Verwaltung". */
+			grid-auto-flow: column;
+			grid-auto-columns: 1fr;
 			height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
 			padding-bottom: env(safe-area-inset-bottom);
 			background: color-mix(in oklab, var(--surface) 88%, transparent);
@@ -208,5 +236,58 @@
 		.tabbar a.active {
 			color: var(--accent);
 		}
+	}
+	.legal {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-4);
+		margin-top: var(--space-6);
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--border);
+		font-size: 0.8125rem;
+	}
+
+	.legal a {
+		color: var(--text-muted);
+	}
+
+	.legal a:hover {
+		color: var(--accent);
+	}
+
+	.account {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		margin-left: var(--space-2);
+	}
+
+	.avatar {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 700;
+	}
+
+	.logout {
+		display: grid;
+		place-items: center;
+		width: 36px;
+		height: 36px;
+		border: 0;
+		border-radius: 999px;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+
+	.logout:hover {
+		background: var(--surface-2);
+		color: var(--text);
 	}
 </style>

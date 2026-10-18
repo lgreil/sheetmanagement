@@ -17,8 +17,16 @@ export interface Instrument {
 	/** Name as used in file names and shown in the app, e.g. "Geige". */
 	name: string;
 	family: InstrumentFamily;
-	/** Other spellings found in file names, e.g. ["Violine", "Violin"]. Matched case-insensitively. */
+	/**
+	 * Other spellings found in file names, e.g. ["Violine", "Violin"]. Matched as whole
+	 * words, ignoring case, so "Alt-Sax" also matches "Alt Sax" and "AltSax".
+	 */
 	aliases?: string[];
+	/**
+	 * A numbered voice in flexible arrangements ("Stimme 3 in B", "Part 2 Violin")
+	 * rather than an instrument. Shown as "Stimme 3" with the instruments that follow.
+	 */
+	voice?: boolean;
 }
 
 export interface NamingRules {
@@ -32,8 +40,35 @@ export interface NamingRules {
 		empty: string;
 		incomplete: string;
 	};
+	/** Other words that mean the same as a status word, e.g. older English names. Lower-case keys. */
+	statusAliases?: Record<string, 'missing' | 'empty' | 'incomplete'>;
 	/** Catalogue numbers recognised in folder names, e.g. "BWV 147", "KV 492", "Op. 90". */
 	cataloguePatterns: RegExp[];
+	/**
+	 * Folders inside the archive that group pieces instead of being a piece themselves,
+	 * e.g. "00 | Weihnachtsstücke". The first capture group is the category's display name.
+	 */
+	categoryFolderPattern: RegExp;
+	/**
+	 * Folders in the current-programme folders that are a programme rather than a piece,
+	 * e.g. "Programm A-Orchester". The first capture group is the programme's name, shown
+	 * as a tag on its pieces.
+	 */
+	programFolderPattern: RegExp;
+	/**
+	 * Composer names recognised at the start (or end) of a folder name without a
+	 * catalogue number, e.g. "Bizet - Carmen". Unknown names are left in the title.
+	 */
+	knownComposers: string[];
+	/** Key names in part file names and how to show them: { bb: "B", eb: "Es" }. Lower-case keys. */
+	transpositions: Record<string, string>;
+	/**
+	 * Extra words describing a part file, lower-case words → shown text:
+	 * { vereinfacht: "vereinfacht", "bass fassung": "Bass-Fassung" }.
+	 */
+	partNotes: Record<string, string>;
+	/** Word for a movement number glued to the front of a file name ("4_Viola" → "Satz 4"). */
+	movementNote?: string;
 }
 
 export interface EventKeywords {
@@ -50,8 +85,17 @@ export interface OrchestraConfig {
 	shortName: string;
 	/** Accent colour as any CSS colour. */
 	accent: string;
+	/** IANA time zone for showing dates and times, e.g. "Europe/Berlin". */
+	timeZone: string;
+	/** Locale for dates and sorting, e.g. "de-DE". */
+	locale: string;
 	/** Instruments in display order; parts are sorted by this list. */
 	instruments: Instrument[];
 	naming: NamingRules;
 	events: EventKeywords;
+	/**
+	 * Short names of the orchestras or ensembles, offered as a dropdown in the sheet's
+	 * "Orchester" column. The first one is used for concerts added from the calendar.
+	 */
+	orchestras: string[];
 }
