@@ -9,7 +9,11 @@ export const STATE_COOKIE = 'oauth_state';
 const MIN_SECRET_LENGTH = 32;
 
 export type AuthConfig =
-	| { mode: 'off' }
+	| {
+			mode: 'off';
+			/** "disabled": a client id is set, but FORCE_AUTH=false turned sign-in off. */
+			reason: 'not-configured' | 'disabled';
+	  }
 	| {
 			mode: 'on';
 			clientId: string;
@@ -20,14 +24,22 @@ export type AuthConfig =
 			problems: string[];
 	  };
 
+/** FORCE_AUTH=false (or 0, no, off) turns sign-in off; anything else, or nothing, leaves it on. */
+export function signInForced(value: string | undefined): boolean {
+	return !['false', '0', 'no', 'off'].includes((value ?? '').trim().toLowerCase());
+}
+
 /**
  * Sign-in is on as soon as GOOGLE_OAUTH_CLIENT_ID is set. Without it the app stays
  * open and read-only, as before phase 5, so a deployment can be set up step by step.
+ * FORCE_AUTH=false turns it off again without removing the client id, e.g. for an
+ * instance that should be open to everyone, or to get in while Google sign-in is broken.
  */
 export function authConfig(): AuthConfig {
 	const env = appEnv();
 	const clientId = env.GOOGLE_OAUTH_CLIENT_ID?.trim();
-	if (!clientId) return { mode: 'off' };
+	if (!clientId) return { mode: 'off', reason: 'not-configured' };
+	if (!signInForced(env.FORCE_AUTH)) return { mode: 'off', reason: 'disabled' };
 	const clientSecret = env.GOOGLE_OAUTH_CLIENT_SECRET?.trim() ?? '';
 	const sessionSecret = env.SESSION_SECRET?.trim() ?? '';
 	const bootstrapAdmins = parseEmailList(env.BOOTSTRAP_ADMINS);

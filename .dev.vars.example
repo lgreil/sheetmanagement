@@ -25,6 +25,9 @@ REPERTOIRE_SHEET_ID=""
 # GOOGLE_OAUTH_CLIENT_SECRET=""
 # Random string, at least 32 characters, for signing session cookies.
 # SESSION_SECRET=""
+# Set to false to turn sign-in off again while keeping the values above. The app is then
+# open to everyone and read-only, including /setup and /status. Default: true.
+# FORCE_AUTH="true"
 # Comma-separated emails that always have every right (the first admins).
 # BOOTSTRAP_ADMINS="admin@example.org,second-admin@example.org"
 

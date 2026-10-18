@@ -168,6 +168,7 @@ Until this step, the app is open to anyone with the link and nobody can change a
 
 - Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.
 - App access and Drive access are separate: to open the PDFs, members still need access to the sheet-music folder in Drive.
+- **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
 ## Troubleshooting
 

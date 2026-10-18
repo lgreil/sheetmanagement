@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { isRedirect, redirect } from '@sveltejs/kit';
 import { authorizationUrl, GOOGLE_SIGN_IN_ORIGIN, readIdToken, signIn, SignInError } from './google.ts';
+import { signInForced } from './index.ts';
 import { safeReturnPath } from './redirect.ts';
 import { base64url, signSession, verifySession } from './session.ts';
 
@@ -94,5 +95,20 @@ describe('safeReturnPath', () => {
 		[null, '/']
 	])('%j → %j', (input, expected) => {
 		expect(safeReturnPath(input)).toBe(expected);
+	});
+});
+
+describe('FORCE_AUTH', () => {
+	it.each([
+		[undefined, true],
+		['', true],
+		['true', true],
+		['false', false],
+		[' FALSE ', false],
+		['0', false],
+		['off', false],
+		['no', false]
+	])('%j → sign-in %s', (value, forced) => {
+		expect(signInForced(value)).toBe(forced);
 	});
 });
