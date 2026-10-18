@@ -115,7 +115,7 @@ export const actions: Actions = {
 			if (!who || !RIGHTS.includes(right)) return 'Bitte „Wer“ und ein Recht angeben.';
 			if (who.includes('@') && !EMAIL.test(who)) return t.admin.invalidEmail;
 			const rights = await readTab('rights');
-			if (rights.rows.some((row) => whoKey(row.values.who) === whoKey(who) && row.values.right.trim() === right)) {
+			if (rights.rows.some((row) => whoKey(row.values.who) === whoKey(who) && row.values.right.trim().toLowerCase() === right)) {
 				return t.admin.grantExists;
 			}
 			await appendRecords('rights', rights, [{ who: who.includes('@') ? normalizeEmail(who) : who, right }]);
@@ -125,11 +125,11 @@ export const actions: Actions = {
 		change(locals, async () => {
 			const data = await request.formData();
 			const who = whoKey(field(data, 'who'));
-			const right = field(data, 'right');
+			const right = field(data, 'right').toLowerCase();
 			const rights = await readTab('rights');
 			await deleteRows(
 				'rights',
-				rights.rows.filter((row) => whoKey(row.values.who) === who && row.values.right.trim() === right).map((row) => row.row)
+				rights.rows.filter((row) => whoKey(row.values.who) === who && row.values.right.trim().toLowerCase() === right).map((row) => row.row)
 			);
 		})
 };

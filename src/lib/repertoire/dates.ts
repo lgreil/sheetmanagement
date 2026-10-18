@@ -1,3 +1,5 @@
+import { dateFormat } from '#lib/events/format.ts';
+
 /**
  * Dates in the sheet may be imprecise: old concerts are often known only by year or
  * month. "1957", "1957-12", "1957-12-21", "12.1957" and "21.12.1957" are all valid.
@@ -47,7 +49,7 @@ export interface FuzzyDateLabel {
 export function formatFuzzyDate(date: FuzzyDate, locale: string): FuzzyDateLabel {
 	const utc = new Date(Date.UTC(date.year, (date.month ?? 1) - 1, date.day ?? 1));
 	const format = (options: Intl.DateTimeFormatOptions) =>
-		new Intl.DateTimeFormat(locale, { timeZone: 'UTC', ...options }).format(utc);
+		dateFormat(locale, { timeZone: 'UTC', ...options }).format(utc);
 	const year = String(date.year);
 	if (!date.month) return { long: year, day: '', month: '', year };
 	if (!date.day) return { long: format({ month: 'long', year: 'numeric' }), day: '', month: format({ month: 'short' }), year };
@@ -62,7 +64,5 @@ export function formatFuzzyDate(date: FuzzyDate, locale: string): FuzzyDateLabel
 /** The calendar day of an event in the given time zone, as "2026-11-15". */
 export function eventDay(event: { start: string; allDay: boolean }, timeZone: string): string {
 	if (event.allDay) return event.start.slice(0, 10);
-	return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(
-		new Date(event.start)
-	);
+	return dateFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(event.start));
 }
