@@ -265,6 +265,40 @@ export const de = {
 		exists: 'Diese E-Mail-Adresse ist schon eingetragen.',
 		grantExists: 'Dieses Recht ist schon vergeben.'
 	},
+	print: {
+		link: 'Drucken',
+		title: (concert: string) => 'Drucken: ' + concert,
+		handout: 'Programmzettel',
+		setlist: 'Setlist',
+		handoutHint: 'Für das Publikum: Programm mit Komponisten.',
+		setlistHint: 'Für Dirigat und Pult: groß, nummeriert, nur die Titel.',
+		print: 'Drucken',
+		back: 'Zurück zum Konzert',
+		empty: 'Für dieses Konzert ist noch kein Programm eingetragen.',
+		program: 'Programm'
+	},
+	archive: {
+		addConcert: 'Früheres Konzert eintragen',
+		addConcertLead: 'Für die Chronik: Konzerte, die nicht (mehr) im Kalender stehen. Das Programm trägst du danach auf der Konzertseite ein.',
+		addPiece: 'Stück ohne Noten eintragen',
+		addPieceLead: 'Für Stücke, die gespielt wurden, aber nicht im Notenarchiv liegen, damit sie in Programmen auftauchen können.',
+		date: 'Datum',
+		dateHint: '1957, 1957-12 oder 21.12.1957',
+		title: 'Anlass',
+		titleHint: 'z. B. Weihnachtskonzert 1957',
+		location: 'Ort',
+		orchestra: 'Orchester',
+		pieceTitle: 'Titel',
+		composer: 'Komponist',
+		catalogue: 'Werkverzeichnis',
+		add: 'Eintragen',
+		failed: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.',
+		problems: {
+			'title-missing': 'Bitte einen Namen angeben.',
+			'title-taken': 'Diesen Namen gibt es schon. Programme verweisen über den Namen, er muss eindeutig sein, z. B. mit Jahreszahl.',
+			'bad-date': 'Das Datum ist nicht lesbar. Möglich sind 1957, 1957-12, 21.12.1957 oder 12.1957.'
+		}
+	},
 	pieceEditor: {
 		title: (piece: string) => `Bearbeiten: ${piece}`,
 		lead: 'Die Angaben stehen im Blatt „Stücke“ der Repertoire-Tabelle. Was hier steht, gilt statt dem, was die App aus dem Ordnernamen liest.',

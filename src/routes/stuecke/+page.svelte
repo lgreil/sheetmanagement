@@ -4,12 +4,13 @@
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
 	import type { PieceSummary } from '#lib/music/types.ts';
+	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	const NEEDS_WORK = '__needs-work';
 	const NO_MUSIC = '__no-music';
@@ -177,6 +178,10 @@
 			</section>
 		{/each}
 	{/if}
+{/if}
+
+{#if data.canAdd}
+	<AddToArchive kind="piece" result={form} />
 {/if}
 
 <style>
