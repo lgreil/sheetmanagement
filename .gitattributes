@@ -1,0 +1,2 @@
+# Shell scripts run on Linux (GitHub Actions) and in Git Bash: always LF.
+*.sh text eol=lf
