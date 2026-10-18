@@ -2,9 +2,10 @@
 	import { t } from '#lib/i18n/index.ts';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import ProblemReports from '#lib/components/ProblemReports.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const piece = $derived(data.piece);
 	type Part = (typeof data.piece.parts)[number];
 
@@ -47,6 +48,16 @@
 			.map((key) => ({ key, label: t.piece.info[key], value: piece.info[key] }))
 			.filter((item) => item.value)
 	);
+
+	// Reporting a single part opens the form with that part chosen.
+	let reporting = $state(false);
+	let reportFile = $state('');
+	const canReport = $derived(data.reports.state === 'ready');
+	const reported = $derived(new Set(data.reports.open.map((report) => report.fileId).filter(Boolean)));
+	const reportPart = (id: string) => {
+		reportFile = id;
+		reporting = true;
+	};
 
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
@@ -103,6 +114,16 @@
 	</dl>
 {/if}
 
+<ProblemReports
+	reports={data.reports.open}
+	status={data.reports.state}
+	canClose={data.reports.canClose}
+	parts={piece.parts.filter((part) => part.status !== 'missing').map(({ id, label }) => ({ id, label }))}
+	result={form}
+	bind:open={reporting}
+	bind:fileId={reportFile}
+/>
+
 {#if sections.length > 1 && current}
 	<div class="sections" role="tablist" aria-label={t.piece.sections}>
 		{#each sections as section (section.key)}
@@ -137,9 +158,10 @@
 		<h2>{t.piece.groups[group.key]}</h2>
 		<ul class="parts">
 			{#each group.parts as part (part.id)}
-				<li>
+				<li class:flagged={reported.has(part.id)}>
 					<a
 						class="part"
+						class:with-flag={canReport && part.status !== 'missing'}
 						class:missing={part.status === 'missing'}
 						href={part.url}
 						target="_blank"
@@ -164,6 +186,16 @@
 						{/if}
 						<span class="open"><Icon name="external" size={16} /></span>
 					</a>
+					{#if canReport && part.status !== 'missing'}
+						<button
+							class="flag"
+							title={t.reports.reportPart(part.label)}
+							aria-label={t.reports.reportPart(part.label)}
+							onclick={() => reportPart(part.id)}
+						>
+							<Icon name="flag" size={15} />
+						</button>
+					{/if}
 				</li>
 			{/each}
 		</ul>
@@ -471,6 +503,43 @@
 		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
 		box-shadow: var(--shadow);
 		transform: translateY(-1px);
+	}
+
+	.parts li {
+		position: relative;
+	}
+
+	.part.with-flag {
+		padding-right: 44px;
+	}
+
+	.flag {
+		position: absolute;
+		top: 50%;
+		right: 6px;
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border: 0;
+		border-radius: 8px;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+		transform: translateY(-50%);
+		opacity: 0.55;
+	}
+
+	.flag:hover,
+	.flag:focus-visible,
+	.flagged .flag {
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+		color: var(--warn);
+		opacity: 1;
+	}
+
+	.flagged .part {
+		border-color: color-mix(in oklab, var(--warn) 45%, var(--border));
 	}
 
 	.part.missing {

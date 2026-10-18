@@ -1,6 +1,6 @@
 import { toSheetRow } from '#lib/repertoire/link.ts';
 import { LAYOUT, readTable, type ColumnKey, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
-import { appendRows, batchUpdate, getTabs, getValues, tabRange } from './google/sheets.ts';
+import { appendRows, batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
 import { getRepertoire } from './repertoire.ts';
 import { getGoogle, requireSetting } from './services.ts';
 
@@ -48,6 +48,30 @@ export async function appendRecords<K extends TabKey>(
 	}
 	const { client, spreadsheetId } = target();
 	await appendRows(client, spreadsheetId, tabRange(LAYOUT[key].tab), records.map((record) => toSheetRow(record, table.indexes)));
+}
+
+/** Overwrites some cells of one row (1-based sheet row number from a fresh readTab). */
+export async function updateRecord<K extends TabKey>(
+	key: K,
+	table: Table<Columns<K>>,
+	row: number,
+	values: Partial<Record<Columns<K>, string>>
+): Promise<void> {
+	const columns = Object.keys(values) as Columns<K>[];
+	const missing = columns.filter((column) => table.indexes[column] === undefined);
+	if (missing.length) {
+		const names = LAYOUT[key].columns as Record<string, string>;
+		throw new SheetLayoutError(LAYOUT[key].tab, missing.map((column) => names[column]));
+	}
+	const { client, spreadsheetId } = target();
+	await updateValues(
+		client,
+		spreadsheetId,
+		columns.map((column) => ({
+			range: tabRange(LAYOUT[key].tab, `${columnLetter(table.indexes[column]!)}${row}`),
+			values: [[values[column] ?? '']]
+		}))
+	);
 }
 
 /** Deletes whole rows (1-based sheet row numbers), bottom-up so the numbers stay valid. */

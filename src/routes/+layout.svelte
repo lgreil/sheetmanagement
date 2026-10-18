@@ -13,6 +13,8 @@
 		{ href: '/stuecke', label: t.nav.pieces, icon: 'music' },
 		{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar' },
 		{ href: '/meine-noten', label: t.nav.myParts, icon: 'user' },
+		// Wishes need someone signed in, so each +1 counts once.
+		...(data.auth === 'on' ? [{ href: '/wuensche', label: t.nav.wishes, icon: 'bulb' as const }] : []),
 		...(data.rights.includes('mitglieder.verwalten') && data.auth === 'on'
 			? [{ href: '/admin', label: t.nav.admin, icon: 'shield' as const }]
 			: [])
@@ -211,7 +213,7 @@
 			inset: auto 0 0 0;
 			z-index: 10;
 			display: grid;
-			/* As many columns as entries: admins get a fifth, "Verwaltung". */
+			/* As many columns as entries: up to six for admins (Wünsche, Verwaltung). */
 			grid-auto-flow: column;
 			grid-auto-columns: 1fr;
 			height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
@@ -223,6 +225,7 @@
 		}
 
 		.tabbar a {
+			min-width: 0;
 			display: grid;
 			place-items: center;
 			align-content: center;
@@ -231,6 +234,14 @@
 			font-weight: 500;
 			color: var(--text-muted);
 			transition: color 0.15s;
+		}
+
+		.tabbar a span {
+			max-width: 100%;
+			padding: 0 2px;
+			overflow: hidden;
+			text-overflow: ellipsis;
+			white-space: nowrap;
 		}
 
 		.tabbar a.active {

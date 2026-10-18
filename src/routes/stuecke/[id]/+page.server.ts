@@ -1,12 +1,17 @@
-import { error } from '@sveltejs/kit';
+import { error, fail } from '@sveltejs/kit';
+import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
+import { t } from '#lib/i18n/index.ts';
+import { addReport, feedbackUser, formText } from '#lib/server/feedback.ts';
+import { getFeedback } from '#lib/server/repertoire.ts';
+import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { fileUrl, folderUrl } from '#lib/server/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import { workKey } from '#lib/music/piece-name.ts';
 import { concertSummary, getLibrary, type LibraryPiece } from '#lib/server/library.ts';
-import type { PageServerLoad } from './$types';
+import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params }) => {
-	const library = await getLibrary();
+export const load: PageServerLoad = async ({ params, locals }) => {
+	const [library, feedback] = await Promise.all([getLibrary(), getFeedback()]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
 		if (!library.catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
@@ -18,7 +23,30 @@ export const load: PageServerLoad = async ({ params }) => {
 		? library.pieces.filter((other) => other.id !== piece.id && sameComposer(other.composer, piece.composer))
 		: [];
 	const work = workKey(piece.title);
+	const canClose = locals.access.rights.has('stuecke.bearbeiten');
 	return {
+		// Open problem reports, so nobody reports the same thing twice. Who reported is for admins only.
+		reports: {
+			open: (feedback?.reports ?? [])
+				.filter((report) => report.pieceId === piece.id && report.status === 'open')
+				.map(({ id, part, fileId, kind, comment, reportedAt, reportedBy }) => ({
+					id,
+					part,
+					fileId,
+					kind,
+					comment,
+					reportedAt,
+					reportedBy: canClose ? reportedBy : undefined
+				})),
+			state: !detail
+				? ('no-parts' as const)
+				: !feedbackUser(locals)
+					? ('sign-in' as const)
+					: feedback?.tables.reports
+						? ('ready' as const)
+						: ('not-set-up' as const),
+			canClose
+		},
 		piece: {
 			id: piece.id,
 			title: piece.title,
@@ -54,3 +82,36 @@ export const load: PageServerLoad = async ({ params }) => {
 const sameComposer = (a: string | undefined, b: string | undefined) => !!a && !!b && searchText(a) === searchText(b);
 
 const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({ id, title, catalogue, status, programs });
+
+export const actions: Actions = {
+	report: async ({ params, request, locals }) => {
+		const user = feedbackUser(locals);
+		if (!user) return fail(403, { reportError: t.reports.signInNeeded });
+		const data = await request.formData();
+		const kind = formText(data, 'kind') as ReportKind;
+		if (!REPORT_KINDS.includes(kind)) return fail(400, { reportError: t.reports.failed });
+
+		const piece = (await getLibrary()).piecesById.get(params.id);
+		if (!piece?.detail) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+		// The part's name comes from the archive, not from the form.
+		const fileId = formText(data, 'fileId');
+		const part = fileId ? piece.detail.parts.find((p) => p.id === fileId) : undefined;
+		if (fileId && !part) return fail(400, { reportError: t.reports.unknownPart });
+
+		try {
+			await addReport(user, {
+				pieceId: piece.id,
+				pieceName: piece.title,
+				part: part?.label ?? '',
+				fileId,
+				kind,
+				comment: formText(data, 'comment', 1000)
+			});
+			return { reported: true };
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { reportError: t.reports.notSetUp });
+			console.error('Saving a problem report failed:', cause);
+			return fail(503, { reportError: t.reports.failed });
+		}
+	}
+};

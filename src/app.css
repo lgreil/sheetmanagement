@@ -127,3 +127,94 @@ a {
 		transition-duration: 0.01ms !important;
 	}
 }
+
+/* Shared form pieces for the pages members write on (reports, wishes). */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--space-1);
+	height: 40px;
+	padding: 0 var(--space-4);
+	border: 0;
+	border-radius: 999px;
+	background: var(--accent);
+	color: var(--accent-contrast);
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+	white-space: nowrap;
+}
+
+.btn.ghost {
+	border: 1px solid var(--border);
+	background: none;
+	color: var(--text);
+}
+
+.btn.small {
+	height: 32px;
+	padding: 0 var(--space-3);
+	font-size: 0.8125rem;
+}
+
+.btn:disabled {
+	opacity: 0.6;
+	cursor: progress;
+}
+
+.field {
+	display: grid;
+	gap: var(--space-1);
+	color: var(--text-muted);
+	font-size: 0.8125rem;
+	font-weight: 600;
+}
+
+.field input,
+.field select,
+.field textarea {
+	min-width: 0;
+	padding: 9px var(--space-3);
+	border: 1px solid var(--border);
+	border-radius: 10px;
+	background: var(--bg);
+	color: var(--text);
+	font: inherit;
+	font-size: 0.9375rem;
+	font-weight: 400;
+}
+
+.field textarea {
+	min-height: 84px;
+	resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+	outline: 2px solid var(--accent);
+	outline-offset: 1px;
+}
+
+.msg {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	padding: var(--space-3) var(--space-4);
+	border-radius: var(--radius-m);
+}
+
+.msg.ok {
+	background: color-mix(in oklab, var(--ok) 12%, transparent);
+}
+
+.msg.error {
+	background: color-mix(in oklab, var(--danger) 10%, transparent);
+}
+
+.msg.info {
+	border: 1px dashed var(--border);
+	color: var(--text-muted);
+}

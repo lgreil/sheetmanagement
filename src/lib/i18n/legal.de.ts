@@ -50,6 +50,13 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Meldungen und Wünsche',
+				paragraphs: [
+					`Wenn du ein Problem mit Noten meldest oder einen Wunsch einträgst, speichert die App deinen Text zusammen mit deinem Namen, deiner E-Mail-Adresse und dem Datum in der Google-Tabelle des Orchesters. Gibst du einem Wunsch ein „+1“, wird deine E-Mail-Adresse beim Wunsch gespeichert, damit jede Person nur einmal zählt.`,
+					`Alle Mitglieder sehen Meldungen und Wünsche, aber nicht, von wem sie stammen und wer „+1“ gegeben hat. Das sehen nur die Personen, die Meldungen bearbeiten oder Mitglieder verwalten dürfen, damit sie nachfragen können. Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse, die Noten und die App gemeinsam zu verbessern). Auf Wunsch werden deine Einträge gelöscht.`
+				]
+			},
+			{
 				heading: 'Cookies und Speicher im Browser',
 				paragraphs: [
 					'Die App nutzt nur technisch notwendige Cookies, keine Analyse-, Tracking- oder Werbe-Cookies. Dafür ist keine Einwilligung nötig (§ 25 Abs. 2 Nr. 2 TDDDG).'

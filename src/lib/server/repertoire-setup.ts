@@ -1,4 +1,5 @@
 import { RIGHTS } from '#lib/access/access.ts';
+import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
 import type { GoogleClient } from './google/client.ts';
 import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
@@ -6,9 +7,30 @@ import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues }
 /** Marks the protection the app puts on id columns, so setup doesn't add it twice. */
 const ID_PROTECTION = 'sheetmanagement: id column';
 const TAB_KEYS = Object.keys(LAYOUT) as TabKey[];
-const ID_COLUMNS: Partial<Record<TabKey, string>> = { pieces: 'driveFolderId', concerts: 'eventId' };
-const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = { pieces: ['reviewedAt'], concerts: ['date'], requests: ['requestedAt'] };
-const WIDTHS: Record<string, number> = { title: 280, concert: 240, piece: 280, notes: 240, position: 60, date: 110 };
+const ID_COLUMNS: Partial<Record<TabKey, string>> = {
+	pieces: 'driveFolderId',
+	concerts: 'eventId',
+	reports: 'id',
+	wishes: 'id'
+};
+const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
+	pieces: ['reviewedAt'],
+	concerts: ['date'],
+	requests: ['requestedAt'],
+	reports: ['reportedAt'],
+	wishes: ['submittedAt', 'votes']
+};
+const WIDTHS: Record<string, number> = {
+	title: 280,
+	concert: 240,
+	piece: 280,
+	notes: 240,
+	position: 60,
+	date: 110,
+	comment: 280,
+	description: 320,
+	answer: 240
+};
 
 const HEADER_BACKGROUND = { red: 0.93, green: 0.94, blue: 0.96 };
 const ID_TEXT = { red: 0.6, green: 0.6, blue: 0.6 };
@@ -134,6 +156,10 @@ export async function setUpSheet(
 		}
 	}
 
+	const list = (labels: Record<string, string>) => ({
+		type: 'ONE_OF_LIST',
+		values: Object.values(labels).map((label) => ({ userEnteredValue: label }))
+	});
 	// Dropdowns. Not strict, so a name can be typed before its row exists.
 	const fromColumn = (key: TabKey, name: string) => ({
 		type: 'ONE_OF_RANGE',
@@ -142,7 +168,11 @@ export async function setUpSheet(
 	const dropdowns: [TabKey, string, object][] = [
 		['program', 'concert', fromColumn('concerts', 'title')],
 		['program', 'piece', fromColumn('pieces', 'title')],
-		['rights', 'right', { type: 'ONE_OF_LIST', values: RIGHTS.map((right) => ({ userEnteredValue: right })) }]
+		['rights', 'right', { type: 'ONE_OF_LIST', values: RIGHTS.map((right) => ({ userEnteredValue: right })) }],
+		['reports', 'kind', list(t.feedbackValues.reportKind)],
+		['reports', 'status', list(t.feedbackValues.reportStatus)],
+		['wishes', 'kind', list(t.feedbackValues.wishKind)],
+		['wishes', 'status', list(t.feedbackValues.wishStatus)]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));
