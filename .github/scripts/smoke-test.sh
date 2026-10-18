@@ -13,6 +13,10 @@ for attempt in $(seq 1 10); do
 	sleep 3
 done
 
+# Build the caches now rather than on the first visitor's request (issue #57).
+# Not a failure if Google is slow or down: the site still works and builds them later.
+echo "Warming caches: $(curl -s -m 90 "$BASE/api/warm" || echo 'no answer')"
+
 check() {
 	local name="$1" path="$2" want_status="$3" want_location="${4:-}"
 	local out status location
