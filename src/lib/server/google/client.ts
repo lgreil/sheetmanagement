@@ -70,6 +70,25 @@ export class GoogleClient {
 		}
 	}
 
+	/**
+	 * A GET whose body isn't JSON, e.g. a file's content, as the raw response so it can be
+	 * streamed on. Retries once on an expired token; other errors throw like request().
+	 */
+	async fetchRaw(url: string, params: Params = {}): Promise<Response> {
+		const target = new URL(url);
+		for (const [name, value] of Object.entries(params)) {
+			if (value !== undefined) target.searchParams.set(name, String(value));
+		}
+		for (let attempt = 0; ; attempt++) {
+			const token = await this.tokens.getToken({ forceRefresh: attempt > 0 });
+			this.requestCount++;
+			const response = await this.fetchImpl(target, { headers: { authorization: `Bearer ${token}` } });
+			if (response.ok) return response;
+			if (response.status === 401 && attempt === 0) continue;
+			throw new GoogleApiError(response.status, response.statusText || 'Request failed', target.origin + target.pathname);
+		}
+	}
+
 	/** Follows `nextPageToken` until all pages are read. */
 	async paginate<TPage extends { nextPageToken?: string }, TItem>(
 		url: string,

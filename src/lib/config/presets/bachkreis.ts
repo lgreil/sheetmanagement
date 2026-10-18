@@ -170,5 +170,19 @@ export const bachkreis: OrchestraConfig = {
 	},
 
 	// EO = Ehemaligenorchester; the A and B orchestras may follow later.
-	orchestras: ['EO', 'A', 'B']
+	orchestras: ['EO', 'A', 'B'],
+
+	// Flexible arrangements: who reads from the C, B, Es and F parts, and the family parts.
+	sharedParts: {
+		'C-Stimmen': ['Flöte', 'Piccolo', 'Blockflöte', 'Oboe', 'Geige', 'Klavier', 'Synthesizer', 'Glockenspiel'],
+		'B-Stimmen': ['Klarinette', 'Trompete', 'Sopran-Saxophon', 'Tenor-Saxophon'],
+		'Es-Stimmen': ['Alt-Saxophon', 'Bariton-Saxophon'],
+		'F-Stimmen': ['Horn', 'Englischhorn'],
+		Holz: ['Flöte', 'Piccolo', 'Oboe', 'Englischhorn', 'Klarinette', 'Bassklarinette', 'Fagott'],
+		Blech: ['Horn', 'Trompete', 'Posaune', 'Bassposaune', 'Bariton', 'Tuba'],
+		Saxophon: ['Sopran-Saxophon', 'Alt-Saxophon', 'Tenor-Saxophon', 'Bariton-Saxophon'],
+		Percussion: ['Schlagwerk', 'Pauke', 'Glockenspiel', 'Xylophon', 'Becken', 'Große Trommel', 'Trommel', 'Tamburin', 'Tamtam'],
+		Schlagwerk: ['Percussion', 'Becken', 'Große Trommel', 'Trommel', 'Tamburin', 'Tamtam'],
+		Continuo: ['Cembalo', 'Orgel', 'Violoncello', 'Kontrabass', 'Fagott']
+	}
 };

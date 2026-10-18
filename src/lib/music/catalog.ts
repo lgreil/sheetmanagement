@@ -53,6 +53,7 @@ function buildPiece(piece: IndexedPiece, config: OrchestraConfig, matcher: Instr
 					kind: parsed.kind,
 					family: parsed.family,
 					instruments: parsed.instruments,
+					voices: parsed.voices,
 					notes: parsed.notes.filter((note) => note !== redundant),
 					status: parsed.status,
 					mimeType: file.mimeType,

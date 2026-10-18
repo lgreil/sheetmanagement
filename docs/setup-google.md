@@ -167,6 +167,7 @@ Until this step, the app is open to anyone with the link and nobody can change a
   | `stuecke.bearbeiten` | Look after problem reports on sheet music (**Meldungen**) and mark them as done |
   | `archiv.bearbeiten` | Reserved for an upcoming feature; edit the sheet directly for now |
 
+- The **Instrument** column in Mitglieder drives **Meine Noten**: write it like a part name (`Geige 2`, `2. Violine`, `Klarinette`, `Cello`). Members without one pick it once on the page, which saves it there. Which shared parts (`B-Stimmen`, `Holz` …) an instrument reads from is set in the config preset (`sharedParts`).
 - Every member can report a problem with a part (flag button on the piece page) and add wishes and +1s on **Wünsche**. Both are stored in their own tabs, **Meldungen** and **Wünsche**; an older sheet gets them when you run **Tabelle einrichten** again.
 
 - Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.

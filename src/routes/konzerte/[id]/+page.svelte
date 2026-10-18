@@ -3,6 +3,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -80,11 +81,20 @@
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
 		{#if data.program.items.length}
 			<ProgramList items={data.program.items} />
+			{#if data.kind === 'event' && !data.event.past}
+				<a class="btn my-parts" href="/meine-noten?konzert={encodeURIComponent(page.params.id ?? '')}">
+					<Icon name="user" size={16} />{t.myParts.forConcert(title)}
+				</a>
+			{/if}
 			<p class="hint">{t.concert.programHint}</p>
 		{:else}
 			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
 		{/if}
 	</section>
+{/if}
+
+{#if isConcert && data.program.instrumentation}
+	<InstrumentationMatrix {...data.program.instrumentation} />
 {/if}
 
 {#if data.kind === 'event'}
@@ -270,6 +280,11 @@
 		align-items: baseline;
 		justify-content: space-between;
 		gap: var(--space-3);
+	}
+
+	.my-parts {
+		justify-self: start;
+		margin-top: var(--space-3);
 	}
 
 	.edit {
