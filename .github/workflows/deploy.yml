@@ -1,0 +1,51 @@
+# Deploys to Cloudflare Workers after every push to main, then checks the live site.
+# Needs two repository secrets: CLOUDFLARE_API_TOKEN (template "Edit Cloudflare Workers")
+# and CLOUDFLARE_ACCOUNT_ID. The app's own settings stay Cloudflare secrets; they're
+# not needed here. The worker name comes from wrangler.toml.
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits instead of cancelling a running deploy.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Cloudflare
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: ${{ vars.APP_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      # Cheap insurance: never deploy a commit that doesn't pass.
+      - run: pnpm check
+      - run: pnpm test
+      - run: pnpm build
+
+      - name: Deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          # Uses the wrangler version from package.json.
+          command: deploy
+
+      - name: Smoke test
+        run: bash .github/scripts/smoke-test.sh "${{ vars.APP_URL }}"

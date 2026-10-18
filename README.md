@@ -53,6 +53,22 @@ The first deploy also creates a small KV namespace (`CACHE`) for caching the arc
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 
+### Automatic deploys from GitHub
+
+Once set up, every merge into `main` deploys by itself (`.github/workflows/deploy.yml`): it type-checks, tests, builds, deploys with Wrangler and then runs a smoke test against the live site (`.github/scripts/smoke-test.sh`). It can also be started by hand under **Actions → Deploy → Run workflow**.
+
+It needs, in the GitHub repository settings:
+
+- Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the template **Edit Cloudflare Workers** (Cloudflare dashboard → My Profile → API Tokens).
+- Secret `CLOUDFLARE_ACCOUNT_ID`: shown by `pnpm wrangler whoami`.
+- Variable `APP_URL`: the app's address, e.g. `https://noten.<your-account>.workers.dev`.
+
+The app's own settings (Google keys, ids, sign-in) stay Cloudflare secrets, set once with `wrangler secret put`; the workflow doesn't touch them.
+
+### Checks on pull requests
+
+`.github/workflows/ci.yml` runs `pnpm check`, `pnpm test` and `pnpm build` on every pull request. With branch protection on `main`, it and CodeQL have to pass before merging. Dependabot opens grouped update PRs every Monday (`.github/dependabot.yml`).
+
 ## Adapting it for your orchestra
 
 Everything orchestra-specific lives in [`src/lib/config/`](src/lib/config):

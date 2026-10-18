@@ -1,0 +1,27 @@
+# Weekly update pull requests, bundled so there's one PR per kind instead of one per package.
+# CI runs on each of them; green ones can be merged with auto-merge.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      # SvelteKit, Svelte and Vite are released together and should move together.
+      svelte:
+        patterns: ['svelte', 'svelte-check', '@sveltejs/*', 'vite']
+      cloudflare:
+        patterns: ['wrangler', '@sveltejs/adapter-cloudflare']
+      minor-and-patch:
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
