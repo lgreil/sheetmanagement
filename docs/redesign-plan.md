@@ -212,6 +212,8 @@ Rights, kept deliberately few:
 | 5 | Login + rights | Google sign-in, Mitglieder/Gruppen/Rechte, `/admin`, programme editor. |
 | 6 | Extras | "Meine Noten", missing-parts tab, instrumentation matrix, linter, Chronik, PWA. |
 
+Phase 6 is planned as versions from here on: each version is a [GitHub milestone](https://github.com/lgreil/sheetmanagement/milestones), and the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73) lists what goes into which one and why.
+
 Phases 0–3 alone give a useful read-only app. Entering the historical programmes can start as soon as the sheet exists (phase 4), in parallel with the rest.
 
 ## 9. Open source: reusable by other orchestras, no private data in the repo
