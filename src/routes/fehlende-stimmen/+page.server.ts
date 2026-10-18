@@ -1,6 +1,7 @@
 import { fileUrl } from '#lib/server/catalog.ts';
 import { getLibrary } from '#lib/server/library.ts';
-import { getFeedback } from '#lib/server/repertoire.ts';
+import { isGap } from '#lib/repertoire/missing-parts.ts';
+import { getFeedback, getMissingPartsDone } from '#lib/server/repertoire.ts';
 import type { PageServerLoad } from './$types';
 
 /**
@@ -8,14 +9,19 @@ import type { PageServerLoad } from './$types';
  * UNVOLLSTÄNDIG) plus open problem reports. Replaces the hand-kept lists in Drive.
  */
 export const load: PageServerLoad = async ({ locals }) => {
-	const [library, feedback] = await Promise.all([getLibrary(), getFeedback()]);
+	const [library, feedback, done] = await Promise.all([getLibrary(), getFeedback(), getMissingPartsDone()]);
 	const openReports = (feedback?.reports ?? []).filter((report) => report.status === 'open');
 
 	const pieces = library.pieces
 		.map((piece) => {
-			const gaps = (piece.detail?.parts ?? [])
-				.filter((part) => part.status !== 'ok' && part.kind !== 'audio' && part.kind !== 'sonstiges')
-				.map((part) => ({ id: part.id, label: part.label, status: part.status, url: fileUrl(part.id, part.mimeType) }));
+			const gaps = (piece.detail?.parts ?? []).filter(isGap).map((part) => ({
+				id: part.id,
+				label: part.label,
+				status: part.status,
+				url: fileUrl(part.id, part.mimeType),
+				// Ticked in the sheet tab "Fehlende Stimmen"; stays listed until the file is renamed.
+				done: done.has(part.id)
+			}));
 			const reports = openReports
 				.filter((report) => report.pieceId === piece.id)
 				.map(({ id, part, kind, comment }) => ({ id, part, kind, comment }));

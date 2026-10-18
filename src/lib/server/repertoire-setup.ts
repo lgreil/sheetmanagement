@@ -6,12 +6,19 @@ import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues }
 
 /** Marks the protection the app puts on id columns, so setup doesn't add it twice. */
 const ID_PROTECTION = 'sheetmanagement: id column';
+/** Same for the columns the app rewrites on every sync. */
+const GENERATED_PROTECTION = 'sheetmanagement: generated column';
 const TAB_KEYS = Object.keys(LAYOUT) as TabKey[];
 const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	pieces: 'driveFolderId',
 	concerts: 'eventId',
 	reports: 'id',
-	wishes: 'id'
+	wishes: 'id',
+	missingParts: 'fileId'
+};
+/** Filled by the app; edits there are overwritten, so they get a warning. */
+const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
+	missingParts: ['piece', 'part', 'status']
 };
 const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
 	pieces: ['reviewedAt'],
@@ -43,7 +50,8 @@ export interface SetupResult {
 
 /**
  * Prepares the Repertoire sheet: adds missing tabs and header columns, then formats
- * headers, greys out and protects id columns (warning only) and adds the dropdowns.
+ * headers, greys out and protects id columns (warning only), protects generated
+ * columns (warning only) and adds the dropdowns and checkboxes.
  * Safe to run again at any time: it never removes or overwrites data.
  */
 export async function setUpSheet(
@@ -132,6 +140,17 @@ export async function setUpSheet(
 			}
 		}
 
+		const generated = GENERATED_COLUMNS[key] ?? [];
+		if (generated.length && !tabOf(key).protections.includes(GENERATED_PROTECTION)) {
+			for (const name of generated) {
+				requests.push({
+					addProtectedRange: {
+						protectedRange: { range: column(key, name), description: GENERATED_PROTECTION, warningOnly: true }
+					}
+				});
+			}
+		}
+
 		// Dates stay text, so "1957" or "1957-12" aren't turned into numbers or full dates.
 		for (const name of TEXT_COLUMNS[key] ?? []) {
 			requests.push({
@@ -172,7 +191,8 @@ export async function setUpSheet(
 		['reports', 'kind', list(t.feedbackValues.reportKind)],
 		['reports', 'status', list(t.feedbackValues.reportStatus)],
 		['wishes', 'kind', list(t.feedbackValues.wishKind)],
-		['wishes', 'status', list(t.feedbackValues.wishStatus)]
+		['wishes', 'status', list(t.feedbackValues.wishStatus)],
+		['missingParts', 'done', { type: 'BOOLEAN' }]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

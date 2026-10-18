@@ -2,6 +2,8 @@ import { config } from '#lib/config/index.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
 import { ACCESS_TABS, buildAccessList, type AccessList, type AccessValues } from '#lib/access/access.ts';
 import { buildFeedback, FEEDBACK_TABS, type Feedback, type FeedbackValues } from '#lib/feedback/feedback.ts';
+import type { PieceDetail } from '#lib/music/types.ts';
+import { archiveGaps, doneFileIds, planMissingParts } from '#lib/repertoire/missing-parts.ts';
 import { buildRepertoire, LAYOUT, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
 import { cached } from './cache.ts';
 import { getCatalog } from './catalog.ts';
@@ -10,6 +12,7 @@ import type { GoogleClient } from './google/client.ts';
 import { appendRows, getSpreadsheetInfo, getValues, tabRange } from './google/sheets.ts';
 import { getSchedule } from './schedule.ts';
 import { getGoogle, NotConfiguredError, requireSetting } from './services.ts';
+import { replaceRows } from './sheet-writes.ts';
 
 /** People edit the sheet by hand, so changes should show up quickly. */
 const SHEET_MAX_AGE_MS = 60 * 1000;
@@ -29,17 +32,17 @@ export class SheetNotSetUpError extends Error {
 export async function readSheet(
 	client: GoogleClient,
 	spreadsheetId: string
-): Promise<{ values: SheetValues; access: AccessValues; feedback: FeedbackValues }> {
+): Promise<{ values: SheetValues; access: AccessValues; feedback: FeedbackValues; missingParts?: string[][] }> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = [...ACCESS_TABS, ...FEEDBACK_TABS].filter((key) => info.tabs.includes(LAYOUT[key].tab));
+	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts'] as const).filter((key) => info.tabs.includes(LAYOUT[key].tab));
 	const keys = [...REPERTOIRE_TABS, ...optional];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
 	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, ...access } = all;
-	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes } };
+	const { pieces, concerts, program, reports, wishes, missingParts, ...access } = all;
+	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes }, missingParts };
 }
 
 export interface Sources {
@@ -48,10 +51,11 @@ export interface Sources {
 }
 
 /** Drive pieces and calendar concerts as far as they load; a failing source is just empty. */
-async function loadSources(): Promise<Sources & { complete: boolean }> {
+async function loadSources(): Promise<Sources & { complete: boolean; archive: PieceDetail[] | null }> {
 	const [catalog, schedule] = await Promise.all([getCatalog(), getSchedule()]);
 	return {
 		complete: catalog.ok && schedule.ok,
+		archive: catalog.ok ? catalog.catalog.pieces : null,
 		drivePieces: catalog.ok
 			? catalog.catalog.pieces.map(({ id, title, composer, catalogue, folderName }) => ({ id, title, composer, catalogue, folderName }))
 			: [],
@@ -84,6 +88,17 @@ async function syncSheet(client: GoogleClient, spreadsheetId: string, repertoire
 	return wrote;
 }
 
+/**
+ * Mirrors the archive's gaps into "Fehlende Stimmen": one write, only when something
+ * changed. Returns the file ids ticked "erledigt".
+ */
+async function syncMissingParts(values: string[][], archive: PieceDetail[], links: Links): Promise<string[]> {
+	const gaps = archiveGaps(archive, (id) => links.pieceByFolder.get(id)?.title);
+	const plan = planMissingParts(values, gaps);
+	if (plan.ok && plan.changed) await replaceRows('missingParts', plan.body);
+	return plan.done;
+}
+
 export type RepertoireResult =
 	| { ok: true; repertoire: Repertoire; links: Links; storedAt: number }
 	| { ok: false; reason: 'not-configured' | 'not-set-up' | 'failed'; missingTabs?: string[] };
@@ -94,6 +109,8 @@ interface SheetSnapshot {
 	repertoire: Repertoire;
 	access: AccessList;
 	feedback: Feedback;
+	/** File ids ticked "erledigt" in "Fehlende Stimmen". */
+	missingPartsDone: string[];
 }
 
 function loadSheet(force: boolean) {
@@ -120,7 +137,24 @@ function loadSheet(force: boolean) {
 					console.error('Adding new pieces and concerts to the sheet failed:', error);
 				}
 			}
-			return { repertoire, access: buildAccessList(sheet.access), feedback: buildFeedback(sheet.feedback) };
+			// Uses the tab from the read above, so it costs at most one write. Without the
+			// archive every row would look gone, so it waits for Drive.
+			let missingPartsDone = doneFileIds(sheet.missingParts ?? []);
+			if (sheet.missingParts && sources.archive && Date.now() - lastSyncFailure > 10 * SHEET_MAX_AGE_MS) {
+				try {
+					const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
+					missingPartsDone = await syncMissingParts(sheet.missingParts, sources.archive, links);
+				} catch (error) {
+					lastSyncFailure = Date.now();
+					console.error('Updating the missing parts in the sheet failed:', error);
+				}
+			}
+			return {
+				repertoire,
+				access: buildAccessList(sheet.access),
+				feedback: buildFeedback(sheet.feedback),
+				missingPartsDone
+			};
 		},
 		waitUntil: runInBackground,
 		force
@@ -149,6 +183,16 @@ export async function getAccessList({ force = false } = {}): Promise<AccessList 
 			console.error('Loading the member list failed:', error);
 		}
 		return null;
+	}
+}
+
+/** File ids ticked "erledigt" in "Fehlende Stimmen"; empty when the sheet can't be read. */
+export async function getMissingPartsDone(): Promise<Set<string>> {
+	try {
+		return new Set((await loadSheet(false)).value.missingPartsDone);
+	} catch {
+		// getLibrary already logs why the sheet failed.
+		return new Set();
 	}
 }
 

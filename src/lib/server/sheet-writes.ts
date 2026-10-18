@@ -102,6 +102,19 @@ export async function deleteRows(key: TabKey, rows: number[]): Promise<void> {
 	);
 }
 
+/**
+ * Overwrites everything below the header of a generated tab in one request. `rows`
+ * come from a fresh read of that tab and must be padded to its old length, so rows
+ * that went away are cleared.
+ */
+export async function replaceRows(key: TabKey, rows: (string | boolean)[][]): Promise<void> {
+	if (rows.length === 0) return;
+	const { client, spreadsheetId } = target();
+	const width = Math.max(...rows.map((row) => row.length));
+	const range = tabRange(LAYOUT[key].tab, `A2:${columnLetter(width - 1)}${rows.length + 1}`);
+	await updateValues(client, spreadsheetId, [{ range, values: rows }]);
+}
+
 /** Re-reads the sheet so the next page shows the change. */
 export async function refreshAfterWrite(): Promise<void> {
 	await getRepertoire({ force: true });
