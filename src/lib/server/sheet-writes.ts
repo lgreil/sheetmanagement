@@ -51,13 +51,23 @@ export async function appendRecords<K extends TabKey>(
 }
 
 /** Overwrites some cells of one row (1-based sheet row number from a fresh readTab). */
-export async function updateRecord<K extends TabKey>(
+export function updateRecord<K extends TabKey>(
 	key: K,
 	table: Table<Columns<K>>,
 	row: number,
 	values: Partial<Record<Columns<K>, string>>
 ): Promise<void> {
-	const columns = Object.keys(values) as Columns<K>[];
+	return updateRecords(key, table, [{ row, values }]);
+}
+
+/** Overwrites cells in several rows in one request, e.g. a renamed piece in every programme. */
+export async function updateRecords<K extends TabKey>(
+	key: K,
+	table: Table<Columns<K>>,
+	updates: { row: number; values: Partial<Record<Columns<K>, string>> }[]
+): Promise<void> {
+	if (updates.length === 0) return;
+	const columns = [...new Set(updates.flatMap((update) => Object.keys(update.values) as Columns<K>[]))];
 	const missing = columns.filter((column) => table.indexes[column] === undefined);
 	if (missing.length) {
 		const names = LAYOUT[key].columns as Record<string, string>;
@@ -67,10 +77,12 @@ export async function updateRecord<K extends TabKey>(
 	await updateValues(
 		client,
 		spreadsheetId,
-		columns.map((column) => ({
-			range: tabRange(LAYOUT[key].tab, `${columnLetter(table.indexes[column]!)}${row}`),
-			values: [[values[column] ?? '']]
-		}))
+		updates.flatMap(({ row, values }) =>
+			(Object.keys(values) as Columns<K>[]).map((column) => ({
+				range: tabRange(LAYOUT[key].tab, `${columnLetter(table.indexes[column]!)}${row}`),
+				values: [[values[column] ?? '']]
+			}))
+		)
 	);
 }
 

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
+	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
@@ -8,7 +9,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	type Filter = 'all' | 'concerts' | 'rehearsals';
 	let filter = $state<Filter>('all');
@@ -115,6 +116,10 @@
 			{/each}
 		</ul>
 	{/each}
+{/if}
+
+{#if data.archive.canAdd}
+	<AddToArchive kind="concert" orchestras={data.archive.orchestras} result={form} />
 {/if}
 
 <style>

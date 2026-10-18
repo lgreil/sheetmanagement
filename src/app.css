@@ -218,3 +218,35 @@ a {
 	border: 1px dashed var(--border);
 	color: var(--text-muted);
 }
+
+/* Printing (e.g. a concert programme): only the page's content, black on white. */
+@media print {
+	.topbar,
+	.tabbar,
+	.legal,
+	.no-print {
+		display: none !important;
+	}
+
+	/* Also over the dark theme, whichever way it was chosen. */
+	:root,
+	:root:not([data-theme='light']),
+	:root[data-theme] {
+		--bg: #fff;
+		--surface: #fff;
+		--text: #000;
+		--text-muted: #444;
+		--border: #bbb;
+		color-scheme: light;
+	}
+
+	body {
+		background: #fff;
+		color: #000;
+	}
+
+	main {
+		max-width: none !important;
+		padding: 0 !important;
+	}
+}

@@ -1,3 +1,4 @@
+import { safeLink } from '#lib/links.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
@@ -70,6 +71,8 @@ export interface SheetPiece {
 	difficulty?: string;
 	notes?: string;
 	reviewedAt?: string;
+	/** A link to listen to, e.g. on YouTube; only http(s). */
+	recording?: string;
 	driveFolderId?: string;
 }
 
@@ -183,6 +186,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			difficulty: optional(v.difficulty),
 			notes: optional(v.notes),
 			reviewedAt: optional(v.reviewedAt),
+			recording: safeLink(v.recording),
 			driveFolderId: optional(folder)
 		};
 		pieces.push(piece);

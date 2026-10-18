@@ -1,0 +1,67 @@
+import { safeLink } from '#lib/links.ts';
+import { normalize, type ColumnKey, type Table, type TableRow } from './sheet.ts';
+
+/**
+ * Editing a piece's row in "Stücke" from the app. Like the programme editor: the form
+ * carries a version of the row it started from, and a save that finds the row changed
+ * meanwhile is refused instead of overwriting someone else's edit.
+ */
+
+type PieceColumn = ColumnKey<'pieces'> & string;
+type ProgramColumn = ColumnKey<'program'> & string;
+
+/** What the app lets people change; the Drive folder id stays the app's. */
+export const EDITABLE = ['title', 'composer', 'catalogue', 'arranger', 'genre', 'difficulty', 'notes', 'reviewedAt', 'recording'] as const;
+export type EditableColumn = (typeof EDITABLE)[number];
+export type PieceValues = Record<EditableColumn, string>;
+
+export function pieceValues(row: TableRow<PieceColumn>): PieceValues {
+	return Object.fromEntries(EDITABLE.map((column) => [column, row.values[column] ?? ''])) as PieceValues;
+}
+
+/** Changes whenever one of the editable cells changes. */
+export function pieceVersion(row: TableRow<PieceColumn>): string {
+	return JSON.stringify(EDITABLE.map((column) => row.values[column] ?? ''));
+}
+
+/** The piece's row: by its Drive folder, or for pieces without sheet music by title. */
+export function findPieceRow(
+	table: Table<PieceColumn>,
+	piece: { driveFolderId?: string; title: string }
+): TableRow<PieceColumn> | undefined {
+	if (piece.driveFolderId) return table.rows.find((row) => row.values.driveFolderId === piece.driveFolderId);
+	const title = normalize(piece.title);
+	return table.rows.find((row) => !row.values.driveFolderId && normalize(row.values.title) === title);
+}
+
+export type EditProblem = 'title-missing' | 'title-taken' | 'bad-link';
+
+/** Cleans the form's values; a problem instead when they can't be saved. */
+export function checkPieceValues(
+	values: PieceValues,
+	table: Table<PieceColumn>,
+	ownRow: number
+): { values: PieceValues } | { problem: EditProblem } {
+	const cleaned = Object.fromEntries(EDITABLE.map((column) => [column, values[column].trim()])) as PieceValues;
+	if (!cleaned.title) return { problem: 'title-missing' };
+	// Programme rows find pieces by title, so it has to stay unique.
+	const title = normalize(cleaned.title);
+	if (table.rows.some((row) => row.row !== ownRow && normalize(row.values.title) === title)) return { problem: 'title-taken' };
+	if (cleaned.recording) {
+		const link = safeLink(cleaned.recording);
+		if (!link) return { problem: 'bad-link' };
+		cleaned.recording = link;
+	}
+	return { values: cleaned };
+}
+
+/** Programme rows that name the piece by its old title, to follow a rename. */
+export function renameInProgram(
+	program: Table<ProgramColumn>,
+	oldTitle: string,
+	newTitle: string
+): { row: number; values: { piece: string } }[] {
+	if (oldTitle === newTitle) return [];
+	const old = normalize(oldTitle);
+	return program.rows.filter((row) => normalize(row.values.piece) === old).map((row) => ({ row: row.row, values: { piece: newTitle } }));
+}

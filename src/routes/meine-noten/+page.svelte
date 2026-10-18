@@ -147,6 +147,11 @@
 									<a href="/stuecke/{encodeURIComponent(piece.pieceId)}">{piece.title}</a>
 								{:else}{piece.title}{/if}
 								{#if piece.subtitle}<span class="muted">{piece.subtitle}</span>{/if}
+								{#if piece.recording}
+									<a class="listen" href={piece.recording} target="_blank" rel="noopener noreferrer nofollow" title={t.piece.recording}>
+										<Icon name="headphones" size={14} />{t.piece.recording}
+									</a>
+								{/if}
 							</div>
 							{#if !piece.hasMusic}
 								<span class="hint">{t.myParts.noMusic}</span>
@@ -307,6 +312,14 @@
 
 	.title a:hover {
 		color: var(--accent);
+	}
+
+	.title .listen {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		color: var(--accent);
+		font-size: 0.8125rem;
 	}
 
 	.parts {

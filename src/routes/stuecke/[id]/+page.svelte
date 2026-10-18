@@ -93,7 +93,25 @@
 				{t.piece.openFolder}
 			</a>
 		{/if}
+		{#if piece.recording}
+			<a class="drive" href={piece.recording} target="_blank" rel="noopener noreferrer nofollow">
+				<Icon name="headphones" size={16} />
+				{t.piece.recording}
+			</a>
+		{/if}
+		{#if data.canEdit}
+			<a class="drive" href="/stuecke/{encodeURIComponent(piece.id)}/bearbeiten">
+				<Icon name="file" size={16} />
+				{t.piece.edit}
+			</a>
+		{/if}
 	</div>
+	{#if data.saved}
+		<p class="msg ok" role="status">
+			<Icon name="check" size={16} />{t.piece.saved}
+			{#if data.renamedIn}{t.pieceEditor.renamed(data.renamedIn)}{/if}
+		</p>
+	{/if}
 	{#if gaps > 0}
 		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
 	{/if}
