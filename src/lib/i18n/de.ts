@@ -150,7 +150,9 @@ export const de = {
 		noneHere: 'In dieser Auswahl gibt es keine Lücken.',
 		failed: 'Das Notenarchiv konnte gerade nicht geladen werden.',
 		manage: 'Meldungen bearbeiten',
-		link: 'Alle fehlenden Stimmen'
+		link: 'Alle fehlenden Stimmen',
+		done: 'erledigt',
+		doneHint: 'Im Blatt „Fehlende Stimmen“ abgehakt. Die Lücke verschwindet, sobald die Datei umbenannt ist.'
 	},
 	instrumentation: {
 		title: 'Besetzung',
@@ -429,6 +431,17 @@ export const de = {
 				submittedAt: 'Datum',
 				votes: '+1',
 				id: 'Wunsch-ID'
+			}
+		},
+		/** Generated from the archive's file names; the app rewrites it, people only tick "erledigt". */
+		missingParts: {
+			tab: 'Fehlende Stimmen',
+			columns: {
+				piece: 'Stück',
+				part: 'Stimme',
+				status: 'Status',
+				fileId: 'Datei-ID',
+				done: 'erledigt'
 			}
 		}
 	},

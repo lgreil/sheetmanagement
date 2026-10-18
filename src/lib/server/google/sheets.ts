@@ -96,7 +96,7 @@ export async function appendRows(
 export async function updateValues(
 	client: GoogleClient,
 	spreadsheetId: string,
-	data: { range: string; values: (string | number)[][] }[]
+	data: { range: string; values: (string | number | boolean)[][] }[]
 ): Promise<void> {
 	await client.request(`${BASE}/${encodeURIComponent(spreadsheetId)}/values:batchUpdate`, {
 		method: 'POST',
