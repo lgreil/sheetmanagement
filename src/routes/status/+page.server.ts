@@ -1,7 +1,9 @@
 import type { PageServerLoad } from './$types';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
+import { LAYOUT } from '#lib/repertoire/sheet.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
+import { getRepertoire } from '#lib/server/repertoire.ts';
 import { getArchiveIndex, getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
 
 /** Manual refreshes are ignored when the index is younger than this, to protect API and KV quotas. */
@@ -115,10 +117,35 @@ export const load: PageServerLoad = async ({ url }) => {
 			? (async (): Promise<Check> => {
 					try {
 						const info = await getSpreadsheetInfo(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'));
-						return { state: 'ok', details: [`„${info.title}" mit ${info.tabs.length} Tabellenblättern`] };
+						const title = `„${info.title}"`;
+						const missingTabs = Object.values(LAYOUT)
+							.map(({ tab }) => tab)
+							.filter((tab) => !info.tabs.includes(tab));
+						if (missingTabs.length) {
+							return {
+								state: 'missing',
+								details: [title],
+								problem: `Es fehlen die Blätter ${missingTabs.join(', ')}.`,
+								hint: 'Auf der Seite „Tabelle einrichten“ werden sie angelegt.'
+							};
+						}
+						const result = await getRepertoire();
+						if (!result.ok) return { state: 'error', details: [title], problem: 'Die Tabelle konnte nicht gelesen werden.' };
+						const { pieces, concerts, problems } = result.repertoire;
+						return {
+							state: 'ok',
+							details: [
+								title,
+								`${pieces.length} Stücke, ${concerts.length} Konzerte`,
+								...(problems.length ? [`${problems.length} Hinweise, siehe „Tabelle einrichten“`] : [])
+							]
+						};
 					} catch (error) {
 						const check = describeError(error, 'die Repertoire-Tabelle', serviceAccountEmail);
-						if (check.state === 'missing') check.hint = 'Wird erst ab Phase 4 gebraucht.';
+						if (check.state === 'missing') check.hint = 'Für Programme und „Gespielt bei“. Siehe Anleitung, Schritt 5.';
+						if (check.state === 'error' && serviceAccountEmail) {
+							check.hint = `Prüfe die ID und teile die Tabelle mit ${serviceAccountEmail} als Bearbeiter.`;
+						}
 						return check;
 					}
 				})()

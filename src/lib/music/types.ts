@@ -33,7 +33,8 @@ export interface Part {
 	order: number;
 }
 
-export type PieceStatus = 'ok' | 'missing' | 'incomplete' | 'empty';
+/** 'none': a piece known only from the sheet, without sheet music in Drive. */
+export type PieceStatus = 'ok' | 'missing' | 'incomplete' | 'empty' | 'none';
 
 export interface PieceSummary {
 	id: string;

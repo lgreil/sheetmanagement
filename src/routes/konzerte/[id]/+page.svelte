@@ -2,41 +2,55 @@
 	import { t } from '#lib/i18n/index.ts';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import ProgramList from '#lib/components/ProgramList.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data } = $props();
-	const event = $derived(data.event);
-	const isConcert = $derived(event.type === 'konzert');
+	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
+	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
+	const isConcert = $derived(data.kind === 'archive' || data.event.type === 'konzert');
 </script>
 
-<Title title={event.displayTitle} />
+<Title {title} />
 
 <a class="back" href="/konzerte"><Icon name="back" size={18} />{t.concert.back}</a>
 
-<header class="head {event.type}">
-	<p class="eyebrow">
-		{t.concerts.types[event.type]}
-		{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
-	</p>
-	<h1>{event.displayTitle}</h1>
-	{#if !event.past}<p class="relative">{t.concerts.relative(event.daysUntil)}</p>{/if}
-</header>
+{#if data.kind === 'event'}
+	{@const event = data.event}
+	<header class="head {event.type}">
+		<p class="eyebrow">
+			{t.concerts.types[event.type]}
+			{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
+		</p>
+		<h1>{event.displayTitle}</h1>
+		{#if !event.past}<p class="relative">{t.concerts.relative(event.daysUntil)}</p>{/if}
+	</header>
+{:else}
+	<header class="head konzert">
+		<p class="eyebrow">{t.concert.archive}</p>
+		<h1>{data.archive.title}</h1>
+	</header>
+{/if}
 
 <div class="facts">
 	<div class="fact">
 		<span class="icon"><Icon name="calendar" size={18} /></span>
 		<div>
 			<p class="label">{t.concert.when}</p>
-			<p>{event.date.long}</p>
-			<p class="muted">{event.date.time || t.concerts.allDay}</p>
+			{#if data.kind === 'event'}
+				<p>{data.event.date.long}</p>
+				<p class="muted">{data.event.date.time || t.concerts.allDay}</p>
+			{:else}
+				<p>{data.archive.label?.long ?? (data.archive.dateText || t.concert.dateUnknown)}</p>
+			{/if}
 		</div>
 	</div>
-	{#if event.location}
+	{#if location}
 		<div class="fact">
 			<span class="icon"><Icon name="home" size={18} /></span>
 			<div>
 				<p class="label">{t.concert.where}</p>
-				<p>{event.location}</p>
+				<p>{location}</p>
 				{#if data.mapUrl}
 					<a class="link" href={data.mapUrl} target="_blank" rel="noopener noreferrer">{t.concert.map}</a>
 				{/if}
@@ -45,45 +59,54 @@
 	{/if}
 </div>
 
-{#if event.description}
+{#if data.kind === 'event' && data.event.description}
 	<section class="block">
 		<h2>{t.concert.description}</h2>
-		<p class="description">{event.description}</p>
+		<p class="description">{data.event.description}</p>
 	</section>
 {/if}
 
 {#if isConcert}
 	<section class="block">
 		<h2>{t.concert.program}</h2>
-		<p class="placeholder">{t.concert.programSoon}</p>
-	</section>
-
-	<section class="block">
-		<h2>{t.concert.rehearsals}</h2>
-		{#if data.rehearsals.length}
-			<ul class="list">
-				{#each data.rehearsals as rehearsal (rehearsal.id)}
-					<li><EventRow event={rehearsal} /></li>
-				{/each}
-			</ul>
+		{#if data.program.items.length}
+			<ProgramList items={data.program.items} />
+			<p class="hint">{t.concert.programHint}</p>
 		{:else}
-			<p class="placeholder">{t.concert.noRehearsals}</p>
+			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
 		{/if}
-	</section>
-{:else if data.concert}
-	<section class="block">
-		<h2>{t.concert.preparesFor}</h2>
-		<ul class="list">
-			<li><EventRow event={data.concert} /></li>
-		</ul>
 	</section>
 {/if}
 
-{#if event.url}
-	<a class="calendar" href={event.url} target="_blank" rel="noopener noreferrer">
-		<Icon name="external" size={16} />
-		{t.concert.openInCalendar}
-	</a>
+{#if data.kind === 'event'}
+	{#if isConcert}
+		<section class="block">
+			<h2>{t.concert.rehearsals}</h2>
+			{#if data.rehearsals.length}
+				<ul class="list">
+					{#each data.rehearsals as rehearsal (rehearsal.id)}
+						<li><EventRow event={rehearsal} /></li>
+					{/each}
+				</ul>
+			{:else}
+				<p class="placeholder">{t.concert.noRehearsals}</p>
+			{/if}
+		</section>
+	{:else if data.concert}
+		<section class="block">
+			<h2>{t.concert.preparesFor}</h2>
+			<ul class="list">
+				<li><EventRow event={data.concert} /></li>
+			</ul>
+		</section>
+	{/if}
+
+	{#if data.event.url}
+		<a class="calendar" href={data.event.url} target="_blank" rel="noopener noreferrer">
+			<Icon name="external" size={16} />
+			{t.concert.openInCalendar}
+		</a>
+	{/if}
 {/if}
 
 <style>
@@ -225,6 +248,12 @@
 
 	.list li + li {
 		border-top: 1px solid var(--border);
+	}
+
+	.hint {
+		margin: var(--space-2) var(--space-1) 0;
+		color: var(--text-muted);
+		font-size: 0.8125rem;
 	}
 
 	.calendar {

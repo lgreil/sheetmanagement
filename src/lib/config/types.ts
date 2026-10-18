@@ -87,4 +87,9 @@ export interface OrchestraConfig {
 	instruments: Instrument[];
 	naming: NamingRules;
 	events: EventKeywords;
+	/**
+	 * Short names of the orchestras or ensembles, offered as a dropdown in the sheet's
+	 * "Orchester" column. The first one is used for concerts added from the calendar.
+	 */
+	orchestras: string[];
 }

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
+	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -32,6 +33,12 @@
 		)
 	);
 
+	const info = $derived(
+		(Object.keys(t.piece.info) as (keyof typeof t.piece.info)[])
+			.map((key) => ({ key, label: t.piece.info[key], value: piece.info[key] }))
+			.filter((item) => item.value)
+	);
+
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
 	);
@@ -47,17 +54,38 @@
 	{/if}
 	<h1>{piece.title}</h1>
 	<div class="facts">
-		<span>{t.pieces.parts(piece.partCount)}</span>
+		{#if piece.status === 'none'}
+			<span>{t.pieces.status.none}</span>
+		{:else}
+			<span>{t.pieces.parts(piece.partCount)}</span>
+		{/if}
 		{#if piece.category}<span class="tag">{piece.category}</span>{/if}
-		<a class="drive" href={piece.folderUrl} target="_blank" rel="noopener noreferrer">
-			<Icon name="folder" size={16} />
-			{t.piece.openFolder}
-		</a>
+		{#if piece.folderUrl}
+			<a class="drive" href={piece.folderUrl} target="_blank" rel="noopener noreferrer">
+				<Icon name="folder" size={16} />
+				{t.piece.openFolder}
+			</a>
+		{/if}
 	</div>
 	{#if gaps > 0}
 		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
 	{/if}
 </header>
+
+{#if piece.status === 'none'}
+	<p class="no-music">{t.piece.noMusic}</p>
+{/if}
+
+{#if info.length}
+	<dl class="info">
+		{#each info as item (item.key)}
+			<div class:wide={item.key === 'notes'}>
+				<dt>{item.label}</dt>
+				<dd>{item.value}</dd>
+			</div>
+		{/each}
+	</dl>
+{/if}
 
 {#each groups as group (group.key)}
 	<section class="group">
@@ -98,10 +126,18 @@
 
 <section class="played">
 	<h2>{t.piece.playedAt}</h2>
-	<p>{t.piece.playedAtSoon}</p>
+	{#if data.playedAt.length}
+		<ul class="concerts">
+			{#each data.playedAt as concert (concert.id)}
+				<li><ConcertRow {concert} /></li>
+			{/each}
+		</ul>
+	{:else}
+		<p class="placeholder">{data.sheet === 'ok' ? t.piece.playedAtNone : t.piece.playedAtNoSheet}</p>
+	{/if}
 </section>
 
-<p class="hint">{t.piece.driveHint}</p>
+{#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
 
 <style>
 	.back {
@@ -289,8 +325,62 @@
 		color: var(--accent);
 	}
 
+	.no-music {
+		margin-bottom: var(--space-5);
+		padding: var(--space-4);
+		border: 1px dashed var(--border);
+		border-radius: var(--radius-m);
+		color: var(--text-muted);
+	}
+
+	.info {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+		gap: var(--space-3);
+		margin: 0 0 var(--space-5);
+		padding: var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	.info .wide {
+		grid-column: 1 / -1;
+	}
+
+	.info dt {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.info dd {
+		margin: 0;
+		white-space: pre-line;
+		overflow-wrap: anywhere;
+	}
+
 	.played {
 		margin-top: var(--space-6);
+	}
+
+	.concerts {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		overflow: hidden;
+	}
+
+	.concerts li + li {
+		border-top: 1px solid var(--border);
+	}
+
+	.placeholder {
 		padding: var(--space-4);
 		border: 1px dashed var(--border);
 		border-radius: var(--radius-m);

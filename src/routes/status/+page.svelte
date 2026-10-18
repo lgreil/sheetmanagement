@@ -43,6 +43,9 @@
 			{t.status.refresh}
 		</a>
 	{/if}
+	{#if data.checks.account.state === 'ok'}
+		<a class="link" href="/setup">{t.status.setupSheet}</a>
+	{/if}
 	<a class="link" href="https://github.com/lgreil/sheetmanagement/blob/main/docs/setup-google.md">{t.status.setupGuide}</a>
 </div>
 

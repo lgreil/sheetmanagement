@@ -165,5 +165,8 @@ export const bachkreis: OrchestraConfig = {
 		generalprobe: ['generalprobe'],
 		probe: ['probe', 'stimmprobe', 'probentag', 'probenwochenende'],
 		konzert: ['konzert', 'auftritt', 'matinee', 'serenade']
-	}
+	},
+
+	// EO = Ehemaligenorchester; the A and B orchestras may follow later.
+	orchestras: ['EO', 'A', 'B']
 };

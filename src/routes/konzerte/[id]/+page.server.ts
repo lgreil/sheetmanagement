@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { getSchedule } from '#lib/server/schedule.ts';
+import { getLibrary } from '#lib/server/library.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { PageServerLoad } from './$types';
 
@@ -20,23 +20,38 @@ function plainText(html: string | undefined): string | undefined {
 	return text || undefined;
 }
 
+const mapUrl = (location: string | undefined) =>
+	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;
+
 export const load: PageServerLoad = async ({ params }) => {
-	const result = await getSchedule();
-	if (!result.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
+	const library = await getLibrary();
+	const schedule = library.schedule;
+	const event = schedule.ok ? schedule.byId.get(params.id) : undefined;
+	// Concerts from the sheet: from the orchestra's history, or no longer in the calendar.
+	const concert = library.concertsById.get(params.id);
 
-	const event = result.byId.get(params.id);
-	if (!event) error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
+	if (!event && !concert) {
+		if (!schedule.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
+		error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
+	}
 
-	const lookup = (id: string) => result.byId.get(id);
-	const rehearsals = event.rehearsalIds.map(lookup).filter((e): e is ShownEvent => !!e);
-	const concert = event.concertId ? lookup(event.concertId) : undefined;
+	const program = {
+		items: concert?.program ?? [],
+		sheet: library.sheet
+	};
 
+	if (!event) {
+		const { title, label, dateText, location, orchestra } = concert!;
+		return { kind: 'archive' as const, archive: { title, label, dateText, location, orchestra }, mapUrl: mapUrl(location), program };
+	}
+
+	const lookup = (id: string) => (schedule.ok ? schedule.byId.get(id) : undefined);
 	return {
+		kind: 'event' as const,
 		event: { ...event, description: plainText(event.description) },
-		rehearsals,
-		concert,
-		mapUrl: event.location
-			? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(event.location)}`
-			: undefined
+		rehearsals: event.rehearsalIds.map(lookup).filter((e): e is ShownEvent => !!e),
+		concert: event.concertId ? lookup(event.concertId) : undefined,
+		mapUrl: mapUrl(event.location),
+		program
 	};
 };

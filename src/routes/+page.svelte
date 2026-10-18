@@ -37,6 +37,7 @@
 				<strong>{concert.displayTitle}</strong>
 				<span>{concert.date.long}{concert.date.time ? `, ${concert.date.time}` : ''}</span>
 				{#if concert.location}<span>{concert.location}</span>{/if}
+				{#if data.program.length}<span class="program">{t.home.program}: {data.program.join(' · ')}</span>{/if}
 			</span>
 			<span class="card-arrow"><Icon name="arrow" size={18} /></span>
 		</a>
@@ -176,6 +177,12 @@
 	.concert-body span {
 		color: var(--text-muted);
 		font-size: 0.9375rem;
+	}
+
+	.concert-body .program {
+		margin-top: var(--space-1);
+		color: var(--text);
+		overflow-wrap: anywhere;
 	}
 
 	.concert:hover .card-arrow {

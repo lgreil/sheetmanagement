@@ -38,14 +38,17 @@ Share with the service account's email, like you would with a person:
 | The sheet-music archive folder | Drive → right-click the folder → **Share** | Viewer |
 | The "current programme" folder (if separate) | same | Viewer |
 | The rehearsal/concert calendar | Calendar → ⋮ next to the calendar → **Settings and sharing → Share with specific people** | See all event details |
-| The repertoire sheet (from phase 4 on) | Sheets → **Share** | Editor |
+| The Repertoire sheet (create it first, see below) | Sheets → **Share** | Editor |
 
 Drive may warn that the address is outside your organisation. That's expected.
+
+**The Repertoire sheet** holds what neither Drive nor Calendar knows: concert programmes, the orchestra's past concerts and extra details per piece. Create an empty Google Sheet for it, e.g. `91 | Repertoire` in the sheet-music folder, and share it as above. Leave it empty: the app fills it in step 8.
 
 ## 5. Collect the ids
 
 - **Folder id:** open the folder in Drive. The id is the last part of the URL: `drive.google.com/drive/folders/<this part>`. If the "current programme" folder is separate, note its id too (`DRIVE_CURRENT_PROGRAM_FOLDER_ID`, optional).
 - **Calendar id:** Calendar → **Settings and sharing → Integrate calendar → Calendar ID**. For a Gmail account's main calendar, it's the email address.
+- **Sheet id:** open the sheet. The id is the long part of the URL: `docs.google.com/spreadsheets/d/<this part>/edit`.
 
 The **Kalender abonnieren** link on the concerts page opens this calendar in the member's own Google Calendar. That only works if they can see the calendar: either make it public (**Settings and sharing → Access permissions → Make available to public**) or share it with each member. The app itself only needs the service-account share from step 4.
 
@@ -72,6 +75,7 @@ GOOGLE_SERVICE_ACCOUNT_JSON="<the base64 line>"
 DRIVE_ARCHIVE_FOLDER_ID="<folder id>"
 # DRIVE_CURRENT_PROGRAM_FOLDER_ID="<folder id>"   (optional)
 CALENDAR_ID="<calendar id>"
+REPERTOIRE_SHEET_ID="<sheet id>"
 ```
 
 **For the deployed app**, store each value as a Cloudflare secret. Wrangler asks for the value, so it never ends up in your shell history:
@@ -80,7 +84,9 @@ CALENDAR_ID="<calendar id>"
 pnpm wrangler secret put GOOGLE_SERVICE_ACCOUNT_JSON
 pnpm wrangler secret put DRIVE_ARCHIVE_FOLDER_ID
 pnpm wrangler secret put CALENDAR_ID
+pnpm wrangler secret put REPERTOIRE_SHEET_ID
 ```
+
 
 If you deploy under a different name (`pnpm run deploy -- --name …`), add the same `--name …` to each `secret put`.
 
@@ -91,9 +97,21 @@ Open `/status` in the app. Each line should say **Verbunden**:
 - **Google-Dienstkonto:** the key works.
 - **Notenarchiv:** shows how many pieces and files were found.
 - **Probenkalender:** shows the upcoming dates.
-- **Repertoire-Tabelle:** stays "Nicht eingerichtet" until phase 4.
+- **Repertoire-Tabelle:** says "Nicht eingerichtet" until step 8.
 
 The archive is re-read automatically every 5 minutes. **Archiv neu einlesen** on the status page forces it right away.
+
+## 8. Set up the Repertoire sheet
+
+Open `/setup` in the app (or **Tabelle einrichten** on the status page) and click **Jetzt einrichten**. The app adds three tabs:
+
+- **Stücke:** one row per piece. Every folder in the archive is added automatically, with title and composer read from the folder name. Fix a wrongly read name here, not in Drive. Pieces without sheet music (e.g. from old programmes) are rows without a Drive-Ordner-ID.
+- **Konzerte:** one row per concert. Confirmed concerts from the calendar are added automatically. Add past concerts by hand; **Datum** may be just a year (`1957`) or a month (`1957-12`).
+- **Programm:** one row per piece in a concert. Pick **Konzert** and **Stück** from the dropdowns; **Nr.** is the order and may stay empty.
+
+The grey id columns are what the app uses to recognise rows. Don't edit them. Columns can be reordered, and you can add your own. Changes show up in the app within a minute. Running setup again is safe: it only adds what's missing.
+
+If the setup page lists **Hinweise zur Tabelle** (e.g. a piece name in "Programm" that isn't in "Stücke"), fix those rows in the sheet.
 
 ## Troubleshooting
 
@@ -104,3 +122,4 @@ The archive is re-read automatically every 5 minutes. **Archiv neu einlesen** on
 | `Invalid JWT Signature` | The key was deleted or replaced in the console. Create a new key. |
 | `Kein Zugriff auf … (404)` or `(403)` | Wrong id, or not shared with the service account's email (step 4). |
 | API "has not been used in project … or it is disabled" | Step 2 is missing for that API. Enabling can take a minute to apply. |
+| `The caller does not have permission (403)` on `/setup` | The sheet is shared as Viewer. The service account needs Editor. |

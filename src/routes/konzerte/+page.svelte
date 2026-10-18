@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
+	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -34,6 +35,16 @@
 				result.push({ key: event.date.monthKey, label: event.date.monthLabel, events: [] });
 			}
 			result.at(-1)!.events.push(event);
+		}
+		return result;
+	});
+
+	const pastYears = $derived.by(() => {
+		const result: { label: string; concerts: typeof data.past }[] = [];
+		for (const concert of data.past) {
+			const label = concert.label?.year ?? t.concert.dateUnknown;
+			if (result.at(-1)?.label !== label) result.push({ label, concerts: [] });
+			result.at(-1)!.concerts.push(concert);
 		}
 		return result;
 	});
@@ -92,14 +103,18 @@
 		{/each}
 	{/if}
 
-	{#if data.past.length > 0 && filter !== 'rehearsals'}
-		<h2 class="section past">{t.concerts.past}</h2>
+{/if}
+
+{#if pastYears.length > 0 && filter !== 'rehearsals'}
+	<h2 class="section past">{t.concerts.past}</h2>
+	{#each pastYears as year (year.label)}
+		<h3 class="month">{year.label}</h3>
 		<ul class="list">
-			{#each data.past as event (event.id)}
-				<li><EventRow {event} showRelative={false} /></li>
+			{#each year.concerts as concert (concert.id)}
+				<li><ConcertRow {concert} /></li>
 			{/each}
 		</ul>
-	{/if}
+	{/each}
 {/if}
 
 <style>

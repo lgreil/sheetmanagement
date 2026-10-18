@@ -11,6 +11,7 @@
 	let { data } = $props();
 
 	const NEEDS_WORK = '__needs-work';
+	const NO_MUSIC = '__no-music';
 	let query = $state('');
 	let filter = $state('');
 	let input: HTMLInputElement | undefined = $state();
@@ -25,15 +26,17 @@
 		{ value: '', label: t.pieces.all },
 		...(data.categories.length ? [{ value: '__archive', label: t.pieces.archive }] : []),
 		...data.categories.map((category) => ({ value: category, label: category })),
-		{ value: NEEDS_WORK, label: t.pieces.needsWork }
+		{ value: NEEDS_WORK, label: t.pieces.needsWork },
+		...(data.pieces.some((piece) => piece.status === 'none') ? [{ value: NO_MUSIC, label: t.pieces.noMusic }] : [])
 	]);
 
 	const visible = $derived.by(() => {
 		const words = searchText(query).split(/\s+/).filter(Boolean);
 		return data.pieces.filter((piece) => {
-			if (filter === NEEDS_WORK && piece.status === 'ok') return false;
-			if (filter === '__archive' && piece.category) return false;
-			if (filter && filter !== NEEDS_WORK && filter !== '__archive' && piece.category !== filter) return false;
+			if (filter === NEEDS_WORK && (piece.status === 'ok' || piece.status === 'none')) return false;
+			if (filter === NO_MUSIC && piece.status !== 'none') return false;
+			if (filter === '__archive' && (piece.category || piece.status === 'none')) return false;
+			if (filter && !filter.startsWith('__') && piece.category !== filter) return false;
 			return words.every((word) => piece.search.includes(word));
 		});
 	});
@@ -136,7 +139,7 @@
 									{#if piece.status !== 'ok'}
 										<span class="status {piece.status}">{t.pieces.status[piece.status]}</span>
 									{/if}
-									<span class="parts">{t.pieces.parts(piece.partCount)}</span>
+									{#if piece.status !== 'none'}<span class="parts">{t.pieces.parts(piece.partCount)}</span>{/if}
 									<span class="chevron"><Icon name="chevron" size={18} /></span>
 								</span>
 							</a>
@@ -341,6 +344,11 @@
 		font-weight: 600;
 		color: var(--warn);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
+	}
+
+	.status.none {
+		color: var(--text-muted);
+		background: var(--surface-2);
 	}
 
 	.status.missing {

@@ -15,9 +15,10 @@ DRIVE_ARCHIVE_FOLDER_ID=""
 # DRIVE_CURRENT_PROGRAM_FOLDER_ID=""
 # Calendar id of the rehearsal/concert calendar (Calendar settings → "Integrate calendar").
 CALENDAR_ID=""
+# Id of the Repertoire sheet (the part after /spreadsheets/d/ in its URL); shared as editor.
+REPERTOIRE_SHEET_ID=""
 
-# --- Needed from phase 4/5 on ------------------------------------------------------
-# REPERTOIRE_SHEET_ID=""
+# --- Needed from phase 5 on --------------------------------------------------------
 # GOOGLE_OAUTH_CLIENT_ID=""
 # GOOGLE_OAUTH_CLIENT_SECRET=""
 # Random string, at least 32 characters, for signing session cookies.

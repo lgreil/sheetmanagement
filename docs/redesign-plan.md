@@ -1,6 +1,6 @@
 # Redesign plan: Sheetmanagement on Google Calendar + Google Drive
 
-Status: phases 0 (skeleton), 1 (Google plumbing), 2 (repertoire from Drive) and 3 (concerts from Calendar) are implemented. Written 2026-10-17, decisions added the same day.
+Status: phases 0 (skeleton), 1 (Google plumbing), 2 (repertoire from Drive), 3 (concerts from Calendar) and 4 (sheet + linking) are implemented. Written 2026-10-17, decisions added the same day.
 
 ## 1. Where things stand
 
@@ -112,11 +112,14 @@ The app needs to store a few things that belong to neither service: which pieces
 
 Each tab has human columns on the left and an id column on the far right, which can be greyed out. People edit by name, using dropdowns. The app keeps the id columns in sync.
 
-- **Stücke**: Titel · Komponist · Arrangeur · Genre · Schwierigkeit · Notiz · Geprüft am · _Drive-Ordner-ID_
+- **Stücke**: Titel · Komponist · Werkverzeichnis · Arrangeur · Genre · Schwierigkeit · Notiz · Geprüft am · _Drive-Ordner-ID_
+  - Titel, Komponist and Werkverzeichnis in the sheet override what the app reads from the folder name, so a wrongly parsed name is fixed in the sheet, not in Drive.
+  - The app finds columns by their header, so columns can be reordered and extra columns added.
   - The app adds new Drive folders automatically, with Titel and Komponist pre-filled from the folder name.
   - **Historical pieces without sheet music in Drive** are just rows with no Drive id. The app shows them as "keine Noten im Archiv".
 - **Konzerte**: Datum · Anlass · Ort · Orchester · _Kalender-Event-ID_
-  - Calendar concerts are added automatically.
+  - Calendar concerts are added automatically, once they're confirmed (no "(?)" in the title). Anlass gets the year ("Herbstkonzert 2026"), since programme rows refer to concerts by this name and it has to be unique.
+  - A concert entered by hand before it was in the calendar is matched to the event by its exact date, so it isn't added twice.
   - **Datum may be imprecise** for old concerts: `1957`, `1957-12` or `1957-12-21` are all valid, and the app sorts and displays them accordingly ("Dez. 1957").
   - Orchester: `EO` for now, `A`/`B` later.
 - **Programm**: Konzert ▾ · Nr. · Stück ▾ · Notiz
@@ -233,7 +236,8 @@ The repository is public and the project is FOSS. It should work for any orchest
 
 **Easy setup for newcomers:**
 
-- **`/setup` page**, only reachable by bootstrap admins. It creates the Repertoire sheet with all tabs, headers and dropdowns in a Drive folder of your choice. Nobody has to build the sheet by hand.
+- **`/setup` page**, only reachable by bootstrap admins (from phase 5; until then anyone, which is harmless because it only adds). It fills an empty Google Sheet with all tabs, headers and dropdowns, so nobody has to build the sheet by hand.
+  - *Changed in phase 4:* you create the empty sheet yourself (e.g. `91 | Repertoire` in `Noten Upload`) and share it with the service account as editor. A service account can't own files in your Drive, and it only has read access to the folder, so it can't create the sheet there.
 - **`README.md` step by step:** create a Google Cloud project (free) → service account → share the folder and calendar with it → Google sign-in client → `wrangler deploy` → open `/setup`. It also states what's free and the limits.
 - **Add a `LICENSE` file.** The README already says MIT, but the file is missing.
 - *Note:* older commits in this repo already contain personal author emails (git metadata). That can't be undone without rewriting history. For new commits, you could use your GitHub "noreply" address.

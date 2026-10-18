@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** early rewrite. The skeleton, the Google connection, the piece list and concerts from the calendar (phases 0–3) are done; linking pieces to concerts comes next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
+> **Status:** early rewrite. The skeleton, the Google connection, the piece list, concerts from the calendar and the Repertoire sheet with programmes (phases 0–4) are done; sign-in and rights come next. See [docs/redesign-plan.md](docs/redesign-plan.md) for the full plan.
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
@@ -46,8 +46,8 @@ On Windows, stop a running `pnpm preview` before building again: the running Wor
 1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
 2. `pnpm wrangler login`
 3. `pnpm run deploy`. The app is then live at `https://sheetmanagement.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
-4. Connect Google Drive and Calendar: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
-5. Open `/status` on your deployment to check every connection.
+4. Connect Google Drive, Calendar and Sheets: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
+5. Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
 
 The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret.
 
