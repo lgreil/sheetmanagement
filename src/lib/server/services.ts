@@ -2,7 +2,7 @@ import { config } from '#lib/config/index.ts';
 import { cached, type CachedResult } from './cache.ts';
 import { buildDriveIndex, INDEX_VERSION, type DriveIndex } from './drive-index.ts';
 import { appEnv, runInBackground } from './env.ts';
-import { createTokenProvider, parseServiceAccountKey } from './google/auth.ts';
+import { createTokenProvider, parseServiceAccountKey, SCOPES, WRITE_SCOPES } from './google/auth.ts';
 import { GoogleClient } from './google/client.ts';
 
 const INDEX_MAX_AGE_MS = 5 * 60 * 1000;
@@ -14,15 +14,22 @@ export class NotConfiguredError extends Error {
 	}
 }
 
-let google: { json: string; client: GoogleClient; email: string } | null = null;
+let google: { json: string; write: boolean; client: GoogleClient; email: string } | null = null;
+
+/** Whether the app may change files in Drive (DRIVE_WRITE=true). Off by default: reading needs no more. */
+export function driveWriteEnabled(): boolean {
+	return ['true', '1', 'yes', 'on'].includes((appEnv().DRIVE_WRITE ?? '').trim().toLowerCase());
+}
 
 /** The Google client for this deployment. Token caching lives as long as the Worker instance. */
 export function getGoogle(): { client: GoogleClient; serviceAccountEmail: string } {
 	const json = appEnv().GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
 	if (!json) throw new NotConfiguredError('GOOGLE_SERVICE_ACCOUNT_JSON');
-	if (google?.json !== json) {
+	const write = driveWriteEnabled();
+	if (google?.json !== json || google.write !== write) {
 		const key = parseServiceAccountKey(json);
-		google = { json, client: new GoogleClient(createTokenProvider(key)), email: key.client_email };
+		const tokens = createTokenProvider(key, write ? WRITE_SCOPES : SCOPES);
+		google = { json, write, client: new GoogleClient(tokens), email: key.client_email };
 	}
 	return { client: google.client, serviceAccountEmail: google.email };
 }

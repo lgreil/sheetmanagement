@@ -25,6 +25,8 @@
 {:else}
 	{#if form?.message}
 		<p class="msg error" role="alert">{form.message}</p>
+	{:else if form && 'warning' in form && form.warning}
+		<p class="msg error" role="alert">{form.warning}</p>
 	{/if}
 
 	{#snippet list(reports: typeof data.open, done: boolean)}
@@ -40,6 +42,24 @@
 						{#if report.comment}<span class="comment">„{report.comment}“</span>{/if}
 						<span class="muted">{t.reports.by(report.reportedBy, report.reportedAt)}</span>
 						{#if done && report.note}<span class="muted">{t.sheet.reports.columns.note}: {report.note}</span>{/if}
+						{#if report.inDrive || report.marked}
+							<span class="drive">
+								{#if report.inDrive}<span class="badge"><Icon name="check" size={12} />{t.reports.inDrive}</span>{/if}
+								{#if report.marked}<span class="badge marked">{t.reports.marked(data.statusWords.find((s) => s.status === report.marked)?.word ?? '')}</span>{/if}
+							</span>
+						{/if}
+						{#if !done && data.driveWrite && report.fileId && !report.marked}
+							<form method="POST" action="?/mark" use:enhance={submit} class="mark" title={t.reports.markHint}>
+								<input type="hidden" name="id" value={report.id} />
+								<label class="field">
+									<span class="sr-only">{t.reports.markLabel}</span>
+									<select name="status" value={report.suggested}>
+										{#each data.statusWords as option (option.status)}<option value={option.status}>{option.word}</option>{/each}
+									</select>
+								</label>
+								<button class="btn small ghost" disabled={busy}><Icon name="file" size={14} />{t.reports.mark}</button>
+							</form>
+						{/if}
 					</div>
 					<form method="POST" action={done ? '?/reopen' : '?/close'} use:enhance={submit} class="close">
 						<input type="hidden" name="id" value={report.id} />
@@ -136,6 +156,41 @@
 		color: var(--text-muted);
 		font-size: 0.8125rem;
 		overflow-wrap: anywhere;
+	}
+
+	.drive {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+	}
+
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		padding: 0 var(--space-2);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--ok) 12%, transparent);
+		color: var(--ok);
+		font-size: 0.75rem;
+		font-weight: 600;
+	}
+
+	.badge.marked {
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+		color: var(--warn);
+	}
+
+	.mark {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2);
+		margin-top: var(--space-1);
+	}
+
+	.mark select {
+		padding: 5px var(--space-2);
 	}
 
 	.close {

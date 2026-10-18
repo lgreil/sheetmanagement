@@ -6,7 +6,7 @@ import { ACCESS_TABS } from '#lib/access/access.ts';
 import { LAYOUT, REPERTOIRE_TABS, type TabKey } from '#lib/repertoire/sheet.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
-import { getArchiveIndex, getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
+import { driveWriteEnabled, getArchiveIndex, getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
 
 /** Manual refreshes are ignored when the index is younger than this, to protect API and KV quotas. */
 const MIN_REFRESH_AGE_MS = 60 * 1000;
@@ -52,7 +52,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			serviceAccountEmail = email;
 			// A cheap call that proves the key works: the token request itself.
 			await client.request('https://www.googleapis.com/drive/v3/about', { params: { fields: 'user(emailAddress)' } });
-			return { state: 'ok', details: [`Dienstkonto: ${email}`] } satisfies Check;
+			const drive = driveWriteEnabled() ? 'lesen und Meldungen spiegeln (DRIVE_WRITE)' : 'nur lesen';
+			return { state: 'ok', details: [`Dienstkonto: ${email}`, `Drive: ${drive}`] } satisfies Check;
 		} catch (error) {
 			const check = describeError(error, 'das Google-Konto', serviceAccountEmail);
 			if (check.state === 'error') {
