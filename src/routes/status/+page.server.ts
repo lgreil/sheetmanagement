@@ -171,12 +171,19 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const auth = authConfig();
 	const signIn: Check =
 		auth.mode === 'off'
-			? {
-					state: 'missing',
-					details: [],
-					problem: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
-					hint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.'
-				}
+			? auth.reason === 'disabled'
+				? {
+						state: 'error',
+						details: [],
+						problem: 'Die Anmeldung ist mit FORCE_AUTH=false ausgeschaltet.',
+						hint: 'Die App ist für alle offen und nur lesbar, auch diese Seite. Zum Einschalten FORCE_AUTH löschen oder auf true setzen.'
+					}
+				: {
+						state: 'missing',
+						details: [],
+						problem: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
+						hint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.'
+					}
 			: {
 					state: auth.problems.length ? 'error' : 'ok',
 					details: [

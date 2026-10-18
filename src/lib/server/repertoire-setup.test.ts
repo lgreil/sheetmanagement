@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RIGHTS } from '#lib/access/access.ts';
+import { t } from '#lib/i18n/index.ts';
 import type { GoogleClient } from './google/client.ts';
 import { columnLetter } from './google/sheets.ts';
 import { setUpSheet } from './repertoire-setup.ts';
@@ -67,12 +68,14 @@ function fakeSheets(tabs: FakeTab[]) {
 
 const kinds = (requests: Record<string, unknown>[]) => requests.map((request) => Object.keys(request)[0]);
 
+const labels = (values: Record<string, string>) => Object.values(values).map((value) => ({ userEnteredValue: value }));
+
 describe('setUpSheet', () => {
 	it('turns a new, empty spreadsheet into all tabs', async () => {
 		const fake = fakeSheets([{ sheetId: 0, title: 'Tabellenblatt1', values: [], protections: [] }]);
 		const result = await setUpSheet(fake.client, 'sheet', { orchestras: ['EO', 'A'] });
 
-		const all = ['Stücke', 'Konzerte', 'Programm', 'Mitglieder', 'Gruppen', 'Rechte', 'Zugangsanfragen'];
+		const all = ['Stücke', 'Konzerte', 'Programm', 'Mitglieder', 'Gruppen', 'Rechte', 'Zugangsanfragen', 'Meldungen', 'Wünsche'];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
 		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Kalender-Event-ID']);
@@ -83,9 +86,14 @@ describe('setUpSheet', () => {
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			RIGHTS.map((right) => ({ userEnteredValue: right })),
+			labels(t.feedbackValues.reportKind),
+			labels(t.feedbackValues.reportStatus),
+			labels(t.feedbackValues.wishKind),
+			labels(t.feedbackValues.wishStatus),
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
-		expect(kinds(fake.requests).filter((k) => k === 'addProtectedRange')).toHaveLength(2);
+		// Drive folder id, event id, report id and wish id.
+		expect(kinds(fake.requests).filter((k) => k === 'addProtectedRange')).toHaveLength(4);
 	});
 
 	it('only adds what is missing when run again, and keeps other tabs', async () => {

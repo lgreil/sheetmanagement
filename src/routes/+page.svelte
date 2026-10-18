@@ -5,11 +5,15 @@
 
 	let { data } = $props();
 
-	const links: { href: string; label: string; text: string; icon: IconName }[] = [
+	const links: { href: string; label: string; text: string; icon: IconName }[] = $derived([
 		{ href: '/stuecke', label: t.nav.pieces, text: t.pieces.lead, icon: 'music' },
 		{ href: '/konzerte', label: t.nav.concerts, text: t.concerts.lead, icon: 'calendar' },
-		{ href: '/meine-noten', label: t.nav.myParts, text: t.myParts.lead, icon: 'user' }
-	];
+		{ href: '/meine-noten', label: t.nav.myParts, text: t.myParts.lead, icon: 'user' },
+		...(data.auth === 'on' ? [{ href: '/wuensche', label: t.nav.wishes, text: t.wishes.lead, icon: 'bulb' as const }] : []),
+		...(data.rights.includes('stuecke.bearbeiten')
+			? [{ href: '/meldungen', label: t.nav.reports, text: t.reports.short, icon: 'flag' as const }]
+			: [])
+	]);
 </script>
 
 <Title />

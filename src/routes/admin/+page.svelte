@@ -159,6 +159,7 @@
 		{#each data.members as member (member.email)}<option value={member.email}>{member.name}</option>{/each}
 	</datalist>
 
+	<a class="link" href="/meldungen"><Icon name="flag" size={16} />{t.nav.reports}</a>
 	{#if data.sheetUrl}
 		<a class="link" href={data.sheetUrl} target="_blank" rel="noopener noreferrer">
 			<Icon name="external" size={16} />{t.admin.openSheet}

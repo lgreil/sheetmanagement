@@ -18,6 +18,8 @@ export interface AppEnv {
 	GOOGLE_OAUTH_CLIENT_SECRET?: string;
 	/** At least 32 random characters; signs the session cookies. */
 	SESSION_SECRET?: string;
+	/** "false" turns sign-in off although GOOGLE_OAUTH_CLIENT_ID is set: the app is then open and read-only. Default: on. */
+	FORCE_AUTH?: string;
 	/** Comma-separated emails that always have every right. */
 	BOOTSTRAP_ADMINS?: string;
 	/** Who is responsible for the app, for the privacy notice (defaults to ORCHESTRA_NAME). */

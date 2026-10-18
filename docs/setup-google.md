@@ -163,11 +163,15 @@ Until this step, the app is open to anyone with the link and nobody can change a
   | Right | Allows |
   |---|---|
   | `programme.bearbeiten` | Edit concert programmes in the app |
-  | `mitglieder.verwalten` | Approve members and give rights (Verwaltung) |
-  | `stuecke.bearbeiten`, `archiv.bearbeiten` | Reserved for upcoming features; edit the sheet directly for now |
+  | `mitglieder.verwalten` | Approve members and give rights (Verwaltung); set the status of wishes and answer them |
+  | `stuecke.bearbeiten` | Look after problem reports on sheet music (**Meldungen**) and mark them as done |
+  | `archiv.bearbeiten` | Reserved for an upcoming feature; edit the sheet directly for now |
+
+- Every member can report a problem with a part (flag button on the piece page) and add wishes and +1s on **Wünsche**. Both are stored in their own tabs, **Meldungen** and **Wünsche**; an older sheet gets them when you run **Tabelle einrichten** again.
 
 - Everything can also be edited directly in the sheet. Changes apply within a minute; removing someone from Mitglieder locks them out at once.
 - App access and Drive access are separate: to open the PDFs, members still need access to the sheet-music folder in Drive.
+- **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
 ## Troubleshooting
 

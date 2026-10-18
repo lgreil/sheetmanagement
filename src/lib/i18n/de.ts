@@ -7,6 +7,8 @@ export const de = {
 		pieces: 'Stücke',
 		concerts: 'Konzerte',
 		myParts: 'Meine Noten',
+		wishes: 'Wünsche',
+		reports: 'Meldungen',
 		admin: 'Verwaltung'
 	},
 	theme: {
@@ -343,7 +345,115 @@ export const de = {
 				name: 'Name',
 				requestedAt: 'Angefragt am'
 			}
+		},
+		reports: {
+			tab: 'Meldungen',
+			columns: {
+				piece: 'Stück',
+				pieceId: 'Drive-Ordner-ID',
+				part: 'Stimme',
+				fileId: 'Datei-ID',
+				kind: 'Art',
+				comment: 'Kommentar',
+				status: 'Status',
+				note: 'Notiz',
+				reportedBy: 'Gemeldet von',
+				reportedAt: 'Gemeldet am',
+				id: 'Meldungs-ID'
+			}
+		},
+		wishes: {
+			tab: 'Wünsche',
+			columns: {
+				kind: 'Art',
+				title: 'Titel',
+				composer: 'Komponist',
+				link: 'Link',
+				description: 'Beschreibung',
+				status: 'Status',
+				answer: 'Antwort',
+				submittedBy: 'Eingereicht von',
+				submittedAt: 'Datum',
+				votes: '+1',
+				id: 'Wunsch-ID'
+			}
 		}
+	},
+	/** Values of the dropdown columns in "Meldungen" and "Wünsche", as they appear in the sheet. */
+	feedbackValues: {
+		reportKind: {
+			missing: 'Stimme fehlt',
+			scan: 'Schlechter Scan',
+			pages: 'Seiten fehlen',
+			wrong: 'Falsche Stimme',
+			other: 'Sonstiges'
+		},
+		reportStatus: { open: 'offen', done: 'erledigt' },
+		wishKind: { piece: 'Stück', feature: 'Funktion' },
+		wishStatus: { open: 'offen', planned: 'geplant', done: 'erledigt', declined: 'abgelehnt' }
+	},
+	reports: {
+		report: 'Problem melden',
+		reportPart: (part: string) => `Problem mit „${part}“ melden`,
+		lead: 'Stimme fehlt, Scan unleserlich, Seiten fehlen? Kurz melden, dann kümmert sich jemand darum.',
+		part: 'Was ist betroffen?',
+		wholePiece: 'Ganzes Stück',
+		kind: 'Art des Problems',
+		comment: 'Kommentar (optional)',
+		commentHint: 'z. B. „Seite 3 fehlt“',
+		send: 'Melden',
+		cancel: 'Abbrechen',
+		thanks: 'Danke! Die Meldung ist eingegangen.',
+		known: 'Bekannte Probleme',
+		failed: 'Die Meldung konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		notSetUp: 'Meldungen sind noch nicht eingerichtet: Auf der Seite „Tabelle einrichten“ wird das Blatt „Meldungen“ angelegt.',
+		signInNeeded: 'Zum Melden bitte anmelden.',
+		title: 'Meldungen',
+		short: 'Probleme mit Noten, die Mitglieder gemeldet haben.',
+		pageLead: 'Probleme mit Noten, die Mitglieder gemeldet haben. Erledigte verschwinden von der Stückseite.',
+		open: 'Offen',
+		done: 'Erledigt',
+		noOpen: 'Keine offenen Meldungen.',
+		noDone: 'Noch nichts erledigt.',
+		close: 'Erledigt',
+		reopen: 'Wieder öffnen',
+		note: 'Notiz (optional)',
+		noteHint: 'z. B. „neu gescannt“',
+		by: (name: string, date: string) => `${name} · ${date}`,
+		toPiece: 'Zum Stück',
+		openCount: (n: number) => (n === 1 ? '1 offene Meldung' : `${n} offene Meldungen`),
+		gone: 'Diese Meldung gibt es nicht mehr.',
+		unknownPart: 'Diese Stimme gibt es in dem Stück nicht.'
+	},
+	wishes: {
+		title: 'Wünsche',
+		lead: 'Stücke, die wir spielen, bestellen oder digitalisieren sollten, und Ideen für die App.',
+		tabs: { piece: 'Stückwünsche', feature: 'Funktionswünsche' },
+		add: { piece: 'Stück vorschlagen', feature: 'Idee vorschlagen' },
+		titleLabel: 'Titel',
+		composer: 'Komponist (optional)',
+		link: 'Link (optional)',
+		linkHint: 'z. B. eine Aufnahme oder der Verlag',
+		why: 'Warum? (optional)',
+		description: 'Was soll die App können?',
+		send: 'Wunsch abschicken',
+		thanks: 'Danke! Dein Wunsch steht jetzt auf der Liste.',
+		empty: { piece: 'Noch keine Stückwünsche.', feature: 'Noch keine Funktionswünsche.' },
+		vote: 'Finde ich auch',
+		unvote: 'Doch nicht',
+		votes: (n: number) => `+${n}`,
+		answer: 'Antwort',
+		status: 'Status',
+		setStatus: 'Speichern',
+		submittedBy: (name: string, date: string) => `Von ${name} · ${date}`,
+		invalidLink: 'Der Link muss mit http:// oder https:// beginnen.',
+		titleMissing: 'Bitte einen Titel angeben.',
+		descriptionMissing: 'Bitte beschreiben, was die App können soll.',
+		failed: 'Das konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		notSetUp: 'Wünsche sind noch nicht eingerichtet: Auf der Seite „Tabelle einrichten“ wird das Blatt „Wünsche“ angelegt.',
+		signInNeeded: 'Wünsche brauchen eine Anmeldung, damit jede Person nur einmal „+1“ geben kann.',
+		gone: 'Diesen Wunsch gibt es nicht mehr.',
+		toPiece: 'Im Archiv'
 	},
 	legal,
 	common: {
