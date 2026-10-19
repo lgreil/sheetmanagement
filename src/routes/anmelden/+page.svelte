@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
-	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data } = $props();
@@ -9,7 +8,7 @@
 <Title title={t.auth.title} />
 
 <section class="card">
-	<span class="logo"><Icon name="music" size={28} /></span>
+	<img class="logo" src="/logo.png" alt="" width="88" height="88" />
 	<h1>{t.auth.title}</h1>
 	<p>{t.auth.lead}</p>
 
@@ -53,13 +52,8 @@
 	}
 
 	.logo {
-		display: grid;
-		place-items: center;
-		width: 56px;
-		height: 56px;
-		border-radius: 16px;
-		background: var(--accent);
-		color: var(--accent-contrast);
+		width: 88px;
+		height: 88px;
 	}
 
 	p {

@@ -1,15 +1,19 @@
 /* Design tokens. Components use only these variables, so a theme is one block here. */
 :root {
-	--accent: #2f6fdb;
-	--accent-soft: color-mix(in oklab, var(--accent) 12%, transparent);
+	/* Black and gold, like the posters. --brand is the preset's accent (set in +layout.svelte);
+	   on light backgrounds a deeper gold keeps accent text and buttons readable. */
+	--brand: #e6b422;
+	--brand-ink: #0b0b0a;
+	--accent: color-mix(in oklab, var(--brand) 50%, #3a1f00);
+	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
 	--accent-contrast: #fff;
 
-	--bg: #f6f5f2;
-	--surface: #ffffff;
-	--surface-2: #efede8;
-	--border: #e2dfd8;
-	--text: #1d1c1a;
-	--text-muted: #6b6760;
+	--bg: #f7f4ec;
+	--surface: #fffdf8;
+	--surface-2: #efe9da;
+	--border: #e3dccb;
+	--text: #1a1814;
+	--text-muted: #6e675a;
 
 	--ok: #2e7d4f;
 	--warn: #b7791f;
@@ -39,28 +43,30 @@
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
-		--accent-contrast: #0d1117;
-		--bg: #131312;
-		--surface: #1c1c1a;
-		--surface-2: #262523;
-		--border: #33322f;
-		--text: #edebe6;
-		--text-muted: #a19d95;
-		--accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
+		--accent: var(--brand);
+		--accent-contrast: var(--brand-ink);
+		--bg: #0b0b0a;
+		--surface: #161513;
+		--surface-2: #201e1b;
+		--border: #2f2c26;
+		--text: #f2eee4;
+		--text-muted: #a9a293;
+		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 		color-scheme: dark;
 	}
 }
 
 :root[data-theme='dark'] {
-	--accent-contrast: #0d1117;
-	--bg: #131312;
-	--surface: #1c1c1a;
-	--surface-2: #262523;
-	--border: #33322f;
-	--text: #edebe6;
-	--text-muted: #a19d95;
-	--accent-soft: color-mix(in oklab, var(--accent) 22%, transparent);
+	--accent: var(--brand);
+	--accent-contrast: var(--brand-ink);
+	--bg: #0b0b0a;
+	--surface: #161513;
+	--surface-2: #201e1b;
+	--border: #2f2c26;
+	--text: #f2eee4;
+	--text-muted: #a9a293;
+	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 	color-scheme: dark;
 }
