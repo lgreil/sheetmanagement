@@ -3,6 +3,8 @@ import { legal } from './legal.de.ts';
 /** All user-facing texts. To translate the app, copy this file and change the strings. */
 export const de = {
 	nav: {
+		/** Shown after the orchestra's short name in the header. */
+		appName: 'Notenarchiv',
 		home: 'Übersicht',
 		pieces: 'Stücke',
 		concerts: 'Konzerte',

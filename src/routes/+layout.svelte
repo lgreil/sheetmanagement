@@ -28,15 +28,17 @@
 
 <svelte:head>
 	<meta name="theme-color" content={config.accent} />
+	<!-- On :root, so the theme tokens in app.css derive from it. -->
+	{@html `<style>:root{--brand:${config.accent}}</style>`}
 </svelte:head>
 
-<div class="app" style:--accent={config.accent}>
+<div class="app">
 	<header class="topbar">
 		<div class="topbar-inner">
 			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>
-				<span class="logo"><Icon name="music" size={18} /></span>
+				<img class="logo" src="/logo.png" alt="" width="40" height="40" />
 				<span class="brand-full">{data.orchestraName}</span>
-				<span class="brand-short">{data.orchestraShortName}</span>
+				<span class="brand-short">{data.orchestraShortName} <span class="app-name">{t.nav.appName}</span></span>
 			</a>
 
 			<nav class="nav-desktop" aria-label="Hauptnavigation">
@@ -124,15 +126,15 @@
 		text-overflow: ellipsis;
 	}
 
+	.app-name {
+		color: var(--accent);
+		font-weight: 500;
+	}
+
 	.logo {
-		display: grid;
-		place-items: center;
 		flex: none;
-		width: 32px;
-		height: 32px;
-		border-radius: 10px;
-		background: var(--accent);
-		color: var(--accent-contrast);
+		width: 40px;
+		height: 40px;
 	}
 
 	.nav-desktop {

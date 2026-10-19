@@ -8,7 +8,7 @@ import type { OrchestraConfig } from '../types.ts';
 export const bachkreis: OrchestraConfig = {
 	name: 'Bachkreis Ehemaligenorchester',
 	shortName: 'Bachkreis',
-	accent: '#2f6fdb',
+	accent: '#e6b422',
 	timeZone: 'Europe/Berlin',
 	locale: 'de-DE',
 
