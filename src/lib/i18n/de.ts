@@ -322,6 +322,17 @@ export const de = {
 		remove: 'Entfernen',
 		confirmRemove: (name: string) => `${name} wirklich entfernen?`,
 		rightsTitle: 'Rechte',
+		instrumentGroups: 'Instrumentgruppen',
+		instrumentGroupsLead: 'Wer aus welchen Stimmen spielt. Gilt für „Meine Noten“ und den Besetzungscheck. Steht auch im Blatt „Instrumentgruppen“.',
+		instrumentGroupsDefaults: 'Noch keine eigenen Gruppen: Es gelten die Voreinstellungen unten. Mit der ersten eigenen Gruppe werden sie ins Blatt übernommen und lassen sich dann einzeln entfernen.',
+		instrumentGroupsUnknown: (names: string) => `Diese Namen kennt die App nicht als Instrument: ${names}`,
+		alsoPlayedBy: 'auch gespielt von',
+		mutual: 'gegenseitig mit',
+		groupPart: 'Stimme',
+		groupPlayers: 'Gespielt von (mit Komma trennen)',
+		mutualLabel: 'Gegenseitig: alle spielen die Stimmen der anderen',
+		groupMissing: 'Bitte eine Stimme und mindestens ein Instrument angeben.',
+		groupGone: 'Diese Gruppe hat sich in der Tabelle geändert. Bitte die Seite neu laden.',
 		rightsLead: 'Rechte gelten für eine E-Mail-Adresse oder eine Gruppe.',
 		who: 'Wer',
 		right: 'Recht',
@@ -565,6 +576,16 @@ export const de = {
 				status: 'Status',
 				fileId: 'Datei-ID',
 				done: 'erledigt'
+			}
+		},
+		/** Who plays from which part: "B-Stimmen" are read by clarinets and trumpets. */
+		instrumentGroups: {
+			tab: 'Instrumentgruppen',
+			columns: {
+				part: 'Stimme',
+				players: 'Gespielt von',
+				mutual: 'Gegenseitig',
+				note: 'Notiz'
 			}
 		}
 	},

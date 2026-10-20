@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { config } from '#lib/config/index.ts';
 import { coverage, parseInstrument, playedParts, programInstruments } from '#lib/music/my-parts.ts';
 import { getLibrary, type Library, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList } from '#lib/server/repertoire.ts';
+import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { PageServerLoad } from './$types';
 
@@ -38,11 +38,11 @@ async function instrumentation(items: ProgramItem[], library: Library) {
 	const withMusic = rows.filter((row) => row.parts.length);
 	if (!withMusic.length) return null;
 
-	const access = await getAccessList();
+	const [access, music] = await Promise.all([getAccessList(), getMusicConfig()]);
 	const played = new Set(
 		(access?.members ?? []).flatMap((member) => parseInstrument(member.instrument ?? '', config)?.instrument ?? [])
 	);
-	const needed = new Set(programInstruments(withMusic.map((row) => row.parts), config));
+	const needed = new Set(programInstruments(withMusic.map((row) => row.parts), music));
 	const instruments = config.instruments
 		.map((instrument) => instrument.name)
 		.filter((name) => needed.has(name) || (played.has(name) && name !== 'Partitur'));
@@ -52,7 +52,7 @@ async function instrumentation(items: ProgramItem[], library: Library) {
 			title: item.title,
 			pieceId: item.pieceId,
 			hasMusic: parts.length > 0,
-			cells: instruments.map((name) => (parts.length ? coverage(parts, name, config) : ('none' as const)))
+			cells: instruments.map((name) => (parts.length ? coverage(parts, name, music) : ('none' as const)))
 		}))
 	};
 }

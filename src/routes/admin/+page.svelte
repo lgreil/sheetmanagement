@@ -170,6 +170,51 @@
 		</form>
 	</section>
 
+	<section>
+		<h2>{t.admin.instrumentGroups}</h2>
+		<p class="muted lead">{t.admin.instrumentGroupsLead}</p>
+		{#if !data.instrumentGroups.own}<p class="muted small">{t.admin.instrumentGroupsDefaults}</p>{/if}
+		{#if data.instrumentGroups.unknown.length}
+			<p class="message error">{t.admin.instrumentGroupsUnknown(data.instrumentGroups.unknown.join(', '))}</p>
+		{/if}
+		<ul class="list">
+			{#each data.instrumentGroups.rows as group (group.part + group.row)}
+				<li class="row">
+					<span class="main">
+						<strong>{group.part}</strong>
+						<span class="muted">
+							{group.mutual ? t.admin.mutual : t.admin.alsoPlayedBy}
+							{group.players.join(', ')}{group.note ? ` · ${group.note}` : ''}
+						</span>
+					</span>
+					{#if data.instrumentGroups.own}
+						<form method="POST" action="?/removeGroup" use:enhance={submit}>
+							<input type="hidden" name="row" value={group.row} />
+							<input type="hidden" name="part" value={group.part} />
+							<button class="ghost" disabled={busy}>{t.admin.remove}</button>
+						</form>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+
+		<form class="add" method="POST" action="?/addGroup" use:enhance={submit}>
+			<label>
+				{t.admin.groupPart}
+				<input name="part" list="instrument-names" required autocomplete="off" placeholder="Percussion" />
+			</label>
+			<label>
+				{t.admin.groupPlayers}
+				<input name="players" required autocomplete="off" placeholder="Schlagwerk, Mallet Percussion" />
+			</label>
+			<label class="check"><input type="checkbox" name="mutual" />{t.admin.mutualLabel}</label>
+			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.add}</button>
+		</form>
+	</section>
+
+	<datalist id="instrument-names">
+		{#each data.instruments as name (name)}<option value={name}></option>{/each}
+	</datalist>
 	<datalist id="group-names">
 		{#each data.groups as group (group.name)}<option value={group.name}>{group.description}</option>{/each}
 	</datalist>
@@ -316,6 +361,18 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-m);
 		background: var(--surface);
+	}
+
+	label.check {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		align-self: center;
+	}
+
+	label.check input {
+		height: auto;
+		accent-color: var(--accent);
 	}
 
 	label {

@@ -6,7 +6,7 @@ import { formatInstrument, matchParts, parseInstrument, playedParts, type Instru
 import type { Part } from '#lib/music/types.ts';
 import { fileUrl } from '#lib/server/catalog.ts';
 import { getLibrary, isPastConcert, type LibraryConcert } from '#lib/server/library.ts';
-import { getAccessList } from '#lib/server/repertoire.ts';
+import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -36,7 +36,7 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
 }
 
 export const load: PageServerLoad = async ({ url, cookies, locals }) => {
-	const [library, access] = await Promise.all([getLibrary(), getAccessList()]);
+	const [library, access, music] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig()]);
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
 
 	// What to show: asked for in the URL, else remembered in this browser, else from "Mitglieder".
@@ -48,7 +48,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 		concert.program.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
-			const match = choice && parts.length ? matchParts(parts, choice, config) : { own: [], shared: [] };
+			const match = choice && parts.length ? matchParts(parts, choice, music) : { own: [], shared: [] };
 			return {
 				position: item.position,
 				title: item.title,

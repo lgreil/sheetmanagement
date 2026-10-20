@@ -1,7 +1,8 @@
-import { config } from '#lib/config/index.ts';
+import { config, type OrchestraConfig } from '#lib/config/index.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
 import { ACCESS_TABS, buildAccessList, type AccessList, type AccessValues } from '#lib/access/access.ts';
 import { buildFeedback, FEEDBACK_TABS, type Feedback, type FeedbackValues } from '#lib/feedback/feedback.ts';
+import { readInstrumentGroups, type InstrumentGroups } from '#lib/music/instrument-groups.ts';
 import type { PieceDetail } from '#lib/music/types.ts';
 import { archiveGaps, doneFileIds, planMissingParts } from '#lib/repertoire/missing-parts.ts';
 import { buildRepertoire, LAYOUT, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
@@ -32,17 +33,25 @@ export class SheetNotSetUpError extends Error {
 export async function readSheet(
 	client: GoogleClient,
 	spreadsheetId: string
-): Promise<{ values: SheetValues; access: AccessValues; feedback: FeedbackValues; missingParts?: string[][] }> {
+): Promise<{
+	values: SheetValues;
+	access: AccessValues;
+	feedback: FeedbackValues;
+	missingParts?: string[][];
+	instrumentGroups?: string[][];
+}> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts'] as const).filter((key) => info.tabs.includes(LAYOUT[key].tab));
+	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups'] as const).filter((key) =>
+		info.tabs.includes(LAYOUT[key].tab)
+	);
 	const keys = [...REPERTOIRE_TABS, ...optional];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
 	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, missingParts, ...access } = all;
-	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes }, missingParts };
+	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, ...access } = all;
+	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes }, missingParts, instrumentGroups };
 }
 
 export interface Sources {
@@ -111,13 +120,15 @@ interface SheetSnapshot {
 	feedback: Feedback;
 	/** File ids ticked "erledigt" in "Fehlende Stimmen". */
 	missingPartsDone: string[];
+	/** null: the tab is missing or empty, so the preset's groups apply. */
+	instrumentGroups: InstrumentGroups | null;
 }
 
 function loadSheet(force: boolean) {
 	const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
 	const { client } = getGoogle();
 	return cached<SheetSnapshot>({
-		key: `repertoire:v3:${spreadsheetId}`,
+		key: `repertoire:v4:${spreadsheetId}`,
 		maxAgeMs: SHEET_MAX_AGE_MS,
 		// Memory only: a KV write per minute would use up the free tier's 1,000 writes a day.
 		build: async () => {
@@ -153,7 +164,11 @@ function loadSheet(force: boolean) {
 				repertoire,
 				access: buildAccessList(sheet.access),
 				feedback: buildFeedback(sheet.feedback),
-				missingPartsDone
+				missingPartsDone,
+				instrumentGroups: readInstrumentGroups(
+					sheet.instrumentGroups,
+					config.instruments.map((instrument) => instrument.name)
+				)
 			};
 		},
 		waitUntil: runInBackground,
@@ -184,6 +199,22 @@ export async function getAccessList({ force = false } = {}): Promise<AccessList 
 		}
 		return null;
 	}
+}
+
+/** The groups from "Instrumentgruppen"; null when the tab is missing, empty or unreadable. */
+export async function getInstrumentGroups({ force = false } = {}): Promise<InstrumentGroups | null> {
+	try {
+		return (await loadSheet(force)).value.instrumentGroups;
+	} catch {
+		// getLibrary already logs why the sheet failed.
+		return null;
+	}
+}
+
+/** The config with the orchestra's own instrument groups from the sheet, if it has any. */
+export async function getMusicConfig(): Promise<OrchestraConfig> {
+	const groups = await getInstrumentGroups();
+	return groups ? { ...config, sharedParts: groups.sharedParts } : config;
 }
 
 /** File ids ticked "erledigt" in "Fehlende Stimmen"; empty when the sheet can't be read. */

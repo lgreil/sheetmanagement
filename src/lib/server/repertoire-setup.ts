@@ -1,5 +1,6 @@
 import { RIGHTS } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
+import { defaultRows, type SharedParts } from '#lib/music/instrument-groups.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
 import type { GoogleClient } from './google/client.ts';
 import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
@@ -33,6 +34,7 @@ const WIDTHS: Record<string, number> = {
 	piece: 280,
 	notes: 240,
 	position: 60,
+	players: 320,
 	date: 110,
 	comment: 280,
 	description: 320,
@@ -57,7 +59,7 @@ export interface SetupResult {
 export async function setUpSheet(
 	client: GoogleClient,
 	spreadsheetId: string,
-	{ orchestras }: { orchestras: string[] }
+	{ orchestras, sharedParts }: { orchestras: string[]; sharedParts?: SharedParts }
 ): Promise<SetupResult> {
 	const before = await getTabs(client, spreadsheetId);
 	const missingTabs = TAB_KEYS.filter((key) => !before.some((tab) => tab.title === LAYOUT[key].tab));
@@ -93,6 +95,11 @@ export async function setUpSheet(
 		}
 		const final = [...header, ...missing.map(([, name]) => normalize(name))];
 		indexes[key] = Object.fromEntries(Object.entries(columns).map(([column, name]) => [column, final.indexOf(normalize(name))]));
+	}
+	// A new "Instrumentgruppen" starts with the preset's groups, so there's something to edit.
+	const groupRows = defaultRows(sharedParts);
+	if (missingTabs.includes('instrumentGroups') && groupRows.length) {
+		writes.push({ range: tabRange(LAYOUT.instrumentGroups.tab, 'A2'), values: groupRows });
 	}
 	if (writes.length) await updateValues(client, spreadsheetId, writes);
 
@@ -192,7 +199,8 @@ export async function setUpSheet(
 		['reports', 'status', list(t.feedbackValues.reportStatus)],
 		['wishes', 'kind', list(t.feedbackValues.wishKind)],
 		['wishes', 'status', list(t.feedbackValues.wishStatus)],
-		['missingParts', 'done', { type: 'BOOLEAN' }]
+		['missingParts', 'done', { type: 'BOOLEAN' }],
+		['instrumentGroups', 'mutual', { type: 'BOOLEAN' }]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

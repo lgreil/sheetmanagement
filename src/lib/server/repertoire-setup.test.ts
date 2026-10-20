@@ -42,10 +42,13 @@ function fakeSheets(tabs: FakeTab[]) {
 				for (const write of body.data) {
 					valueWrites.push(write);
 					const tab = tabOf(write.range)!;
-					const start = write.range.match(/!([A-Z]+)1$/)![1];
+					const [, start, row] = write.range.match(/!([A-Z]+)(\d+)$/)!;
 					const offset = [...Array(26).keys()].find((i) => columnLetter(i) === start)!;
-					tab.values[0] = [...(tab.values[0] ?? [])];
-					write.values[0].forEach((value: string, i: number) => (tab.values[0][offset + i] = value));
+					write.values.forEach((cells: string[], r: number) => {
+						const at = Number(row) - 1 + r;
+						tab.values[at] = [...(tab.values[at] ?? [])];
+						cells.forEach((value, i) => (tab.values[at][offset + i] = value));
+					});
 				}
 				return {};
 			}
@@ -85,7 +88,8 @@ describe('setUpSheet', () => {
 			'Zugangsanfragen',
 			'Meldungen',
 			'Wünsche',
-			'Fehlende Stimmen'
+			'Fehlende Stimmen',
+			'Instrumentgruppen'
 		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
@@ -102,12 +106,15 @@ describe('setUpSheet', () => {
 			labels(t.feedbackValues.wishKind),
 			labels(t.feedbackValues.wishStatus),
 			undefined,
+			undefined,
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
 		expect(fake.tabs[9].values[0]).toEqual(['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt']);
 		// "erledigt" is a checkbox column.
 		const checkbox = dropdowns.find((r) => r.setDataValidation.rule.condition.type === 'BOOLEAN');
 		expect(checkbox.setDataValidation.range).toMatchObject({ sheetId: fake.tabs[9].sheetId, startColumnIndex: 4 });
+
+		expect(fake.tabs[10].values[0]).toEqual(['Stimme', 'Gespielt von', 'Gegenseitig', 'Notiz']);
 
 		const protections = (fake.requests as any[]).filter((r) => r.addProtectedRange).map((r) => r.addProtectedRange.protectedRange);
 		// Drive folder id, event id, report id, wish id and file id …
@@ -142,5 +149,21 @@ describe('setUpSheet', () => {
 		const second = fake.requests.slice(first);
 		expect(kinds(second)).not.toContain('addProtectedRange');
 		expect(kinds(fake.requests)).not.toContain('deleteSheet');
+	});
+});
+
+describe('setUpSheet: instrument groups', () => {
+	it('fills a new "Instrumentgruppen" tab with the preset groups, but never an existing one', async () => {
+		const fake = fakeSheets([{ sheetId: 0, title: 'Tabellenblatt1', values: [], protections: [] }]);
+		await setUpSheet(fake.client, 'sheet', { orchestras: ['EO'], sharedParts: { 'B-Stimmen': ['Klarinette', 'Trompete'] } });
+		const tab = fake.tabs.find((t) => t.title === 'Instrumentgruppen')!;
+		expect(tab.values.slice(0, 2)).toEqual([
+			['Stimme', 'Gespielt von', 'Gegenseitig', 'Notiz'],
+			['B-Stimmen', 'Klarinette, Trompete', '', '']
+		]);
+
+		const writes = fake.valueWrites.length;
+		await setUpSheet(fake.client, 'sheet', { orchestras: ['EO'], sharedParts: { 'B-Stimmen': ['Klarinette'] } });
+		expect(fake.valueWrites.length).toBe(writes);
 	});
 });
