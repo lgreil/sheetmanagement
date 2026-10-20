@@ -1,13 +1,13 @@
 import type { User } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
-import { markedStatus, newId, parseVotes, toggleVote, type ReportKind, type ReportStatus, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
+import { markedStatus, mayDeleteWish, newId, parseVotes, readWishStatus, toggleVote, type ReportKind, type ReportStatus, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { withoutStatusWord, withStatusWord, type MarkableStatus } from '#lib/music/status-word.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
 import { runInBackground } from './env.ts';
 import { createComment, createGoogleDoc, getFile, renameFile, replyToComment } from './google/drive.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle } from './services.ts';
-import { appendRecords, readTab, refreshAfterWrite, updateRecord } from './sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord } from './sheet-writes.ts';
 
 /**
  * Writes for problem reports and wishes. Like the programme editor, every change starts
@@ -201,6 +201,18 @@ export async function setWishStatus(id: string, status: WishStatus, answer: stri
 	const row = table.rows.find((r) => r.values.id === id);
 	if (!row) return false;
 	await updateRecord('wishes', table, row.row, { status: t.feedbackValues.wishStatus[status], answer });
+	await refreshAfterWrite();
+	return true;
+}
+
+/** Deletes a wish's row if the user may (see mayDeleteWish). False when it's gone, "forbidden" otherwise. */
+export async function deleteWish(id: string, user: User, admin: boolean): Promise<boolean | 'forbidden'> {
+	const table = await readTab('wishes');
+	const row = table.rows.find((r) => r.values.id === id);
+	if (!row) return false;
+	const wish = { submittedBy: row.values.submittedBy, status: readWishStatus(row.values.status) };
+	if (!mayDeleteWish(wish, user.email, admin)) return 'forbidden';
+	await deleteRows('wishes', [row.row]);
 	await refreshAfterWrite();
 	return true;
 }

@@ -3,7 +3,6 @@
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
-	import type { PieceSummary } from '#lib/music/types.ts';
 	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -14,6 +13,7 @@
 
 	const NEEDS_WORK = '__needs-work';
 	const NO_MUSIC = '__no-music';
+	const RECORDING = '__recording';
 	let query = $state('');
 	let filter = $state('');
 	let input: HTMLInputElement | undefined = $state();
@@ -24,13 +24,16 @@
 		restore: (value: { query: string; filter: string }) => ({ query, filter } = value)
 	};
 
+	const recordings = $derived(data.pieces.filter((piece) => piece.recording).length);
+
 	// Programmes first ("A-Orchester", "Ehemaligenorchester"), then categories like "Weihnachtsstücke".
 	const filters = $derived([
 		{ value: '', label: t.pieces.all },
 		...data.programs.map((program) => ({ value: `program:${program}`, label: program })),
 		...data.categories.map((category) => ({ value: `category:${category}`, label: category })),
 		{ value: NEEDS_WORK, label: t.pieces.needsWork },
-		...(data.pieces.some((piece) => piece.status === 'none') ? [{ value: NO_MUSIC, label: t.pieces.noMusic }] : [])
+		...(data.pieces.some((piece) => piece.status === 'none') ? [{ value: NO_MUSIC, label: t.pieces.noMusic }] : []),
+		...(recordings ? [{ value: RECORDING, label: t.pieces.withRecording(recordings) }] : [])
 	]);
 
 	// "/stuecke?komponist=Bach", linked from a piece page: all works by one composer.
@@ -44,6 +47,7 @@
 			if (byComposer && searchText(piece.composer) !== byComposer) return false;
 			if (filter === NEEDS_WORK && (piece.status === 'ok' || piece.status === 'none')) return false;
 			if (filter === NO_MUSIC && piece.status !== 'none') return false;
+			if (filter === RECORDING && !piece.recording) return false;
 			if (filter.startsWith('program:') && !piece.programs.includes(filter.slice('program:'.length))) return false;
 			if (filter.startsWith('category:') && piece.category !== filter.slice('category:'.length)) return false;
 			return words.every((word) => piece.search.includes(word));
@@ -56,7 +60,7 @@
 	};
 
 	const groups = $derived.by(() => {
-		const result: { letter: string; pieces: PieceSummary[] }[] = [];
+		const result: { letter: string; pieces: typeof visible }[] = [];
 		for (const piece of visible) {
 			const letter = letterOf(piece.title);
 			if (result.at(-1)?.letter !== letter) result.push({ letter, pieces: [] });
@@ -155,7 +159,10 @@
 						<li>
 							<a class="row" href="/stuecke/{piece.id}">
 								<span class="main">
-									<span class="title">{piece.title}</span>
+									<span class="title">
+										{piece.title}
+										{#if piece.recording}<span class="listen" title={t.piece.recording}><Icon name="headphones" size={14} /></span>{/if}
+									</span>
 									{#if piece.composer || piece.catalogue || piece.category || piece.programs.length}
 										<span class="meta">
 											{[piece.composer, piece.catalogue].filter(Boolean).join(' · ')}
@@ -185,6 +192,13 @@
 {/if}
 
 <style>
+	.listen {
+		display: inline-flex;
+		vertical-align: -2px;
+		margin-left: var(--space-1);
+		color: var(--accent);
+	}
+
 	.gaps-link {
 		color: var(--accent);
 		font-weight: 600;

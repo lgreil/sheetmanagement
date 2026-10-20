@@ -2,6 +2,7 @@ import { error, type Cookies } from '@sveltejs/kit';
 import { parseEmailList, resolveAccess, type Access, type Right, type User } from '#lib/access/access.ts';
 import { appEnv } from '../env.ts';
 import { getAccessList } from '../repertoire.ts';
+import { linkValid } from './links.ts';
 import { verifySession } from './session.ts';
 
 export const SESSION_COOKIE = 'session';
@@ -59,6 +60,13 @@ export async function accessFromCookies(cookies: Cookies, auth: AuthConfig): Pro
 	const session = auth.sessionSecret ? await verifySession(cookies.get(SESSION_COOKIE), auth.sessionSecret) : null;
 	const user: User | null = session ? { email: session.email, name: session.name } : null;
 	if (!user) return resolveAccess(null, null, []);
+	// A session from an access link lasts only as long as the link: always checked in the sheet.
+	if (session?.link !== undefined) {
+		const list = await getAccessList();
+		const member = list?.membersByEmail.get(user.email.toLowerCase());
+		if (!member || !linkValid(member.linkVersion, session.link)) return resolveAccess(null, null, []);
+		return { ...resolveAccess(user, list, auth.bootstrapAdmins), viaLink: true };
+	}
 	// Bootstrap admins don't depend on the sheet, so a broken sheet can't lock them out.
 	const bootstrap = auth.bootstrapAdmins.includes(user.email.toLowerCase());
 	return resolveAccess(user, bootstrap ? null : await getAccessList(), auth.bootstrapAdmins);

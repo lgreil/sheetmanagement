@@ -1,9 +1,9 @@
 import { fail } from '@sveltejs/kit';
-import { safeLink, sortWishes, WISH_STATUSES, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
+import { mayDeleteWish, safeLink, sortWishes, WISH_STATUSES, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
-import { addWish, feedbackUser, formText, setWishStatus, voteOnWish } from '#lib/server/feedback.ts';
+import { addWish, deleteWish, feedbackUser, formText, setWishStatus, voteOnWish } from '#lib/server/feedback.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
@@ -39,6 +39,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			submittedBy: canManage ? wish.submittedBy || t.wishes.anonymous : undefined,
 			votes: wish.votes.length,
 			voted: wish.votes.includes(me),
+			canDelete: mayDeleteWish(wish, me, canManage),
 			pieceId: wish.kind === 'piece' && wish.title ? pieceByTitle.get(searchText(wish.title)) : undefined
 		}))
 	};
@@ -86,6 +87,19 @@ export const actions: Actions = {
 		if (!user) return fail(403, { message: t.wishes.signInNeeded });
 		const id = formText(await request.formData(), 'id', 40);
 		return save(() => voteOnWish(id, user));
+	},
+
+	delete: async ({ request, locals }) => {
+		const user = feedbackUser(locals);
+		if (!user) return fail(403, { message: t.wishes.signInNeeded });
+		const id = formText(await request.formData(), 'id', 40);
+		let forbidden = false;
+		const result = await save(async () => {
+			const done = await deleteWish(id, user, locals.access.rights.has(MANAGE));
+			forbidden = done === 'forbidden';
+			return done !== false;
+		});
+		return forbidden ? fail(403, { message: t.wishes.notYours }) : result;
 	},
 
 	status: async ({ request, locals }) => {

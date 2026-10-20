@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFeedback, markedStatus, newId, parseVotes, safeLink, sortWishes, toggleVote } from './feedback.ts';
+import { buildFeedback, markedStatus, mayDeleteWish, newId, parseVotes, safeLink, sortWishes, submitterEmail, toggleVote } from './feedback.ts';
 
 const REPORT_HEADER = ['Stück', 'Drive-Ordner-ID', 'Stimme', 'Datei-ID', 'Art', 'Kommentar', 'Status', 'Notiz', 'Gemeldet von', 'Gemeldet am', 'Meldungs-ID'];
 const WISH_HEADER = ['Art', 'Titel', 'Komponist', 'Link', 'Beschreibung', 'Status', 'Antwort', 'Eingereicht von', 'Datum', '+1', 'Wunsch-ID'];
@@ -120,4 +120,28 @@ it('makes short, distinct ids', () => {
 	const ids = new Set(Array.from({ length: 50 }, newId));
 	expect(ids.size).toBe(50);
 	expect([...ids][0]).toMatch(/^[0-9a-f]{12}$/);
+});
+
+describe('deleting wishes', () => {
+	it.each([
+		['Anna Beispiel <Anna@Example.org>', 'anna@example.org'],
+		['ben@example.org', 'ben@example.org'],
+		['', undefined],
+		['Anonym', undefined]
+	])('submitter of %j is %j', (text, email) => {
+		expect(submitterEmail(text)).toBe(email);
+	});
+
+	const wish = { submittedBy: 'Anna Beispiel <anna@example.org>', status: 'open' as const };
+
+	it('lets the submitter delete their own open wish', () => {
+		expect(mayDeleteWish(wish, 'ANNA@example.org', false)).toBe(true);
+		expect(mayDeleteWish(wish, 'ben@example.org', false)).toBe(false);
+		expect(mayDeleteWish({ ...wish, status: 'planned' }, 'anna@example.org', false)).toBe(false);
+	});
+
+	it('lets admins delete any wish, anonymous ones too', () => {
+		expect(mayDeleteWish({ submittedBy: '', status: 'done' }, 'admin@example.org', true)).toBe(true);
+		expect(mayDeleteWish({ submittedBy: '', status: 'open' }, 'anna@example.org', false)).toBe(false);
+	});
 });

@@ -25,6 +25,10 @@
 		goto(next === 'feature' ? '?art=funktion' : '?', { replace: true, shallow: true });
 	};
 
+	const confirmDelete = (title: string) => (event: SubmitEvent) => {
+		if (!confirm(t.wishes.confirmDelete(title))) event.preventDefault();
+	};
+
 	const submit = () => {
 		busy = true;
 		return async ({ update, result }: { update: (options?: { reset?: boolean }) => Promise<void>; result: { type: string } }) => {
@@ -122,9 +126,19 @@
 							{/if}
 						</div>
 						{#if wish.answer}<p class="answer"><strong>{t.wishes.answer}:</strong> {wish.answer}</p>{/if}
-						<p class="muted small">
-							{wish.submittedBy ? t.wishes.submittedBy(wish.submittedBy, wish.submittedAt) : wish.submittedAt}
-						</p>
+						<div class="meta">
+							<p class="muted small">
+								{wish.submittedBy ? t.wishes.submittedBy(wish.submittedBy, wish.submittedAt) : wish.submittedAt}
+							</p>
+							{#if wish.canDelete}
+								<form method="POST" action="?/delete" use:enhance={submit} onsubmit={confirmDelete(wish.title)}>
+									<input type="hidden" name="id" value={wish.id} />
+									<button class="delete" disabled={busy} title={t.wishes.delete} aria-label={t.wishes.delete}>
+										<Icon name="trash" size={16} />
+									</button>
+								</form>
+							{/if}
+						</div>
 						{#if data.canManage}
 							<form class="manage" method="POST" action="?/status" use:enhance={submit}>
 								<input type="hidden" name="id" value={wish.id} />
@@ -355,6 +369,30 @@
 
 	.small {
 		font-size: 0.8125rem;
+	}
+
+	.meta {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+
+	.delete {
+		display: grid;
+		place-items: center;
+		width: 32px;
+		height: 32px;
+		border: 0;
+		border-radius: 999px;
+		background: none;
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+
+	.delete:hover {
+		background: color-mix(in oklab, var(--danger) 12%, transparent);
+		color: var(--danger);
 	}
 
 	.manage {

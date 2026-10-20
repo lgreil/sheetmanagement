@@ -30,6 +30,8 @@ export interface Member {
 	status: MemberStatus;
 	/** "2027-03-31": paused up to and including this day. */
 	pausedUntil?: string;
+	/** Personal access link: 0 none, n > 0 link n is valid, -n link n was revoked (see server/auth/links.ts). */
+	linkVersion: number;
 }
 
 export interface Group {
@@ -96,7 +98,8 @@ export function buildAccessList(values: AccessValues): AccessList {
 			groups: splitGroups(v.groups),
 			orchestras: splitGroups(v.orchestras),
 			status: parseStatus(v.status),
-			pausedUntil: parseDay(v.pausedUntil)
+			pausedUntil: parseDay(v.pausedUntil),
+			linkVersion: parseLinkVersion(v.linkVersion)
 		};
 		members.push(member);
 		membersByEmail.set(email, member);
@@ -135,6 +138,8 @@ export interface Access {
 	member: boolean;
 	/** From BOOTSTRAP_ADMINS: every right, whatever the sheet says. */
 	bootstrapAdmin: boolean;
+	/** Signed in with a personal access link, so maybe without a Google account. */
+	viaLink?: boolean;
 	rights: Set<Right>;
 }
 
@@ -200,6 +205,12 @@ export function maskEmail(email: string): string {
 
 /** A name without a second word ("Anna") can't be told apart from another Anna. */
 export const lacksSurname = (name: string) => !/\S\s+\S/.test(name.trim()) && !name.includes('@');
+
+/** "3", "-3", "" → 3, -3, 0. */
+export function parseLinkVersion(text: string): number {
+	const n = Number.parseInt(text.trim(), 10);
+	return Number.isFinite(n) ? n : 0;
+}
 
 /** Empty or unknown counts as active, so a member is never left out by a typo. */
 export function parseStatus(text: string): MemberStatus {

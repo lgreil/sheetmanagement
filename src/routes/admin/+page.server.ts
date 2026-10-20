@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { currentStatus, normalizeEmail, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
+import { currentStatus, normalizeEmail, parseLinkVersion, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
@@ -7,6 +7,7 @@ import { config } from '#lib/config/index.ts';
 import { splitNames } from '#lib/music/instrument-groups.ts';
 import { commonInstruments, parseInstruments, playableInstruments } from '#lib/music/my-parts.ts';
 import { readMemberForm, today, writable } from '#lib/server/members.ts';
+import { linkToken, nextLinkVersion, revokedLinkVersion } from '#lib/server/auth/links.ts';
 import { getAccessList, getInstrumentGroups } from '#lib/server/repertoire.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import { requireSetting } from '#lib/server/services.ts';
@@ -34,7 +35,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		bootstrapAdmins: auth.mode === 'on' ? auth.bootstrapAdmins : [],
 		requests: list?.requests.map(({ email, name, requestedAt }) => ({ email, name, requestedAt })) ?? [],
 		members:
-			list?.members.map(({ email, name, instrument, groups, orchestras, status, pausedUntil }) => {
+			list?.members.map(({ email, name, instrument, groups, orchestras, status, pausedUntil, linkVersion }) => {
 				return {
 					email,
 					name,
@@ -47,6 +48,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					pausedUntil,
 					// A pause whose date has passed already counts as active.
 					current: currentStatus({ status, pausedUntil }, day),
+					// Personal access link: "active", "revoked" or none.
+					link: linkVersion > 0 ? ('active' as const) : linkVersion < 0 ? ('revoked' as const) : null,
 					// What they may do, from their own grants and their groups'.
 					rights: [...resolveAccess({ email, name }, list, auth.mode === 'on' ? auth.bootstrapAdmins : []).rights].filter(
 						(right) => right !== 'ansehen'
@@ -201,6 +204,34 @@ export const actions: Actions = {
 			if (!target) return t.admin.groupGone;
 			await deleteRows('instrumentGroups', [target.row]);
 		}),
+
+	/**
+	 * Personal access links: "show" the current one again, "new" (ends the old one and its
+	 * sessions) or "revoke". The link is only ever shown to the admin, who sends it themselves.
+	 */
+	link: async ({ request, locals, url }) => {
+		requireRight(locals, 'mitglieder.verwalten');
+		const auth = authConfig();
+		if (auth.mode !== 'on' || !auth.sessionSecret) return fail(400, { message: t.admin.linkUnavailable });
+		const data = await request.formData();
+		const email = normalizeEmail(field(data, 'email'));
+		const mode = field(data, 'mode');
+		let version = 0;
+		const result = await change(locals, async () => {
+			const members = await readTab('members');
+			const row = members.rows.find((r) => normalizeEmail(r.values.email) === email);
+			if (!row) return t.admin.memberGone;
+			const current = parseLinkVersion(row.values.linkVersion);
+			if (mode === 'show' && current > 0) {
+				version = current;
+				return;
+			}
+			version = mode === 'revoke' ? revokedLinkVersion(current) : nextLinkVersion(current);
+			await updateRecord('members', members, row.row, { linkVersion: String(version) });
+		});
+		if ('status' in result || version <= 0) return result;
+		return { ...result, link: { email, url: `${url.origin}/auth/link/${await linkToken(email, version, auth.sessionSecret)}` } };
+	},
 
 	revoke: ({ request, locals }) =>
 		change(locals, async () => {
