@@ -116,3 +116,29 @@ export function programInstruments(pieces: Part[][], config: OrchestraConfig): s
 		.filter((instrument) => used.has(instrument.name) && instrument.family !== 'partitur' && !instrument.voice)
 		.map((instrument) => instrument.name);
 }
+
+/** "Weihnachtskonzert 2026" → "weihnachtskonzert-2026"; umlauts spelled out so the name works everywhere. */
+export function slug(text: string): string {
+	return text
+		.toLowerCase()
+		.replace(/ä/g, 'ae')
+		.replace(/ö/g, 'oe')
+		.replace(/ü/g, 'ue')
+		.replace(/ß/g, 'ss')
+		.normalize('NFD')
+		.replace(/[̀-ͯ]/g, '')
+		.replace(/[^a-z0-9]+/g, '-')
+		.replace(/^-+|-+$/g, '');
+}
+
+/** The merged PDF's name: "herbstkonzert-komplett-violoncello.pdf". */
+export function mergedFileName(concert: string, instrument: string): string {
+	return `${[slug(concert), 'komplett', slug(instrument)].filter(Boolean).join('-')}.pdf`;
+}
+
+/** Instruments a person plays or a missing part can be for: no shared parts, numbered voices or family parts. */
+export function playableInstruments(config: OrchestraConfig): string[] {
+	return config.instruments
+		.filter((instrument) => !instrument.voice && instrument.family !== 'sonstige' && instrument.name !== 'Holz' && instrument.name !== 'Blech')
+		.map((instrument) => instrument.name);
+}

@@ -70,6 +70,9 @@
 				<div class="head">
 					<a class="folder" href="/stuecke/{encodeURIComponent(section.pieceId)}">{section.folderName}</a>
 					{#if section.section}<span class="tag">{section.section}</span>{/if}
+					<a class="drive" href={section.folderUrl} target="_blank" rel="noopener noreferrer">
+						<Icon name="folder" size={14} />{t.naming.openFolder}
+					</a>
 				</div>
 
 				<form method="POST" action="?/rename" use:enhance={submit(section.key)}>
@@ -198,6 +201,20 @@
 
 	.folder:hover {
 		color: var(--accent);
+	}
+
+	.drive {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		margin-left: auto;
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.drive:hover {
+		text-decoration: underline;
 	}
 
 	.tag {

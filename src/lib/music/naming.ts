@@ -216,3 +216,15 @@ export function checkSection(
 }
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** The convention's placeholder for a missing part: "<Kurztitel> - <Stimme> - FEHLT", a Google Doc in the piece folder. */
+export function placeholderName(
+	files: NamingFile[],
+	title: string,
+	part: string,
+	naming: NamingRules,
+	piece: { composer?: string; catalogue?: string } = {}
+): string {
+	const short = guessShortTitle(files, title, naming, piece);
+	return [short, cleanShortTitle(part, naming), naming.status.missing].join(naming.separator);
+}

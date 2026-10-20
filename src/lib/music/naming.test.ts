@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bachkreis } from '#lib/config/presets/bachkreis.ts';
-import { checkSection, guessShortTitle, type NamingFile } from './naming.ts';
+import { checkSection, guessShortTitle, placeholderName, type NamingFile } from './naming.ts';
 import { createInstrumentMatcher } from './part-name.ts';
 
 const matcher = createInstrumentMatcher(bachkreis.instruments);
@@ -109,5 +109,13 @@ describe('short titles', () => {
 	it('reads the head before the part, movement and status', () => {
 		const files = ['Schumann - Klavierkonzert op. 54 - Kontrabass.pdf', 'Schumann - Klavierkonzert op. 54 - Viola - LEER.pdf'].map((x) => pdf(x));
 		expect(guessShortTitle(files, 'Klavierkonzert', naming)).toBe('Schumann Klavierkonzert op. 54');
+	});
+});
+
+describe('placeholderName', () => {
+	it('uses the folder short title, the part and FEHLT', () => {
+		const files = ['Fame - Geige I.pdf', 'Fame - Viola.pdf'].map((x) => pdf(x));
+		expect(placeholderName(files, 'Fame', 'Trompete II', naming)).toBe('Fame - Trompete II - FEHLT');
+		expect(placeholderName([], 'Sinfonie Nr. 9 Aus der neuen Welt', 'Horn III', naming, { composer: 'Dvorak' })).toBe('Dvorak 9 - Horn III - FEHLT');
 	});
 });

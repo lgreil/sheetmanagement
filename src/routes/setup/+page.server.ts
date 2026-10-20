@@ -58,7 +58,8 @@ export const actions: Actions = {
 		requireAdminWhenSignInIsOn(locals);
 		try {
 			const result = await setUpSheet(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'), {
-				orchestras: config.orchestras
+				orchestras: config.orchestras,
+				sharedParts: config.sharedParts
 			});
 			// Read the new tabs right away, which also adds the pieces and concerts.
 			await getRepertoire({ force: true });

@@ -88,6 +88,8 @@ export const de = {
 	},
 	piece: {
 		details: 'Details',
+		reportedMissing: 'Als fehlend gemeldet',
+		reportedMissingHint: 'Gemeldet, aber noch nicht bestätigt. Nach der Bestätigung steht ein Platzhalter im Ordner.',
 		back: 'Alle Stücke',
 		openFolder: 'Ordner in Google Drive',
 		recording: 'Hörbeispiel',
@@ -183,6 +185,7 @@ export const de = {
 		counts: (rename: number, unclear: number, folders: number) =>
 			`${rename} Vorschläge · ${unclear} unklar · in ${folders} Ordnern`,
 		shortTitle: 'Kurztitel',
+		openFolder: 'Ordner in Drive',
 		shortTitleHint: 'Steht vor jeder Stimme. Kurz halten, damit die Stimme auf dem Handy lesbar bleibt.',
 		long: 'lang fürs Handy',
 		unclear: 'unklar',
@@ -235,6 +238,8 @@ export const de = {
 		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.',
 		forConcert: (concert: string) => `Meine Noten fürs ${concert}`,
 		concert: 'Konzert',
+		jumpTo: 'Springen zu',
+		more: (n: number) => (n === 1 ? 'Noch 1 Konzert' : `Noch ${n} Konzerte`),
 		instrument: 'Instrument',
 		number: 'Stimme',
 		anyNumber: 'alle',
@@ -261,7 +266,6 @@ export const de = {
 		skipUnreadable: 'die Datei ist keine lesbare PDF',
 		mergeHint: 'Fügt deine Stimmen in Programmreihenfolge zu einer Datei zusammen, zum Drucken oder fürs Tablet.',
 		mergeOff: 'Das Zusammenfügen geht nur mit Anmeldung.',
-		fileName: (concert: string, instrument: string) => `Meine Noten – ${concert} – ${instrument}.pdf`
 	},
 	auth: {
 		title: 'Anmelden',
@@ -320,6 +324,25 @@ export const de = {
 		remove: 'Entfernen',
 		confirmRemove: (name: string) => `${name} wirklich entfernen?`,
 		rightsTitle: 'Rechte',
+		edit: 'Bearbeiten',
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		searchMembers: 'Mitglieder suchen …',
+		noInstrument: 'kein Instrument',
+		unknownInstrument: 'Dieses Instrument kennt die App nicht.',
+		memberGone: 'Dieses Mitglied gibt es nicht mehr. Bitte die Seite neu laden.',
+		effectiveRights: 'Darf',
+		instrumentGroups: 'Instrumentgruppen',
+		instrumentGroupsLead: 'Wer aus welchen Stimmen spielt. Gilt für „Meine Noten“ und den Besetzungscheck. Steht auch im Blatt „Instrumentgruppen“.',
+		instrumentGroupsDefaults: 'Noch keine eigenen Gruppen: Es gelten die Voreinstellungen unten. Mit der ersten eigenen Gruppe werden sie ins Blatt übernommen und lassen sich dann einzeln entfernen.',
+		instrumentGroupsUnknown: (names: string) => `Diese Namen kennt die App nicht als Instrument: ${names}`,
+		alsoPlayedBy: 'auch gespielt von',
+		mutual: 'gegenseitig mit',
+		groupPart: 'Stimme',
+		groupPlayers: 'Gespielt von (mit Komma trennen)',
+		mutualLabel: 'Gegenseitig: alle spielen die Stimmen der anderen',
+		groupMissing: 'Bitte eine Stimme und mindestens ein Instrument angeben.',
+		groupGone: 'Diese Gruppe hat sich in der Tabelle geändert. Bitte die Seite neu laden.',
 		rightsLead: 'Rechte gelten für eine E-Mail-Adresse oder eine Gruppe.',
 		who: 'Wer',
 		right: 'Recht',
@@ -564,6 +587,16 @@ export const de = {
 				fileId: 'Datei-ID',
 				done: 'erledigt'
 			}
+		},
+		/** Who plays from which part: "B-Stimmen" are read by clarinets and trumpets. */
+		instrumentGroups: {
+			tab: 'Instrumentgruppen',
+			columns: {
+				part: 'Stimme',
+				players: 'Gespielt von',
+				mutual: 'Gegenseitig',
+				note: 'Notiz'
+			}
 		}
 	},
 	/** Values of the dropdown columns in "Meldungen" and "Wünsche", as they appear in the sheet. */
@@ -580,6 +613,14 @@ export const de = {
 		wishStatus: { open: 'offen', planned: 'geplant', done: 'erledigt', declined: 'abgelehnt' }
 	},
 	reports: {
+		placeholderCreated: (name: string) => `Platzhalter „${name}“ in Drive angelegt.`,
+		confirmMissing: 'Fehlt bestätigen',
+		confirmMissingHint: (name: string) => `Legt den Platzhalter „${name}“ als Google-Doc im Stückordner an und schließt die Meldung.`,
+		placeholderManual: 'Bitte von Hand als Google-Doc im Stückordner anlegen, dann die Meldung schließen:',
+		missingPart: 'Welche Stimme fehlt?',
+		missingNumber: 'Nummer',
+		notInFolder: 'Nicht im Ordner',
+		inFolder: 'Schon im Ordner (z. B. andere Nummer)',
 		report: 'Problem melden',
 		reportPart: (part: string) => `Problem mit „${part}“ melden`,
 		lead: 'Stimme fehlt, Scan unleserlich, Seiten fehlen? Kurz melden, dann kümmert sich jemand darum.',

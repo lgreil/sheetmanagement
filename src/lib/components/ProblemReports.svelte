@@ -18,6 +18,8 @@
 		status,
 		canClose,
 		parts,
+		instruments = [],
+		present = [],
 		result,
 		open = $bindable(false),
 		fileId = $bindable('')
@@ -26,12 +28,21 @@
 		status: 'ready' | 'sign-in' | 'not-set-up' | 'no-parts';
 		canClose: boolean;
 		parts: { id: string; label: string }[];
+		/** For "Stimme fehlt": every instrument a part can be for … */
+		instruments?: string[];
+		/** … and the ones the piece already has a part for, offered last. */
+		present?: string[];
 		result?: { reportError?: string; reported?: boolean } | null;
 		open?: boolean;
 		fileId?: string;
 	} = $props();
 
 	let busy = $state(false);
+	let kind = $state<ReportKind>('missing');
+	// A part that's missing has no file to pick: name the instrument instead.
+	const missing = $derived(kind === 'missing' && !fileId);
+	const absent = $derived(instruments.filter((name) => !present.includes(name)));
+	const already = $derived(instruments.filter((name) => present.includes(name)));
 	let dialog = $state<HTMLElement>();
 
 	$effect(() => {
@@ -85,18 +96,40 @@
 					<p class="muted">{t.reports.lead}</p>
 					{#if result?.reportError}<p class="msg error" role="alert">{result.reportError}</p>{/if}
 					<label class="field">
-						{t.reports.part}
-						<select name="fileId" bind:value={fileId}>
-							<option value="">{t.reports.wholePiece}</option>
-							{#each parts as part (part.id)}<option value={part.id}>{part.label}</option>{/each}
-						</select>
-					</label>
-					<label class="field">
 						{t.reports.kind}
-						<select name="kind" required>
-							{#each REPORT_KINDS as kind (kind)}<option value={kind}>{t.feedbackValues.reportKind[kind]}</option>{/each}
+						<select name="kind" required bind:value={kind}>
+							{#each REPORT_KINDS as option (option)}<option value={option}>{t.feedbackValues.reportKind[option]}</option>{/each}
 						</select>
 					</label>
+					{#if missing && instruments.length}
+						<label class="field">
+							{t.reports.missingPart}
+							<select name="missingInstrument" required>
+								<option value="" disabled selected>…</option>
+								<optgroup label={t.reports.notInFolder}>
+									{#each absent as name (name)}<option value={name}>{name}</option>{/each}
+								</optgroup>
+								<optgroup label={t.reports.inFolder}>
+									{#each already as name (name)}<option value={name}>{name}</option>{/each}
+								</optgroup>
+							</select>
+						</label>
+						<label class="field">
+							{t.reports.missingNumber}
+							<select name="missingNumber">
+								<option value="">–</option>
+								{#each ['I', 'II', 'III', 'IV'] as roman, i (roman)}<option value={String(i + 1)}>{roman}</option>{/each}
+							</select>
+						</label>
+					{:else}
+						<label class="field">
+							{t.reports.part}
+							<select name="fileId" bind:value={fileId}>
+								<option value="">{t.reports.wholePiece}</option>
+								{#each parts as part (part.id)}<option value={part.id}>{part.label}</option>{/each}
+							</select>
+						</label>
+					{/if}
 					<label class="field wide">
 						{t.reports.comment}
 						<input name="comment" maxlength="1000" placeholder={t.reports.commentHint} autocomplete="off" />

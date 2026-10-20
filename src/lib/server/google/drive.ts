@@ -113,6 +113,15 @@ export function renameFile(client: GoogleClient, fileId: string, name: string): 
 	});
 }
 
+/** An empty Google Doc in a folder, e.g. the placeholder "<Titel> - <Stimme> - FEHLT". */
+export function createGoogleDoc(client: GoogleClient, name: string, folderId: string): Promise<DriveFile> {
+	return client.request<DriveFile>(FILES_URL, {
+		method: 'POST',
+		params: { fields: 'id, name', supportsAllDrives: true },
+		body: { name, mimeType: 'application/vnd.google-apps.document', parents: [folderId] }
+	});
+}
+
 /** A file's content (e.g. a PDF), as a response to stream on. */
 export function downloadFile(client: GoogleClient, fileId: string): Promise<Response> {
 	return client.fetchRaw(`${FILES_URL}/${encodeURIComponent(fileId)}`, { alt: 'media', supportsAllDrives: true });

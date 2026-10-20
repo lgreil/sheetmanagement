@@ -50,6 +50,8 @@
 	);
 
 	// Reporting a single part opens the form with that part chosen.
+	// Reported as missing but not confirmed yet: shown greyed out, there's no file.
+	const reportedMissing = $derived(data.reports.open.filter((report) => report.kind === 'missing' && report.part && !report.fileId));
 	let reporting = $state(false);
 	let reportFile = $state('');
 	const canReport = $derived(data.reports.state === 'ready');
@@ -126,6 +128,8 @@
 	status={data.reports.state}
 	canClose={data.reports.canClose}
 	parts={piece.parts.filter((part) => part.status !== 'missing').map(({ id, label }) => ({ id, label }))}
+	instruments={data.reports.instruments}
+	present={data.reports.present}
 	result={form}
 	bind:open={reporting}
 	bind:fileId={reportFile}
@@ -166,13 +170,15 @@
 		<ul class="parts">
 			{#each group.parts as part (part.id)}
 				<li class:flagged={reported.has(part.id)}>
-					<a
+					<!-- A missing part is only a placeholder: nothing to open, so it isn't a link. -->
+					<svelte:element
+						this={part.status === 'missing' ? 'div' : 'a'}
 						class="part"
 						class:with-flag={canReport && part.status !== 'missing'}
 						class:missing={part.status === 'missing'}
-						href={part.url}
-						target="_blank"
-						rel="noopener noreferrer"
+						href={part.status === 'missing' ? undefined : part.url}
+						target={part.status === 'missing' ? undefined : '_blank'}
+						rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
 						title={part.fileName}
 					>
 						<span class="icon">
@@ -191,8 +197,8 @@
 						{#if part.status !== 'ok'}
 							<span class="status {part.status}">{t.piece.partStatus[part.status]}</span>
 						{/if}
-						<span class="open"><Icon name="external" size={16} /></span>
-					</a>
+						{#if part.status !== 'missing'}<span class="open"><Icon name="external" size={16} /></span>{/if}
+					</svelte:element>
 					{#if canReport && part.status !== 'missing'}
 						<button
 							class="flag"
@@ -219,6 +225,23 @@
 			</div>
 		{/each}
 	</dl>
+{/if}
+
+{#if reportedMissing.length}
+	<section class="group">
+		<h2>{t.piece.reportedMissing}</h2>
+		<ul class="parts">
+			{#each reportedMissing as report (report.id)}
+				<li>
+					<div class="part missing" title={t.piece.reportedMissingHint}>
+						<span class="icon"><Icon name="file" size={18} /></span>
+						<span class="label"><span class="name">{report.part}</span></span>
+						<span class="status reported">{t.gaps.reported}</span>
+					</div>
+				</li>
+			{/each}
+		</ul>
+	</section>
 {/if}
 
 {#snippet pieceLinks(title: string, pieces: typeof data.moreByComposer)}
@@ -535,7 +558,7 @@
 			transform 0.15s;
 	}
 
-	.part:hover {
+	a.part:hover {
 		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
 		box-shadow: var(--shadow);
 		transform: translateY(-1px);
@@ -582,6 +605,8 @@
 		border-style: dashed;
 		background: transparent;
 		color: var(--text-muted);
+		opacity: 0.75;
+		cursor: default;
 	}
 
 	.icon {
