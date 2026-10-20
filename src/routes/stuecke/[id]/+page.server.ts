@@ -6,7 +6,7 @@ import { commonInstruments, formatInstrument, playableInstruments } from '#lib/m
 import { addReport, feedbackUser, formText } from '#lib/server/feedback.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
-import { fileUrl, folderUrl } from '#lib/server/catalog.ts';
+import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import { workKey } from '#lib/music/piece-name.ts';
 import { concertSummary, getLibrary, type LibraryPiece } from '#lib/server/library.ts';
@@ -67,7 +67,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			status: piece.status,
 			folderUrl: detail ? folderUrl(detail.id) : undefined,
 			recording: sheet?.recording,
-			parts: (detail?.parts ?? []).map((part) => ({ ...part, url: fileUrl(part.id, part.mimeType) })),
+			parts: (detail?.parts ?? []).map((part) => ({ ...part, url: partUrl(part.id, part.mimeType, locals.access.viaLink) })),
 			sections: (detail?.sections ?? []).map((section) => ({ ...section, folderUrl: folderUrl(section.folderId) })),
 			info: {
 				arranger: sheet?.arranger,

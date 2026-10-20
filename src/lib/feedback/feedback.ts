@@ -24,12 +24,30 @@ export type WishStatus = keyof typeof VALUES.wishStatus;
 export const REPORT_KINDS = Object.keys(VALUES.reportKind) as ReportKind[];
 export const WISH_STATUSES = Object.keys(VALUES.wishStatus) as WishStatus[];
 
+/** "Anna Beispiel <anna@example.org>" or "anna@example.org" → the email, lower case; anonymous wishes have none. */
+export function submitterEmail(submittedBy: string): string | undefined {
+	const email = (submittedBy.match(/<([^<>]+)>\s*$/)?.[1] ?? submittedBy).trim().toLowerCase();
+	return email.includes('@') ? email : undefined;
+}
+
+/**
+ * Who may delete a wish: admins any, the submitter their own while it's still open.
+ * Anonymous wishes keep no name, so only admins can delete them.
+ */
+export function mayDeleteWish(wish: Pick<Wish, 'submittedBy' | 'status'>, email: string, admin: boolean): boolean {
+	if (admin) return true;
+	return wish.status === 'open' && submitterEmail(wish.submittedBy) === email.trim().toLowerCase();
+}
+
 /** Reads a dropdown cell back to its key, ignoring case and accents; unknown text gives the fallback. */
 function fromLabel<K extends string>(labels: Record<K, string>, text: string, fallback: K): K {
 	const wanted = normalize(text);
 	if (!wanted) return fallback;
 	return (Object.keys(labels) as K[]).find((key) => normalize(labels[key]) === wanted || key === wanted) ?? fallback;
 }
+
+/** A wish's status cell ("offen", "geplant" …) as its key. */
+export const readWishStatus = (text: string): WishStatus => fromLabel(VALUES.wishStatus, text, 'open');
 
 export interface Report {
 	row: number;
@@ -139,7 +157,7 @@ export function buildFeedback(values: FeedbackValues): Feedback {
 			composer: v.composer,
 			link: safeLink(v.link),
 			description: v.description,
-			status: fromLabel(VALUES.wishStatus, v.status, 'open'),
+			status: readWishStatus(v.status),
 			answer: v.answer,
 			submittedBy: v.submittedBy,
 			submittedAt: v.submittedAt,

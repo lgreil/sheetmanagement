@@ -37,6 +37,15 @@ export function fileUrl(id: string, mimeType: string): string {
 	return `https://drive.google.com/file/d/${id}/view`;
 }
 
+/**
+ * Where a part opens: Drive's viewer, which needs a Google account with access to the
+ * folder. Members signed in with an access link may have none, so their PDFs come
+ * through the app (/api/noten), which checks they're a member.
+ */
+export function partUrl(id: string, mimeType: string, viaLink: boolean | undefined): string {
+	return viaLink && mimeType === 'application/pdf' ? `/api/noten/${encodeURIComponent(id)}` : fileUrl(id, mimeType);
+}
+
 export function folderUrl(id: string): string {
 	return `https://drive.google.com/drive/folders/${id}`;
 }

@@ -10,6 +10,8 @@ export interface Session {
 	name: string;
 	/** Expiry, seconds since the epoch. */
 	exp: number;
+	/** Signed in with a personal access link of this version; a newer version in the sheet ends the session. */
+	link?: number;
 }
 
 export const SESSION_DAYS = 30;
@@ -63,7 +65,35 @@ export async function verifySession(
 		if (!valid) return null;
 		const session = JSON.parse(new TextDecoder().decode(fromBase64url(payload))) as Session;
 		if (typeof session.email !== 'string' || typeof session.exp !== 'number') return null;
+		if (session.link !== undefined && !Number.isInteger(session.link)) return null;
 		return session.exp * 1000 > now ? session : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Other signed values, e.g. personal access links. The purpose is part of what's signed,
+ * so a token made for one purpose is never accepted for another, nor as a session cookie.
+ */
+export async function signToken(purpose: string, data: object, secret: string): Promise<string> {
+	const payload = base64url(encoder.encode(JSON.stringify(data)));
+	const signature = await crypto.subtle.sign('HMAC', await hmacKey(secret, 'sign'), encoder.encode(`${purpose}:${payload}`));
+	return `${payload}.${base64url(signature)}`;
+}
+
+/** The token's data, or null if it's malformed or wasn't signed for this purpose. */
+export async function verifyToken<T>(purpose: string, token: string | undefined, secret: string): Promise<T | null> {
+	const [payload, signature, ...rest] = (token ?? '').split('.');
+	if (!payload || !signature || rest.length) return null;
+	try {
+		const valid = await crypto.subtle.verify(
+			'HMAC',
+			await hmacKey(secret, 'verify'),
+			fromBase64url(signature),
+			encoder.encode(`${purpose}:${payload}`)
+		);
+		return valid ? (JSON.parse(new TextDecoder().decode(fromBase64url(payload))) as T) : null;
 	} catch {
 		return null;
 	}

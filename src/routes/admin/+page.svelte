@@ -43,6 +43,22 @@
 	);
 	const count = (status: string) => (data.state === 'ready' ? data.members.filter((m) => m.current === status).length : 0);
 
+	/** Asks before a button that ends a link; cancelling stops the form from being sent. */
+	const confirmLink = (question: string) => (event: MouseEvent) => {
+		if (!confirm(question)) event.preventDefault();
+	};
+
+	let copied = $state(false);
+	async function copy(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = true;
+			setTimeout(() => (copied = false), 2000);
+		} catch {
+			// No clipboard (e.g. plain http): the field is selected on focus for copying by hand.
+		}
+	}
+
 	const confirmRemove = (name: string) => (event: SubmitEvent) => {
 		if (!confirm(t.admin.confirmRemove(name))) event.preventDefault();
 	};
@@ -139,7 +155,8 @@
 									return async ({ update, result }) => {
 										await update({ reset: false });
 										busy = false;
-										if (result.type === 'success') editing = null;
+										// A link stays open, so it can be copied.
+										if (result.type === 'success' && !result.data?.link) editing = null;
 									};
 								}}
 							>
@@ -152,6 +169,26 @@
 									{t.admin.groups}
 									<input name="groups" value={member.groups.join(', ')} list="group-names" autocomplete="off" placeholder={t.admin.groupsHint} />
 								</label>
+								<div class="link-box">
+									<span class="caption">{t.admin.accessLink}</span>
+									<p class="muted small">{t.admin.linkHint}</p>
+									{#if form?.link && form.link.email === member.email}
+										<p class="small">{t.admin.linkFor(member.name)}</p>
+										<div class="link-row">
+											<input readonly value={form.link.url} onfocus={(event) => event.currentTarget.select()} aria-label={t.admin.accessLink} />
+											<button class="ghost" type="button" onclick={() => copy(form!.link!.url)}>{copied ? t.admin.copied : t.admin.copy}</button>
+										</div>
+									{/if}
+									<div class="link-actions">
+										{#if member.link === 'active'}
+											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="show" formnovalidate>{t.admin.linkShow}</button>
+											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="new" formnovalidate onclick={confirmLink(t.admin.confirmNewLink(member.name))}>{t.admin.linkNew}</button>
+											<button class="ghost danger" disabled={busy} formaction="?/link" name="mode" value="revoke" formnovalidate onclick={confirmLink(t.admin.confirmRevokeLink(member.name))}>{t.admin.linkRevoke}</button>
+										{:else}
+											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="new" formnovalidate>{t.admin.linkCreate}</button>
+										{/if}
+									</div>
+								</div>
 								<div class="edit-actions">
 									<button class="button" disabled={busy}><Icon name="check" size={16} />{t.admin.save}</button>
 									<button class="ghost" type="button" onclick={() => (editing = null)}>{t.admin.cancel}</button>
@@ -166,6 +203,11 @@
 							<span class="muted">
 								{[mail(member.email), member.instrument, member.orchestras.join(', ')].filter(Boolean).join(' · ')}
 							</span>
+							{#if member.link}
+								<span class="status-tag" class:link-active={member.link === 'active'}>
+									{member.link === 'active' ? t.admin.accessLinkActive : t.admin.accessLinkRevoked}
+								</span>
+							{/if}
 							{#if member.current !== 'aktiv'}
 								<span class="status-tag">
 									{t.profile.statuses[member.current]}{member.current === 'pausiert' && member.pausedUntil
@@ -500,6 +542,51 @@
 		align-items: end;
 		gap: var(--space-3);
 		width: 100%;
+	}
+
+	.link-box {
+		display: grid;
+		gap: var(--space-2);
+		grid-column: 1 / -1;
+		padding-top: var(--space-3);
+		border-top: 1px dashed var(--border);
+	}
+
+	.link-box .muted,
+	.link-box .small {
+		margin: 0;
+	}
+
+	.caption {
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.link-row {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	.link-row input {
+		flex: 1;
+		font-family: ui-monospace, monospace;
+		font-size: 0.8125rem;
+	}
+
+	.link-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+
+	.ghost.danger {
+		color: var(--danger);
+	}
+
+	.status-tag.link-active {
+		background: var(--accent-soft);
+		color: var(--accent);
 	}
 
 	.edit-actions {

@@ -21,7 +21,8 @@ function archivePdfs(catalog: Catalog): Set<string> {
 
 /**
  * One part's PDF, fetched by the service account, so "Meine Noten" can merge a
- * member's parts in the browser. Only for signed-in members (with sign-in off the app
+ * member's parts in the browser, and members without a Google account (signed in by
+ * access link) can open single parts. Only for signed-in members (with sign-in off the app
  * is public, and the PDFs must stay behind Drive's own sharing), and only for PDFs that
  * are in the archive, never any other file the service account can see.
  */
@@ -40,6 +41,8 @@ export const GET: RequestHandler = async ({ params, locals }) => {
 	return new Response(file.body, {
 		headers: {
 			'content-type': PDF,
+			// Opened in the browser's own viewer, not saved.
+			'content-disposition': 'inline',
 			// Members only: never in a shared cache.
 			'cache-control': 'private, max-age=600',
 			'x-content-type-options': 'nosniff'

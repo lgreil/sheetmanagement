@@ -4,6 +4,9 @@ import type { PieceSummary } from '#lib/music/types.ts';
 import { addPiece } from '#lib/server/archive.ts';
 import type { Actions, PageServerLoad } from './$types';
 
+/** A piece in the list; `recording` marks a Hörbeispiel in the sheet. */
+type ListedPiece = PieceSummary & { recording: boolean };
+
 export const load: PageServerLoad = async ({ locals }) => {
 	const library = await getLibrary();
 	const canAdd = locals.access.rights.has('archiv.bearbeiten') && library.sheet === 'ok';
@@ -11,7 +14,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		return {
 			canAdd,
 			error: library.catalog.reason,
-			pieces: [] as PieceSummary[],
+			pieces: [] as ListedPiece[],
 			categories: [] as string[],
 			programs: [] as string[],
 			categoryFiles: {} as Record<string, { id: string; name: string; url: string }[]>
@@ -19,8 +22,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	// Only what the list shows; the parts stay on the server.
-	const pieces: PieceSummary[] = library.pieces.map(
-		({ id, title, composer, catalogue, category, programs, partCount, status, search }) => ({
+	const pieces: ListedPiece[] = library.pieces.map(
+		({ id, title, composer, catalogue, category, programs, partCount, status, search, sheet }) => ({
 			id,
 			title,
 			composer,
@@ -29,7 +32,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			programs,
 			partCount,
 			status,
-			search
+			search,
+			recording: !!sheet?.recording
 		})
 	);
 	const categories = [...new Set(pieces.map((piece) => piece.category).filter((c): c is string => !!c))];

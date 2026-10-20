@@ -75,6 +75,7 @@ export const de = {
 		all: 'Alle',
 		needsWork: 'Mit Lücken',
 		noMusic: 'Ohne Noten',
+		withRecording: (n: number) => `Mit Hörbeispiel · ${n}`,
 		byComposer: (composer: string) => `Werke von ${composer}`,
 		clearComposer: 'Komponisten-Filter entfernen',
 		categoryFiles: 'Dateien zu dieser Kategorie',
@@ -299,6 +300,15 @@ export const de = {
 		logout: 'Abmelden',
 		switchAccount: 'Mit einem anderen Konto anmelden'
 	},
+	accessLink: {
+		title: 'Zugang per Link',
+		hello: (name: string) => (name ? `Hallo ${name}!` : 'Hallo!'),
+		lead: 'Mit diesem persönlichen Link meldest du dich ohne Google-Konto an.',
+		signIn: 'Anmelden',
+		keep: 'Bewahre den Link gut auf und gib ihn nicht weiter. Er gilt, bis die Verwaltung einen neuen erzeugt.',
+		invalid: 'Dieser Link gilt nicht mehr. Bitte frag die Verwaltung nach einem neuen.',
+		toSignIn: 'Zur Anmeldung mit Google'
+	},
 	access: {
 		title: 'Zugang beantragen',
 		hello: (name: string) => `Hallo ${name}!`,
@@ -378,6 +388,20 @@ export const de = {
 		orchestras: 'Orchester',
 		status: 'Status',
 		onlyActive: 'Nur aktive',
+		linkUnavailable: 'Zugangslinks brauchen die Anmeldung mit SESSION_SECRET.',
+		accessLink: 'Zugangslink',
+		accessLinkActive: 'Zugang per Link',
+		accessLinkRevoked: 'Link gesperrt',
+		linkShow: 'Link anzeigen',
+		linkNew: 'Neuen Link erzeugen',
+		linkCreate: 'Zugangslink erzeugen',
+		linkRevoke: 'Link sperren',
+		linkHint: 'Für Mitglieder ohne Google-Konto. Schick den Link selbst, z. B. per WhatsApp oder E-Mail. Ein neuer Link oder „Sperren“ beendet den alten und meldet damit Angemeldete ab.',
+		linkFor: (name: string) => `Persönlicher Link für ${name}:`,
+		copy: 'Kopieren',
+		copied: 'Kopiert',
+		confirmNewLink: (name: string) => `Neuen Link für ${name} erzeugen? Der bisherige gilt dann nicht mehr.`,
+		confirmRevokeLink: (name: string) => `Link für ${name} sperren? Wer damit angemeldet ist, wird abgemeldet.`,
 		statusCounts: (active: number, paused: number, inactive: number) =>
 			[`${active} aktiv`, paused && `${paused} pausiert`, inactive && `${inactive} inaktiv`].filter(Boolean).join(' · ')
 	},
@@ -574,7 +598,8 @@ export const de = {
 				groups: 'Gruppen',
 				orchestras: 'Orchester',
 				status: 'Status',
-				pausedUntil: 'Pausiert bis'
+				pausedUntil: 'Pausiert bis',
+				linkVersion: 'Link-Version'
 			}
 		},
 		groups: {
@@ -751,7 +776,10 @@ export const de = {
 		notSetUp: 'Wünsche sind noch nicht eingerichtet: Auf der Seite „Tabelle einrichten“ wird das Blatt „Wünsche“ angelegt.',
 		signInNeeded: 'Wünsche brauchen eine Anmeldung, damit jede Person nur einmal „+1“ geben kann.',
 		gone: 'Diesen Wunsch gibt es nicht mehr.',
-		toPiece: 'Im Archiv'
+		toPiece: 'Im Archiv',
+		delete: 'Wunsch löschen',
+		confirmDelete: (title: string) => `„${title}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`,
+		notYours: 'Löschen kannst du nur eigene Wünsche, solange sie noch offen sind.'
 	},
 	legal,
 	common: {

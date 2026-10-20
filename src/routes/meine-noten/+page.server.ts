@@ -4,7 +4,7 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import type { Part } from '#lib/music/types.ts';
-import { fileUrl } from '#lib/server/catalog.ts';
+import { partUrl } from '#lib/server/catalog.ts';
 import { getLibrary, isPastConcert, type LibraryConcert } from '#lib/server/library.ts';
 import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
@@ -18,7 +18,14 @@ const YEAR = 365 * 24 * 60 * 60;
 const CHOICES = playableInstruments(config);
 
 const PDF = 'application/pdf';
-const shown = (part: Part) => ({ id: part.id, label: part.label, notes: part.notes, status: part.status, url: fileUrl(part.id, part.mimeType), pdf: part.mimeType === PDF });
+const shown = (part: Part, viaLink?: boolean) => ({
+	id: part.id,
+	label: part.label,
+	notes: part.notes,
+	status: part.status,
+	url: partUrl(part.id, part.mimeType, viaLink),
+	pdf: part.mimeType === PDF
+});
 
 /**
  * The concerts to show, one below the other: every upcoming one of the member's orchestras,
@@ -59,7 +66,8 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 				// One block per instrument the member plays.
 				matches: choices.map((choice) => {
 					const match = parts.length ? matchParts(parts, choice, music) : { own: [], shared: [] };
-					return { label: formatInstrument(choice), own: match.own.map(shown), shared: match.shared.map(shown) };
+					const show = (part: Part) => shown(part, locals.access.viaLink);
+					return { label: formatInstrument(choice), own: match.own.map(show), shared: match.shared.map(show) };
 				})
 			};
 		});
