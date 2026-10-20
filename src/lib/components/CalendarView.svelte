@@ -45,8 +45,9 @@
 	const mainType = (events: ShownEvent[]) =>
 		events.reduce<ShownEvent['type'] | null>((best, e) => (best === null || RANK[e.type] < RANK[best] ? e.type : best), null);
 	/**
-	 * Stuck on by hand: each sticker a little off its place, at its own angle and with its own
-	 * paper edge. Derived from the date, so a day looks the same on every visit.
+	 * Stuck on by hand: each sticker somewhere else in the free part of the day, at its own
+	 * angle and size, cut a little lopsided. Derived from the date, so a day looks the same
+	 * on every visit. --px and --py run from 0 to 1; the CSS maps them to the free area.
 	 */
 	function placement(key: string) {
 		let hash = 2166136261;
@@ -55,11 +56,19 @@
 		hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
 		hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
 		hash ^= hash >>> 16;
-		const pick = (bits: number, range: number) => (((hash >>> bits) & 0xff) / 255) * 2 * range - range;
+		// A second stream of bits for the shape, so it doesn't follow the position.
+		let more = Math.imul(hash ^ 0x9e3779b9, 2654435761);
+		more ^= more >>> 15;
+		const unit = (source: number, bits: number) => ((source >>> bits) & 0xff) / 255;
+		const pick = (bits: number, range: number) => unit(hash, bits) * 2 * range - range;
+		// Lopsided: each corner of the circle a little rounder or flatter.
+		const corner = (bits: number) => Math.round(42 + unit(more, bits) * 16);
 		return {
-			'--tilt': `${pick(0, 14).toFixed(1)}deg`,
-			'--dx': `${pick(8, 4).toFixed(1)}px`,
-			'--dy': `${pick(16, 3).toFixed(1)}px`,
+			'--tilt': `${pick(0, 25).toFixed(1)}deg`,
+			'--px': unit(hash, 8).toFixed(2),
+			'--py': unit(hash, 16).toFixed(2),
+			'--size': (0.86 + unit(more, 0) * 0.3).toFixed(2),
+			'--radius': `${corner(4)}% ${corner(8)}% ${corner(12)}% ${corner(16)}% / ${corner(20)}% ${corner(24)}% ${corner(2)}% ${corner(6)}%`,
 			edge: `url(#paper-edge-${(hash >>> 24) % 3})`
 		};
 	}
@@ -82,10 +91,10 @@
 	<!-- Rough, paper-like edges for the stickers: three cuts, so neighbours differ. Only the
 	     paper backing is filtered; the logo on it stays sharp. -->
 	<svg class="filters" width="0" height="0" aria-hidden="true" focusable="false">
-		{#each [3, 11, 27] as seed, i (seed)}
-			<filter id="paper-edge-{i}" x="-20%" y="-20%" width="140%" height="140%">
-				<feTurbulence type="fractalNoise" baseFrequency="0.13" numOctaves="2" {seed} result="noise" />
-				<feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+		{#each [{ seed: 3, frequency: 0.09 }, { seed: 11, frequency: 0.13 }, { seed: 27, frequency: 0.17 }] as cut, i (cut.seed)}
+			<filter id="paper-edge-{i}" x="-25%" y="-25%" width="150%" height="150%">
+				<feTurbulence type="fractalNoise" baseFrequency={cut.frequency} numOctaves="3" seed={cut.seed} result="noise" />
+				<feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
 			</filter>
 		{/each}
 	</svg>
@@ -281,7 +290,6 @@
 		min-height: 104px;
 		padding: 4px;
 		min-width: 0;
-		overflow: hidden;
 	}
 
 	.day + .day {
@@ -344,15 +352,17 @@
 		--paper: #fbf7ec;
 		--paper-shade: #ece4cf;
 		position: absolute;
-		top: 7px;
-		right: 7px;
+		/* Somewhere right of the date number and above the titles. */
+		/* People don't stick within the lines: some hang over the edge into the next day. */
+		left: calc(46% + var(--px, 0.5) * 50%);
+		top: calc(16px + var(--py, 0.5) * 40px);
 		z-index: 1;
 		display: grid;
 		place-items: center;
 		width: 38px;
 		height: 38px;
 		padding: 5px;
-		transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--tilt, -6deg));
+		transform: translate(-50%, -50%) rotate(var(--tilt, -6deg)) scale(var(--size, 1));
 		transition: transform 0.2s ease;
 	}
 
@@ -360,7 +370,7 @@
 	.paper {
 		position: absolute;
 		inset: 0;
-		border-radius: 50%;
+		border-radius: var(--radius, 50%);
 		background:
 			radial-gradient(circle at 30% 25%, var(--paper) 55%, var(--paper-shade) 100%);
 		filter: var(--edge, none) drop-shadow(0 1px 1px rgb(0 0 0 / 0.2)) drop-shadow(0 3px 3px rgb(0 0 0 / 0.18));
@@ -390,7 +400,7 @@
 	}
 
 	.day:hover > .sticker {
-		transform: translate(var(--dx, 0), calc(var(--dy, 0) - 1px)) rotate(calc(var(--tilt, -6deg) * 0.6)) scale(1.08);
+		transform: translate(-50%, calc(-50% - 1px)) rotate(calc(var(--tilt, -6deg) * 0.7)) scale(calc(var(--size, 1) * 1.06));
 	}
 
 	/* Not confirmed yet: pencilled in rather than stuck on. */
@@ -401,16 +411,16 @@
 
 	/* --- Concert days are a stage: curtains, a pelmet, and the logo in the spotlight. --- */
 	.stage {
+		overflow: hidden;
 		background: radial-gradient(ellipse at 50% 70%, color-mix(in oklab, var(--fringe) 22%, transparent), transparent 70%);
 	}
 
+	/* On stage, but not quite in the middle: whoever stuck it there was in a hurry. */
 	.stage > .sticker {
-		top: 50%;
-		left: 50%;
-		right: auto;
+		left: calc(38% + var(--px, 0.5) * 24%);
+		top: calc(40% + var(--py, 0.5) * 20%);
 		width: 48px;
 		height: 48px;
-		margin: -27px 0 0 -24px;
 		padding: 6px;
 		--paper: #f6dc8c;
 		--paper-shade: #c99b2c;
@@ -591,11 +601,12 @@
 
 	.sticker.mini {
 		position: relative;
+		left: auto;
 		top: auto;
-		right: auto;
 		width: 24px;
 		height: 24px;
 		padding: 2px;
+		transform: rotate(var(--tilt, -6deg));
 	}
 
 	.swatch {
@@ -664,23 +675,20 @@
 			display: none;
 		}
 
+		/* Below the number, wandering left and right. */
 		.day > .sticker {
-			top: auto;
-			right: auto;
-			bottom: 4px;
-			left: 50%;
+			left: calc(28% + var(--px, 0.5) * 44%);
+			top: calc(60% + var(--py, 0.5) * 16%);
 			width: 28px;
 			height: 28px;
-			margin-left: -14px;
 			padding: 3px;
 		}
 
 		.stage > .sticker {
-			top: auto;
-			bottom: 5px;
-			width: 26px;
-			height: 26px;
-			margin: 0 0 0 -13px;
+			left: calc(38% + var(--px, 0.5) * 24%);
+			top: calc(62% + var(--py, 0.5) * 10%);
+			width: 28px;
+			height: 28px;
 		}
 
 		.stage .number {
