@@ -7,6 +7,9 @@ import {
 	currentStatus,
 	lacksSurname,
 	maskEmail,
+	missingRoles,
+	planRoleRights,
+	roleRights,
 	parseDay,
 	parseEmailList,
 	parseStatus,
@@ -215,5 +218,48 @@ describe('member status and orchestras', () => {
 		expect(countingMembers(members, 'A', '2027-01-01').map((m) => m.name)).toEqual(['Anna A']);
 		expect(countingMembers(members, 'A', '2027-04-01').map((m) => m.name)).toEqual(['Anna A', 'Ben B']);
 		expect(countingMembers(members, undefined, '2027-04-01').map((m) => m.name)).toEqual(['Anna A', 'Ben B']);
+	});
+});
+
+describe('roles', () => {
+	const access = buildAccessList({
+		groups: [['Gruppe', 'Beschreibung'], ['Dirigat', ''], ['Vorstand', ''], ['Geigen', '']],
+		rights: [
+			['Wer', 'Recht'],
+			['dirigat', 'programme.bearbeiten'],
+			['Dirigat', 'anmeldungen.sehen'],
+			['Vorstand', 'mitglieder.verwalten'],
+			['anna@example.org', 'stuecke.bearbeiten']
+		]
+	});
+
+	it('collects the rights of each group, in the usual order', () => {
+		expect(Object.fromEntries(roleRights(access))).toEqual({
+			Dirigat: ['programme.bearbeiten', 'anmeldungen.sehen'],
+			Vorstand: ['mitglieder.verwalten'],
+			Geigen: []
+		});
+	});
+
+	it('plans the rows to add and remove for a role', () => {
+		const rows = [
+			{ row: 2, who: 'dirigat', right: 'programme.bearbeiten' },
+			{ row: 3, who: 'Dirigat', right: 'anmeldungen.sehen' },
+			{ row: 4, who: 'Dirigat', right: 'programme.bearbeiten' },
+			{ row: 5, who: 'anna@example.org', right: 'programme.bearbeiten' }
+		];
+		expect(planRoleRights(rows, 'Dirigat', ['programme.bearbeiten', 'stuecke.bearbeiten'])).toEqual({
+			add: ['stuecke.bearbeiten'],
+			remove: [3, 4]
+		});
+		expect(planRoleRights(rows, 'Dirigat', [])).toEqual({ add: [], remove: [2, 3, 4] });
+	});
+
+	it('offers only preset roles that are missing', () => {
+		const presets = [
+			{ name: 'dirigat', description: '', rights: [] },
+			{ name: 'Orga', description: '', rights: [] }
+		];
+		expect(missingRoles(presets, access.groups).map((role) => role.name)).toEqual(['Orga']);
 	});
 });

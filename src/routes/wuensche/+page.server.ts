@@ -4,7 +4,7 @@ import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { addWish, deleteWish, feedbackUser, formText, setWishStatus, voteOnWish } from '#lib/server/feedback.ts';
-import { getLibrary } from '#lib/server/library.ts';
+import { getLibrary, isPastConcert } from '#lib/server/library.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -14,9 +14,9 @@ const MANAGE = 'mitglieder.verwalten';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const user = feedbackUser(locals);
-	if (!user) return { state: 'sign-in' as const, wishes: [], canManage: false };
+	if (!user) return { state: 'sign-in' as const, wishes: [], canManage: false, concerts: [], archive: [] };
 	const [feedback, library] = await Promise.all([getFeedback(), getLibrary()]);
-	if (!feedback?.tables.wishes) return { state: 'not-set-up' as const, wishes: [], canManage: false };
+	if (!feedback?.tables.wishes) return { state: 'not-set-up' as const, wishes: [], canManage: false, concerts: [], archive: [] };
 
 	const canManage = locals.access.rights.has(MANAGE);
 	const me = user.email.toLowerCase();
@@ -25,6 +25,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		state: 'ready' as const,
 		canManage,
+		// Upcoming concerts in the sheet, soonest first, to suggest a piece for (#91).
+		concerts: upcomingConcerts(library),
+		// Archive titles to pick from; a wish for one links to it.
+		archive: library.pieces.map((piece) => piece.title),
 		wishes: sortWishes(feedback.wishes).map((wish) => ({
 			id: wish.id,
 			kind: wish.kind,
@@ -40,10 +44,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 			votes: wish.votes.length,
 			voted: wish.votes.includes(me),
 			canDelete: mayDeleteWish(wish, me, canManage),
-			pieceId: wish.kind === 'piece' && wish.title ? pieceByTitle.get(searchText(wish.title)) : undefined
+			pieceId: wish.pieceId ?? (wish.kind === 'piece' && wish.title ? pieceByTitle.get(searchText(wish.title)) : undefined),
+			pieceStatus: library.piecesById.get(wish.pieceId ?? pieceByTitle.get(searchText(wish.title)) ?? '')?.status,
+			concert: wish.concert
 		}))
 	};
 };
+
+function upcomingConcerts(library: Awaited<ReturnType<typeof getLibrary>>) {
+	return library.concerts
+		.filter((concert) => concert.sheet && !isPastConcert(concert, library.today))
+		.reverse()
+		.map((concert) => ({ title: concert.sheet!.title, label: concert.label?.long }));
+}
 
 /** Runs one change; a missing tab or a failed write becomes a message. */
 async function save(work: () => Promise<boolean | void>) {
@@ -70,11 +83,18 @@ export const actions: Actions = {
 		if (link === undefined) return fail(400, { message: t.wishes.invalidLink, kind });
 		if (kind === 'piece' && !title) return fail(400, { message: t.wishes.titleMissing, kind });
 		if (kind === 'feature' && !description) return fail(400, { message: t.wishes.descriptionMissing, kind });
+		// A piece from the archive is linked by its id; a concert must be an upcoming one.
+		const library = await getLibrary();
+		const archived = kind === 'piece' ? library.pieces.find((piece) => searchText(piece.title) === searchText(title)) : undefined;
+		const concertTitle = formText(data, 'concert');
+		const concert = upcomingConcerts(library).find((c) => c.title === concertTitle)?.title ?? '';
 		const wish = {
 			kind,
+			concert: kind === 'piece' ? concert : '',
+			pieceId: archived?.id,
 			// A feature request's title is the start of its description, so the sheet stays readable.
 			title: kind === 'piece' ? title : title || description.split('\n')[0].slice(0, 80),
-			composer: kind === 'piece' ? formText(data, 'composer') : '',
+			composer: kind === 'piece' ? formText(data, 'composer') || (archived?.composer ?? '') : '',
 			link,
 			description
 		};

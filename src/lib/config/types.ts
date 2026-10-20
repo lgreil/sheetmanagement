@@ -1,3 +1,5 @@
+import type { RolePreset } from '#lib/access/access.ts';
+
 /**
  * Everything an orchestra adjusts to run this app lives in one OrchestraConfig.
  * Presets in ./presets are complete examples; copy one and change what differs.
@@ -120,6 +122,11 @@ export interface OrchestraConfig {
 	 * instrumentation check, so a clarinettist also gets the B part. Instrument names as above.
 	 */
 	sharedParts?: Record<string, string[]>;
+	/**
+	 * Roles offered in /admin ("Standardrollen anlegen"): groups with a set of rights.
+	 * Once added they're ordinary rows in "Gruppen" and "Rechte" and can be changed freely.
+	 */
+	roles?: RolePreset[];
 	/** The orchestra's website, socials and newsletter, in the footer and on the start page. */
 	links?: OrchestraLink[];
 	/**

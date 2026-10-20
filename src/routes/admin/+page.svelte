@@ -67,6 +67,7 @@
 		if (!confirm(t.admin.confirmDeclineAll(count))) event.preventDefault();
 	};
 
+	const grantable = $derived(data.state === 'ready' ? data.rights.filter((r) => r.right !== 'ansehen') : []);
 	const rightLabel = (right: string) => data.rights?.find((r) => r.right === right)?.label ?? right;
 </script>
 
@@ -165,10 +166,12 @@
 								<div class="member-fields">
 									<MemberFields {member} instruments={data.playable} common={data.common} orchestras={data.orchestras} />
 								</div>
-								<label>
-									{t.admin.groups}
-									<input name="groups" value={member.groups.join(', ')} list="group-names" autocomplete="off" placeholder={t.admin.groupsHint} />
-								</label>
+								<fieldset class="member-roles">
+									<legend>{t.admin.memberRoles}</legend>
+									{#each [...new Set([...data.groups.map((g) => g.name), ...member.groups])] as group (group)}
+										<label class="check"><input type="checkbox" name="group" value={group} checked={member.groups.includes(group)} />{group}</label>
+									{/each}
+								</fieldset>
 								<div class="link-box">
 									<span class="caption">{t.admin.accessLink}</span>
 									<p class="muted small">{t.admin.linkHint}</p>
@@ -251,11 +254,60 @@
 	</section>
 
 	<section>
-		<h2>{t.admin.rightsTitle}</h2>
-		<p class="muted lead">{t.admin.rightsLead}</p>
+		<h2>{t.admin.roles}</h2>
+		<p class="muted lead">{t.admin.rolesLead}</p>
 		{#if data.bootstrapAdmins.length}
 			<p class="muted small">{t.admin.bootstrap(data.bootstrapAdmins.map(mail).join(', '))}</p>
 		{/if}
+		{#if data.roles.length}
+			<ul class="list">
+				{#each data.roles as role (role.name)}
+					<li class="row">
+						<form class="role" method="POST" action="?/setRole" use:enhance={submit}>
+							<input type="hidden" name="name" value={role.name} />
+							<div class="role-head">
+								<strong>{role.name}</strong>
+								<span class="muted">{t.admin.roleMembers(role.members)}</span>
+							</div>
+							<input class="role-description" name="description" value={role.description ?? ''} placeholder={t.admin.roleDescription} aria-label={t.admin.roleDescription} autocomplete="off" />
+							<div class="rights">
+								{#each grantable as option (option.right)}
+									<label class="check"><input type="checkbox" name="right" value={option.right} checked={role.rights.includes(option.right)} />{option.label}</label>
+								{/each}
+							</div>
+							<div class="edit-actions">
+								<button class="button" disabled={busy}><Icon name="check" size={16} />{t.admin.save}</button>
+								<button class="icon-button" disabled={busy} formaction="?/removeRole" title={t.admin.remove} aria-label={t.admin.remove} onclick={confirmLink(t.admin.confirmRemoveRole(role.name))}>
+									<Icon name="trash" size={16} />
+								</button>
+							</div>
+						</form>
+					</li>
+				{/each}
+			</ul>
+		{/if}
+		{#if data.missingRoles.length}
+			<form method="POST" action="?/addRoles" use:enhance={submit}>
+				<button class="ghost preset" disabled={busy}><Icon name="plus" size={16} />{t.admin.addPresetRoles(data.missingRoles.join(', '))}</button>
+			</form>
+		{/if}
+
+		<form class="add role-add" method="POST" action="?/setRole" use:enhance={submit}>
+			<h3>{t.admin.addRole}</h3>
+			<label>{t.admin.roleName}<input name="name" required autocomplete="off" /></label>
+			<label>{t.admin.roleDescription}<input name="description" autocomplete="off" /></label>
+			<div class="rights">
+				{#each grantable as option (option.right)}
+					<label class="check"><input type="checkbox" name="right" value={option.right} />{option.label}</label>
+				{/each}
+			</div>
+			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.add}</button>
+		</form>
+	</section>
+
+	<section>
+		<h2>{t.admin.singleRights}</h2>
+		<p class="muted lead">{t.admin.singleRightsLead}</p>
 		{#if data.grants.length}
 			<ul class="list">
 				{#each data.grants as grant (grant.who + grant.right)}
@@ -272,8 +324,6 @@
 					</li>
 				{/each}
 			</ul>
-		{:else}
-			<p class="empty">{t.admin.noGrants}</p>
 		{/if}
 
 		<form class="add" method="POST" action="?/grant" use:enhance={submit}>
@@ -284,7 +334,7 @@
 			<label>
 				{t.admin.right}
 				<select name="right" required>
-					{#each data.rights.filter((r) => r.right !== 'ansehen') as option (option.right)}
+					{#each grantable as option (option.right)}
 						<option value={option.right}>{option.label}</option>
 					{/each}
 				</select>
@@ -542,6 +592,57 @@
 		align-items: end;
 		gap: var(--space-3);
 		width: 100%;
+	}
+
+	.role {
+		display: grid;
+		gap: var(--space-2);
+		width: 100%;
+	}
+
+	.role-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-2);
+	}
+
+	.rights,
+	.member-roles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1) var(--space-4);
+	}
+
+	.rights label.check,
+	.member-roles label.check {
+		align-self: auto;
+		color: var(--text);
+		font-weight: 400;
+		font-size: 0.875rem;
+	}
+
+	.role-add .rights {
+		grid-column: 1 / -1;
+	}
+
+	.member-roles {
+		grid-column: 1 / -1;
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.member-roles legend {
+		margin-bottom: var(--space-1);
+		padding: 0;
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.preset {
+		margin-top: var(--space-2);
 	}
 
 	.link-box {

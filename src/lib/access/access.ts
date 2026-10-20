@@ -6,6 +6,7 @@ export const RIGHTS = [
 	'programme.bearbeiten',
 	'stuecke.bearbeiten',
 	'archiv.bearbeiten',
+	'anmeldungen.sehen',
 	'mitglieder.verwalten'
 ] as const;
 export type Right = (typeof RIGHTS)[number];
@@ -247,4 +248,48 @@ export function countingMembers<M extends Pick<Member, 'orchestras' | 'status' |
 	today: string
 ): M[] {
 	return members.filter((member) => currentStatus(member, today) === 'aktiv' && playsIn(member, orchestra));
+}
+
+/** A role is a group ("Gruppen") with rights ("Rechte"); members get roles through their groups. */
+export interface RolePreset {
+	name: string;
+	description: string;
+	rights: Right[];
+}
+
+/** The rights each group holds, by group name as written in "Gruppen" (case-insensitive match). */
+export function roleRights(list: Pick<AccessList, 'groups' | 'grants'>): Map<string, Right[]> {
+	const byKey = new Map<string, Right[]>();
+	for (const grant of list.grants) {
+		if (grant.who.includes('@')) continue;
+		const key = normalize(grant.who);
+		byKey.set(key, [...(byKey.get(key) ?? []), grant.right]);
+	}
+	return new Map(list.groups.map((group) => [group.name, RIGHTS.filter((right) => byKey.get(normalize(group.name))?.includes(right))]));
+}
+
+/**
+ * Setting a role's rights: which rights to add and which "Rechte" rows go. Rows for the
+ * role written in another case count as the role's; duplicates of a kept right go too.
+ */
+export function planRoleRights(
+	rows: { row: number; who: string; right: string }[],
+	role: string,
+	wanted: Right[]
+): { add: Right[]; remove: number[] } {
+	const kept = new Set<string>();
+	const remove: number[] = [];
+	for (const row of rows) {
+		if (row.who.includes('@') || normalize(row.who) !== normalize(role)) continue;
+		const right = row.right.trim().toLowerCase();
+		if (wanted.includes(right as Right) && !kept.has(right)) kept.add(right);
+		else remove.push(row.row);
+	}
+	return { add: wanted.filter((right) => !kept.has(right)), remove };
+}
+
+/** Preset roles not yet in "Gruppen", and the rights rows they bring. */
+export function missingRoles(presets: RolePreset[], groups: Pick<Group, 'name'>[]): RolePreset[] {
+	const known = new Set(groups.map((group) => normalize(group.name)));
+	return presets.filter((preset) => !known.has(normalize(preset.name)));
 }

@@ -85,6 +85,10 @@ export interface Wish {
 	submittedAt: string;
 	/** Emails of the people who gave a +1, lower case, each once. */
 	votes: string[];
+	/** The concert it's suggested for (its "Anlass"); empty: any time. */
+	concert: string;
+	/** The archive piece it's about, e.g. "Wieder spielen" (#108). */
+	pieceId?: string;
 }
 
 export interface Feedback {
@@ -161,7 +165,9 @@ export function buildFeedback(values: FeedbackValues): Feedback {
 			answer: v.answer,
 			submittedBy: v.submittedBy,
 			submittedAt: v.submittedAt,
-			votes: parseVotes(v.votes)
+			votes: parseVotes(v.votes),
+			concert: v.concert ?? '',
+			pieceId: v.pieceId || undefined
 		}));
 
 	return { reports, wishes, tables };

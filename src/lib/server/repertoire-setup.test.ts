@@ -89,7 +89,8 @@ describe('setUpSheet', () => {
 			'Meldungen',
 			'Wünsche',
 			'Fehlende Stimmen',
-			'Instrumentgruppen'
+			'Instrumentgruppen',
+			'Anmeldungen'
 		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
@@ -108,6 +109,7 @@ describe('setUpSheet', () => {
 			labels(t.feedbackValues.wishStatus),
 			undefined,
 			undefined,
+			labels(t.signups.answerValues),
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
 		expect(fake.tabs[9].values[0]).toEqual(['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt']);
@@ -118,8 +120,8 @@ describe('setUpSheet', () => {
 		expect(fake.tabs[10].values[0]).toEqual(['Stimme', 'Gespielt von', 'Gegenseitig', 'Notiz']);
 
 		const protections = (fake.requests as any[]).filter((r) => r.addProtectedRange).map((r) => r.addProtectedRange.protectedRange);
-		// Drive folder id, event id, report id, wish id and file id …
-		expect(protections.filter((p) => p.description === 'sheetmanagement: id column')).toHaveLength(5);
+		// Drive folder id, event id, report id, wish id, file id and the sign-ups' event id …
+		expect(protections.filter((p) => p.description === 'sheetmanagement: id column')).toHaveLength(6);
 		// … and piece, part and status of "Fehlende Stimmen", all warning only.
 		const generated = protections.filter((p) => p.description === 'sheetmanagement: generated column');
 		expect(generated.map((p) => p.range.startColumnIndex)).toEqual([0, 1, 2]);

@@ -3,7 +3,7 @@ import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
-import { addReport, feedbackUser, formText } from '#lib/server/feedback.ts';
+import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
@@ -26,6 +26,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		: [];
 	const work = workKey(piece.title);
 	const canClose = locals.access.rights.has('stuecke.bearbeiten');
+	// "Wieder spielen": the +1s on the piece's open or planned wish.
+	const user = feedbackUser(locals);
+	const againWish = (feedback?.wishes ?? []).find((wish) => wish.pieceId === piece.id && (wish.status === 'open' || wish.status === 'planned'));
 	return {
 		canEdit: locals.access.rights.has('stuecke.bearbeiten') && !!sheet,
 		saved: url.searchParams.has('gespeichert'),
@@ -77,6 +80,13 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				notes: sheet?.notes
 			}
 		},
+		again: user && feedback?.tables.wishes
+			? {
+					votes: againWish?.votes.length ?? 0,
+					mine: !!againWish?.votes.includes(user.email.toLowerCase()),
+					planned: againWish?.status === 'planned'
+				}
+			: null,
 		playedAt: piece.playedAt
 			.map((id) => library.concertsById.get(id))
 			.filter((concert) => concert !== undefined)
@@ -94,6 +104,20 @@ const sameComposer = (a: string | undefined, b: string | undefined) => !!a && !!
 const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({ id, title, catalogue, status, programs });
 
 export const actions: Actions = {
+	again: async ({ params, locals }) => {
+		const user = feedbackUser(locals);
+		if (!user) return fail(403, { againError: t.wishes.signInNeeded });
+		const piece = (await getLibrary()).piecesById.get(params.id);
+		if (!piece) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+		try {
+			return { againSaved: await playAgain(piece, user) };
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { againError: t.wishes.notSetUp });
+			console.error('Saving "Wieder spielen" failed:', cause);
+			return fail(503, { againError: t.wishes.failed });
+		}
+	},
+
 	report: async ({ params, request, locals }) => {
 		const user = feedbackUser(locals);
 		if (!user) return fail(403, { reportError: t.reports.signInNeeded });

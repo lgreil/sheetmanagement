@@ -43,6 +43,18 @@
 	}
 
 	const payload = $derived(JSON.stringify(entries.map(({ piece, notes }) => ({ piece, notes }))));
+
+	// Suggestions taken into the programme; on saving, their wishes become "geplant".
+	let takenWishes = $state<string[]>([]);
+	type Suggestion = Extract<typeof data, { state: 'ready' }>['suggestions']['wished'][number];
+	const inProgram = $derived(new Set(entries.map((entry) => entry.piece)));
+	const open = (list: Suggestion[]) => list.filter((s) => !s.name || !inProgram.has(s.name));
+	function take(suggestion: Suggestion) {
+		if (!suggestion.name) return;
+		add({ name: suggestion.name, title: suggestion.title, subtitle: suggestion.subtitle });
+		takenWishes.push(...suggestion.wishIds);
+	}
+	const year = (key?: string) => key?.slice(0, 4);
 </script>
 
 <Title title={t.editor.edit} />
@@ -95,6 +107,50 @@
 			</ul>
 		{/if}
 	</div>
+
+	{#if data.suggestions.wished.length || data.suggestions.longAgo.length}
+		<details class="suggestions" open={data.suggestions.wished.length > 0}>
+			<summary>
+				<Icon name="bulb" size={16} />{t.editor.suggestions}
+				{#if data.suggestions.wished.length}<span class="count">{data.suggestions.wished.length}</span>{/if}
+			</summary>
+			{#if data.suggestions.genres.length}
+				<p class="muted small">{t.editor.genres(data.suggestions.genres.join(', '))}</p>
+			{/if}
+			{#snippet list(items: Suggestion[])}
+				<ul class="suggestion-list">
+					{#each open(items) as suggestion (suggestion.pieceId ?? suggestion.title)}
+						<li>
+							<span class="body">
+								<strong>{suggestion.title}</strong>
+								<span class="hints">
+									{#if suggestion.votes}<span class="tag accent">{t.wishes.votes(suggestion.votes)}</span>{/if}
+									{#if suggestion.forThisConcert}<span class="tag accent">{t.editor.forThisConcert}</span>{/if}
+									{#if suggestion.lastPlayed}<span class="tag">{t.editor.lastPlayed(year(suggestion.lastPlayed) ?? '')}</span>{/if}
+									{#if suggestion.genre}<span class="tag" class:new={suggestion.newGenre}>{suggestion.genre}{suggestion.newGenre ? ` · ${t.editor.newGenre}` : ''}</span>{/if}
+									{#if suggestion.status && suggestion.status !== 'ok'}<span class="tag warn">{t.pieces.status[suggestion.status]}</span>{/if}
+									{#if !suggestion.name}<span class="tag">{t.editor.notInArchive}</span>{/if}
+								</span>
+							</span>
+							{#if suggestion.name}
+								<button type="button" class="take" onclick={() => take(suggestion)} title={t.editor.take}>
+									<Icon name="plus" size={16} /><span>{t.editor.take}</span>
+								</button>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/snippet}
+			{#if open(data.suggestions.wished).length}
+				<h3>{t.editor.wished}</h3>
+				{@render list(data.suggestions.wished)}
+			{/if}
+			{#if open(data.suggestions.longAgo).length}
+				<h3>{t.editor.longAgo}</h3>
+				{@render list(data.suggestions.longAgo)}
+			{/if}
+		</details>
+	{/if}
 
 	{#if entries.length}
 		<ol class="entries">
@@ -173,6 +229,7 @@
 	>
 		<input type="hidden" name="entries" value={payload} />
 		<input type="hidden" name="version" value={data.version} />
+		<input type="hidden" name="wishes" value={takenWishes.join(',')} />
 		<button class="button" disabled={saving}><Icon name="check" size={16} />{t.editor.save}</button>
 		<a class="cancel" href="/konzerte/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
 	</form>
@@ -424,6 +481,117 @@
 
 	@media (max-width: 560px) {
 		.handle {
+			display: none;
+		}
+	}
+
+	.suggestions {
+		margin-bottom: var(--space-4);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	.suggestions summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.suggestions .count {
+		padding: 0 var(--space-2);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.75rem;
+	}
+
+	.suggestions h3 {
+		margin: var(--space-3) 0 var(--space-1);
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.small {
+		margin: var(--space-2) 0 0;
+		font-size: 0.8125rem;
+	}
+
+	.suggestion-list {
+		display: grid;
+		gap: var(--space-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.suggestion-list li {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		padding: var(--space-2) 0;
+	}
+
+	.suggestion-list li + li {
+		border-top: 1px solid var(--border);
+	}
+
+	.suggestion-list .body {
+		display: grid;
+		gap: 2px;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.hints {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+	}
+
+	.tag {
+		padding: 0 6px;
+		border-radius: 6px;
+		background: var(--surface-2);
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 600;
+	}
+
+	.tag.accent,
+	.tag.new {
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.tag.warn {
+		color: var(--warn);
+	}
+
+	.take {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		height: 32px;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--bg);
+		color: var(--accent);
+		font: inherit;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	@media (max-width: 480px) {
+		.take span {
 			display: none;
 		}
 	}
