@@ -160,8 +160,7 @@ export const bachkreis: OrchestraConfig = {
 			solo: 'Solo',
 			notizen: 'mit Notizen',
 			zusatzstimmen: 'Zusatzstimmen',
-			fassung: 'Fassung',
-			'bass fassung': 'Bass-Fassung'
+			fassung: 'Fassung'
 		},
 		movementNote: 'Satz'
 	},

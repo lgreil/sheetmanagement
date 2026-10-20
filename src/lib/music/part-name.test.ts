@@ -81,7 +81,7 @@ describe('parsePartName', () => {
 		expect(parse('Elegie - Viola - LEER.pdf').status).toBe('empty');
 		expect(parse('Phantom-Synth-incomplete.pdf', 'Phantom-')).toMatchObject({ label: 'Synthesizer', status: 'incomplete' });
 		expect(parse('Elegie - Viola vereinfacht.pdf').notes).toEqual(['vereinfacht']);
-		expect(parse('Interstellar - Geige I - Bass-Fassung.pdf')).toMatchObject({ label: 'Geige I', notes: ['Bass-Fassung'] });
+		expect(parse('Fame - Geige I - Duplikat.pdf')).toMatchObject({ label: 'Geige I', notes: ['Duplikat'] });
 		expect(parse('@No Time to Die - Gesang.pdf')).toMatchObject({ kind: 'solo', featured: true });
 		expect(parse('Barcarolle-Solo.pdf', 'Barcarolle-')).toMatchObject({ label: 'Solo', kind: 'solo' });
 	});

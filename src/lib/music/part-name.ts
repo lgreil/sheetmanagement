@@ -47,6 +47,8 @@ export interface ParsedPart {
 	notes: string[];
 	status: PartStatus;
 	featured: boolean;
+	/** Words the parser couldn't place; a name with some isn't safe to rename automatically. */
+	unrecognized: string[];
 	/** Sort position: instrument order, then part number. */
 	order: number;
 }
@@ -102,7 +104,7 @@ export function parsePartName(
 		.map((key) => key.split(' '))
 		.sort((a, b) => b.length - a.length);
 
-	// Notes can span several words ("Bass-Fassung"), so they are matched like instruments.
+	// Notes can span several words ("mit Notizen"), so they are matched like instruments.
 	const noteKeys = Object.keys(naming.partNotes)
 		.map((key) => ({ tokens: tokenize(key), text: naming.partNotes[key] }))
 		.sort((a, b) => b.tokens.length - a.tokens.length);
@@ -286,9 +288,12 @@ export function parsePartName(
 	});
 
 	// Voice parts of singers ("Gesang SA", "Gesang B") keep their short voice names.
+	let unrecognized = unknown;
 	if (items.length > 0 && items.every((item) => item.instrument.family === 'gesang')) {
-		const voices = unknown.filter((token) => /^[satb]{1,4}$/.test(token)).map((t) => t.toUpperCase());
+		const isVoice = (token: string) => /^[satb]{1,4}$/.test(token);
+		const voices = unknown.filter(isVoice).map((t) => t.toUpperCase());
 		if (voices.length) label += ` ${voices.join(' ')}`;
+		unrecognized = unknown.filter((token) => !isVoice(token));
 	}
 
 	const soloNote = naming.partNotes.solo ?? 'Solo';
@@ -331,6 +336,7 @@ export function parsePartName(
 		notes,
 		status,
 		featured,
+		unrecognized,
 		order
 	};
 }

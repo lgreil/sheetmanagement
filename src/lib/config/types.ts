@@ -64,7 +64,7 @@ export interface NamingRules {
 	transpositions: Record<string, string>;
 	/**
 	 * Extra words describing a part file, lower-case words → shown text:
-	 * { vereinfacht: "vereinfacht", "bass fassung": "Bass-Fassung" }.
+	 * { vereinfacht: "vereinfacht", "mit notizen": "mit Notizen" }.
 	 */
 	partNotes: Record<string, string>;
 	/** Word for a movement number glued to the front of a file name ("4_Viola" → "Satz 4"). */
