@@ -192,15 +192,23 @@ export function checkSection(
 	const taken = new Set<string>();
 	const key = (name: string) => name.toLowerCase();
 	for (const draft of drafts) if (draft.build && draft.build(draft.notes) === draft.check.name) taken.add(key(draft.check.name));
-	return drafts.map(({ check, build, notes }) => {
-		if (!build) return check;
-		let suggested = build(notes);
-		if (suggested === check.name) return { ...check, state: 'ok' };
-		if (taken.has(key(suggested)) && !notes.includes('Duplikat')) suggested = build([...notes, 'Duplikat']);
-		if (taken.has(key(suggested))) return check;
-		taken.add(key(suggested));
-		return { ...check, state: 'rename', suggested };
-	});
+	// Copies ("Geige (1).pdf") come last, so the original keeps the plain name.
+	const isCopy = (name: string) => /\s\(\d+\)(\.[a-z0-9]{2,4})?$/i.test(name);
+	const order = drafts.map((_, i) => i).sort((a, b) => Number(isCopy(drafts[a].check.name)) - Number(isCopy(drafts[b].check.name)) || a - b);
+	const results: NameCheck[] = [];
+	for (const i of order) {
+		const { check, build, notes } = drafts[i];
+		results[i] = ((): NameCheck => {
+			if (!build) return check;
+			let suggested = build(notes);
+			if (suggested === check.name) return { ...check, state: 'ok' };
+			if (taken.has(key(suggested)) && !notes.includes('Duplikat')) suggested = build([...notes, 'Duplikat']);
+			if (taken.has(key(suggested))) return check;
+			taken.add(key(suggested));
+			return { ...check, state: 'rename', suggested };
+		})();
+	}
+	return results;
 }
 
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

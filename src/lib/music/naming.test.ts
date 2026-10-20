@@ -81,6 +81,15 @@ describe('checkSection', () => {
 	});
 });
 
+describe('copies', () => {
+	it('keeps the plain name for the original, whichever comes first', () => {
+		expect(check(['Lord of the Dance 2. Geige (1).pdf', 'Lord of the Dance 2. Geige.pdf'], 'Lord of the Dance')).toEqual([
+			['Lord of the Dance 2. Geige (1).pdf', 'rename', 'Lord of the Dance - Geige II Duplikat.pdf'],
+			['Lord of the Dance 2. Geige.pdf', 'rename', 'Lord of the Dance - Geige II.pdf']
+		]);
+	});
+});
+
 describe('short titles', () => {
 	it('uses composer and number for classical works, BWV for Bach', () => {
 		expect(guessShortTitle([pdf('Dvorak_9-4_ViolinI.pdf')], 'Sinfonie Nr. 9 Aus der neuen Welt', naming, { composer: 'Dvorak', catalogue: 'Op. 95' })).toBe('Dvorak 9');
