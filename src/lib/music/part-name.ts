@@ -1,5 +1,5 @@
 import type { Instrument, InstrumentFamily, NamingRules } from '#lib/config/index.ts';
-import { formatNumbers, parseNumeral, tokenize } from './text.ts';
+import { formatNumbers, isOrdinal, parseNumeral, tokenize } from './text.ts';
 import type { PartKind, PartStatus } from './types.ts';
 
 interface AliasEntry {
@@ -72,7 +72,13 @@ export function parsePartName(
 	matcher: InstrumentMatcher,
 	prefix = ''
 ): ParsedPart {
-	let name = fileName.trim().replace(/\.[a-z0-9]{2,4}$/i, '');
+	let name = fileName
+		.trim()
+		.replace(/\.[a-z0-9]{2,4}$/i, '')
+		// The extension typed into the name as well: "Pianopdf.pdf"
+		.replace(/(?<=[a-z])pdf$/i, '')
+		// A copy's suffix from Drive or the desktop: "Horn- (1).pdf"
+		.replace(/\s+\(\d+\)$/, '');
 	const featured = name.startsWith(naming.featuredPrefix);
 	if (featured) name = name.slice(naming.featuredPrefix.length).trim();
 	if (prefix && name.startsWith(prefix)) name = name.slice(prefix.length);
@@ -106,7 +112,9 @@ export function parsePartName(
 	const items: Item[] = [];
 	const unknown: string[] = [];
 	let status: PartStatus = 'ok';
-	let pendingNumber: number | undefined;
+	let pendingNumbers: number[] = [];
+	/** A key written before the instrument: "F Horn", "B-flat Clarinet". */
+	let pendingTransposition: string | undefined;
 	let joiner = '&';
 	let afterUnknownWord = false;
 
@@ -122,6 +130,28 @@ export function parsePartName(
 			}
 		}
 		return [undefined, at];
+	};
+
+	/** An unambiguous key directly followed by an instrument: [key, index of the instrument]. */
+	const keyBeforeInstrument = (at: number): [string, number] | undefined => {
+		const [transposition, after] = readTransposition(at, false);
+		return transposition && matchAt(tokens, after, matcher) ? [transposition, after] : undefined;
+	};
+
+	/** Part numbers before the instrument, maybe with a key: "1. Violine", "1. und 2. F Horn", "2nd B-flat Trumpet". */
+	const numbersBeforeInstrument = (at: number): { numbers: number[]; transposition?: string; after: number } | undefined => {
+		const numbers: number[] = [];
+		let k = at;
+		while (parseNumeral(tokens[k]) !== undefined) {
+			numbers.push(parseNumeral(tokens[k])!);
+			k++;
+			if (['+', '&', ',', 'und'].includes(tokens[k]) && parseNumeral(tokens[k + 1]) !== undefined) k++;
+			else break;
+		}
+		if (!numbers.length) return undefined;
+		if (matchAt(tokens, k, matcher)) return { numbers, after: k };
+		const key = keyBeforeInstrument(k);
+		return key ? { numbers, transposition: key[0], after: key[1] } : undefined;
 	};
 
 	let i = 0;
@@ -140,10 +170,12 @@ export function parsePartName(
 			afterUnknownWord = false;
 			const item: Item = {
 				instrument: match.instrument,
-				numbers: pendingNumber ? [pendingNumber] : [],
+				numbers: pendingNumbers,
+				transposition: pendingTransposition,
 				joiner
 			};
-			pendingNumber = undefined;
+			pendingNumbers = [];
+			pendingTransposition = undefined;
 			joiner = '&';
 			i += match.tokens.length;
 
@@ -184,13 +216,17 @@ export function parsePartName(
 			continue;
 		}
 
-		const wasAfterUnknownWord = afterUnknownWord;
+		// "Section II Violine": II belongs to "Section". An ordinal ("1st") never does.
+		const wasAfterUnknownWord = afterUnknownWord && !isOrdinal(token);
 		afterUnknownWord = false;
+		const leading = numbersBeforeInstrument(i);
 		if (statusWords[token]) {
 			status = statusWords[token];
-		} else if (parseNumeral(token) !== undefined && !wasAfterUnknownWord && matchAt(tokens, i + 1, matcher)) {
-			// "1. Violine", "2.Flöte" (but not "Section II Violine", where II belongs to "Section")
-			pendingNumber = parseNumeral(token);
+		} else if (leading && (!wasAfterUnknownWord || leading.numbers.length > 1)) {
+			// "1. Violine", "2.Flöte" (but not "Section II Violine", where II belongs to "Section";
+			// a list like "Dance 1. und 2. F Horn" is clear even after a word)
+			({ numbers: pendingNumbers, transposition: pendingTransposition, after: i } = leading);
+			continue;
 		} else if (parseNumeral(token) !== undefined && voice && readTransposition(i + 1, false, true)[0]) {
 			// Flexible voices written as "3Es", "1C": voice 3 in Es.
 			const [transposition, after] = readTransposition(i + 1, false, true);
@@ -206,6 +242,11 @@ export function parsePartName(
 				i = after;
 				continue;
 			}
+		} else if (keyBeforeInstrument(i)) {
+			const [transposition, after] = keyBeforeInstrument(i)!;
+			pendingTransposition = transposition;
+			i = after;
+			continue;
 		} else {
 			unknown.push(token);
 			afterUnknownWord = true;

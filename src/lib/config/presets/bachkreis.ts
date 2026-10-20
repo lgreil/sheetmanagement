@@ -22,7 +22,7 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'Oboe', family: 'holz', aliases: ['Oboen', 'Oboes'] },
 		{ name: 'Englischhorn', family: 'holz', aliases: ['English Horn', 'Cor Anglais'] },
 		{ name: 'Klarinette', family: 'holz', aliases: ['Klarinetten', 'Clarinet', 'Clarinets', 'Clarinette', 'Clarinettes', 'Clarinett', 'Calarinet', 'Clari'] },
-		{ name: 'Bassklarinette', family: 'holz', aliases: ['Bass Clarinet', 'Bass Clari'] },
+		{ name: 'Bassklarinette', family: 'holz', aliases: ['Bass Clarinet', 'Bass Clari', 'Bass Klarinette'] },
 		{ name: 'Fagott', family: 'holz', aliases: ['Fagotte', 'Bassoon', 'Bassoons', 'Bassoonpdf', 'Basson', 'Bassons'] },
 		{ name: 'Sopran-Saxophon', family: 'holz', aliases: ['Sopransaxophon', 'Soprano Sax'] },
 		{ name: 'Alt-Saxophon', family: 'holz', aliases: ['Altsaxophon', 'Alt Sax', 'Alto Sax', 'Alto Saxophone', 'Altsax', 'Alt Saxphone'] },
@@ -34,9 +34,9 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'Horn', family: 'blech', aliases: ['Hörner', 'Waldhorn', 'French Horn', 'Horns'] },
 		{ name: 'Trompete', family: 'blech', aliases: ['Trompeten', 'Trumpet', 'Trumpets'] },
 		{ name: 'Posaune', family: 'blech', aliases: ['Posaunen', 'Trombone', 'Trombones', 'Tombone', 'Pos'] },
-		{ name: 'Bassposaune', family: 'blech', aliases: ['Bass Trombone'] },
+		{ name: 'Bassposaune', family: 'blech', aliases: ['Bass Trombone', 'Bass Posaune'] },
 		{ name: 'Bariton', family: 'blech', aliases: ['Baritone', 'Euphonium'] },
-		{ name: 'Tuba', family: 'blech', aliases: ['Basstuba'] },
+		{ name: 'Tuba', family: 'blech', aliases: ['Basstuba', 'Bass Tuba'] },
 		{ name: 'Blech', family: 'blech', aliases: ['Blechbläser', 'Brass'] },
 
 		{ name: 'Pauke', family: 'schlagwerk', aliases: ['Pauken', 'Timpani', 'Timp'] },
@@ -75,7 +75,8 @@ export const bachkreis: OrchestraConfig = {
 			name: 'Kontrabass',
 			family: 'streicher',
 			aliases: ['Kontrabässe', 'Contrabass', 'Contrabasses', 'Double Bass', 'String Bass', 'Stringbass', 'Bass']
-		}
+		},
+		{ name: 'E-Bass', family: 'streicher', aliases: ['Bass Guitar', 'Electric Bass', 'E Bass'] }
 	],
 
 	naming: {
@@ -148,7 +149,9 @@ export const bachkreis: OrchestraConfig = {
 			a: 'A',
 			c: 'C',
 			d: 'D',
-			'hoch b': 'hoch B'
+			'hoch b': 'hoch B',
+			'b flat': 'B',
+			'e flat': 'Es'
 		},
 		partNotes: {
 			vereinfacht: 'vereinfacht',
@@ -183,6 +186,8 @@ export const bachkreis: OrchestraConfig = {
 		Saxophon: ['Sopran-Saxophon', 'Alt-Saxophon', 'Tenor-Saxophon', 'Bariton-Saxophon'],
 		Percussion: ['Schlagwerk', 'Pauke', 'Glockenspiel', 'Xylophon', 'Becken', 'Große Trommel', 'Trommel', 'Tamburin', 'Tamtam'],
 		Schlagwerk: ['Percussion', 'Becken', 'Große Trommel', 'Trommel', 'Tamburin', 'Tamtam'],
-		Continuo: ['Cembalo', 'Orgel', 'Violoncello', 'Kontrabass', 'Fagott']
+		Continuo: ['Cembalo', 'Orgel', 'Violoncello', 'Kontrabass', 'Fagott'],
+		// Most arrangements' bass guitar parts are played on the double bass.
+		'E-Bass': ['Kontrabass']
 	}
 };
