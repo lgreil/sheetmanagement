@@ -8,21 +8,22 @@
 	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
 	--accent-contrast: #fff;
 
-	--bg: #f7f4ec;
-	--surface: #fffdf8;
-	--surface-2: #efe9da;
-	--border: #e3dccb;
-	--text: #1a1814;
-	--text-muted: #6e675a;
+	/* Light: a bright, nearly neutral page with white cards on it; gold stays the accent. */
+	--bg: #f3f3f1;
+	--surface: #ffffff;
+	--surface-2: #e9e8e3;
+	--border: #d9d7d0;
+	--text: #161512;
+	--text-muted: #5c584f;
 
-	--ok: #2e7d4f;
-	--warn: #b7791f;
-	--danger: #c0392b;
+	--ok: #2a7548;
+	--warn: #8f5c0a;
+	--danger: #b8342a;
 
 	--radius-s: 8px;
 	--radius-m: 14px;
 	--radius-l: 20px;
-	--shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 4px 16px rgb(0 0 0 / 0.05);
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.06);
 
 	--space-1: 4px;
 	--space-2: 8px;
@@ -53,6 +54,9 @@
 		--text-muted: #a9a293;
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+		--ok: #2e7d4f;
+		--warn: #b7791f;
+		--danger: #c0392b;
 		color-scheme: dark;
 	}
 }
@@ -68,6 +72,9 @@
 	--text-muted: #a9a293;
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+	--ok: #2e7d4f;
+	--warn: #b7791f;
+	--danger: #c0392b;
 	color-scheme: dark;
 }
 

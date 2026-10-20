@@ -11,7 +11,14 @@ export const de = {
 		myParts: 'Meine Noten',
 		wishes: 'Wünsche',
 		reports: 'Meldungen',
-		admin: 'Verwaltung'
+		gaps: 'Fehlende Stimmen',
+		admin: 'Mitglieder & Rechte',
+		setup: 'Tabelle einrichten',
+		status: 'Status',
+		more: 'Mehr',
+		menu: 'Alle Seiten',
+		close: 'Menü schließen',
+		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
 	},
 	theme: {
 		label: 'Farbschema',
@@ -28,7 +35,25 @@ export const de = {
 		program: 'Programm',
 		nextRehearsal: 'Nächste Probe',
 		toConcert: 'Zum Konzert',
-		quickLinks: 'Schnellzugriff'
+		quickLinks: 'Alle Bereiche',
+		todo: {
+			title: 'Wartet auf dich',
+			reports: (n: number) => (n === 1 ? 'offene Meldung' : 'offene Meldungen'),
+			wishes: (n: number) => (n === 1 ? 'offener Wunsch' : 'offene Wünsche'),
+			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen')
+		},
+		/** One line under each page on the start page. */
+		describe: {
+			'/meine-noten': 'Deine Stimmen fürs nächste Konzert, in Programmreihenfolge.',
+			'/konzerte': 'Proben und Konzerte mit Programm.',
+			'/stuecke': 'Das komplette Notenarchiv mit allen Stimmen.',
+			'/fehlende-stimmen': 'Welche Stimmen fehlen oder unvollständig sind.',
+			'/wuensche': 'Stücke und Ideen vorschlagen, anderen zustimmen.',
+			'/meldungen': 'Gemeldete Probleme mit Noten bearbeiten.',
+			'/admin': 'Mitglieder, Gruppen, Rechte und Zugangsanfragen.',
+			'/setup': 'Die Repertoire-Tabelle anlegen oder ergänzen.',
+			'/status': 'Ob die Verbindung zu Google funktioniert.'
+		} as Record<string, string>
 	},
 	pieces: {
 		title: 'Stücke',
@@ -55,6 +80,7 @@ export const de = {
 		}
 	},
 	piece: {
+		details: 'Details',
 		back: 'Alle Stücke',
 		openFolder: 'Ordner in Google Drive',
 		recording: 'Hörbeispiel',
