@@ -151,13 +151,22 @@
 								<ul class="parts">
 									{#each [...piece.own.map((p) => ({ ...p, shared: false })), ...piece.shared.map((p) => ({ ...p, shared: true }))] as part (part.id)}
 										<li>
-											<a class="part" class:problem={part.status !== 'ok'} href={part.url} target="_blank" rel="noopener noreferrer">
+											<!-- A missing part is only a placeholder: nothing to open. -->
+											<svelte:element
+												this={part.status === 'missing' ? 'span' : 'a'}
+												class="part"
+												class:problem={part.status !== 'ok'}
+												class:missing={part.status === 'missing'}
+												href={part.status === 'missing' ? undefined : part.url}
+												target={part.status === 'missing' ? undefined : '_blank'}
+												rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
+											>
 												<Icon name="file" size={16} />
 												<span>{part.label}</span>
 												{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
 												{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
 												{#each part.notes as note (note)}<span class="tag">{note}</span>{/each}
-											</a>
+											</svelte:element>
 										</li>
 									{/each}
 								</ul>
@@ -298,7 +307,12 @@
 		font-weight: 600;
 	}
 
-	.part:hover {
+	.part.missing {
+		opacity: 0.7;
+		cursor: default;
+	}
+
+	a.part:hover {
 		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
 	}
 

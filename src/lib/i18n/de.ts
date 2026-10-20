@@ -88,6 +88,8 @@ export const de = {
 	},
 	piece: {
 		details: 'Details',
+		reportedMissing: 'Als fehlend gemeldet',
+		reportedMissingHint: 'Gemeldet, aber noch nicht bestätigt. Nach der Bestätigung steht ein Platzhalter im Ordner.',
 		back: 'Alle Stücke',
 		openFolder: 'Ordner in Google Drive',
 		recording: 'Hörbeispiel',
@@ -603,6 +605,14 @@ export const de = {
 		wishStatus: { open: 'offen', planned: 'geplant', done: 'erledigt', declined: 'abgelehnt' }
 	},
 	reports: {
+		placeholderCreated: (name: string) => `Platzhalter „${name}“ in Drive angelegt.`,
+		confirmMissing: 'Fehlt bestätigen',
+		confirmMissingHint: (name: string) => `Legt den Platzhalter „${name}“ als Google-Doc im Stückordner an und schließt die Meldung.`,
+		placeholderManual: 'Bitte von Hand als Google-Doc im Stückordner anlegen, dann die Meldung schließen:',
+		missingPart: 'Welche Stimme fehlt?',
+		missingNumber: 'Nummer',
+		notInFolder: 'Nicht im Ordner',
+		inFolder: 'Schon im Ordner (z. B. andere Nummer)',
 		report: 'Problem melden',
 		reportPart: (part: string) => `Problem mit „${part}“ melden`,
 		lead: 'Stimme fehlt, Scan unleserlich, Seiten fehlen? Kurz melden, dann kümmert sich jemand darum.',

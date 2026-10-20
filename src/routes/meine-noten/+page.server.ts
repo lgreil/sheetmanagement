@@ -2,7 +2,7 @@ import { fail } from '@sveltejs/kit';
 import { normalizeEmail } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { formatInstrument, matchParts, parseInstrument, playedParts, type InstrumentChoice } from '#lib/music/my-parts.ts';
+import { formatInstrument, matchParts, parseInstrument, playableInstruments, playedParts, type InstrumentChoice } from '#lib/music/my-parts.ts';
 import type { Part } from '#lib/music/types.ts';
 import { fileUrl } from '#lib/server/catalog.ts';
 import { getLibrary, isPastConcert, type LibraryConcert } from '#lib/server/library.ts';
@@ -15,9 +15,7 @@ const COOKIE = 'instrument';
 const YEAR = 365 * 24 * 60 * 60;
 
 /** Instruments to pick from: real instruments, not shared parts or numbered voices. */
-const CHOICES = config.instruments
-	.filter((instrument) => !instrument.voice && instrument.family !== 'sonstige' && instrument.name !== 'Holz' && instrument.name !== 'Blech')
-	.map((instrument) => instrument.name);
+const CHOICES = playableInstruments(config);
 
 const PDF = 'application/pdf';
 const shown = (part: Part) => ({ id: part.id, label: part.label, notes: part.notes, status: part.status, url: fileUrl(part.id, part.mimeType), pdf: part.mimeType === PDF });

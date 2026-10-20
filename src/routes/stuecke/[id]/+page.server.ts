@@ -1,6 +1,8 @@
 import { error, fail } from '@sveltejs/kit';
 import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
+import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
+import { formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText } from '#lib/server/feedback.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
@@ -49,7 +51,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 					: feedback?.tables.reports
 						? ('ready' as const)
 						: ('not-set-up' as const),
-			canClose
+			canClose,
+			instruments: playableInstruments(config),
+			present: [...new Set((detail?.parts ?? []).filter((part) => part.status !== 'missing').flatMap((part) => part.instruments))]
 		},
 		piece: {
 			id: piece.id,
@@ -102,12 +106,20 @@ export const actions: Actions = {
 		const fileId = formText(data, 'fileId');
 		const part = fileId ? piece.detail.parts.find((p) => p.id === fileId) : undefined;
 		if (fileId && !part) return fail(400, { reportError: t.reports.unknownPart });
+		// A missing part has no file: it's named by instrument and number, from the configured list.
+		const instrument = formText(data, 'missingInstrument');
+		let missingLabel = '';
+		if (kind === 'missing' && !fileId && instrument) {
+			if (!playableInstruments(config).includes(instrument)) return fail(400, { reportError: t.reports.unknownPart });
+			const number = Number(formText(data, 'missingNumber'));
+			missingLabel = formatInstrument({ instrument, ...(number >= 1 && number <= 8 ? { number } : {}) });
+		}
 
 		try {
 			await addReport(user, {
 				pieceId: piece.id,
 				pieceName: piece.title,
-				part: part?.label ?? '',
+				part: part?.label ?? missingLabel,
 				fileId,
 				kind,
 				comment: formText(data, 'comment', 1000)

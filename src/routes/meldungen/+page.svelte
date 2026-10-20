@@ -50,6 +50,22 @@
 								{#if report.marked}<span class="badge marked">{t.reports.marked(data.statusWords.find((s) => s.status === report.marked)?.word ?? '')}</span>{/if}
 							</span>
 						{/if}
+						{#if !done && report.placeholder && !report.placeholder.exists}
+							{@const manual = !data.driveWrite || form?.manual?.id === report.id}
+							<div class="placeholder">
+								{#if manual}
+									<span class="muted">{t.reports.placeholderManual}</span>
+									<code>{report.placeholder.name}</code>
+									<a href={report.placeholder.folderUrl} target="_blank" rel="noopener noreferrer"><Icon name="folder" size={14} />{t.naming.openFolder}</a>
+								{:else}
+									<form method="POST" action="?/confirmMissing" use:enhance={submit} title={t.reports.confirmMissingHint(report.placeholder.name)}>
+										<input type="hidden" name="id" value={report.id} />
+										<button class="btn small" disabled={busy}><Icon name="check" size={14} />{t.reports.confirmMissing}</button>
+									</form>
+									<span class="muted small">{t.reports.confirmMissingHint(report.placeholder.name)}</span>
+								{/if}
+							</div>
+						{/if}
 						{#if !done && data.driveWrite && report.fileId && !report.marked}
 							<form method="POST" action="?/mark" use:enhance={submit} class="mark" title={t.reports.markHint}>
 								<input type="hidden" name="id" value={report.id} />
@@ -95,6 +111,33 @@
 <style>
 	section {
 		margin-bottom: var(--space-6);
+	}
+
+	.placeholder {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2);
+		font-size: 0.875rem;
+	}
+
+	.placeholder code {
+		padding: 0 6px;
+		border-radius: 6px;
+		background: var(--surface-2);
+		user-select: all;
+	}
+
+	.placeholder a {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.small {
+		font-size: 0.8125rem;
 	}
 
 	.overview {

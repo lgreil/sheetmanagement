@@ -5,7 +5,7 @@ import { t } from '#lib/i18n/index.ts';
 import { withoutStatusWord, withStatusWord, type MarkableStatus } from '#lib/music/status-word.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
 import { runInBackground } from './env.ts';
-import { createComment, getFile, renameFile, replyToComment } from './google/drive.ts';
+import { createComment, createGoogleDoc, getFile, renameFile, replyToComment } from './google/drive.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle } from './services.ts';
 import { appendRecords, readTab, refreshAfterWrite, updateRecord } from './sheet-writes.ts';
 
@@ -135,6 +135,28 @@ export async function markReportedFile(id: string, status: MarkableStatus): Prom
 	});
 	if (!ok) return false;
 	await updateRecord('reports', table, row.row, { marked: config.naming.status[status] });
+	refreshArchive();
+	await refreshAfterWrite();
+	return true;
+}
+
+/**
+ * After someone with the right confirmed a reported missing part: creates the convention's
+ * placeholder (a Google Doc "<Kurztitel> - <Stimme> - FEHLT") in the piece folder and
+ * closes the report. False when Drive refused (or DRIVE_WRITE is off): nothing changed,
+ * and the placeholder can be made by hand. Undefined when the report is gone.
+ */
+export async function confirmMissingPart(id: string, placeholder: { name: string; folderId: string }): Promise<boolean | undefined> {
+	const table = await readTab('reports');
+	const row = table.rows.find((r) => r.values.id === id);
+	if (!row) return undefined;
+	if (!driveWriteEnabled()) return false;
+	const created = await inDrive('Creating a missing-part placeholder', () => createGoogleDoc(getGoogle().client, placeholder.name, placeholder.folderId));
+	if (!created) return false;
+	await updateRecord('reports', table, row.row, {
+		status: t.feedbackValues.reportStatus.done,
+		note: t.reports.placeholderCreated(placeholder.name)
+	});
 	refreshArchive();
 	await refreshAfterWrite();
 	return true;

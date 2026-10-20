@@ -135,3 +135,10 @@ export function slug(text: string): string {
 export function mergedFileName(concert: string, instrument: string): string {
 	return `${[slug(concert), 'komplett', slug(instrument)].filter(Boolean).join('-')}.pdf`;
 }
+
+/** Instruments a person plays or a missing part can be for: no shared parts, numbered voices or family parts. */
+export function playableInstruments(config: OrchestraConfig): string[] {
+	return config.instruments
+		.filter((instrument) => !instrument.voice && instrument.family !== 'sonstige' && instrument.name !== 'Holz' && instrument.name !== 'Blech')
+		.map((instrument) => instrument.name);
+}
