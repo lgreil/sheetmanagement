@@ -32,6 +32,7 @@ export const de = {
 	},
 	home: {
 		greeting: 'Willkommen',
+		title: (orchestra: string) => `Notenarchiv des ${orchestra}`,
 		intro: 'Noten, Konzerte und Programme an einem Ort, direkt aus Google Drive und dem Probenkalender.',
 		nextConcert: 'Nächstes Konzert',
 		nextConcertEmpty: 'Sobald der Kalender verbunden ist, steht hier das nächste Konzert mit Programm.',

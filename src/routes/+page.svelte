@@ -2,13 +2,9 @@
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
-	import { config } from '#lib/config/index.ts';
-	import { orchestraLinks } from '#lib/links.ts';
 	import { navGroups } from '#lib/nav.ts';
 
 	let { data } = $props();
-
-	const links = orchestraLinks(config.links);
 
 	// Every page by group, so the start page doubles as a map of the app.
 	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
@@ -27,15 +23,8 @@
 
 <section class="hero">
 	<p class="eyebrow">{t.home.greeting}</p>
-	<h1>{data.orchestraName}</h1>
+	<h1>{t.home.title(data.orchestraName)}</h1>
 	<p class="intro">{t.home.intro}</p>
-	{#if links.length}
-		<ul class="links" aria-label={t.footer.links}>
-			{#each links as link (link.url)}
-				<li><a href={link.url} target="_blank" rel="noopener noreferrer"><Icon name={link.icon} size={16} />{link.label}</a></li>
-			{/each}
-		</ul>
-	{/if}
 </section>
 
 <section class="next">
@@ -121,32 +110,6 @@
 		font-size: 0.875rem;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
-	}
-
-	.links {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.links a {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
-		padding: 4px 12px;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--surface);
-		font-size: 0.875rem;
-		font-weight: 500;
-	}
-
-	.links a:hover {
-		border-color: var(--accent);
-		color: var(--accent);
 	}
 
 	.intro {
