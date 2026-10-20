@@ -1,3 +1,4 @@
+import { SUGGESTED_STATUS, type Report } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import type { Part, PartStatus } from '#lib/music/types.ts';
 import { LAYOUT, readTable } from './sheet.ts';
@@ -33,6 +34,41 @@ export function archiveGaps(
 			status: part.status as GapStatus
 		}))
 	);
+}
+
+export interface ReportedGap {
+	id: string;
+	part: string;
+	fileId: string;
+	kind: Report['kind'];
+	comment: string;
+	/** What the report says about the part, while the file name doesn't say it (yet). */
+	status: GapStatus;
+}
+
+/** The status an open report stands for. "Stimme fehlt" counts as fehlt, the rest as the word the app would mark. */
+export const reportedStatus = (report: Pick<Report, 'kind' | 'marked'>): GapStatus =>
+	report.marked ?? (report.kind === 'missing' ? 'missing' : SUGGESTED_STATUS[report.kind]);
+
+/**
+ * Open reports as gaps, for parts whose file name doesn't mark a gap yet. A part that
+ * already is a gap keeps its own status, and several reports on one file count once.
+ */
+export function reportedGaps(
+	gapFileIds: Iterable<string>,
+	reports: Pick<Report, 'id' | 'part' | 'fileId' | 'kind' | 'comment' | 'marked'>[]
+): ReportedGap[] {
+	const seen = new Set(gapFileIds);
+	const result: ReportedGap[] = [];
+	for (const report of reports) {
+		if (report.fileId) {
+			if (seen.has(report.fileId)) continue;
+			seen.add(report.fileId);
+		}
+		const { id, part, fileId, kind, comment } = report;
+		result.push({ id, part, fileId, kind, comment, status: reportedStatus(report) });
+	}
+	return result;
 }
 
 /** Checkbox cells read as TRUE (or WAHR in a German sheet); people may also type x or ja. */

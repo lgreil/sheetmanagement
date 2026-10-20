@@ -61,13 +61,19 @@
 							<li>
 								<a href={gap.url} target="_blank" rel="noopener noreferrer">{gap.label}</a>
 								<span class="status {gap.status}">{t.piece.partStatus[gap.status]}</span>
+								{#if gap.reported}<span class="status reported" title={t.gaps.reportedHint}><Icon name="flag" size={12} />{t.gaps.reported}</span>{/if}
 								{#if gap.done}<span class="status done" title={t.gaps.doneHint}><Icon name="check" size={12} />{t.gaps.done}</span>{/if}
 							</li>
 						{/each}
 						{#each piece.reports as report (report.id)}
 							<li>
-								<span>{report.part || t.reports.wholePiece}</span>
-								<span class="status reported"><Icon name="flag" size={12} />{t.feedbackValues.reportKind[report.kind]}</span>
+								{#if report.url}
+									<a href={report.url} target="_blank" rel="noopener noreferrer">{report.part || t.reports.wholePiece}</a>
+								{:else}
+									<span>{report.part || t.reports.wholePiece}</span>
+								{/if}
+								<span class="status {report.status}">{t.piece.partStatus[report.status]}</span>
+								<span class="status reported" title={t.gaps.reportedHint}><Icon name="flag" size={12} />{t.gaps.reported}: {t.feedbackValues.reportKind[report.kind]}</span>
 								{#if report.comment}<span class="muted">„{report.comment}“</span>{/if}
 							</li>
 						{/each}
