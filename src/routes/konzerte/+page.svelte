@@ -2,6 +2,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
 	import AddToArchive from '#lib/components/AddToArchive.svelte';
+	import CalendarView from '#lib/components/CalendarView.svelte';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
@@ -13,6 +14,19 @@
 
 	type Filter = 'all' | 'concerts' | 'rehearsals';
 	let filter = $state<Filter>('all');
+
+	// svelte-ignore state_referenced_locally
+	let view = $state(data.view);
+	/** Remembered in a cookie, so the next visit starts in the same view without a jump. */
+	function show(next: 'list' | 'calendar') {
+		view = next;
+		document.cookie = `konzerte-ansicht=${next === 'calendar' ? 'kalender' : 'liste'}; path=/konzerte; max-age=31536000; samesite=lax`;
+	}
+	const calendarEvents = $derived(
+		data.events.filter((event) =>
+			filter === 'concerts' ? event.type === 'konzert' : filter === 'rehearsals' ? event.type === 'probe' || event.type === 'generalprobe' : true
+		)
+	);
 
 	export const snapshot = {
 		capture: () => filter,
@@ -28,6 +42,9 @@
 					: true
 		)
 	);
+
+	/** The very next date stands out in the list. */
+	const next = $derived(shown[0]?.id);
 
 	const months = $derived.by(() => {
 		const result: { key: string; label: string; events: ShownEvent[] }[] = [];
@@ -82,6 +99,14 @@
 				</button>
 			{/each}
 		</div>
+		<div class="views" role="radiogroup" aria-label={t.concerts.view}>
+			<button class="view" class:active={view === 'list'} role="radio" aria-checked={view === 'list'} onclick={() => show('list')}>
+				<Icon name="menu" size={16} />{t.concerts.list}
+			</button>
+			<button class="view" class:active={view === 'calendar'} role="radio" aria-checked={view === 'calendar'} onclick={() => show('calendar')}>
+				<Icon name="calendar" size={16} />{t.concerts.calendar}
+			</button>
+		</div>
 		{#if data.subscribeUrl}
 			<a class="subscribe" href={data.subscribeUrl} target="_blank" rel="noopener noreferrer">
 				<Icon name="calendar" size={16} />
@@ -90,6 +115,9 @@
 		{/if}
 	</div>
 
+	{#if view === 'calendar'}
+		<CalendarView events={calendarEvents} today={data.today} concertTitles={data.concertTitles} />
+	{:else}
 	<h2 class="section">{t.concerts.upcoming}</h2>
 	{#if months.length === 0}
 		<p class="none">{t.concerts.noUpcoming}</p>
@@ -98,24 +126,31 @@
 			<h3 class="month">{month.label}</h3>
 			<ul class="list">
 				{#each month.events as event (event.id)}
-					<li><EventRow {event} concertTitle={event.concertId ? data.concertTitles[event.concertId] : undefined} /></li>
+					<li class:next={event.id === next}>
+						{#if event.id === next}<span class="next-label">{t.concerts.next}</span>{/if}
+						<EventRow {event} concertTitle={event.concertId ? data.concertTitles[event.concertId] : undefined} />
+					</li>
 				{/each}
 			</ul>
 		{/each}
+	{/if}
 	{/if}
 
 {/if}
 
 {#if pastYears.length > 0 && filter !== 'rehearsals'}
-	<h2 class="section past">{t.concerts.past}</h2>
-	{#each pastYears as year (year.label)}
-		<h3 class="month">{year.label}</h3>
-		<ul class="list">
-			{#each year.concerts as concert (concert.id)}
-				<li><ConcertRow {concert} /></li>
-			{/each}
-		</ul>
-	{/each}
+	<!-- Folded away: the page is about what's coming. -->
+	<details class="past-block">
+		<summary class="section past">{t.concerts.past} <span class="past-count">{data.past.length}</span></summary>
+		{#each pastYears as year (year.label)}
+			<h3 class="month">{year.label}</h3>
+			<ul class="list">
+				{#each year.concerts as concert (concert.id)}
+					<li><ConcertRow {concert} /></li>
+				{/each}
+			</ul>
+		{/each}
+	</details>
 {/if}
 
 {#if data.archive.canAdd}
@@ -161,6 +196,65 @@
 		border-color: var(--accent);
 		background: var(--accent);
 		color: var(--accent-contrast);
+	}
+
+	.views {
+		display: inline-flex;
+		padding: 3px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+	}
+
+	.view {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		padding: 4px 12px;
+		border: 0;
+		border-radius: 999px;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 500;
+		cursor: pointer;
+	}
+
+	.view.active {
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	li.next {
+		position: relative;
+		box-shadow: inset 4px 0 0 var(--accent);
+		background: color-mix(in oklab, var(--accent) 6%, transparent);
+	}
+
+	.next-label {
+		position: absolute;
+		top: 6px;
+		right: var(--space-4);
+		padding: 0 var(--space-2);
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font-size: 0.6875rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.past-block summary {
+		cursor: pointer;
+	}
+
+	.past-count {
+		color: var(--text-muted);
+		font-family: var(--font-sans, inherit);
+		font-size: 0.9375rem;
 	}
 
 	.subscribe {

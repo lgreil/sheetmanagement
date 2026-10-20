@@ -3,7 +3,11 @@ import { config } from '#lib/config/index.ts';
 import { addConcert } from '#lib/server/archive.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ locals }) => {
+/** List or calendar, remembered per viewer in a cookie the page sets. */
+const VIEW_COOKIE = 'konzerte-ansicht';
+
+export const load: PageServerLoad = async ({ locals, cookies }) => {
+	const view = cookies.get(VIEW_COOKIE) === 'kalender' ? ('calendar' as const) : ('list' as const);
 	const library = await getLibrary();
 	const archive = { canAdd: locals.access.rights.has('archiv.bearbeiten') && library.sheet === 'ok', orchestras: config.orchestras };
 	const schedule = library.schedule;
@@ -12,7 +16,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const past = library.concerts.filter((concert) => isPastConcert(concert, library.today)).map(concertSummary);
 
 	if (!schedule.ok) {
-		return { error: schedule.reason, upcoming: [], past, concertTitles: {}, subscribeUrl: null, archive };
+		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {}, subscribeUrl: null, archive };
 	}
 
 	const concertTitles: Record<string, string> = {};
@@ -23,6 +27,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		error: null,
 		upcoming: schedule.events.filter((event) => !event.past),
+		// The calendar shows the recent past of the current month too.
+		events: schedule.events,
+		today: library.today,
+		view,
 		past,
 		concertTitles,
 		subscribeUrl: schedule.subscribeUrl,
