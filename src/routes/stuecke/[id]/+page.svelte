@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { t } from '#lib/i18n/index.ts';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -263,7 +264,19 @@
 {/snippet}
 
 <section class="played">
-	<h2>{t.piece.playedAt}</h2>
+	<div class="played-head">
+		<h2>{t.piece.playedAt}</h2>
+		{#if data.again}
+			<form method="POST" action="?/again" use:enhance={() => async ({ update }) => update({ reset: false })}>
+				<button class="again" class:mine={data.again.mine} aria-pressed={data.again.mine} title={t.piece.againHint}>
+					<Icon name="heart" size={16} />{data.again.mine ? t.piece.againMine : t.piece.again}
+					{#if data.again.votes}<span class="votes">{t.wishes.votes(data.again.votes)}</span>{/if}
+				</button>
+			</form>
+		{/if}
+	</div>
+	{#if form?.againError}<p class="placeholder" role="alert">{form.againError}</p>{/if}
+	{#if data.again?.planned}<p class="planned"><Icon name="check" size={14} />{t.piece.againPlanned}</p>{/if}
 	{#if data.playedAt.length}
 		<ul class="concerts">
 			{#each data.playedAt as concert (concert.id)}
@@ -747,5 +760,49 @@
 	.hint {
 		margin-top: var(--space-4);
 		font-size: 0.8125rem;
+	}
+
+	.played-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+
+	.again {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		height: 34px;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.again.mine {
+		border-color: var(--accent);
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.again .votes {
+		color: var(--text-muted);
+		font-weight: 700;
+	}
+
+	.planned {
+		display: flex;
+		align-items: center;
+		gap: var(--space-1);
+		margin-bottom: var(--space-2);
+		color: var(--ok);
+		font-size: 0.875rem;
 	}
 </style>

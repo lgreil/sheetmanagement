@@ -15,7 +15,8 @@ const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	concerts: 'eventId',
 	reports: 'id',
 	wishes: 'id',
-	missingParts: 'fileId'
+	missingParts: 'fileId',
+	signups: 'eventId'
 };
 /** Filled by the app; edits there are overwritten, so they get a warning. */
 const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
@@ -27,7 +28,8 @@ const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
 	members: ['pausedUntil'],
 	requests: ['requestedAt'],
 	reports: ['reportedAt'],
-	wishes: ['submittedAt', 'votes']
+	wishes: ['submittedAt', 'votes'],
+	signups: ['answeredAt']
 };
 const WIDTHS: Record<string, number> = {
 	title: 280,
@@ -202,7 +204,8 @@ export async function setUpSheet(
 		['wishes', 'kind', list(t.feedbackValues.wishKind)],
 		['wishes', 'status', list(t.feedbackValues.wishStatus)],
 		['missingParts', 'done', { type: 'BOOLEAN' }],
-		['instrumentGroups', 'mutual', { type: 'BOOLEAN' }]
+		['instrumentGroups', 'mutual', { type: 'BOOLEAN' }],
+		['signups', 'answer', list(t.signups.answerValues)]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

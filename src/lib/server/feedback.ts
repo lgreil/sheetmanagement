@@ -1,4 +1,4 @@
-import type { User } from '#lib/access/access.ts';
+import { normalizeEmail, type User } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
 import { markedStatus, mayDeleteWish, newId, parseVotes, readWishStatus, toggleVote, type ReportKind, type ReportStatus, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
@@ -7,7 +7,7 @@ import { eventDay } from '#lib/repertoire/dates.ts';
 import { runInBackground } from './env.ts';
 import { createComment, createGoogleDoc, getFile, renameFile, replyToComment } from './google/drive.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle } from './services.ts';
-import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord } from './sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord, updateRecords } from './sheet-writes.ts';
 
 /**
  * Writes for problem reports and wishes. Like the programme editor, every change starts
@@ -165,12 +165,15 @@ export async function confirmMissingPart(id: string, placeholder: { name: string
 /** An anonymous wish keeps no name or email in the sheet; its +1s still count per person. */
 export async function addWish(
 	user: User,
-	wish: { kind: WishKind; title: string; composer: string; link: string; description: string },
-	{ anonymous = false } = {}
+	wish: { kind: WishKind; title: string; composer: string; link: string; description: string; concert?: string; pieceId?: string },
+	{ anonymous = false, vote = false } = {}
 ): Promise<void> {
 	const table = await readTab('wishes');
 	await appendRecords('wishes', table, [
 		{
+			concert: wish.concert ?? '',
+			pieceId: wish.pieceId ?? '',
+			votes: vote ? normalizeEmail(user.email) : '',
 			kind: t.feedbackValues.wishKind[wish.kind],
 			title: wish.title,
 			composer: wish.composer,
@@ -183,6 +186,35 @@ export async function addWish(
 		}
 	]);
 	await refreshAfterWrite();
+}
+
+/**
+ * "Wieder spielen" on a piece page: the +1 on the piece's open or planned wish, or a new
+ * wish with the user's +1 when there is none. Returns whether the user now wants it.
+ */
+export async function playAgain(piece: { id: string; title: string; composer?: string }, user: User): Promise<boolean> {
+	const table = await readTab('wishes');
+	const open = [t.feedbackValues.wishStatus.open, t.feedbackValues.wishStatus.planned].map((label) => label.toLowerCase());
+	const row = table.rows.find((r) => r.values.pieceId === piece.id && open.includes(r.values.status.trim().toLowerCase()));
+	if (!row) {
+		await addWish(user, { kind: 'piece', title: piece.title, composer: piece.composer ?? '', link: '', description: '', pieceId: piece.id }, { vote: true });
+		return true;
+	}
+	const votes = toggleVote(parseVotes(row.values.votes), user.email);
+	await updateRecord('wishes', table, row.row, { votes: votes.join(', ') });
+	await refreshAfterWrite();
+	return votes.includes(normalizeEmail(user.email));
+}
+
+/** Taking suggestions into a programme: their wishes become "geplant". Already closed ones stay. */
+export async function planWishes(ids: string[]): Promise<void> {
+	if (!ids.length) return;
+	const table = await readTab('wishes');
+	const open = t.feedbackValues.wishStatus.open.toLowerCase();
+	const updates = table.rows
+		.filter((r) => ids.includes(r.values.id) && (!r.values.status.trim() || r.values.status.trim().toLowerCase() === open))
+		.map((r) => ({ row: r.row, values: { status: t.feedbackValues.wishStatus.planned } }));
+	await updateRecords('wishes', table, updates);
 }
 
 /** Gives or takes back the user's +1. False when the wish no longer exists. */

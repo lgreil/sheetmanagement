@@ -131,6 +131,10 @@ export const de = {
 		sectionFolder: 'Diesen Ordner in Google Drive',
 		otherVersions: 'Weitere Fassungen dieses Werks',
 		moreBy: (composer: string) => `Weitere Werke von ${composer}`,
+		again: 'Wieder spielen',
+		againMine: 'Möchte ich wieder spielen',
+		againHint: 'Zeigt der Programmplanung, dass du das Stück gern wieder spielen würdest. Nochmal klicken nimmt es zurück.',
+		againPlanned: 'Ist für ein Programm vorgemerkt.',
 		allBy: (composer: string) => `Alle Werke von ${composer}`,
 		playedAtNone: 'In der Repertoire-Tabelle steht noch kein Konzert mit diesem Stück.',
 		playedAtNoSheet: 'Sobald die Repertoire-Tabelle eingerichtet ist, steht hier, in welchen Konzerten dieses Stück gespielt wurde.',
@@ -154,6 +158,14 @@ export const de = {
 		noUpcoming: 'Gerade stehen keine Termine im Kalender.',
 		subscribe: 'Kalender abonnieren',
 		filters: { all: 'Alle', concerts: 'Konzerte', rehearsals: 'Proben' },
+		view: 'Ansicht',
+		list: 'Liste',
+		calendar: 'Kalender',
+		next: 'Als Nächstes',
+		today: 'Heute',
+		previousMonth: 'Vorheriger Monat',
+		nextMonth: 'Nächster Monat',
+		noEventsThatDay: 'An diesem Tag ist nichts eingetragen.',
 		types: {
 			konzert: 'Konzert',
 			generalprobe: 'Generalprobe',
@@ -300,6 +312,36 @@ export const de = {
 		logout: 'Abmelden',
 		switchAccount: 'Mit einem anderen Konto anmelden'
 	},
+	signups: {
+		title: 'Anmeldung',
+		question: 'Bist du dabei?',
+		answers: { yes: 'Ich komme', maybe: 'Vielleicht', no: 'Ich kann nicht' } as Record<string, string>,
+		answerValues: { yes: 'Zusage', maybe: 'Vielleicht', no: 'Absage' } as Record<string, string>,
+		yourAnswer: 'Deine Antwort',
+		instrument: 'Instrument bei diesem Termin',
+		ownInstrument: (instrument: string) => (instrument ? `wie im Profil (${instrument})` : 'wie im Profil'),
+		comment: 'Kommentar (optional)',
+		commentHint: 'z. B. komme später',
+		details: 'Instrument oder Kommentar ändern',
+		save: 'Speichern',
+		saved: 'Gespeichert.',
+		withdraw: 'Antwort zurückziehen',
+		signInNeeded: 'Für Zu- und Absagen bitte anmelden.',
+		notSetUp: 'Anmeldungen sind noch nicht eingerichtet: Auf der Seite „Tabelle einrichten“ wird das Blatt „Anmeldungen“ angelegt.',
+		failed: 'Die Antwort konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		gone: 'Diesen Termin gibt es nicht (mehr) oder er ist vorbei.',
+		coverage: 'Besetzung',
+		coverageLead: 'Zusagen je Stimme. Erwartet werden aktive Mitglieder des Orchesters.',
+		summary: (yes: number, maybe: number, no: number, open: number) =>
+			[`${yes} ${yes === 1 ? 'Zusage' : 'Zusagen'}`, maybe && `${maybe} vielleicht`, no && `${no} ${no === 1 ? 'Absage' : 'Absagen'}`, open && `${open} offen`]
+				.filter(Boolean)
+				.join(' · '),
+		uncovered: 'niemand',
+		noInstrument: 'Ohne Instrument',
+		kinds: { yes: 'kommen', maybe: 'vielleicht', no: 'können nicht', open: 'offen' } as Record<string, string>,
+		comments: 'Kommentare',
+		noOne: 'Noch keine Antworten und keine Mitglieder mit Instrument.'
+	},
 	accessLink: {
 		title: 'Zugang per Link',
 		hello: (name: string) => (name ? `Hallo ${name}!` : 'Hallo!'),
@@ -324,6 +366,7 @@ export const de = {
 		'programme.bearbeiten': 'Konzertprogramme bearbeiten',
 		'stuecke.bearbeiten': 'Angaben zu Stücken bearbeiten',
 		'archiv.bearbeiten': 'Frühere Konzerte und Stücke eintragen',
+		'anmeldungen.sehen': 'Zu- und Absagen aller sehen',
 		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
 	},
 	admin: {
@@ -388,6 +431,19 @@ export const de = {
 		orchestras: 'Orchester',
 		status: 'Status',
 		onlyActive: 'Nur aktive',
+		roles: 'Rollen',
+		rolesLead: 'Eine Rolle ist eine Gruppe mit Rechten. Mitglieder bekommen Rollen über „Bearbeiten“. Steht auch in den Blättern „Gruppen“ und „Rechte“.',
+		roleMembers: (n: number) => (n === 1 ? '1 Mitglied' : `${n} Mitglieder`),
+		roleNoRights: 'keine Rechte',
+		roleNameMissing: 'Bitte einen Namen für die Rolle angeben (keine E-Mail-Adresse).',
+		addRole: 'Rolle anlegen',
+		roleName: 'Name',
+		roleDescription: 'Beschreibung',
+		addPresetRoles: (names: string) => `Standardrollen anlegen: ${names}`,
+		confirmRemoveRole: (name: string) => `Rolle „${name}“ mit ihren Rechten entfernen?`,
+		singleRights: 'Einzelne Rechte',
+		singleRightsLead: 'Rechte für eine einzelne Person. Meist ist eine Rolle besser.',
+		memberRoles: 'Rollen und Gruppen',
 		linkUnavailable: 'Zugangslinks brauchen die Anmeldung mit SESSION_SECRET.',
 		accessLink: 'Zugangslink',
 		accessLinkActive: 'Zugang per Link',
@@ -483,6 +539,16 @@ export const de = {
 		}
 	},
 	editor: {
+		suggestions: 'Vorschläge',
+		wished: 'Gewünscht',
+		longAgo: 'Lange nicht gespielt',
+		genres: (genres: string) => `Genres im Programm: ${genres}`,
+		forThisConcert: 'für dieses Konzert',
+		lastPlayed: (year: string) => `zuletzt ${year}`,
+		newGenre: 'neues Genre',
+		notInArchive: 'nicht im Archiv',
+		take: 'Übernehmen',
+		openSuggestions: (n: number) => (n === 1 ? '1 Stückwunsch für die Planung' : `${n} Stückwünsche für die Planung`),
 		edit: 'Programm bearbeiten',
 		title: (concert: string) => `Programm: ${concert}`,
 		lead: 'Stücke hinzufügen, sortieren und speichern. Das Programm landet im Blatt „Programm“ der Repertoire-Tabelle.',
@@ -655,6 +721,8 @@ export const de = {
 				submittedBy: 'Eingereicht von',
 				submittedAt: 'Datum',
 				votes: '+1',
+				concert: 'Konzert',
+				pieceId: 'Stück-ID',
 				id: 'Wunsch-ID'
 			}
 		},
@@ -677,6 +745,19 @@ export const de = {
 				players: 'Gespielt von',
 				mutual: 'Gegenseitig',
 				note: 'Notiz'
+			}
+		},
+		signups: {
+			tab: 'Anmeldungen',
+			columns: {
+				event: 'Termin',
+				who: 'Wer',
+				name: 'Name',
+				answer: 'Antwort',
+				instrument: 'Instrument',
+				comment: 'Kommentar',
+				answeredAt: 'Datum',
+				eventId: 'Termin-ID'
 			}
 		}
 	},
@@ -777,6 +858,10 @@ export const de = {
 		signInNeeded: 'Wünsche brauchen eine Anmeldung, damit jede Person nur einmal „+1“ geben kann.',
 		gone: 'Diesen Wunsch gibt es nicht mehr.',
 		toPiece: 'Im Archiv',
+		titleHint: 'Titel, auch aus dem Archiv',
+		concert: 'Für welches Konzert?',
+		anyTime: 'irgendwann',
+		forConcert: (concert: string) => `für ${concert}`,
 		delete: 'Wunsch löschen',
 		confirmDelete: (title: string) => `„${title}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`,
 		notYours: 'Löschen kannst du nur eigene Wünsche, solange sie noch offen sind.'

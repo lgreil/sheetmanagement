@@ -1,0 +1,333 @@
+<script lang="ts">
+	import { enhance } from '$app/forms';
+	import { t } from '#lib/i18n/index.ts';
+	import { ANSWERS } from '#lib/signups/signups.ts';
+	import type { PageData } from '../../routes/konzerte/[id]/$types';
+	import Icon from './Icon.svelte';
+
+	/** "Bist du dabei?" on an upcoming event, and how well each section is covered (#94). */
+	type Ready = Extract<NonNullable<Extract<PageData, { kind: 'event' }>['signups']>, { state: 'ready' }>;
+	let {
+		signups,
+		result
+	}: {
+		signups: Ready;
+		result?: { signupError?: string; signupSaved?: boolean } | null;
+	} = $props();
+
+	let busy = $state(false);
+	const submit = () => {
+		busy = true;
+		return async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
+			await update({ reset: false });
+			busy = false;
+		};
+	};
+
+	const ICONS = { yes: 'check', maybe: 'minus', no: 'x' } as const;
+	const KINDS = ['yes', 'maybe', 'no', 'open'] as const;
+	const mine = $derived(signups.mine);
+	const otherSections = $derived(signups.instruments.filter((name) => !signups.ownSections.includes(name)));
+</script>
+
+<section class="signups" id="anmeldung">
+	<div class="ask">
+		<h2>{t.signups.question}</h2>
+		<form class="answers" method="POST" action="?/answer" use:enhance={submit}>
+			{#each ANSWERS as answer (answer)}
+				<button
+					class="answer {answer}"
+					class:chosen={mine?.answer === answer}
+					aria-pressed={mine?.answer === answer}
+					name="answer"
+					value={answer}
+					disabled={busy}
+				>
+					<Icon name={ICONS[answer]} size={16} />{t.signups.answers[answer]}
+				</button>
+			{/each}
+		</form>
+		{#if result?.signupError}<p class="msg error" role="alert">{result.signupError}</p>{/if}
+
+		{#if mine}
+			<details class="details">
+				<summary>
+					{t.signups.details}{mine.instrument ? ` · ${mine.instrument}` : ''}{mine.comment ? ` · „${mine.comment}“` : ''}
+				</summary>
+				<form class="details-form" method="POST" action="?/answer" use:enhance={submit}>
+					<input type="hidden" name="answer" value={mine.answer} />
+					<label class="field">
+						{t.signups.instrument}
+						<select name="instrument" value={mine.instrument}>
+							<option value="">{t.signups.ownInstrument(signups.ownInstrument)}</option>
+							{#each signups.ownSections as name (name)}<option value={name}>{name}</option>{/each}
+							<optgroup label="…">
+								{#each otherSections as name (name)}<option value={name}>{name}</option>{/each}
+							</optgroup>
+						</select>
+					</label>
+					<label class="field grow">
+						{t.signups.comment}
+						<input name="comment" value={mine.comment} maxlength="500" placeholder={t.signups.commentHint} autocomplete="off" />
+					</label>
+					<button class="btn small" disabled={busy}>{t.signups.save}</button>
+				</form>
+				<form method="POST" action="?/withdraw" use:enhance={submit}>
+					<button class="link" disabled={busy}>{t.signups.withdraw}</button>
+				</form>
+			</details>
+		{/if}
+	</div>
+
+	<div class="coverage">
+		<h2>{t.signups.coverage}</h2>
+		<p class="muted">{t.signups.summary(signups.totals.yes, signups.totals.maybe, signups.totals.no, signups.totals.open)}</p>
+		{#if signups.sections.length}
+			<ul class="sections">
+				{#each signups.sections as section (section.label)}
+					{@const expected = section.counts.yes + section.counts.maybe + section.counts.open}
+					<li class:uncovered={section.counts.yes === 0}>
+						<span class="label">{section.label}</span>
+						<span class="bar" aria-hidden="true">
+							<span class="yes" style:width="{expected ? (section.counts.yes / expected) * 100 : 0}%"></span>
+							<span class="maybe" style:width="{expected ? (section.counts.maybe / expected) * 100 : 0}%"></span>
+						</span>
+						<span class="count">
+							{#if section.counts.yes === 0}{t.signups.uncovered}{:else}{section.counts.yes}/{expected}{/if}
+						</span>
+						{#if section.names}
+							<details class="names">
+								<summary aria-label={section.label}><Icon name="down" size={14} /></summary>
+								<dl>
+									{#each KINDS as kind (kind)}
+										{#if section.names[kind].length}
+											<dt>{t.signups.kinds[kind]}</dt>
+											<dd>{section.names[kind].join(', ')}</dd>
+										{/if}
+									{/each}
+								</dl>
+							</details>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p class="muted">{t.signups.noOne}</p>
+		{/if}
+		{#if signups.comments.length}
+			<h3>{t.signups.comments}</h3>
+			<ul class="comments">
+				{#each signups.comments as comment, i (i)}<li><strong>{comment.name}:</strong> {comment.comment}</li>{/each}
+			</ul>
+		{/if}
+	</div>
+</section>
+
+<style>
+	.signups {
+		display: grid;
+		gap: var(--space-4);
+		margin-bottom: var(--space-5);
+		padding: var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	h2 {
+		margin: 0 0 var(--space-2);
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	h3 {
+		margin: var(--space-3) 0 var(--space-1);
+		font-size: 0.875rem;
+	}
+
+	.answers {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+
+	.answer {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		height: 40px;
+		padding: 0 var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+		font-size: 0.9375rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.answer.yes.chosen {
+		border-color: var(--ok);
+		background: color-mix(in oklab, var(--ok) 16%, transparent);
+	}
+
+	.answer.maybe.chosen {
+		border-color: var(--warn);
+		background: color-mix(in oklab, var(--warn) 16%, transparent);
+	}
+
+	.answer.no.chosen {
+		border-color: var(--danger);
+		background: color-mix(in oklab, var(--danger) 12%, transparent);
+	}
+
+	.answer:disabled {
+		opacity: 0.6;
+		cursor: progress;
+	}
+
+	.msg {
+		margin-top: var(--space-2);
+	}
+
+	.details {
+		margin-top: var(--space-3);
+		font-size: 0.875rem;
+	}
+
+	.details summary {
+		color: var(--text-muted);
+		cursor: pointer;
+	}
+
+	.details-form {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: end;
+		gap: var(--space-2) var(--space-3);
+		margin: var(--space-3) 0 var(--space-2);
+	}
+
+	.grow {
+		flex: 1;
+		min-width: 180px;
+	}
+
+	.link {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	.muted {
+		margin: 0 0 var(--space-2);
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.sections,
+	.comments {
+		display: grid;
+		gap: var(--space-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.sections li {
+		display: grid;
+		grid-template-columns: minmax(90px, 140px) 1fr auto auto;
+		align-items: center;
+		gap: var(--space-1) var(--space-3);
+		font-size: 0.875rem;
+	}
+
+	.label {
+		font-weight: 600;
+	}
+
+	.bar {
+		display: flex;
+		height: 8px;
+		overflow: hidden;
+		border-radius: 999px;
+		background: var(--surface-2);
+	}
+
+	.bar .yes {
+		background: var(--ok);
+	}
+
+	.bar .maybe {
+		background: color-mix(in oklab, var(--warn) 60%, transparent);
+	}
+
+	.count {
+		min-width: 3.5em;
+		color: var(--text-muted);
+		font-variant-numeric: tabular-nums;
+		text-align: right;
+	}
+
+	.uncovered .label,
+	.uncovered .count {
+		color: var(--danger);
+	}
+
+	.names {
+		display: contents;
+	}
+
+	.names summary {
+		display: grid;
+		place-items: center;
+		width: 24px;
+		height: 24px;
+		border-radius: 6px;
+		color: var(--text-muted);
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.names summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.names dl {
+		grid-column: 1 / -1;
+		display: grid;
+		grid-template-columns: auto 1fr;
+		gap: 2px var(--space-3);
+		margin: 0 0 var(--space-2);
+		padding: var(--space-2) var(--space-3);
+		border-radius: 8px;
+		background: var(--surface-2);
+	}
+
+	.names dt {
+		color: var(--text-muted);
+	}
+
+	.names dd {
+		margin: 0;
+	}
+
+	.comments {
+		font-size: 0.875rem;
+	}
+
+	@media (min-width: 800px) {
+		.signups {
+			grid-template-columns: minmax(260px, 1fr) 1.4fr;
+			align-items: start;
+		}
+	}
+</style>

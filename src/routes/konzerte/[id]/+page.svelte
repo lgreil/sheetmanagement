@@ -5,9 +5,10 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
+	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
 	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
 	const isConcert = $derived(data.kind === 'archive' || data.event.type === 'konzert');
@@ -61,6 +62,14 @@
 	{/if}
 </div>
 
+{#if data.kind === 'event' && data.signups}
+	{#if data.signups.state === 'ready'}
+		<Signups signups={data.signups} result={form} />
+	{:else}
+		<p class="placeholder signup-note">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
+	{/if}
+{/if}
+
 {#if data.kind === 'event' && data.event.description}
 	<section class="block">
 		<h2>{t.concert.description}</h2>
@@ -84,6 +93,11 @@
 			{/if}
 		</div>
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
+		{#if data.program.canEdit && data.program.suggestions}
+			<a class="suggestions-link" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
+				<Icon name="bulb" size={16} />{t.editor.openSuggestions(data.program.suggestions)}
+			</a>
+		{/if}
 		{#if data.program.items.length}
 			{#if data.kind === 'event' && !data.event.past}
 				<a class="btn my-parts" href="/meine-noten?konzert={encodeURIComponent(page.params.id ?? '')}">
@@ -232,6 +246,20 @@
 	}
 
 	.block {
+		margin-bottom: var(--space-5);
+	}
+
+	.suggestions-link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		margin: 0 0 var(--space-3) var(--space-1);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.signup-note {
 		margin-bottom: var(--space-5);
 	}
 

@@ -5,6 +5,7 @@ import { buildFeedback, FEEDBACK_TABS, type Feedback, type FeedbackValues } from
 import { readInstrumentGroups, type InstrumentGroups } from '#lib/music/instrument-groups.ts';
 import type { PieceDetail } from '#lib/music/types.ts';
 import { archiveGaps, doneFileIds, planMissingParts } from '#lib/repertoire/missing-parts.ts';
+import { buildSignups, type Signups } from '#lib/signups/signups.ts';
 import { buildRepertoire, LAYOUT, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
 import { cached } from './cache.ts';
 import { getCatalog } from './catalog.ts';
@@ -39,19 +40,20 @@ export async function readSheet(
 	feedback: FeedbackValues;
 	missingParts?: string[][];
 	instrumentGroups?: string[][];
+	signups?: string[][];
 }> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups'] as const).filter((key) =>
+	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups'] as const).filter((key) =>
 		info.tabs.includes(LAYOUT[key].tab)
 	);
 	const keys = [...REPERTOIRE_TABS, ...optional];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
 	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, ...access } = all;
-	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes }, missingParts, instrumentGroups };
+	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, ...access } = all;
+	return { values: { pieces, concerts, program }, access, feedback: { reports, wishes }, missingParts, instrumentGroups, signups };
 }
 
 export interface Sources {
@@ -122,13 +124,15 @@ interface SheetSnapshot {
 	missingPartsDone: string[];
 	/** null: the tab is missing or empty, so the preset's groups apply. */
 	instrumentGroups: InstrumentGroups | null;
+	/** null: the "Anmeldungen" tab is missing. */
+	signups: Signups | null;
 }
 
 function loadSheet(force: boolean) {
 	const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
 	const { client } = getGoogle();
 	return cached<SheetSnapshot>({
-		key: `repertoire:v4:${spreadsheetId}`,
+		key: `repertoire:v5:${spreadsheetId}`,
 		maxAgeMs: SHEET_MAX_AGE_MS,
 		// Memory only: a KV write per minute would use up the free tier's 1,000 writes a day.
 		build: async () => {
@@ -168,7 +172,8 @@ function loadSheet(force: boolean) {
 				instrumentGroups: readInstrumentGroups(
 					sheet.instrumentGroups,
 					config.instruments.map((instrument) => instrument.name)
-				)
+				),
+				signups: sheet.signups ? buildSignups(sheet.signups) : null
 			};
 		},
 		waitUntil: runInBackground,
@@ -235,6 +240,16 @@ export async function getFeedback({ force = false } = {}): Promise<Feedback | nu
 		if (!(error instanceof NotConfiguredError) && !(error instanceof SheetNotSetUpError)) {
 			console.error('Loading reports and wishes failed:', error);
 		}
+		return null;
+	}
+}
+
+/** Sign-ups for rehearsals and concerts; null when the tab is missing or the sheet can't be read. */
+export async function getSignups({ force = false } = {}): Promise<Signups | null> {
+	try {
+		return (await loadSheet(force)).value.signups;
+	} catch {
+		// getLibrary already logs why the sheet failed.
 		return null;
 	}
 }

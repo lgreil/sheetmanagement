@@ -1,5 +1,17 @@
 import { fail } from '@sveltejs/kit';
-import { currentStatus, normalizeEmail, parseLinkVersion, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
+import {
+	currentStatus,
+	missingRoles,
+	normalizeEmail,
+	parseLinkVersion,
+	planApproval,
+	planRoleRights,
+	resolveAccess,
+	RIGHTS,
+	roleRights,
+	splitGroups,
+	type Right
+} from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
@@ -57,7 +69,21 @@ export const load: PageServerLoad = async ({ locals }) => {
 				};
 			}) ?? [],
 		groups: list?.groups.map(({ name, description }) => ({ name, description })) ?? [],
-		grants: list?.grants.map(({ who, right }) => ({ who, right })) ?? [],
+		// Roles: the groups with their rights and how many members have them.
+		roles: list
+			? [...roleRights(list)].map(([name, rights]) => ({
+					name,
+					description: list.groups.find((group) => group.name === name)?.description,
+					rights,
+					members: list.members.filter((member) => member.groups.some((g) => normalize(g) === normalize(name))).length
+				}))
+			: [],
+		missingRoles: missingRoles(config.roles ?? [], list?.groups ?? []).map(({ name }) => name),
+		// Rights given to one person, or to a group name that isn't in "Gruppen".
+		grants:
+			list?.grants
+				.filter(({ who }) => who.includes('@') || !list.groups.some((group) => normalize(group.name) === normalize(who)))
+				.map(({ who, right }) => ({ who, right })) ?? [],
 		rights: RIGHTS.map((right) => ({ right, label: t.rights[right] })),
 		// The sheet's groups, or the preset's while the tab is empty.
 		instrumentGroups: groups
@@ -150,7 +176,9 @@ export const actions: Actions = {
 			const members = await readTab('members');
 			const row = members.rows.find((r) => normalizeEmail(r.values.email) === email);
 			if (!row) return t.admin.memberGone;
-			await updateRecord('members', members, row.row, writable(members, { ...form.values, groups: splitGroups(field(data, 'groups')).join(', ') }));
+			// Roles as ticked; the form lists every group the member has, so none is lost.
+			const groups = [...new Set(data.getAll('group').map((value) => String(value).trim().slice(0, 100)).filter(Boolean))];
+			await updateRecord('members', members, row.row, writable(members, { ...form.values, groups: groups.join(', ') }));
 		}),
 
 	removeMember: ({ request, locals }) =>
@@ -232,6 +260,53 @@ export const actions: Actions = {
 		if ('status' in result || version <= 0) return result;
 		return { ...result, link: { email, url: `${url.origin}/auth/link/${await linkToken(email, version, auth.sessionSecret)}` } };
 	},
+
+	/** A role's description and rights; a new name adds the role to "Gruppen". */
+	setRole: ({ request, locals }) =>
+		change(locals, async () => {
+			const data = await request.formData();
+			const name = field(data, 'name');
+			if (!name || name.includes('@')) return t.admin.roleNameMissing;
+			const wanted = RIGHTS.filter((right) => right !== 'ansehen' && data.getAll('right').includes(right));
+			const [groups, rights] = await Promise.all([readTab('groups'), readTab('rights')]);
+			const group = groups.rows.find((row) => normalize(row.values.name) === normalize(name));
+			const description = field(data, 'description');
+			if (!group) await appendRecords('groups', groups, [{ name, description }]);
+			else if (data.has('description') && group.values.description !== description) {
+				await updateRecord('groups', groups, group.row, { description });
+			}
+			const plan = planRoleRights(
+				rights.rows.map((row) => ({ row: row.row, who: row.values.who, right: row.values.right })),
+				group?.values.name ?? name,
+				wanted
+			);
+			if (plan.add.length) await appendRecords('rights', rights, plan.add.map((right) => ({ who: group?.values.name ?? name, right })));
+			await deleteRows('rights', plan.remove);
+		}),
+
+	/** Removes a role and its rights. Members keep the name in "Gruppen" until edited; it grants nothing. */
+	removeRole: ({ request, locals }) =>
+		change(locals, async () => {
+			const name = field(await request.formData(), 'name');
+			const [groups, rights] = await Promise.all([readTab('groups'), readTab('rights')]);
+			const plan = planRoleRights(
+				rights.rows.map((row) => ({ row: row.row, who: row.values.who, right: row.values.right })),
+				name,
+				[]
+			);
+			await deleteRows('rights', plan.remove);
+			await deleteRows('groups', groups.rows.filter((row) => normalize(row.values.name) === normalize(name)).map((row) => row.row));
+		}),
+
+	/** Adds the preset roles that are missing, with their rights. */
+	addRoles: ({ locals }) =>
+		change(locals, async () => {
+			const [groups, rights] = await Promise.all([readTab('groups'), readTab('rights')]);
+			const roles = missingRoles(config.roles ?? [], groups.rows.map((row) => ({ name: row.values.name })));
+			if (!roles.length) return;
+			await appendRecords('groups', groups, roles.map(({ name, description }) => ({ name, description })));
+			await appendRecords('rights', rights, roles.flatMap(({ name, rights: list }) => list.map((right) => ({ who: name, right }))));
+		}),
 
 	revoke: ({ request, locals }) =>
 		change(locals, async () => {

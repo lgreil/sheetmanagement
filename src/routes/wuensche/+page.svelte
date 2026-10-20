@@ -66,8 +66,25 @@
 		<form class="add" method="POST" action="?/add" use:enhance={submit}>
 			<input type="hidden" name="kind" value={kind} />
 			{#if kind === 'piece'}
-				<label class="field">{t.wishes.titleLabel}<input name="title" required maxlength="200" autocomplete="off" /></label>
+				<label class="field">
+					{t.wishes.titleLabel}
+					<input name="title" required maxlength="200" autocomplete="off" list="archive-titles" placeholder={t.wishes.titleHint} />
+				</label>
+				<datalist id="archive-titles">
+					{#each data.archive as title (title)}<option value={title}></option>{/each}
+				</datalist>
 				<label class="field">{t.wishes.composer}<input name="composer" maxlength="200" autocomplete="off" /></label>
+				{#if data.concerts.length}
+					<label class="field wide">
+						{t.wishes.concert}
+						<select name="concert">
+							<option value="">{t.wishes.anyTime}</option>
+							{#each data.concerts as concert (concert.title)}
+								<option value={concert.title}>{concert.title}{concert.label ? ` · ${concert.label}` : ''}</option>
+							{/each}
+						</select>
+					</label>
+				{/if}
 				<label class="field wide">
 					{t.wishes.link}
 					<input name="link" type="url" maxlength="500" placeholder={t.wishes.linkHint} autocomplete="off" />
@@ -113,6 +130,7 @@
 							{#if wish.status !== 'open'}
 								<span class="status {wish.status}">{t.feedbackValues.wishStatus[wish.status]}</span>
 							{/if}
+							{#if wish.concert}<span class="for-concert">{t.wishes.forConcert(wish.concert)}</span>{/if}
 						</div>
 						{#if wish.description && (wish.kind === 'piece' || wish.description !== wish.title)}
 							<p class="description">{wish.description}</p>
@@ -123,6 +141,7 @@
 							{/if}
 							{#if wish.pieceId}
 								<a href="/stuecke/{encodeURIComponent(wish.pieceId)}"><Icon name="music" size={14} />{t.wishes.toPiece}</a>
+								{#if wish.pieceStatus && wish.pieceStatus !== 'ok'}<span class="piece-status">{t.pieces.status[wish.pieceStatus]}</span>{/if}
 							{/if}
 						</div>
 						{#if wish.answer}<p class="answer"><strong>{t.wishes.answer}:</strong> {wish.answer}</p>{/if}
@@ -368,6 +387,20 @@
 	}
 
 	.small {
+		font-size: 0.8125rem;
+	}
+
+	.for-concert {
+		padding: 0 var(--space-2);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.75rem;
+		font-weight: 600;
+	}
+
+	.piece-status {
+		color: var(--warn);
 		font-size: 0.8125rem;
 	}
 
