@@ -183,6 +183,7 @@ export const de = {
 		counts: (rename: number, unclear: number, folders: number) =>
 			`${rename} Vorschläge · ${unclear} unklar · in ${folders} Ordnern`,
 		shortTitle: 'Kurztitel',
+		openFolder: 'Ordner in Drive',
 		shortTitleHint: 'Steht vor jeder Stimme. Kurz halten, damit die Stimme auf dem Handy lesbar bleibt.',
 		long: 'lang fürs Handy',
 		unclear: 'unklar',
@@ -235,6 +236,8 @@ export const de = {
 		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.',
 		forConcert: (concert: string) => `Meine Noten fürs ${concert}`,
 		concert: 'Konzert',
+		jumpTo: 'Springen zu',
+		more: (n: number) => (n === 1 ? 'Noch 1 Konzert' : `Noch ${n} Konzerte`),
 		instrument: 'Instrument',
 		number: 'Stimme',
 		anyNumber: 'alle',
@@ -261,7 +264,6 @@ export const de = {
 		skipUnreadable: 'die Datei ist keine lesbare PDF',
 		mergeHint: 'Fügt deine Stimmen in Programmreihenfolge zu einer Datei zusammen, zum Drucken oder fürs Tablet.',
 		mergeOff: 'Das Zusammenfügen geht nur mit Anmeldung.',
-		fileName: (concert: string, instrument: string) => `Meine Noten – ${concert} – ${instrument}.pdf`
 	},
 	auth: {
 		title: 'Anmelden',

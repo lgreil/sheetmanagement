@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { config } from '#lib/config/index.ts';
-import { coverage, formatInstrument, matchParts, parseInstrument, playedParts, programInstruments } from './my-parts.ts';
+import { coverage, formatInstrument, matchParts, mergedFileName, parseInstrument, playedParts, programInstruments } from './my-parts.ts';
 import { createInstrumentMatcher, parsePartName } from './part-name.ts';
 import type { Part } from './types.ts';
 
@@ -119,5 +119,13 @@ describe('instrumentation check', () => {
 	it('lists the instruments of a programme in the configured order, without group parts', () => {
 		const other = [part('Bolero - Partitur.pdf'), part('Bolero - Flöte.pdf'), part('Bolero - Schlagwerk.pdf'), part('Bolero - Holz.pdf')];
 		expect(programInstruments([parts, other], config)).toEqual(['Flöte', 'Schlagwerk', 'Geige', 'Viola', 'Violoncello']);
+	});
+});
+
+describe('mergedFileName', () => {
+	it('names the merged PDF after concert and instrument, without spaces or umlauts', () => {
+		expect(mergedFileName('Herbstkonzert', 'Violoncello')).toBe('herbstkonzert-komplett-violoncello.pdf');
+		expect(mergedFileName('1. Weihnachtskonzert 2026', 'Flöte II')).toBe('1-weihnachtskonzert-2026-komplett-floete-ii.pdf');
+		expect(mergedFileName('Konzert', 'Alt-Saxophon')).toBe('konzert-komplett-alt-saxophon.pdf');
 	});
 });

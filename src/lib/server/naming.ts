@@ -1,6 +1,7 @@
 import { config } from '#lib/config/index.ts';
 import { checkSection, guessShortTitle, type NameCheck, type NamingFile } from '#lib/music/naming.ts';
 import { createInstrumentMatcher } from '#lib/music/part-name.ts';
+import { folderUrl } from './catalog.ts';
 import type { Library } from './library.ts';
 
 /** One folder (or subfolder) of the archive as the naming check sees it. */
@@ -11,6 +12,8 @@ export interface NamingSection {
 	folderName: string;
 	/** "2. Satz" for a subfolder, empty for the files directly in the piece folder. */
 	section: string;
+	/** The folder in Drive the files are in (the subfolder for a movement). */
+	folderUrl: string;
 	files: NamingFile[];
 	/** The guessed short title the suggestions start from; people may change it. */
 	shortTitle: string;
@@ -34,6 +37,7 @@ export function namingSections(library: Library): NamingSection[] {
 				pieceId: detail.id,
 				folderName: detail.folderName,
 				section: section.label,
+				folderUrl: folderUrl(section.folderId),
 				files,
 				shortTitle: guessShortTitle(files, detail.title, config.naming, detail),
 				movement: Number(/^(\d+)\. Satz/.exec(section.label)?.[1]) || undefined,
