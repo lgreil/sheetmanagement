@@ -8,6 +8,7 @@
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import { isActive, navGroups, primaryNav } from '#lib/nav.ts';
+	import { orchestraLinks, safeLink } from '#lib/links.ts';
 
 	let { data, children } = $props();
 
@@ -17,6 +18,9 @@
 	// "Mehr" is highlighted on the pages only it links to.
 	const inMore = $derived(!nav.some((item) => isActive(item.href, path)) && groups.some((g) => g.items.some((item) => isActive(item.href, path))));
 	let menuOpen = $state(false);
+
+	const links = orchestraLinks(config.links);
+	const sourceUrl = safeLink(config.sourceUrl ?? '');
 
 	afterNavigate(() => (menuOpen = false));
 </script>
@@ -65,9 +69,27 @@
 
 	<main>
 		{@render children()}
-		<footer class="legal">
-			<a href="/datenschutz">{t.legal.links.privacy}</a>
-			<a href="/nutzungsbedingungen">{t.legal.links.terms}</a>
+		<footer class="footer">
+			{#if links.length}
+				<ul class="links" aria-label={t.footer.links}>
+					{#each links as link (link.url)}
+						<li>
+							<a href={link.url} target="_blank" rel="noopener noreferrer" title={link.label}>
+								<Icon name={link.icon} size={18} /><span>{link.label}</span>
+							</a>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<div class="legal">
+				<a href="/datenschutz">{t.legal.links.privacy}</a>
+				<a href="/nutzungsbedingungen">{t.legal.links.terms}</a>
+			</div>
+			{#if sourceUrl}
+				<p class="source">
+					{t.nav.appName} v{__APP_VERSION__} · <a href={sourceUrl} target="_blank" rel="noopener noreferrer">{t.footer.source}</a>
+				</p>
+			{/if}
 		</footer>
 	</main>
 
@@ -281,21 +303,48 @@
 			color: var(--accent);
 		}
 	}
-	.legal {
-		display: flex;
-		justify-content: center;
-		gap: var(--space-4);
+	.footer {
+		display: grid;
+		justify-items: center;
+		gap: var(--space-3);
 		margin-top: var(--space-6);
 		padding-top: var(--space-4);
 		border-top: 1px solid var(--border);
 		font-size: 0.8125rem;
-	}
-
-	.legal a {
 		color: var(--text-muted);
 	}
 
-	.legal a:hover {
+	.links {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--space-1) var(--space-3);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.links a {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: var(--space-1) var(--space-2);
+		border-radius: 999px;
+		font-size: 0.875rem;
+		font-weight: 500;
+	}
+
+	.legal {
+		display: flex;
+		justify-content: center;
+		gap: var(--space-4);
+	}
+
+	.footer a {
+		color: var(--text-muted);
+	}
+
+	.footer a:hover {
 		color: var(--accent);
 	}
 

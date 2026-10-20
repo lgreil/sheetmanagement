@@ -78,6 +78,17 @@ export interface EventKeywords {
 	konzert: string[];
 }
 
+/** Icons for the orchestra's links; anything else shows a globe. */
+export type LinkIcon = 'globe' | 'instagram' | 'facebook' | 'youtube' | 'mail';
+
+export interface OrchestraLink {
+	/** Shown next to the icon, and read out by screen readers. */
+	label: string;
+	/** Only http(s) links are shown. */
+	url: string;
+	icon?: LinkIcon;
+}
+
 export interface OrchestraConfig {
 	/** Default display name; the ORCHESTRA_NAME variable overrides it per deployment. */
 	name: string;
@@ -104,4 +115,11 @@ export interface OrchestraConfig {
 	 * instrumentation check, so a clarinettist also gets the B part. Instrument names as above.
 	 */
 	sharedParts?: Record<string, string[]>;
+	/** The orchestra's website, socials and newsletter, in the footer and on the start page. */
+	links?: OrchestraLink[];
+	/**
+	 * Link to the app's source code, shown as a quiet line in the footer. Off when unset:
+	 * a deployment for children and teens may not want to point to a personal profile.
+	 */
+	sourceUrl?: string;
 }

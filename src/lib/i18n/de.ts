@@ -20,6 +20,10 @@ export const de = {
 		close: 'Menü schließen',
 		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
 	},
+	footer: {
+		links: 'Das Orchester im Netz',
+		source: 'Quellcode'
+	},
 	theme: {
 		label: 'Farbschema',
 		system: 'System',
@@ -275,6 +279,10 @@ export const de = {
 		noRequests: 'Keine offenen Anfragen.',
 		approve: 'Freischalten',
 		decline: 'Ablehnen',
+		approveAll: (n: number) => `Alle ${n} freischalten`,
+		declineAll: 'Alle ablehnen',
+		confirmDeclineAll: (n: number) => `Wirklich alle ${n} Anfragen ablehnen?`,
+		requestGone: 'Diese Anfrage gibt es nicht mehr.',
 		members: 'Mitglieder',
 		noMembers: 'Noch keine Mitglieder eingetragen.',
 		addMember: 'Mitglied hinzufügen',
@@ -611,6 +619,9 @@ export const de = {
 		status: 'Status',
 		setStatus: 'Speichern',
 		submittedBy: (name: string, date: string) => `Von ${name} · ${date}`,
+		anonymous: 'anonym',
+		anonymousLabel: 'Anonym einreichen',
+		anonymousHint: 'Dein Name wird nicht gespeichert, auch nicht für die Verwaltung. Du kannst den Wunsch dann später nicht mehr bearbeiten oder zurückziehen.',
 		invalidLink: 'Der Link muss mit http:// oder https:// beginnen.',
 		titleMissing: 'Bitte einen Titel angeben.',
 		descriptionMissing: 'Bitte beschreiben, was die App können soll.',

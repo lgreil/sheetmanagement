@@ -145,3 +145,28 @@ export function parseEmailList(text: string | undefined): string[] {
 		.map(normalizeEmail)
 		.filter((email) => email.includes('@'));
 }
+
+/**
+ * Approving access requests: who becomes a member (each email once, skipping existing
+ * members) and which request rows go. Only the emails the admin saw are touched, so a
+ * request that arrives meanwhile stays open.
+ */
+export function planApproval(
+	memberEmails: string[],
+	requests: { row: number; email: string; name: string }[],
+	emails: string[]
+): { add: { email: string; name: string }[]; remove: number[] } {
+	const wanted = new Set(emails.map(normalizeEmail));
+	const known = new Set(memberEmails.map(normalizeEmail));
+	const add: { email: string; name: string }[] = [];
+	const remove: number[] = [];
+	for (const request of requests) {
+		const email = normalizeEmail(request.email);
+		if (!wanted.has(email)) continue;
+		remove.push(request.row);
+		if (known.has(email)) continue;
+		known.add(email);
+		add.push({ email, name: request.name });
+	}
+	return { add, remove };
+}

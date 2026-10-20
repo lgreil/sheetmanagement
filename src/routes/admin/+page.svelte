@@ -21,6 +21,10 @@
 		if (!confirm(t.admin.confirmRemove(name))) event.preventDefault();
 	};
 
+	const confirmDeclineAll = (count: number) => (event: SubmitEvent) => {
+		if (!confirm(t.admin.confirmDeclineAll(count))) event.preventDefault();
+	};
+
 	const rightLabel = (right: string) => data.rights?.find((r) => r.right === right)?.label ?? right;
 </script>
 
@@ -42,7 +46,22 @@
 	{/if}
 
 	<section>
-		<h2>{t.admin.requests}</h2>
+		<div class="section-head">
+			<h2>{t.admin.requests} {#if data.requests.length}<span class="count">{data.requests.length}</span>{/if}</h2>
+			{#if data.requests.length > 1}
+				<!-- Only the requests shown here; one that arrives meanwhile stays open. -->
+				<div class="bulk">
+					<form method="POST" action="?/approve" use:enhance={submit}>
+						{#each data.requests as request (request.email)}<input type="hidden" name="email" value={request.email} />{/each}
+						<button class="button" disabled={busy}>{t.admin.approveAll(data.requests.length)}</button>
+					</form>
+					<form method="POST" action="?/decline" use:enhance={submit} onsubmit={confirmDeclineAll(data.requests.length)}>
+						{#each data.requests as request (request.email)}<input type="hidden" name="email" value={request.email} />{/each}
+						<button class="ghost" disabled={busy}>{t.admin.declineAll}</button>
+					</form>
+				</div>
+			{/if}
+		</div>
 		{#if data.requests.length}
 			<ul class="list">
 				{#each data.requests as request (request.email)}
@@ -188,6 +207,24 @@
 		grid-column: 1 / -1;
 		margin: 0;
 		font-size: 1rem;
+	}
+
+	.section-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+		margin-bottom: var(--space-2);
+	}
+
+	.section-head h2 {
+		margin-bottom: 0;
+	}
+
+	.bulk {
+		display: flex;
+		gap: var(--space-2);
 	}
 
 	.count {

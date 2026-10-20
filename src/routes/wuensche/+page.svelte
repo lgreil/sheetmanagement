@@ -72,6 +72,10 @@
 			{:else}
 				<label class="field wide">{t.wishes.description}<textarea name="description" required maxlength="2000"></textarea></label>
 			{/if}
+			<label class="anonymous wide">
+				<input type="checkbox" name="anonymous" />
+				<span>{t.wishes.anonymousLabel} <span class="muted">{t.wishes.anonymousHint}</span></span>
+			</label>
 			<div class="actions">
 				<button class="btn" disabled={busy}><Icon name="plus" size={16} />{t.wishes.send}</button>
 				<button class="btn ghost" type="button" onclick={() => (adding = false)}>{t.reports.cancel}</button>
@@ -191,6 +195,18 @@
 
 	.add-button {
 		margin-bottom: var(--space-4);
+	}
+
+	.anonymous {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-2);
+		font-size: 0.9375rem;
+	}
+
+	.anonymous input {
+		margin-top: 4px;
+		accent-color: var(--accent);
 	}
 
 	.add {
