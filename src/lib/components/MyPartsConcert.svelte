@@ -27,7 +27,7 @@
 	let skipped = $state<{ piece: string; label: string; reason: string }[]>([]);
 
 	/** The part's pages, or why it couldn't be added. */
-	async function loadPart(PDFDocument: typeof import('pdf-lib').PDFDocument, id: string) {
+	async function loadPart(PDFDocument: typeof import('@cantoo/pdf-lib').PDFDocument, id: string) {
 		let response: Response;
 		try {
 			response = await fetch(`/api/noten/${encodeURIComponent(id)}`);
@@ -45,7 +45,9 @@
 			return { reason: t.myParts.skipHttp(response.status, message) };
 		}
 		try {
-			return { doc: await PDFDocument.load(await response.arrayBuffer(), { ignoreEncryption: true }) };
+			// Some publishers' PDFs are encrypted without a password (copy protection only); the
+			// empty password decrypts them, otherwise their pages can't be read (#80).
+			return { doc: await PDFDocument.load(await response.arrayBuffer(), { password: '' }) };
 		} catch (error) {
 			console.error(error);
 			return { reason: t.myParts.skipUnreadable };
@@ -59,7 +61,7 @@
 		skipped = [];
 		try {
 			progress = t.myParts.merging(0, files.length);
-			const { PDFDocument } = await import('pdf-lib');
+			const { PDFDocument } = await import('@cantoo/pdf-lib');
 			const merged = await PDFDocument.create();
 			// One broken file shouldn't cost the whole PDF: it's left out and named.
 			for (const [i, file] of files.entries()) {
@@ -87,7 +89,7 @@
 			link.click();
 			setTimeout(() => URL.revokeObjectURL(link.href), 60_000);
 		} catch (error) {
-			// Loading pdf-lib failed (offline, or an old cached page after a deploy).
+			// Loading the PDF library failed (offline, or an old cached page after a deploy).
 			console.error(error);
 			mergeError = `${t.myParts.mergeFailed} ${error instanceof Error ? `(${error.message})` : ''}`;
 		} finally {

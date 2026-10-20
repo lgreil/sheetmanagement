@@ -53,7 +53,7 @@ Very little real logic exists, so a rewrite costs almost nothing.
 - **Runtime dependencies: none besides SvelteKit itself.** Dev dependencies are `svelte`, `@sveltejs/kit`, `vite`, the Cloudflare adapter and `vitest`. Compare today's Nuxt setup with ~30 packages.
 - **No `googleapis` package.** It's huge and doesn't run on Workers. The Drive, Calendar and Sheets REST APIs are called with plain `fetch`. The service-account login (a signed JWT) uses the built-in WebCrypto. That's about 40 lines of code instead of a dependency.
 - **No Tailwind or UI kit.** Plain CSS with a few design tokens (colours, spacing, light/dark). Svelte's scoped styles and built-in transitions give the modern, smooth feel without a framework.
-- **One optional library:** `pdf-lib`, loaded only in the browser and only when someone clicks "merge my parts into one PDF".
+- **One optional library:** `@cantoo/pdf-lib` (a maintained pdf-lib fork that can also open copy-protected PDFs), loaded only in the browser and only when someone clicks "merge my parts into one PDF".
 - Why SvelteKit over the alternatives:
   - Nuxt: much heavier, and its Google libraries don't fit Workers.
   - Astro: great for content pages, but the programme editor and filters are app-like.
@@ -185,7 +185,7 @@ Rights, kept deliberately few:
 
 ### Very nice to have
 
-6. **"Meine Noten".** Each member's instrument comes from "Mitglieder". Every concert page shows a **"Meine Noten fürs Herbstkonzert"** button: their parts for the whole programme, in programme order. "Als eine PDF" merges them in the browser with pdf-lib.
+6. **"Meine Noten".** Each member's instrument comes from "Mitglieder". Every concert page shows a **"Meine Noten fürs Herbstkonzert"** button: their parts for the whole programme, in programme order. "Als eine PDF" merges them in the browser with @cantoo/pdf-lib.
 7. **Missing-parts dashboard, generated automatically.** Mirrored into the sheet's "Fehlende Stimmen" tab, which replaces maintaining `91 | Prüfstatus` and `92 | Fehlende Stimmen.md` by hand.
 8. **Instrumentation check for programmes.** A matrix of pieces × instruments with gaps highlighted, so missing parts are found *before* the first rehearsal.
 9. **Naming-convention linter.** List files that break `93 | Namenskonvention`. Later this could offer one-click renames, always with confirmation and always *towards* the convention.
