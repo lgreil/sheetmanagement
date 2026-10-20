@@ -175,8 +175,11 @@ export const bachkreis: OrchestraConfig = {
 	// EO = Ehemaligenorchester; the A and B orchestras may follow later.
 	orchestras: ['EO', 'A', 'B'],
 
-	// Website and socials go here, e.g. { label: 'Instagram', url: 'https://www.instagram.com/…', icon: 'instagram' }.
-	links: [],
+	links: [
+		{ label: 'Website', url: 'https://www.gymnasium-bergkamen.de/bachkreis/', icon: 'globe' },
+		{ label: 'Instagram', url: 'https://www.instagram.com/ehemaligenorchester_bachkreis/', icon: 'instagram' },
+		{ label: 'Facebook', url: 'https://www.facebook.com/bachkreisbergkamen/', icon: 'facebook' }
+	],
 	// No sourceUrl: many members are kids and teens, and the repository leads to a personal profile.
 
 	// Flexible arrangements: who reads from the C, B, Es and F parts, and the family parts.

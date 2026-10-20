@@ -4,7 +4,7 @@
 	   on light backgrounds a deeper gold keeps accent text and buttons readable. */
 	--brand: #e6b422;
 	--brand-ink: #0b0b0a;
-	--accent: color-mix(in oklab, var(--brand) 50%, #3a1f00);
+	--accent: color-mix(in oklab, var(--brand) 44%, #3a1f00);
 	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
 	--accent-contrast: #fff;
 
