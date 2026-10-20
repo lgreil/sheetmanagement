@@ -44,8 +44,29 @@
 	const RANK = { konzert: 0, generalprobe: 1, probe: 2, sonstiges: 3 } as const;
 	const mainType = (events: ShownEvent[]) =>
 		events.reduce<ShownEvent['type'] | null>((best, e) => (best === null || RANK[e.type] < RANK[best] ? e.type : best), null);
-	/** Stuck on by hand: each sticker at its own small angle, the same on every visit. */
-	const tilt = (key: string) => ((Number(key.slice(-2)) * 37 + Number(key.slice(5, 7)) * 11) % 19) - 9;
+	/**
+	 * Stuck on by hand: each sticker a little off its place, at its own angle and with its own
+	 * paper edge. Derived from the date, so a day looks the same on every visit.
+	 */
+	function placement(key: string) {
+		let hash = 2166136261;
+		for (const char of key) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619);
+		// Mix the bits, so neighbouring dates don't land on similar values.
+		hash = Math.imul(hash ^ (hash >>> 16), 2246822507);
+		hash = Math.imul(hash ^ (hash >>> 13), 3266489909);
+		hash ^= hash >>> 16;
+		const pick = (bits: number, range: number) => (((hash >>> bits) & 0xff) / 255) * 2 * range - range;
+		return {
+			'--tilt': `${pick(0, 14).toFixed(1)}deg`,
+			'--dx': `${pick(8, 4).toFixed(1)}px`,
+			'--dy': `${pick(16, 3).toFixed(1)}px`,
+			edge: `url(#paper-edge-${(hash >>> 24) % 3})`
+		};
+	}
+	const stickerStyle = (key: string) => {
+		const { edge, ...vars } = placement(key);
+		return `${Object.entries(vars).map(([name, value]) => `${name}:${value}`).join(';')};--edge:${edge}`;
+	};
 
 	function go(step: number) {
 		month = addMonths(month, step);
@@ -58,6 +79,16 @@
 </script>
 
 <div class="calendar">
+	<!-- Rough, paper-like edges for the stickers: three cuts, so neighbours differ. Only the
+	     paper backing is filtered; the logo on it stays sharp. -->
+	<svg class="filters" width="0" height="0" aria-hidden="true" focusable="false">
+		{#each [3, 11, 27] as seed, i (seed)}
+			<filter id="paper-edge-{i}" x="-20%" y="-20%" width="140%" height="140%">
+				<feTurbulence type="fractalNoise" baseFrequency="0.13" numOctaves="2" {seed} result="noise" />
+				<feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G" />
+			</filter>
+		{/each}
+	</svg>
 	<div class="head">
 		<button class="nav" onclick={() => go(-1)} aria-label={t.concerts.previousMonth}><Icon name="back" size={18} /></button>
 		<h3 aria-live="polite">{label}</h3>
@@ -98,7 +129,8 @@
 							</span>
 						{/if}
 						{#if main && main !== 'sonstiges'}
-							<span class="sticker {main}" style:--tilt="{tilt(day.key)}deg" aria-hidden="true">
+							<span class="sticker {main}" style={stickerStyle(day.key)} aria-hidden="true">
+								<span class="paper"></span>
 								<img src="/logo.png" alt="" width="40" height="40" loading="lazy" />
 							</span>
 						{/if}
@@ -122,8 +154,14 @@
 
 	<div class="legend" aria-hidden="true">
 		<span><span class="swatch stage-swatch"><span class="curtain left"></span><span class="curtain right"></span></span>{t.concerts.types.konzert}</span>
-		<span><span class="sticker generalprobe mini"><img src="/logo.png" alt="" width="20" height="20" /></span>{t.concerts.types.generalprobe}</span>
-		<span><span class="sticker probe mini"><img src="/logo.png" alt="" width="20" height="20" /></span>{t.concerts.types.probe}</span>
+		<span>
+			<span class="sticker generalprobe mini" style={stickerStyle('legend-gp')}><span class="paper"></span><img src="/logo.png" alt="" width="20" height="20" /></span>
+			{t.concerts.types.generalprobe}
+		</span>
+		<span>
+			<span class="sticker probe mini" style={stickerStyle('legend-probe')}><span class="paper"></span><img src="/logo.png" alt="" width="20" height="20" /></span>
+			{t.concerts.types.probe}
+		</span>
 	</div>
 
 	<div class="selected">
@@ -294,56 +332,71 @@
 		color: var(--accent-contrast);
 	}
 
-	/* --- Stickers: the orchestra logo, die-cut with a white edge, stuck on at an angle. --- */
-	.sticker {
+	.filters {
 		position: absolute;
-		top: 6px;
-		right: 6px;
+		width: 0;
+		height: 0;
+		overflow: hidden;
+	}
+
+	/* --- Stickers: the orchestra logo on a roughly cut paper circle, stuck on by hand. --- */
+	.sticker {
+		--paper: #fbf7ec;
+		--paper-shade: #ece4cf;
+		position: absolute;
+		top: 7px;
+		right: 7px;
 		z-index: 1;
 		display: grid;
 		place-items: center;
-		width: 34px;
-		height: 34px;
-		padding: 2px;
-		border-radius: 50%;
-		background: #fff;
-		box-shadow:
-			0 1px 1px rgb(0 0 0 / 0.18),
-			0 3px 6px -2px rgb(0 0 0 / 0.3);
-		transform: rotate(var(--tilt, -6deg));
+		width: 38px;
+		height: 38px;
+		padding: 5px;
+		transform: translate(var(--dx, 0), var(--dy, 0)) rotate(var(--tilt, -6deg));
 		transition: transform 0.2s ease;
 	}
 
+	/* The paper backing, cut a little unevenly, with a soft shadow where it lifts. */
+	.paper {
+		position: absolute;
+		inset: 0;
+		border-radius: 50%;
+		background:
+			radial-gradient(circle at 30% 25%, var(--paper) 55%, var(--paper-shade) 100%);
+		filter: var(--edge, none) drop-shadow(0 1px 1px rgb(0 0 0 / 0.2)) drop-shadow(0 3px 3px rgb(0 0 0 / 0.18));
+	}
+
 	.sticker img {
+		position: relative;
 		width: 100%;
 		height: 100%;
 		border-radius: 50%;
 	}
 
-	/* A little shine across the sticker, like glossy vinyl. */
+	/* A faint sheen on the printed logo. */
 	.sticker::after {
 		content: '';
 		position: absolute;
-		inset: 2px;
+		inset: 5px;
 		border-radius: 50%;
-		background: linear-gradient(135deg, rgb(255 255 255 / 0.45), transparent 45%);
+		background: linear-gradient(135deg, rgb(255 255 255 / 0.35), transparent 45%);
 		pointer-events: none;
 	}
 
+	/* The Generalprobe sticker is printed on gold paper. */
 	.sticker.generalprobe {
-		box-shadow:
-			0 0 0 2px var(--fringe),
-			0 3px 6px -2px rgb(0 0 0 / 0.35);
+		--paper: #f0d27a;
+		--paper-shade: #c99b2c;
 	}
 
 	.day:hover > .sticker {
-		transform: rotate(calc(var(--tilt, -6deg) * -0.5)) scale(1.08);
+		transform: translate(var(--dx, 0), calc(var(--dy, 0) - 1px)) rotate(calc(var(--tilt, -6deg) * 0.6)) scale(1.08);
 	}
 
+	/* Not confirmed yet: pencilled in rather than stuck on. */
 	.tentative-day > .sticker {
-		opacity: 0.6;
-		outline: 2px dashed var(--border);
-		outline-offset: 2px;
+		opacity: 0.55;
+		filter: grayscale(0.7);
 	}
 
 	/* --- Concert days are a stage: curtains, a pelmet, and the logo in the spotlight. --- */
@@ -355,13 +408,18 @@
 		top: 50%;
 		left: 50%;
 		right: auto;
-		width: 42px;
-		height: 42px;
-		margin: -24px 0 0 -21px;
-		box-shadow:
-			0 0 0 2px var(--fringe),
-			0 0 16px 2px color-mix(in oklab, var(--fringe) 45%, transparent),
-			0 4px 8px -2px rgb(0 0 0 / 0.35);
+		width: 48px;
+		height: 48px;
+		margin: -27px 0 0 -24px;
+		padding: 6px;
+		--paper: #f6dc8c;
+		--paper-shade: #c99b2c;
+	}
+
+	/* In the spotlight. */
+	.stage > .sticker .paper {
+		filter: var(--edge, none) drop-shadow(0 0 8px color-mix(in oklab, var(--fringe) 70%, transparent))
+			drop-shadow(0 3px 3px rgb(0 0 0 / 0.3));
 	}
 
 	.curtains {
@@ -535,9 +593,9 @@
 		position: relative;
 		top: auto;
 		right: auto;
-		width: 22px;
-		height: 22px;
-		padding: 1px;
+		width: 24px;
+		height: 24px;
+		padding: 2px;
 	}
 
 	.swatch {
@@ -611,10 +669,10 @@
 			right: auto;
 			bottom: 4px;
 			left: 50%;
-			width: 24px;
-			height: 24px;
-			margin-left: -12px;
-			padding: 1px;
+			width: 28px;
+			height: 28px;
+			margin-left: -14px;
+			padding: 3px;
 		}
 
 		.stage > .sticker {
