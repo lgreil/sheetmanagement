@@ -1,8 +1,8 @@
 import { fail } from '@sveltejs/kit';
-import { normalizeEmail } from '#lib/access/access.ts';
+import { currentStatus, normalizeEmail, playsIn, type Member } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { formatInstrument, matchParts, parseInstrument, playableInstruments, playedParts, type InstrumentChoice } from '#lib/music/my-parts.ts';
+import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import type { Part } from '#lib/music/types.ts';
 import { fileUrl } from '#lib/server/catalog.ts';
 import { getLibrary, isPastConcert, type LibraryConcert } from '#lib/server/library.ts';
@@ -21,12 +21,14 @@ const PDF = 'application/pdf';
 const shown = (part: Part) => ({ id: part.id, label: part.label, notes: part.notes, status: part.status, url: fileUrl(part.id, part.mimeType), pdf: part.mimeType === PDF });
 
 /**
- * The concerts to show, one below the other: every upcoming one, soonest first, and a past
- * one asked for in the URL on top. `focus` is where the page starts: the one asked for,
- * else the next one with a programme.
+ * The concerts to show, one below the other: every upcoming one of the member's orchestras,
+ * soonest first, and one asked for in the URL on top. `focus` is where the page starts: the
+ * one asked for, else the next one with a programme.
  */
-function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string | null) {
-	const upcoming = concerts.filter((concert) => !isPastConcert(concert, today)).reverse();
+function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string | null, member: Member | undefined) {
+	const upcoming = concerts
+		.filter((concert) => !isPastConcert(concert, today) && (!member || playsIn(member, concert.orchestra)))
+		.reverse();
 	const asked = wanted ? concerts.find((c) => c.id === wanted) : undefined;
 	const shown = asked && !upcoming.includes(asked) ? [asked, ...upcoming] : upcoming;
 	const focus = asked ?? upcoming.find((c) => c.program.length) ?? upcoming[0];
@@ -37,16 +39,16 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const [library, access, music] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig()]);
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
 
-	// What to show: asked for in the URL, else remembered in this browser, else from "Mitglieder".
-	const text = url.searchParams.get('instrument') ?? cookies.get(COOKIE) ?? member?.instrument ?? '';
-	const choice = parseInstrument(text, config);
+	// What to show: asked for in the URL, else from "Mitglieder" (it follows members to every
+	// device and the profile page edits it), else remembered in this browser.
+	const text = url.searchParams.get('instrument') ?? member?.instrument ?? cookies.get(COOKIE) ?? '';
+	const choices = parseInstruments(text, config);
 
-	const { shown: concerts, focus } = pickConcerts(library.concerts, library.today, url.searchParams.get('konzert'));
+	const { shown: concerts, focus } = pickConcerts(library.concerts, library.today, url.searchParams.get('konzert'), member);
 	const piecesOf = (concert: LibraryConcert) =>
 		concert.program.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
-			const match = choice && parts.length ? matchParts(parts, choice, music) : { own: [], shared: [] };
 			return {
 				position: item.position,
 				title: item.title,
@@ -54,15 +56,23 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 				pieceId: item.pieceId,
 				hasMusic: parts.length > 0,
 				recording: piece?.sheet?.recording,
-				own: match.own.map(shown),
-				shared: match.shared.map(shown)
+				// One block per instrument the member plays.
+				matches: choices.map((choice) => {
+					const match = parts.length ? matchParts(parts, choice, music) : { own: [], shared: [] };
+					return { label: formatInstrument(choice), own: match.own.map(shown), shared: match.shared.map(shown) };
+				})
 			};
 		});
 
 	return {
-		choice: choice ? { ...choice, label: formatInstrument(choice) } : null,
-		unknown: !choice && text ? text : null,
-		choices: CHOICES,
+		choices,
+		label: formatInstruments(choices),
+		unknown: !choices.length && text ? text : null,
+		// Paused and inactive members still get their parts, with a hint.
+		status: member ? currentStatus(member, library.today) : 'aktiv',
+		pausedUntil: member?.pausedUntil,
+		instruments: CHOICES,
+		common: commonInstruments(config),
 		concerts: concerts.map((concert) => ({
 			id: concert.id,
 			title: concert.title,
@@ -77,12 +87,9 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 
 export const actions: Actions = {
 	save: async ({ request, cookies, locals, url }) => {
-		const data = await request.formData();
-		const instrument = String(data.get('instrument') ?? '');
-		const number = Number(data.get('number')) || undefined;
-		if (!CHOICES.includes(instrument)) return fail(400, { message: t.myParts.pickInstrument });
-		const choice: InstrumentChoice = { instrument, ...(number && number <= 8 ? { number } : {}) };
-		const text = formatInstrument(choice);
+		const choices = choicesFromForm(await request.formData(), CHOICES);
+		if (!choices.length) return fail(400, { message: t.myParts.pickInstrument });
+		const text = formatInstruments(choices);
 		cookies.set(COOKIE, text, { path: '/', httpOnly: true, sameSite: 'lax', maxAge: YEAR, secure: url.protocol === 'https:' });
 
 		// Members listed in "Mitglieder" get it saved there too, so it follows them to other devices.

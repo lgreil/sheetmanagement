@@ -39,7 +39,9 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 			label: t.nav.groups.proben,
 			items: [
 				{ href: '/meine-noten', label: t.nav.myParts, icon: 'user', primary: true },
-				{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar', primary: true }
+				{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar', primary: true },
+				// Also behind the avatar in the header; here it's reachable from the phone's tab bar.
+				...(auth === 'on' ? [{ href: '/profil', label: t.nav.profile, icon: 'user' as const }] : [])
 			]
 		},
 		{

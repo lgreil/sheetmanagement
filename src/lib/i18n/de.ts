@@ -6,7 +6,7 @@ export const de = {
 		/** Shown after the orchestra's short name in the header. */
 		appName: 'Notenarchiv',
 		home: 'Übersicht',
-		pieces: 'Stücke',
+		pieces: 'Archiv',
 		concerts: 'Konzerte',
 		myParts: 'Meine Noten',
 		wishes: 'Wünsche',
@@ -17,6 +17,7 @@ export const de = {
 		setup: 'Tabelle einrichten',
 		status: 'Status',
 		more: 'Mehr',
+		profile: 'Profil',
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
 		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
@@ -65,7 +66,7 @@ export const de = {
 		} as Record<string, string>
 	},
 	pieces: {
-		title: 'Stücke',
+		title: 'Notenarchiv',
 		lead: 'Das komplette Notenarchiv mit allen Stimmen.',
 		empty: 'Sobald Google Drive verbunden ist, erscheinen hier alle Stücke aus dem Notenarchiv.',
 		failed: 'Das Notenarchiv konnte gerade nicht geladen werden. Versuch es gleich noch einmal.',
@@ -269,6 +270,18 @@ export const de = {
 		skipUnreadable: 'die Datei ist keine lesbare PDF',
 		mergeHint: 'Fügt deine Stimmen in Programmreihenfolge zu einer Datei zusammen, zum Drucken oder fürs Tablet.',
 		mergeOff: 'Das Zusammenfügen geht nur mit Anmeldung.',
+		pickInstruments: 'Was spielst du? Einmal auswählen, dann sind deine Noten immer hier. Mehrere Instrumente und Stimmen gehen auch.',
+		paused: (until?: string) =>
+			until ? `Du bist bis ${until} pausiert. Deine Noten siehst du trotzdem.` : 'Du bist gerade pausiert. Deine Noten siehst du trotzdem.',
+		inactive: 'Du bist als inaktiv eingetragen. Deine Noten siehst du trotzdem.',
+		profileHint: 'Ändern lässt sich das auch im Profil.'
+	},
+	instruments: {
+		more: 'Mehr Instrumente …',
+		add: 'Weiteres Instrument',
+		remove: 'Instrument entfernen',
+		numbers: 'Stimmen',
+		numbersHint: 'keine Auswahl: alle Stimmen'
 	},
 	auth: {
 		title: 'Anmelden',
@@ -361,7 +374,39 @@ export const de = {
 		saved: 'Gespeichert.',
 		invalidEmail: 'Bitte eine gültige E-Mail-Adresse eingeben.',
 		exists: 'Diese E-Mail-Adresse ist schon eingetragen.',
-		grantExists: 'Dieses Recht ist schon vergeben.'
+		grantExists: 'Dieses Recht ist schon vergeben.',
+		orchestras: 'Orchester',
+		status: 'Status',
+		onlyActive: 'Nur aktive',
+		statusCounts: (active: number, paused: number, inactive: number) =>
+			[`${active} aktiv`, paused && `${paused} pausiert`, inactive && `${inactive} inaktiv`].filter(Boolean).join(' · ')
+	},
+	profile: {
+		title: 'Profil',
+		lead: 'Was du spielst und ob du gerade dabei bist. Danach richten sich „Meine Noten“ und die Besetzung.',
+		notMember: 'Das Profil gibt es für eingetragene Mitglieder. Ohne Anmeldung merkt sich „Meine Noten“ dein Instrument im Browser.',
+		email: 'E-Mail',
+		name: 'Vor- und Nachname',
+		instruments: 'Instrumente',
+		orchestras: 'Orchester',
+		orchestrasHint: 'Keins angekreuzt: Du siehst die Konzerte aller Orchester.',
+		status: 'Status',
+		statuses: { aktiv: 'aktiv', pausiert: 'pausiert', inaktiv: 'inaktiv' } as Record<string, string>,
+		statusHints: {
+			aktiv: 'Du zählst bei der Besetzung mit.',
+			pausiert: 'Zum Beispiel Auslandssemester oder Elternzeit. Mit Datum wirst du danach automatisch wieder aktiv.',
+			inaktiv: 'Du behältst den Zugang, zählst aber bei der Besetzung nicht mit.'
+		} as Record<string, string>,
+		pausedUntil: 'Pausiert bis (optional)',
+		pausedUntilShort: (day: string) => `bis ${day}`,
+		save: 'Speichern',
+		saved: 'Gespeichert.',
+		groups: 'Gruppen',
+		groupsHint: 'Gruppen und Rechte vergibt die Verwaltung.',
+		gone: 'Dein Eintrag in „Mitglieder“ wurde nicht gefunden. Bitte die Seite neu laden.',
+		failed: 'Das Profil konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		unknownStatus: 'Diesen Status gibt es nicht.',
+		badDate: 'Das Datum ist nicht lesbar.'
 	},
 	print: {
 		link: 'Drucken',
@@ -526,7 +571,10 @@ export const de = {
 				email: 'E-Mail',
 				name: 'Name',
 				instrument: 'Instrument',
-				groups: 'Gruppen'
+				groups: 'Gruppen',
+				orchestras: 'Orchester',
+				status: 'Status',
+				pausedUntil: 'Pausiert bis'
 			}
 		},
 		groups: {

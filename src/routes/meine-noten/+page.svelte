@@ -3,13 +3,16 @@
 	import { tick } from 'svelte';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import InstrumentPicker from '#lib/components/InstrumentPicker.svelte';
 	import MyPartsConcert from '#lib/components/MyPartsConcert.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { config } from '#lib/config/index.ts';
+	import { formatDay } from '#lib/events/format.ts';
 
 	let { data, form } = $props();
 	let picking = $state(false);
-	const showPicker = $derived(picking || !data.choice);
+	const showPicker = $derived(picking || !data.choices.length);
 
 	/** Concerts are added as you scroll; the one the page starts at is always among them. */
 	const STEP = 2;
@@ -49,6 +52,13 @@
 <Title title={t.myParts.title} />
 <PageHeader title={t.myParts.title} lead={t.myParts.lead} />
 
+{#if data.status !== 'aktiv'}
+	<p class="msg info status">
+		{data.status === 'pausiert' ? t.myParts.paused(data.pausedUntil && formatDay(data.pausedUntil, config.locale)) : t.myParts.inactive}
+		<a href="/profil">{t.myParts.profileHint}</a>
+	</p>
+{/if}
+
 <div class="controls">
 	{#if showPicker}
 		<form
@@ -62,29 +72,20 @@
 				}}
 		>
 			<p class="muted wide">
-				{data.unknown ? t.myParts.unknownInstrument(data.unknown) : t.myParts.pickInstrument}
+				{data.unknown ? t.myParts.unknownInstrument(data.unknown) : t.myParts.pickInstruments}
 			</p>
-			<label class="field">
-				{t.myParts.instrument}
-				<select name="instrument" value={data.choice?.instrument ?? ''} required>
-					<option value="" disabled>…</option>
-					{#each data.choices as name (name)}<option value={name}>{name}</option>{/each}
-				</select>
-			</label>
-			<label class="field narrow">
-				{t.myParts.number}
-				<select name="number" value={String(data.choice?.number ?? '')}>
-					<option value="">{t.myParts.anyNumber}</option>
-					{#each ['I', 'II', 'III', 'IV'] as roman, i (roman)}<option value={String(i + 1)}>{roman}</option>{/each}
-				</select>
-			</label>
+			<div class="wide">
+				{#key data.label}
+					<InstrumentPicker choices={data.choices} instruments={data.instruments} common={data.common} required />
+				{/key}
+			</div>
 			<button class="btn">{t.myParts.save}</button>
-			{#if data.choice}<button class="btn ghost" type="button" onclick={() => (picking = false)}>{t.reports.cancel}</button>{/if}
+			{#if data.choices.length}<button class="btn ghost" type="button" onclick={() => (picking = false)}>{t.reports.cancel}</button>{/if}
 		</form>
-	{:else if data.choice}
+	{:else}
 		<div class="chip">
 			<Icon name="user" size={16} />
-			<strong>{data.choice.label}</strong>
+			<strong>{data.label}</strong>
 			<button class="link" onclick={() => (picking = true)}>{t.myParts.change}</button>
 			{#if form?.saved}<span class="muted">· {t.myParts.saved}</span>{/if}
 		</div>
@@ -112,7 +113,7 @@
 {:else}
 	<div class="concerts">
 		{#each shown as concert (concert.id)}
-			<MyPartsConcert {concert} choice={data.choice} canMerge={data.canMerge} />
+			<MyPartsConcert {concert} label={data.label} canMerge={data.canMerge} />
 		{/each}
 	</div>
 	{#if count < data.concerts.length}
@@ -147,10 +148,6 @@
 		flex-basis: 100%;
 	}
 
-	.narrow select {
-		width: 90px;
-	}
-
 	.chip {
 		display: inline-flex;
 		align-items: center;
@@ -177,6 +174,15 @@
 
 	.msg {
 		margin-bottom: var(--space-4);
+	}
+
+	.status {
+		flex-wrap: wrap;
+	}
+
+	.status a {
+		color: var(--accent);
+		font-weight: 600;
 	}
 
 	.muted {

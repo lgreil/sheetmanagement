@@ -74,3 +74,8 @@ export function daysUntil(event: { start: string; allDay: boolean }, now: number
 export function isPast(event: { end: string; allDay: boolean }, now: number): boolean {
 	return new Date(event.end).getTime() <= now;
 }
+
+/** "2027-03-31" → "31. März 2027". The day is a calendar day, so no time zone applies. */
+export function formatDay(day: string, locale: string): string {
+	return dateFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`));
+}

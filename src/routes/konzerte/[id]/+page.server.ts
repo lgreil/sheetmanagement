@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
+import { countingMembers } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
-import { coverage, parseInstrument, playedParts, programInstruments } from '#lib/music/my-parts.ts';
+import { coverage, parseInstruments, playedParts, programInstruments } from '#lib/music/my-parts.ts';
 import { getLibrary, type Library, type ProgramItem } from '#lib/server/library.ts';
 import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
@@ -28,9 +29,10 @@ const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'" 
 /**
  * Pieces × instruments for the programme, so missing parts are found before the first
  * rehearsal. Columns: every instrument with a part in the programme, plus the ones
- * members play (from "Mitglieder"), which the page can filter down to.
+ * members play (from "Mitglieder"), which the page can filter down to. Only active members
+ * of the concert's orchestra count.
  */
-async function instrumentation(items: ProgramItem[], library: Library) {
+async function instrumentation(items: ProgramItem[], library: Library, orchestra: string | undefined) {
 	const rows = items.map((item) => {
 		const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 		return { item, parts: piece?.detail ? playedParts(piece.detail) : [] };
@@ -40,7 +42,7 @@ async function instrumentation(items: ProgramItem[], library: Library) {
 
 	const [access, music] = await Promise.all([getAccessList(), getMusicConfig()]);
 	const played = new Set(
-		(access?.members ?? []).flatMap((member) => parseInstrument(member.instrument ?? '', config)?.instrument ?? [])
+		countingMembers(access?.members ?? [], orchestra, library.today).flatMap((member) => parseInstruments(member.instrument ?? '', config).map((choice) => choice.instrument))
 	);
 	const needed = new Set(programInstruments(withMusic.map((row) => row.parts), music));
 	const instruments = config.instruments
@@ -77,7 +79,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		items,
 		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
 		// For whoever plans programmes; it reads every piece's parts.
-		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library) : null,
+		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library, concert?.orchestra) : null,
 		saved: url.searchParams.has('gespeichert'),
 		sheet: library.sheet
 	};

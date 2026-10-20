@@ -1,8 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { lacksSurname, maskEmail } from '#lib/access/access.ts';
+	import { config } from '#lib/config/index.ts';
+	import { formatDay } from '#lib/events/format.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import MemberFields from '#lib/components/MemberFields.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -25,13 +28,20 @@
 	/** The member whose edit form is open. */
 	let editing = $state<string | null>(null);
 	let query = $state('');
+	let onlyActive = $state(false);
 	const members = $derived(
 		data.state === 'ready'
-			? data.members.filter((member) =>
-					[member.name, member.email, member.instrument ?? '', ...member.groups].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+			? data.members.filter(
+					(member) =>
+						(!onlyActive || member.current === 'aktiv') &&
+						[member.name, member.email, member.instrument ?? '', ...member.groups, ...member.orchestras]
+							.join(' ')
+							.toLowerCase()
+							.includes(query.trim().toLowerCase())
 				)
 			: []
 	);
+	const count = (status: string) => (data.state === 'ready' ? data.members.filter((m) => m.current === status).length : 0);
 
 	const confirmRemove = (name: string) => (event: SubmitEvent) => {
 		if (!confirm(t.admin.confirmRemove(name))) event.preventDefault();
@@ -106,9 +116,15 @@
 
 	<section>
 		<h2>{t.admin.members} <span class="count">{data.members.length}</span></h2>
-		{#if data.members.length > 8}
-			<input class="search" type="search" bind:value={query} placeholder={t.admin.searchMembers} aria-label={t.admin.searchMembers} />
-		{/if}
+		<div class="member-tools">
+			{#if data.members.length > 8}
+				<input class="search" type="search" bind:value={query} placeholder={t.admin.searchMembers} aria-label={t.admin.searchMembers} />
+			{/if}
+			{#if count('aktiv') < data.members.length}
+				<label class="check"><input type="checkbox" bind:checked={onlyActive} />{t.admin.onlyActive}</label>
+				<span class="muted small">{t.admin.statusCounts(count('aktiv'), count('pausiert'), count('inaktiv'))}</span>
+			{/if}
+		</div>
 		{#if data.members.length}
 			<ul class="list">
 				{#each members as member (member.email)}
@@ -129,21 +145,9 @@
 							>
 								<input type="hidden" name="email" value={member.email} />
 								<p class="full-email muted small">{member.email}</p>
-								<label>{t.admin.name}<input name="name" value={member.name} autocomplete="off" /></label>
-								<label>
-									{t.admin.instrument}
-									<select name="instrument" value={member.choice?.instrument ?? ''}>
-										<option value="">{t.admin.noInstrument}</option>
-										{#each data.playable as name (name)}<option value={name}>{name}</option>{/each}
-									</select>
-								</label>
-								<label>
-									{t.myParts.number}
-									<select name="number" value={String(member.choice?.number || '')}>
-										<option value="">–</option>
-										{#each ['I', 'II', 'III', 'IV'] as roman, i (roman)}<option value={String(i + 1)}>{roman}</option>{/each}
-									</select>
-								</label>
+								<div class="member-fields">
+									<MemberFields {member} instruments={data.playable} common={data.common} orchestras={data.orchestras} />
+								</div>
 								<label>
 									{t.admin.groups}
 									<input name="groups" value={member.groups.join(', ')} list="group-names" autocomplete="off" placeholder={t.admin.groupsHint} />
@@ -160,8 +164,15 @@
 								{#if lacksSurname(member.name)}<span class="hint" title={t.admin.noSurnameHint}>{t.admin.noSurname}</span>{/if}
 							</strong>
 							<span class="muted">
-								{[mail(member.email), member.instrument].filter(Boolean).join(' · ')}
+								{[mail(member.email), member.instrument, member.orchestras.join(', ')].filter(Boolean).join(' · ')}
 							</span>
+							{#if member.current !== 'aktiv'}
+								<span class="status-tag">
+									{t.profile.statuses[member.current]}{member.current === 'pausiert' && member.pausedUntil
+										? ` ${t.profile.pausedUntilShort(formatDay(member.pausedUntil, config.locale))}`
+										: ''}
+								</span>
+							{/if}
 							{#if member.groups.length}
 								<span class="tags">{#each member.groups as group (group)}<span class="tag">{group}</span>{/each}</span>
 							{/if}
@@ -453,9 +464,34 @@
 		font-weight: 600;
 	}
 
-	.search {
-		width: 100%;
+	.member-tools {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-4);
 		margin-bottom: var(--space-2);
+	}
+
+	.member-tools .small {
+		margin: 0;
+	}
+
+	.search {
+		flex: 1 1 100%;
+	}
+
+	.member-fields {
+		grid-column: 1 / -1;
+	}
+
+	.status-tag {
+		justify-self: start;
+		padding: 0 var(--space-2);
+		border-radius: 999px;
+		background: var(--surface-2);
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 600;
 	}
 
 	.edit {

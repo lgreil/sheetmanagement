@@ -6,9 +6,9 @@ const hrefs = (auth: 'on' | 'off', rights: Right[]) =>
 	Object.fromEntries(navGroups({ auth, rights }).map((group) => [group.key, group.items.map((item) => item.href)]));
 
 describe('navGroups', () => {
-	it('shows members the parts, concerts, archive and wishes', () => {
+	it('shows members the parts, concerts, their profile, archive and wishes', () => {
 		expect(hrefs('on', ['ansehen'])).toEqual({
-			proben: ['/meine-noten', '/konzerte'],
+			proben: ['/meine-noten', '/konzerte', '/profil'],
 			archiv: ['/stuecke', '/fehlende-stimmen'],
 			mitmachen: ['/wuensche']
 		});
@@ -27,6 +27,7 @@ describe('navGroups', () => {
 	it('keeps setup and status reachable while sign-in is off, without wishes or admin', () => {
 		const groups = hrefs('off', ['ansehen']);
 		expect(groups.mitmachen).toBeUndefined();
+		expect(groups.proben).toEqual(['/meine-noten', '/konzerte']);
 		expect(groups.verwaltung).toEqual(['/setup', '/status']);
 	});
 

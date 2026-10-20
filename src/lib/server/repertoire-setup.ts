@@ -1,4 +1,4 @@
-import { RIGHTS } from '#lib/access/access.ts';
+import { MEMBER_STATUSES, RIGHTS } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { defaultRows, type SharedParts } from '#lib/music/instrument-groups.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
@@ -24,6 +24,7 @@ const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
 const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
 	pieces: ['reviewedAt'],
 	concerts: ['date'],
+	members: ['pausedUntil'],
 	requests: ['requestedAt'],
 	reports: ['reportedAt'],
 	wishes: ['submittedAt', 'votes']
@@ -195,6 +196,7 @@ export async function setUpSheet(
 		['program', 'concert', fromColumn('concerts', 'title')],
 		['program', 'piece', fromColumn('pieces', 'title')],
 		['rights', 'right', { type: 'ONE_OF_LIST', values: RIGHTS.map((right) => ({ userEnteredValue: right })) }],
+		['members', 'status', { type: 'ONE_OF_LIST', values: MEMBER_STATUSES.map((status) => ({ userEnteredValue: status })) }],
 		['reports', 'kind', list(t.feedbackValues.reportKind)],
 		['reports', 'status', list(t.feedbackValues.reportStatus)],
 		['wishes', 'kind', list(t.feedbackValues.wishKind)],

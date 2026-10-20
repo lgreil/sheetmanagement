@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { RIGHTS } from '#lib/access/access.ts';
+import { MEMBER_STATUSES, RIGHTS } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import type { GoogleClient } from './google/client.ts';
 import { columnLetter } from './google/sheets.ts';
@@ -101,6 +101,7 @@ describe('setUpSheet', () => {
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			RIGHTS.map((right) => ({ userEnteredValue: right })),
+			MEMBER_STATUSES.map((status) => ({ userEnteredValue: status })),
 			labels(t.feedbackValues.reportKind),
 			labels(t.feedbackValues.reportStatus),
 			labels(t.feedbackValues.wishKind),

@@ -3,6 +3,7 @@
 	import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
+	import InstrumentSelect from './InstrumentSelect.svelte';
 
 	interface OpenReport {
 		id: string;
@@ -19,6 +20,7 @@
 		canClose,
 		parts,
 		instruments = [],
+		common = [],
 		present = [],
 		result,
 		open = $bindable(false),
@@ -30,6 +32,8 @@
 		parts: { id: string; label: string }[];
 		/** For "Stimme fehlt": every instrument a part can be for … */
 		instruments?: string[];
+		/** … of which the usual ones are offered first, the rest behind "Mehr" … */
+		common?: string[];
 		/** … and the ones the piece already has a part for, offered last. */
 		present?: string[];
 		result?: { reportError?: string; reported?: boolean } | null;
@@ -104,15 +108,15 @@
 					{#if missing && instruments.length}
 						<label class="field">
 							{t.reports.missingPart}
-							<select name="missingInstrument" required>
-								<option value="" disabled selected>…</option>
-								<optgroup label={t.reports.notInFolder}>
-									{#each absent as name (name)}<option value={name}>{name}</option>{/each}
-								</optgroup>
-								<optgroup label={t.reports.inFolder}>
-									{#each already as name (name)}<option value={name}>{name}</option>{/each}
-								</optgroup>
-							</select>
+							<InstrumentSelect
+								name="missingInstrument"
+								required
+								{common}
+								groups={[
+									{ label: t.reports.notInFolder, names: absent },
+									{ label: t.reports.inFolder, names: already }
+								]}
+							/>
 						</label>
 						<label class="field">
 							{t.reports.missingNumber}

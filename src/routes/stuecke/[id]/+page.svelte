@@ -129,6 +129,7 @@
 	canClose={data.reports.canClose}
 	parts={piece.parts.filter((part) => part.status !== 'missing').map(({ id, label }) => ({ id, label }))}
 	instruments={data.reports.instruments}
+	common={data.reports.common}
 	present={data.reports.present}
 	result={form}
 	bind:open={reporting}

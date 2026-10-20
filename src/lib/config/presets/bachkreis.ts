@@ -13,17 +13,17 @@ export const bachkreis: OrchestraConfig = {
 	locale: 'de-DE',
 
 	instruments: [
-		{ name: 'Partitur', family: 'partitur', aliases: ['Score', 'Full Score', 'Direktion', 'Dirigent', 'Conductor', 'Gesamtausgabe', 'Gesammtausgabe', 'Ges', 'Full Orchestra'] },
+		{ name: 'Partitur', family: 'partitur', common: true, aliases: ['Score', 'Full Score', 'Direktion', 'Dirigent', 'Conductor', 'Gesamtausgabe', 'Gesammtausgabe', 'Ges', 'Full Orchestra'] },
 
 		{ name: 'Blockflöte', family: 'holz', aliases: ['Recorder', 'Recorders'] },
 		{ name: 'Tenor-Blockflöte', family: 'holz', aliases: ['Tenorblockflöte', 'Tenor Recorder'] },
 		{ name: 'Piccolo', family: 'holz', aliases: ['Piccoloflöte', 'Picc'] },
-		{ name: 'Flöte', family: 'holz', aliases: ['Flöten', 'Querflöte', 'Floete', 'Flute', 'Flutes'] },
-		{ name: 'Oboe', family: 'holz', aliases: ['Oboen', 'Oboes'] },
+		{ name: 'Flöte', family: 'holz', common: true, aliases: ['Flöten', 'Querflöte', 'Floete', 'Flute', 'Flutes'] },
+		{ name: 'Oboe', family: 'holz', common: true, aliases: ['Oboen', 'Oboes'] },
 		{ name: 'Englischhorn', family: 'holz', aliases: ['English Horn', 'Cor Anglais'] },
-		{ name: 'Klarinette', family: 'holz', aliases: ['Klarinetten', 'Clarinet', 'Clarinets', 'Clarinette', 'Clarinettes', 'Clarinett', 'Calarinet', 'Clari'] },
+		{ name: 'Klarinette', family: 'holz', common: true, aliases: ['Klarinetten', 'Clarinet', 'Clarinets', 'Clarinette', 'Clarinettes', 'Clarinett', 'Calarinet', 'Clari'] },
 		{ name: 'Bassklarinette', family: 'holz', aliases: ['Bass Clarinet', 'Bass Clari', 'Bass Klarinette'] },
-		{ name: 'Fagott', family: 'holz', aliases: ['Fagotte', 'Bassoon', 'Bassoons', 'Bassoonpdf', 'Basson', 'Bassons'] },
+		{ name: 'Fagott', family: 'holz', common: true, aliases: ['Fagotte', 'Bassoon', 'Bassoons', 'Bassoonpdf', 'Basson', 'Bassons'] },
 		{ name: 'Sopran-Saxophon', family: 'holz', aliases: ['Sopransaxophon', 'Soprano Sax'] },
 		{ name: 'Alt-Saxophon', family: 'holz', aliases: ['Altsaxophon', 'Alt Sax', 'Alto Sax', 'Alto Saxophone', 'Altsax', 'Alt Saxphone'] },
 		{ name: 'Tenor-Saxophon', family: 'holz', aliases: ['Tenorsaxophon', 'Tenor Sax', 'Tenor Saxophone', 'Tenorsax'] },
@@ -31,16 +31,16 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'Saxophon', family: 'holz', aliases: ['Sax', 'Saxophone', 'Saxphone'] },
 		{ name: 'Holz', family: 'holz', aliases: ['Holzbläser', 'Woodwinds'] },
 
-		{ name: 'Horn', family: 'blech', aliases: ['Hörner', 'Waldhorn', 'French Horn', 'Horns'] },
-		{ name: 'Trompete', family: 'blech', aliases: ['Trompeten', 'Trumpet', 'Trumpets'] },
-		{ name: 'Posaune', family: 'blech', aliases: ['Posaunen', 'Trombone', 'Trombones', 'Tombone', 'Pos'] },
+		{ name: 'Horn', family: 'blech', common: true, aliases: ['Hörner', 'Waldhorn', 'French Horn', 'Horns'] },
+		{ name: 'Trompete', family: 'blech', common: true, aliases: ['Trompeten', 'Trumpet', 'Trumpets'] },
+		{ name: 'Posaune', family: 'blech', common: true, aliases: ['Posaunen', 'Trombone', 'Trombones', 'Tombone', 'Pos'] },
 		{ name: 'Bassposaune', family: 'blech', aliases: ['Bass Trombone', 'Bass Posaune'] },
 		{ name: 'Bariton', family: 'blech', aliases: ['Baritone', 'Euphonium'] },
-		{ name: 'Tuba', family: 'blech', aliases: ['Basstuba', 'Bass Tuba'] },
+		{ name: 'Tuba', family: 'blech', common: true, aliases: ['Basstuba', 'Bass Tuba'] },
 		{ name: 'Blech', family: 'blech', aliases: ['Blechbläser', 'Brass'] },
 
-		{ name: 'Pauke', family: 'schlagwerk', aliases: ['Pauken', 'Timpani', 'Timp'] },
-		{ name: 'Schlagwerk', family: 'schlagwerk', aliases: ['Schlagzeug', 'Drum Set', 'Drumset', 'Drums'] },
+		{ name: 'Pauke', family: 'schlagwerk', common: true, aliases: ['Pauken', 'Timpani', 'Timp'] },
+		{ name: 'Schlagwerk', family: 'schlagwerk', common: true, aliases: ['Schlagzeug', 'Drum Set', 'Drumset', 'Drums'] },
 		{ name: 'Percussion', family: 'schlagwerk', aliases: ['Perc'] },
 		{ name: 'Mallet Percussion', family: 'schlagwerk', aliases: ['Mallets'] },
 		{ name: 'Glockenspiel', family: 'schlagwerk', aliases: ['Bells'] },
@@ -68,12 +68,13 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'F-Stimmen', family: 'sonstige' },
 		{ name: 'Stimme', family: 'sonstige', aliases: ['Part'], voice: true },
 
-		{ name: 'Geige', family: 'streicher', aliases: ['Geigen', 'Violine', 'Violinen', 'Violin', 'Violins'] },
-		{ name: 'Viola', family: 'streicher', aliases: ['Violen', 'Bratsche', 'Violas', 'Vioa'] },
-		{ name: 'Violoncello', family: 'streicher', aliases: ['Cello', 'Celli', 'Cellos', 'Violoncellos'] },
+		{ name: 'Geige', family: 'streicher', common: true, aliases: ['Geigen', 'Violine', 'Violinen', 'Violin', 'Violins'] },
+		{ name: 'Viola', family: 'streicher', common: true, aliases: ['Violen', 'Bratsche', 'Violas', 'Vioa'] },
+		{ name: 'Violoncello', family: 'streicher', common: true, aliases: ['Cello', 'Celli', 'Cellos', 'Violoncellos'] },
 		{
 			name: 'Kontrabass',
 			family: 'streicher',
+			common: true,
 			aliases: ['Kontrabässe', 'Contrabass', 'Contrabasses', 'Double Bass', 'String Bass', 'Stringbass', 'Bass']
 		},
 		{ name: 'E-Bass', family: 'streicher', aliases: ['Bass Guitar', 'Electric Bass', 'E Bass'] }
