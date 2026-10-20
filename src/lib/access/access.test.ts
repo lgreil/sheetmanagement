@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { planProgramSave, parseEntries, programVersion } from '#lib/repertoire/program-edit.ts';
 import { readTable } from '#lib/repertoire/sheet.ts';
-import { buildAccessList, parseEmailList, planApproval, resolveAccess, RIGHTS } from './access.ts';
+import { buildAccessList, lacksSurname, maskEmail, parseEmailList, planApproval, resolveAccess, RIGHTS } from './access.ts';
 
 const list = buildAccessList({
 	members: [
@@ -123,5 +123,20 @@ describe('planApproval', () => {
 
 	it('does nothing for a request that is gone', () => {
 		expect(planApproval([], requests, ['dora@example.org'])).toEqual({ add: [], remove: [] });
+	});
+});
+
+describe('maskEmail and lacksSurname', () => {
+	it('keeps the start and the domain of an email', () => {
+		expect(maskEmail('anna.mueller@gmail.com')).toBe('an…@gmail.com');
+		expect(maskEmail('ab@x.org')).toBe('a…@x.org');
+		expect(maskEmail('Vorstand')).toBe('Vorstand');
+	});
+
+	it('spots names without a surname', () => {
+		expect(lacksSurname('Anna')).toBe(true);
+		expect(lacksSurname(' Anna ')).toBe(true);
+		expect(lacksSurname('Anna Müller')).toBe(false);
+		expect(lacksSurname('anna@example.org')).toBe(false);
 	});
 });
