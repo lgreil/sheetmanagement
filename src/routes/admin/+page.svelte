@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { lacksSurname, maskEmail } from '#lib/access/access.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -16,6 +17,10 @@
 			busy = false;
 		};
 	};
+
+	/** Emails are shortened unless asked for; the edit form always shows the full one. */
+	let showEmails = $state(false);
+	const mail = (email: string) => (showEmails ? email : maskEmail(email));
 
 	/** The member whose edit form is open. */
 	let editing = $state<string | null>(null);
@@ -56,6 +61,8 @@
 		<p class="message ok" role="status"><Icon name="check" size={16} />{t.admin.saved}</p>
 	{/if}
 
+	<label class="check show-emails"><input type="checkbox" bind:checked={showEmails} />{t.admin.showEmails}</label>
+
 	<section>
 		<div class="section-head">
 			<h2>{t.admin.requests} {#if data.requests.length}<span class="count">{data.requests.length}</span>{/if}</h2>
@@ -78,8 +85,8 @@
 				{#each data.requests as request (request.email)}
 					<li class="row">
 						<span class="main">
-							<strong>{request.name || request.email}</strong>
-							<span class="muted">{request.email}{request.requestedAt ? ` · ${request.requestedAt}` : ''}</span>
+							<strong>{request.name || mail(request.email)}</strong>
+							<span class="muted">{mail(request.email)}{request.requestedAt ? ` · ${request.requestedAt}` : ''}</span>
 						</span>
 						<form method="POST" action="?/approve" use:enhance={submit}>
 							<input type="hidden" name="email" value={request.email} />
@@ -121,6 +128,7 @@
 								}}
 							>
 								<input type="hidden" name="email" value={member.email} />
+								<p class="full-email muted small">{member.email}</p>
 								<label>{t.admin.name}<input name="name" value={member.name} autocomplete="off" /></label>
 								<label>
 									{t.admin.instrument}
@@ -147,9 +155,12 @@
 							</form>
 						{:else}
 						<span class="main">
-							<strong>{member.name}</strong>
+							<strong>
+								{member.name}
+								{#if lacksSurname(member.name)}<span class="hint" title={t.admin.noSurnameHint}>{t.admin.noSurname}</span>{/if}
+							</strong>
 							<span class="muted">
-								{[member.email, member.instrument].filter(Boolean).join(' · ')}
+								{[mail(member.email), member.instrument].filter(Boolean).join(' · ')}
 							</span>
 							{#if member.groups.length}
 								<span class="tags">{#each member.groups as group (group)}<span class="tag">{group}</span>{/each}</span>
@@ -190,14 +201,14 @@
 		<h2>{t.admin.rightsTitle}</h2>
 		<p class="muted lead">{t.admin.rightsLead}</p>
 		{#if data.bootstrapAdmins.length}
-			<p class="muted small">{t.admin.bootstrap(data.bootstrapAdmins.join(', '))}</p>
+			<p class="muted small">{t.admin.bootstrap(data.bootstrapAdmins.map(mail).join(', '))}</p>
 		{/if}
 		{#if data.grants.length}
 			<ul class="list">
 				{#each data.grants as grant (grant.who + grant.right)}
 					<li class="row">
 						<span class="main">
-							<strong>{grant.who}</strong>
+							<strong>{grant.who.includes('@') ? mail(grant.who) : grant.who}</strong>
 							<span class="muted">{rightLabel(grant.right)}</span>
 						</span>
 						<form method="POST" action="?/revoke" use:enhance={submit}>
@@ -420,6 +431,26 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-m);
 		background: var(--surface);
+	}
+
+	.show-emails {
+		justify-self: start;
+		margin-bottom: var(--space-4);
+	}
+
+	.full-email {
+		grid-column: 1 / -1;
+		margin: 0;
+	}
+
+	.hint {
+		margin-left: var(--space-2);
+		padding: 0 6px;
+		border-radius: 6px;
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+		color: var(--warn);
+		font-size: 0.75rem;
+		font-weight: 600;
 	}
 
 	.search {

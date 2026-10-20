@@ -21,7 +21,12 @@
 	{:else if !data.canRequest || form?.failed}
 		<p class="error" role="alert">{t.access.unavailable}</p>
 	{:else}
-		<form method="POST" use:enhance>
+		<form class="request" method="POST" use:enhance>
+			<label>
+				{t.access.nameLabel}
+				<input name="name" value={form?.name ?? data.user.name} required maxlength="120" autocomplete="name" />
+			</label>
+			{#if form?.nameError}<p class="error" role="alert">{form.nameError}</p>{/if}
 			<button class="button">{t.access.request}</button>
 		</form>
 	{/if}
@@ -61,6 +66,33 @@
 
 	.small {
 		font-size: 0.875rem;
+	}
+
+	.request {
+		display: grid;
+		gap: var(--space-3);
+		justify-items: center;
+		width: 100%;
+	}
+
+	.request label {
+		display: grid;
+		gap: var(--space-1);
+		width: 100%;
+		color: var(--text-muted);
+		font-size: 0.875rem;
+		font-weight: 600;
+		text-align: left;
+	}
+
+	.request input {
+		height: 42px;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
 	}
 
 	.button {

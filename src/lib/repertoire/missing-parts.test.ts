@@ -8,7 +8,7 @@ const gap = (fileId: string, status: Gap['status'] = 'missing', piece = 'Bolero'
 	part,
 	status
 });
-const row = (g: Gap, done = '') => [g.piece, g.part, { missing: 'fehlt', empty: 'leer', incomplete: 'unvollständig' }[g.status], g.fileId, done];
+const row = (g: Gap, done = '') => [g.piece, g.part, { missing: 'fehlt', empty: 'leer', incomplete: 'Seiten fehlen' }[g.status], g.fileId, done];
 
 describe('archiveGaps', () => {
 	it('lists missing, empty and incomplete parts, but not recordings or other files', () => {
@@ -94,7 +94,7 @@ describe('planMissingParts', () => {
 		expect(plan.changed).toBe(true);
 		expect(plan.added).toEqual([]);
 		expect(plan.removed).toEqual([]);
-		expect(plan.body).toEqual([['Boléro', 'Stimme a', 'unvollständig', 'a', true]]);
+		expect(plan.body).toEqual([['Boléro', 'Stimme a', 'Seiten fehlen', 'a', true]]);
 	});
 
 	it('drops rows without a file id and repeated file ids', () => {

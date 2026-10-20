@@ -24,6 +24,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const upcoming = result.events.filter((event) => !event.past);
 	const nextConcert = upcoming.find((event) => event.type === 'konzert') ?? null;
 	const nextRehearsal = upcoming.find((event) => event.type === 'probe' || event.type === 'generalprobe') ?? null;
-	const program = nextConcert ? (library.concertsById.get(nextConcert.id)?.program ?? []).map((item) => item.title) : [];
+	const program = nextConcert
+		? (library.concertsById.get(nextConcert.id)?.program ?? []).map(({ title, pieceId }) => ({ title, pieceId }))
+		: [];
 	return { calendar: 'ok' as const, nextConcert, nextRehearsal, program, todo: open };
 };

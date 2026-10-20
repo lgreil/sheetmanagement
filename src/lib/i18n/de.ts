@@ -39,6 +39,8 @@ export const de = {
 		nextConcertEmpty: 'Sobald der Kalender verbunden ist, steht hier das nächste Konzert mit Programm.',
 		noNextConcert: 'Gerade ist kein Konzert im Kalender eingetragen.',
 		program: 'Programm',
+		pieces: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
+		morePieces: (n: number) => `+ ${n} weitere`,
 		nextRehearsal: 'Nächste Probe',
 		toConcert: 'Zum Konzert',
 		quickLinks: 'Alle Bereiche',
@@ -53,7 +55,7 @@ export const de = {
 			'/meine-noten': 'Deine Stimmen fürs nächste Konzert, in Programmreihenfolge.',
 			'/konzerte': 'Proben und Konzerte mit Programm.',
 			'/stuecke': 'Das komplette Notenarchiv mit allen Stimmen.',
-			'/fehlende-stimmen': 'Welche Stimmen fehlen oder unvollständig sind.',
+			'/fehlende-stimmen': 'Welche Stimmen fehlen und wo Seiten fehlen.',
 			'/namen': 'Dateinamen prüfen und in die Namenskonvention bringen.',
 			'/wuensche': 'Stücke und Ideen vorschlagen, anderen zustimmen.',
 			'/meldungen': 'Gemeldete Probleme mit Noten bearbeiten.',
@@ -81,7 +83,8 @@ export const de = {
 		status: {
 			ok: '',
 			missing: 'Stimmen fehlen',
-			incomplete: 'Unvollständig',
+			// Pages missing inside a part's PDF (UNVOLLSTÄNDIG in the file name), not a missing part.
+			incomplete: 'Seiten fehlen',
 			empty: 'Keine Noten',
 			none: 'Nicht im Archiv'
 		}
@@ -110,10 +113,10 @@ export const de = {
 			ok: '',
 			missing: 'fehlt',
 			empty: 'leer',
-			incomplete: 'unvollständig'
+			incomplete: 'Seiten fehlen'
 		},
 		missingSummary: (n: number) =>
-			n === 1 ? '1 Stimme fehlt oder ist unvollständig.' : `${n} Stimmen fehlen oder sind unvollständig.`,
+			n === 1 ? '1 Stimme fehlt, ist leer oder es fehlen Seiten.' : `${n} Stimmen fehlen, sind leer oder es fehlen Seiten.`,
 		playedAt: 'Gespielt bei',
 		sections: 'Fassungen',
 		playedBadge: 'gespielt',
@@ -207,7 +210,7 @@ export const de = {
 		lead: 'Alle Lücken im Notenarchiv, aus den Dateinamen (FEHLT, LEER, UNVOLLSTÄNDIG) und den offenen Meldungen. Ersetzt die Listen in Drive.',
 		all: 'Alle',
 		current: 'Aktuelle Programme',
-		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'unvollständig', reports: 'davon nur gemeldet' },
+		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'mit fehlenden Seiten', reports: 'davon nur gemeldet' },
 		reported: 'gemeldet',
 		reportedHint: 'In der App gemeldet. Der Dateiname in Drive sagt es noch nicht.',
 		none: 'Keine Lücken im Archiv.',
@@ -226,7 +229,7 @@ export const de = {
 		legend: {
 			own: 'Stimme da',
 			shared: 'Gemeinsame Stimme',
-			problem: 'Fehlt, leer oder unvollständig',
+			problem: 'Fehlt, leer oder es fehlen Seiten',
 			none: 'Keine Stimme'
 		},
 		noMusic: 'keine Noten',
@@ -288,6 +291,8 @@ export const de = {
 		hello: (name: string) => `Hallo ${name}!`,
 		lead: 'Du bist angemeldet, aber noch nicht als Mitglied freigeschaltet.',
 		request: 'Zugang beantragen',
+		nameLabel: 'Vor- und Nachname',
+		surnameNeeded: 'Bitte Vor- und Nachnamen angeben, damit die Verwaltung dich zuordnen kann.',
 		requested: 'Deine Anfrage ist angekommen. Sobald sie bestätigt ist, kannst du die App nutzen. Lade die Seite dann neu.',
 		unavailable: 'Anfragen sind gerade nicht möglich. Bitte melde dich direkt beim Vorstand.'
 	},
@@ -316,7 +321,7 @@ export const de = {
 		noMembers: 'Noch keine Mitglieder eingetragen.',
 		addMember: 'Mitglied hinzufügen',
 		email: 'E-Mail',
-		name: 'Name',
+		name: 'Vor- und Nachname',
 		instrument: 'Instrument',
 		groups: 'Gruppen',
 		groupsHint: 'mehrere mit Komma trennen',
@@ -325,6 +330,9 @@ export const de = {
 		confirmRemove: (name: string) => `${name} wirklich entfernen?`,
 		rightsTitle: 'Rechte',
 		edit: 'Bearbeiten',
+		showEmails: 'E-Mail-Adressen anzeigen',
+		noSurname: 'Nachname fehlt',
+		noSurnameHint: 'Ohne Nachname sind zwei Mitglieder mit gleichem Vornamen nicht zu unterscheiden. Über „Bearbeiten“ ergänzen.',
 		save: 'Speichern',
 		cancel: 'Abbrechen',
 		searchMembers: 'Mitglieder suchen …',

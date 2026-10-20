@@ -170,3 +170,14 @@ export function planApproval(
 	}
 	return { add, remove };
 }
+
+/** "anna.mueller@gmail.com" → "an…@gmail.com": enough to tell people apart, without showing the address. */
+export function maskEmail(email: string): string {
+	const at = email.indexOf('@');
+	if (at < 0) return email;
+	const local = email.slice(0, at);
+	return `${local.slice(0, local.length > 3 ? 2 : 1)}…${email.slice(at)}`;
+}
+
+/** A name without a second word ("Anna") can't be told apart from another Anna. */
+export const lacksSurname = (name: string) => !/\S\s+\S/.test(name.trim()) && !name.includes('@');

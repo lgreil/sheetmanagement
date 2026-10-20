@@ -6,6 +6,11 @@
 
 	let { data } = $props();
 
+	/** The programme as a few chips; the whole list is one click away on the concert page. */
+	const PROGRAM_CHIPS = 4;
+	/** "Städtisches Gymnasium Bergkamen, Hubert-Biernat-Straße 1, …" → the venue's name. */
+	const venue = (location: string) => location.split(',')[0].trim();
+
 	// Every page by group, so the start page doubles as a map of the app.
 	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
 	const todo = $derived(
@@ -43,11 +48,31 @@
 			<span class="concert-body">
 				<strong>{concert.displayTitle}</strong>
 				<span>{concert.date.long}{concert.date.time ? `, ${concert.date.time}` : ''}</span>
-				{#if concert.location}<span>{concert.location}</span>{/if}
-				{#if data.program.length}<span class="program">{t.home.program}: {data.program.join(' · ')}</span>{/if}
+				{#if concert.location}<span class="venue" title={concert.location}>{venue(concert.location)}</span>{/if}
 			</span>
 			<span class="card-arrow"><Icon name="arrow" size={18} /></span>
 		</a>
+		{#if data.program.length}
+			<div class="program">
+				<span class="program-label">{t.home.program} · {t.home.pieces(data.program.length)}</span>
+				<ul class="chips">
+					{#each data.program.slice(0, PROGRAM_CHIPS) as item, i (i)}
+						<li>
+							{#if item.pieceId}
+								<a class="chip" href="/stuecke/{encodeURIComponent(item.pieceId)}">{item.title}</a>
+							{:else}
+								<span class="chip">{item.title}</span>
+							{/if}
+						</li>
+					{/each}
+					{#if data.program.length > PROGRAM_CHIPS}
+						<li>
+							<a class="chip more" href="/konzerte/{encodeURIComponent(concert.id)}">{t.home.morePieces(data.program.length - PROGRAM_CHIPS)}</a>
+						</li>
+					{/if}
+				</ul>
+			</div>
+		{/if}
 		<a class="btn my-parts" href="/meine-noten?konzert={encodeURIComponent(concert.id)}">
 			<Icon name="user" size={18} />{t.myParts.forConcert(concert.displayTitle)}
 		</a>
@@ -205,10 +230,57 @@
 		font-size: 0.9375rem;
 	}
 
-	.concert-body .program {
-		margin-top: var(--space-1);
+	.venue {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.program {
+		display: grid;
+		gap: var(--space-2);
+		margin-top: var(--space-3);
+	}
+
+	.program-label {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.chips {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.chip {
+		display: inline-block;
+		max-width: 100%;
+		padding: 4px 12px;
+		overflow: hidden;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--surface) 70%, transparent);
 		color: var(--text);
-		overflow-wrap: anywhere;
+		font-size: 0.875rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	a.chip:hover {
+		border-color: var(--accent);
+		color: var(--accent);
+	}
+
+	.chip.more {
+		border-style: dashed;
+		color: var(--text-muted);
 	}
 
 	.concert:hover .card-arrow {
