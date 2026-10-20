@@ -17,6 +17,17 @@
 		};
 	};
 
+	/** The member whose edit form is open. */
+	let editing = $state<string | null>(null);
+	let query = $state('');
+	const members = $derived(
+		data.state === 'ready'
+			? data.members.filter((member) =>
+					[member.name, member.email, member.instrument ?? '', ...member.groups].join(' ').toLowerCase().includes(query.trim().toLowerCase())
+				)
+			: []
+	);
+
 	const confirmRemove = (name: string) => (event: SubmitEvent) => {
 		if (!confirm(t.admin.confirmRemove(name))) event.preventDefault();
 	};
@@ -88,10 +99,53 @@
 
 	<section>
 		<h2>{t.admin.members} <span class="count">{data.members.length}</span></h2>
+		{#if data.members.length > 8}
+			<input class="search" type="search" bind:value={query} placeholder={t.admin.searchMembers} aria-label={t.admin.searchMembers} />
+		{/if}
 		{#if data.members.length}
 			<ul class="list">
-				{#each data.members as member (member.email)}
+				{#each members as member (member.email)}
 					<li class="row">
+						{#if editing === member.email}
+							<form
+								class="edit"
+								method="POST"
+								action="?/editMember"
+								use:enhance={() => {
+									busy = true;
+									return async ({ update, result }) => {
+										await update({ reset: false });
+										busy = false;
+										if (result.type === 'success') editing = null;
+									};
+								}}
+							>
+								<input type="hidden" name="email" value={member.email} />
+								<label>{t.admin.name}<input name="name" value={member.name} autocomplete="off" /></label>
+								<label>
+									{t.admin.instrument}
+									<select name="instrument" value={member.choice?.instrument ?? ''}>
+										<option value="">{t.admin.noInstrument}</option>
+										{#each data.playable as name (name)}<option value={name}>{name}</option>{/each}
+									</select>
+								</label>
+								<label>
+									{t.myParts.number}
+									<select name="number" value={String(member.choice?.number || '')}>
+										<option value="">–</option>
+										{#each ['I', 'II', 'III', 'IV'] as roman, i (roman)}<option value={String(i + 1)}>{roman}</option>{/each}
+									</select>
+								</label>
+								<label>
+									{t.admin.groups}
+									<input name="groups" value={member.groups.join(', ')} list="group-names" autocomplete="off" placeholder={t.admin.groupsHint} />
+								</label>
+								<div class="edit-actions">
+									<button class="button" disabled={busy}><Icon name="check" size={16} />{t.admin.save}</button>
+									<button class="ghost" type="button" onclick={() => (editing = null)}>{t.admin.cancel}</button>
+								</div>
+							</form>
+						{:else}
 						<span class="main">
 							<strong>{member.name}</strong>
 							<span class="muted">
@@ -100,13 +154,18 @@
 							{#if member.groups.length}
 								<span class="tags">{#each member.groups as group (group)}<span class="tag">{group}</span>{/each}</span>
 							{/if}
+							{#if member.rights.length}
+								<span class="muted small">{t.admin.effectiveRights}: {member.rights.map(rightLabel).join(', ')}</span>
+							{/if}
 						</span>
+						<button class="ghost" disabled={busy} onclick={() => (editing = member.email)}>{t.admin.edit}</button>
 						<form method="POST" action="?/removeMember" use:enhance={submit} onsubmit={confirmRemove(member.name)}>
 							<input type="hidden" name="email" value={member.email} />
 							<button class="icon-button" disabled={busy} title={t.admin.remove} aria-label={t.admin.remove}>
 								<Icon name="trash" size={16} />
 							</button>
 						</form>
+						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -361,6 +420,28 @@
 		border: 1px solid var(--border);
 		border-radius: var(--radius-m);
 		background: var(--surface);
+	}
+
+	.search {
+		width: 100%;
+		margin-bottom: var(--space-2);
+	}
+
+	.edit {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+		align-items: end;
+		gap: var(--space-3);
+		width: 100%;
+	}
+
+	.edit-actions {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	.small {
+		font-size: 0.8125rem;
 	}
 
 	label.check {

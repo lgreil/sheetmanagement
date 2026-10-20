@@ -1,12 +1,13 @@
 import { fail } from '@sveltejs/kit';
-import { normalizeEmail, planApproval, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
+import { normalizeEmail, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
 import { config } from '#lib/config/index.ts';
 import { splitNames } from '#lib/music/instrument-groups.ts';
+import { formatInstrument, parseInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { getAccessList, getInstrumentGroups } from '#lib/server/repertoire.ts';
-import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError } from '#lib/server/sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import { requireSetting } from '#lib/server/services.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,7 +31,22 @@ export const load: PageServerLoad = async ({ locals }) => {
 		sheetUrl,
 		bootstrapAdmins: auth.mode === 'on' ? auth.bootstrapAdmins : [],
 		requests: list?.requests.map(({ email, name, requestedAt }) => ({ email, name, requestedAt })) ?? [],
-		members: list?.members.map(({ email, name, instrument, groups }) => ({ email, name, instrument, groups })) ?? [],
+		members:
+			list?.members.map(({ email, name, instrument, groups }) => {
+				const choice = parseInstrument(instrument ?? '', config);
+				return {
+					email,
+					name,
+					instrument,
+					// For the edit form: the instrument as picked from the list, if the text is one.
+					choice: choice ? { instrument: choice.instrument, number: choice.number ?? 0 } : null,
+					groups,
+					// What they may do, from their own grants and their groups'.
+					rights: [...resolveAccess({ email, name }, list, auth.mode === 'on' ? auth.bootstrapAdmins : []).rights].filter(
+						(right) => right !== 'ansehen'
+					)
+				};
+			}) ?? [],
 		groups: list?.groups.map(({ name, description }) => ({ name, description })) ?? [],
 		grants: list?.grants.map(({ who, right }) => ({ who, right })) ?? [],
 		rights: RIGHTS.map((right) => ({ right, label: t.rights[right] })),
@@ -42,7 +58,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 					unknown: [],
 					rows: Object.entries(config.sharedParts ?? {}).map(([part, players]) => ({ row: 0, part, players, mutual: false, note: '' }))
 				},
-		instruments: config.instruments.filter((instrument) => !instrument.voice).map((instrument) => instrument.name)
+		instruments: config.instruments.filter((instrument) => !instrument.voice).map((instrument) => instrument.name),
+		playable: playableInstruments(config)
 	};
 };
 
@@ -111,6 +128,23 @@ export const actions: Actions = {
 					groups: splitGroups(field(data, 'groups')).join(', ')
 				}
 			]);
+		}),
+
+	editMember: ({ request, locals }) =>
+		change(locals, async () => {
+			const data = await request.formData();
+			const email = normalizeEmail(field(data, 'email'));
+			const instrument = field(data, 'instrument');
+			if (instrument && !playableInstruments(config).includes(instrument)) return t.admin.unknownInstrument;
+			const number = Number(field(data, 'number'));
+			const members = await readTab('members');
+			const row = members.rows.find((r) => normalizeEmail(r.values.email) === email);
+			if (!row) return t.admin.memberGone;
+			await updateRecord('members', members, row.row, {
+				name: field(data, 'name'),
+				instrument: instrument ? formatInstrument({ instrument, ...(number >= 1 && number <= 8 ? { number } : {}) }) : '',
+				groups: splitGroups(field(data, 'groups')).join(', ')
+			});
 		}),
 
 	removeMember: ({ request, locals }) =>
