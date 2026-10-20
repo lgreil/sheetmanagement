@@ -134,6 +134,14 @@ export function parsePartName(
 		return [undefined, at];
 	};
 
+	/** "B.C."/"BC" (bass clef) or "T.C."/"TC" (treble clef), as tokens at `at`. */
+	const clefAt = (at: number): { note: string; length: number } | undefined => {
+		const token = tokens[at];
+		if ((token === 'b' || token === 't') && tokens[at + 1] === 'c') return { note: `${token.toUpperCase()}.C.`, length: 2 };
+		if (token === 'bc' || token === 'tc') return { note: `${token[0].toUpperCase()}.C.`, length: 1 };
+		return undefined;
+	};
+
 	/** An unambiguous key directly followed by an instrument: [key, index of the instrument]. */
 	const keyBeforeInstrument = (at: number): [string, number] | undefined => {
 		const [transposition, after] = readTransposition(at, false);
@@ -184,9 +192,10 @@ export function parsePartName(
 			// Numbers and transposition may come in either order: "Horn in F 2", "Saxophon Eb 1+2".
 			for (let round = 0; round < 2; round++) {
 				// Clef markings for baritone parts: "B.C." (bass clef), "T.C." (treble clef).
-				if ((tokens[i] === 'b' || tokens[i] === 't') && tokens[i + 1] === 'c') {
-					notes.push(`${tokens[i].toUpperCase()}.C.`);
-					i += 2;
+				const clef = clefAt(i);
+				if (clef) {
+					if (!notes.includes(clef.note)) notes.push(clef.note);
+					i += clef.length;
 				}
 				let joined = false;
 				while (parseNumeral(tokens[i]) !== undefined) {
@@ -222,8 +231,14 @@ export function parsePartName(
 		const wasAfterUnknownWord = afterUnknownWord && !isOrdinal(token);
 		afterUnknownWord = false;
 		const leading = numbersBeforeInstrument(i);
+		const clef = clefAt(i);
 		if (statusWords[token]) {
 			status = statusWords[token];
+		} else if (clef && (items.length > 0 || matchAt(tokens, i + clef.length, matcher))) {
+			// "Phantom-BC-Baritone", "Baritone Viola TC": the clef of the part next to it.
+			if (!notes.includes(clef.note)) notes.push(clef.note);
+			i += clef.length;
+			continue;
 		} else if (leading && (!wasAfterUnknownWord || leading.numbers.length > 1)) {
 			// "1. Violine", "2.Flöte" (but not "Section II Violine", where II belongs to "Section";
 			// a list like "Dance 1. und 2. F Horn" is clear even after a word)

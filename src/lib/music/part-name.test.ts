@@ -50,7 +50,10 @@ describe('parsePartName', () => {
 		['Feuerwerksmusik-Cello_und_Bass.pdf', 'Violoncello & Kontrabass', 'sammelstimme'],
 		['Barcarolle-Bass-Clarinet-Trombone.pdf', 'Bassklarinette & Posaune', 'sammelstimme'],
 		['Thriller - Part 5 Trombone Baritone BC Bassoonpdf.pdf', 'Stimme 5: Posaune & Bariton & Fagott', 'sammelstimme'],
-		['Viva_la_Vida-Pianopdf.pdf', 'Klavier', 'stimme']
+		['Viva_la_Vida-Pianopdf.pdf', 'Klavier', 'stimme'],
+		// Clefs written "BC"/"TC", before or after the instrument
+		['Phantom-BC-Baritone.pdf', 'Bariton', 'stimme'],
+		['SEVEN NATION ARMY-BaritoneTC.pdf', 'Bariton', 'stimme']
 	])('%s → %s', (fileName, label, kind) => {
 		const part = parse(fileName);
 		expect(part.label).toBe(label);
@@ -81,6 +84,14 @@ describe('parsePartName', () => {
 		expect(parse('Elegie - Viola - LEER.pdf').status).toBe('empty');
 		expect(parse('Phantom-Synth-incomplete.pdf', 'Phantom-')).toMatchObject({ label: 'Synthesizer', status: 'incomplete' });
 		expect(parse('Elegie - Viola vereinfacht.pdf').notes).toEqual(['vereinfacht']);
+		expect(parse('Phantom-BC-Baritone.pdf', 'Phantom-')).toMatchObject({ notes: ['B.C.'], unrecognized: [] });
+		expect(parse('Thriller - Part 4 Trombone Bassoon Baritone BC.pdf', 'Thriller - ')).toMatchObject({
+			label: 'Stimme 4: Posaune & Fagott & Bariton',
+			notes: ['B.C.'],
+			unrecognized: []
+		});
+		// A lone "BC" is left alone: elsewhere it may mean bass clarinet.
+		expect(parse('Phantom-BC.pdf', 'Phantom-').kind).toBe('sonstiges');
 		expect(parse('Fame - Geige I - Duplikat.pdf')).toMatchObject({ label: 'Geige I', notes: ['Duplikat'] });
 		expect(parse('@No Time to Die - Gesang.pdf')).toMatchObject({ kind: 'solo', featured: true });
 		expect(parse('Barcarolle-Solo.pdf', 'Barcarolle-')).toMatchObject({ label: 'Solo', kind: 'solo' });

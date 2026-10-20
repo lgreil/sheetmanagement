@@ -81,6 +81,12 @@ describe('checkSection', () => {
 	});
 });
 
+describe('clefs', () => {
+	it('keeps the clef and never ends in two dots', () => {
+		expect(check(['Phantom-BC-Baritone.pdf', 'Phantom-Kontrabass.pdf'], 'Phantom der Oper')[0][2]).toBe('Phantom der Oper - Bariton B.C.pdf');
+	});
+});
+
 describe('copies', () => {
 	it('keeps the plain name for the original, whichever comes first', () => {
 		expect(check(['Lord of the Dance 2. Geige (1).pdf', 'Lord of the Dance 2. Geige.pdf'], 'Lord of the Dance')).toEqual([

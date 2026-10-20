@@ -183,7 +183,11 @@ export function checkSection(
 		const status = parsed.status === 'ok' ? '' : `${sep}${naming.status[parsed.status]}`;
 		const label = [parsed.label, ...parsed.notes.filter(isClef)];
 		const build = (extra: string[]) =>
-			[featured, short, movement ? sep + movement : '', sep, [...label, ...extra].join(' '), status, extension].join('').replace(BRACKETS, '');
+			// "Bariton B.C." + ".pdf" would end in "..": the extension's dot is enough.
+			[featured, short, movement ? sep + movement : '', sep, [...label, ...extra].join(' '), status]
+				.join('')
+				.replace(BRACKETS, '')
+				.replace(/\.$/, '') + extension;
 		return { check, build, notes };
 	});
 
