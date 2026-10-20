@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { normalizeEmail, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
+import { normalizeEmail, planApproval, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
@@ -57,28 +57,33 @@ const field = (data: FormData, name: string) => String(data.get(name) ?? '').tri
 /** Rights apply to an email address or a group name. */
 const whoKey = (who: string) => (who.includes('@') ? normalizeEmail(who) : normalize(who));
 
-export const actions: Actions = {
-	approve: ({ request, locals }) =>
-		change(locals, async () => {
-			const email = normalizeEmail(field(await request.formData(), 'email'));
-			const [members, requests] = await Promise.all([readTab('members'), readTab('requests')]);
-			const asked = requests.rows.filter((row) => normalizeEmail(row.values.email) === email);
-			if (!asked.length) return 'Diese Anfrage gibt es nicht mehr.';
-			if (!members.rows.some((row) => normalizeEmail(row.values.email) === email)) {
-				await appendRecords('members', members, [{ email, name: asked[0].values.name }]);
-			}
-			await deleteRows('requests', asked.map((row) => row.row));
-		}),
+/** One request ("email") or all shown at once (several "email" fields). */
+const emails = (data: FormData) => data.getAll('email').map((value) => normalizeEmail(String(value).slice(0, 200))).filter(Boolean);
 
-	decline: ({ request, locals }) =>
-		change(locals, async () => {
-			const email = normalizeEmail(field(await request.formData(), 'email'));
-			const requests = await readTab('requests');
-			await deleteRows(
-				'requests',
-				requests.rows.filter((row) => normalizeEmail(row.values.email) === email).map((row) => row.row)
-			);
-		}),
+async function approve(list: string[]) {
+	const [members, requests] = await Promise.all([readTab('members'), readTab('requests')]);
+	const plan = planApproval(
+		members.rows.map((row) => row.values.email),
+		requests.rows.map((row) => ({ row: row.row, email: row.values.email, name: row.values.name })),
+		list
+	);
+	if (!plan.remove.length) return t.admin.requestGone;
+	if (plan.add.length) await appendRecords('members', members, plan.add);
+	await deleteRows('requests', plan.remove);
+}
+
+async function decline(list: string[]) {
+	const wanted = new Set(list);
+	const requests = await readTab('requests');
+	await deleteRows(
+		'requests',
+		requests.rows.filter((row) => wanted.has(normalizeEmail(row.values.email))).map((row) => row.row)
+	);
+}
+
+export const actions: Actions = {
+	approve: ({ request, locals }) => change(locals, async () => approve(emails(await request.formData()))),
+	decline: ({ request, locals }) => change(locals, async () => decline(emails(await request.formData()))),
 
 	addMember: ({ request, locals }) =>
 		change(locals, async () => {

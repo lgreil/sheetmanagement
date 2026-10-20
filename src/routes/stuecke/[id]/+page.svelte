@@ -121,17 +121,6 @@
 	<p class="no-music">{t.piece.noMusic}</p>
 {/if}
 
-{#if info.length}
-	<dl class="info">
-		{#each info as item (item.key)}
-			<div class:wide={item.key === 'notes'}>
-				<dt>{item.label}</dt>
-				<dd>{item.value}</dd>
-			</div>
-		{/each}
-	</dl>
-{/if}
-
 <ProblemReports
 	reports={data.reports.open}
 	status={data.reports.state}
@@ -220,9 +209,21 @@
 	</section>
 {/each}
 
+<!-- Most used first: the parts above, then details, concerts and related pieces. -->
+{#if info.length}
+	<dl class="info" aria-label={t.piece.details}>
+		{#each info as item (item.key)}
+			<div class:wide={item.key === 'notes'}>
+				<dt>{item.label}</dt>
+				<dd>{item.value}</dd>
+			</div>
+		{/each}
+	</dl>
+{/if}
+
 {#snippet pieceLinks(title: string, pieces: typeof data.moreByComposer)}
 	<section class="more">
-		<h2>{title}</h2>
+		{#if title}<h2>{title}</h2>{/if}
 		<ul class="more-list">
 			{#each pieces as other (other.id)}
 				<li>
@@ -237,13 +238,6 @@
 	</section>
 {/snippet}
 
-{#if data.otherVersions.length}
-	{@render pieceLinks(t.piece.otherVersions, data.otherVersions)}
-{/if}
-{#if piece.composer && data.moreByComposer.length}
-	{@render pieceLinks(t.piece.moreBy(piece.composer), data.moreByComposer)}
-{/if}
-
 <section class="played">
 	<h2>{t.piece.playedAt}</h2>
 	{#if data.playedAt.length}
@@ -257,9 +251,33 @@
 	{/if}
 </section>
 
+{#if data.otherVersions.length}
+	{@render pieceLinks(t.piece.otherVersions, data.otherVersions)}
+{/if}
+{#if piece.composer && data.moreByComposer.length}
+	<details class="more-by">
+		<summary>{t.piece.moreBy(piece.composer)} <span class="muted">({data.moreByComposer.length})</span></summary>
+		{@render pieceLinks('', data.moreByComposer)}
+	</details>
+{/if}
+
 {#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
 
 <style>
+	.more-by {
+		margin-top: var(--space-6);
+	}
+
+	.more-by summary {
+		font-size: 1.125rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.more-by :global(.more) {
+		margin-top: var(--space-3);
+	}
+
 	.back {
 		display: inline-flex;
 		align-items: center;
@@ -645,7 +663,7 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 		gap: var(--space-3);
-		margin: 0 0 var(--space-5);
+		margin: var(--space-6) 0 0;
 		padding: var(--space-4);
 		border: 1px solid var(--border);
 		border-radius: var(--radius-m);

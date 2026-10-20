@@ -26,17 +26,16 @@
 	const SYMBOL: Record<Coverage, string> = { own: '●', shared: '◐', problem: '!', none: '–' };
 </script>
 
-<section class="block">
-	<div class="head">
+<!-- Mostly for the people planning the programme, so it starts folded. -->
+<details class="block">
+	<summary class="head">
 		<h2>{t.instrumentation.title}</h2>
-		{#if anyPlayed}
-			<label class="toggle"><input type="checkbox" bind:checked={onlyPlayed} />{t.instrumentation.onlyPlayed}</label>
-		{/if}
-	</div>
-	<p class="lead">
-		{t.instrumentation.lead}
 		{#if anyPlayed && gaps}<strong class="gaps">{t.instrumentation.gaps(gaps)}</strong>{/if}
-	</p>
+	</summary>
+	<p class="lead">{t.instrumentation.lead}</p>
+	{#if anyPlayed}
+		<label class="toggle"><input type="checkbox" bind:checked={onlyPlayed} />{t.instrumentation.onlyPlayed}</label>
+	{/if}
 
 	<div class="scroll">
 		<table>
@@ -72,11 +71,29 @@
 			<li><span class="cell {kind}">{SYMBOL[kind]}</span>{t.instrumentation.legend[kind]}</li>
 		{/each}
 	</ul>
-</section>
+</details>
 
 <style>
 	.block {
-		margin-bottom: var(--space-6);
+		margin: var(--space-6) 0;
+	}
+
+	summary.head {
+		cursor: pointer;
+		list-style: none;
+	}
+
+	summary.head::-webkit-details-marker {
+		display: none;
+	}
+
+	summary.head h2::before {
+		content: '▸ ';
+		color: var(--text-muted);
+	}
+
+	details[open] summary.head h2::before {
+		content: '▾ ';
 	}
 
 	.head {

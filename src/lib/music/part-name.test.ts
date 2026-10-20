@@ -31,7 +31,29 @@ describe('parsePartName', () => {
 		['Stimme 3 in B.pdf', 'Stimme 3 in B', 'stimme'],
 		['Bariton B.C..pdf', 'Bariton', 'stimme'],
 		['Kontrabass / Stringbass.pdf', 'Kontrabass', 'stimme'],
-		['barbie-girl-HornI-and-HornII.pdf', 'Horn I & II', 'sammelstimme']
+		['barbie-girl-HornI-and-HornII.pdf', 'Horn I & II', 'sammelstimme'],
+		// English ordinals and keys before the instrument (#87)
+		['Polar_Express_2nd-Bassoon.pdf', 'Fagott II', 'stimme'],
+		['LOTR-4th-Horn.pdf', 'Horn IV', 'stimme'],
+		['Phantom-1st-Violin.pdf', 'Geige I', 'stimme'],
+		['The Best of Green Day 1st F Horn- .pdf', 'Horn I in F', 'stimme'],
+		['The Best of Green Day 1st F Horn-  (1).pdf', 'Horn I in F', 'stimme'],
+		['Lord of the Dance 1. und 2. F Horn.pdf', 'Horn I & II in F', 'sammelstimme'],
+		['Sleepers Wake F Horn.pdf', 'Horn in F', 'stimme'],
+		['The Best of Green Day 2nd B-flat Trumpet- .pdf', 'Trompete II in B', 'stimme'],
+		['The Best of Green Day B-flat Bass Clarinet- .pdf', 'Bassklarinette in B', 'stimme'],
+		// "Bass" only means the double bass when nothing longer matches
+		['Last-Christmas_Bass-Guitar.pdf', 'E-Bass', 'stimme'],
+		['Christmas_Memories-E-Bass.pdf', 'E-Bass', 'stimme'],
+		['Fame - Bass-Klarinette.pdf', 'Bassklarinette', 'stimme'],
+		['Fame - Bass-Posaune.pdf', 'Bassposaune', 'stimme'],
+		['Feuerwerksmusik-Cello_und_Bass.pdf', 'Violoncello & Kontrabass', 'sammelstimme'],
+		['Barcarolle-Bass-Clarinet-Trombone.pdf', 'Bassklarinette & Posaune', 'sammelstimme'],
+		['Thriller - Part 5 Trombone Baritone BC Bassoonpdf.pdf', 'Stimme 5: Posaune & Bariton & Fagott', 'sammelstimme'],
+		['Viva_la_Vida-Pianopdf.pdf', 'Klavier', 'stimme'],
+		// Clefs written "BC"/"TC", before or after the instrument
+		['Phantom-BC-Baritone.pdf', 'Bariton', 'stimme'],
+		['SEVEN NATION ARMY-BaritoneTC.pdf', 'Bariton', 'stimme']
 	])('%s → %s', (fileName, label, kind) => {
 		const part = parse(fileName);
 		expect(part.label).toBe(label);
@@ -62,7 +84,15 @@ describe('parsePartName', () => {
 		expect(parse('Elegie - Viola - LEER.pdf').status).toBe('empty');
 		expect(parse('Phantom-Synth-incomplete.pdf', 'Phantom-')).toMatchObject({ label: 'Synthesizer', status: 'incomplete' });
 		expect(parse('Elegie - Viola vereinfacht.pdf').notes).toEqual(['vereinfacht']);
-		expect(parse('Interstellar - Geige I - Bass-Fassung.pdf')).toMatchObject({ label: 'Geige I', notes: ['Bass-Fassung'] });
+		expect(parse('Phantom-BC-Baritone.pdf', 'Phantom-')).toMatchObject({ notes: ['B.C.'], unrecognized: [] });
+		expect(parse('Thriller - Part 4 Trombone Bassoon Baritone BC.pdf', 'Thriller - ')).toMatchObject({
+			label: 'Stimme 4: Posaune & Fagott & Bariton',
+			notes: ['B.C.'],
+			unrecognized: []
+		});
+		// A lone "BC" is left alone: elsewhere it may mean bass clarinet.
+		expect(parse('Phantom-BC.pdf', 'Phantom-').kind).toBe('sonstiges');
+		expect(parse('Fame - Geige I - Duplikat.pdf')).toMatchObject({ label: 'Geige I', notes: ['Duplikat'] });
 		expect(parse('@No Time to Die - Gesang.pdf')).toMatchObject({ kind: 'solo', featured: true });
 		expect(parse('Barcarolle-Solo.pdf', 'Barcarolle-')).toMatchObject({ label: 'Solo', kind: 'solo' });
 	});

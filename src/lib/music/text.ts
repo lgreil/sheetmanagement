@@ -9,6 +9,8 @@ export function tokenize(input: string): string[] {
 			// "Querfl”Te": ö mangled by an old encoding conversion
 			.replace(/”t/gi, 'öt')
 			.replace(/”/g, 'ö')
+			// English ordinals stay one token ("1st"); the § keeps the split below off them.
+			.replace(/(\d)(st|nd|rd|th)(?![a-z])/gi, '$1§$2')
 			// camelCase and glued numbers: "ViolinII" → "Violin II", "Clari1" → "Clari 1"
 			.replace(/([a-zäöüß])([A-ZÄÖÜ])/g, '$1 $2')
 			.replace(/([A-Za-zÄÖÜäöüß])(\d)/g, '$1 $2')
@@ -19,8 +21,12 @@ export function tokenize(input: string): string[] {
 			.toLowerCase()
 			.split(/\s+/)
 			.filter(Boolean)
+			.map((token) => token.replace('§', ''))
 	);
 }
+
+/** "1st", "2nd": unlike a bare number, these always belong to the instrument after them. */
+export const isOrdinal = (token: string | undefined) => !!token && /^[1-8](?:st|nd|rd|th)$/.test(token);
 
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
@@ -28,6 +34,7 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 export function parseNumeral(token: string | undefined): number | undefined {
 	if (!token) return undefined;
 	if (/^[1-8]$/.test(token)) return Number(token);
+	if (isOrdinal(token)) return Number(token[0]);
 	const roman = ROMAN.indexOf(token.toUpperCase());
 	return roman > 0 ? roman : undefined;
 }

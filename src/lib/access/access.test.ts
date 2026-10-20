@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { planProgramSave, parseEntries, programVersion } from '#lib/repertoire/program-edit.ts';
 import { readTable } from '#lib/repertoire/sheet.ts';
-import { buildAccessList, parseEmailList, resolveAccess, RIGHTS } from './access.ts';
+import { buildAccessList, parseEmailList, planApproval, resolveAccess, RIGHTS } from './access.ts';
 
 const list = buildAccessList({
 	members: [
@@ -100,5 +100,28 @@ describe('programme editor', () => {
 			{ concert: 'Herbstkonzert 2026', position: '1', piece: 'Jesu bleibet meine Freude', notes: 'Zugabe' },
 			{ concert: 'Herbstkonzert 2026', position: '2', piece: 'Bolero', notes: '' }
 		]);
+	});
+});
+
+describe('planApproval', () => {
+	const requests = [
+		{ row: 2, email: 'Anna@Example.org', name: 'Anna' },
+		{ row: 3, email: 'ben@example.org', name: 'Ben' },
+		{ row: 4, email: 'anna@example.org', name: 'Anna B.' },
+		{ row: 5, email: 'cleo@example.org', name: 'Cleo' }
+	];
+
+	it('approves one request, removing every row of that email', () => {
+		expect(planApproval([], requests, ['anna@example.org'])).toEqual({ add: [{ email: 'anna@example.org', name: 'Anna' }], remove: [2, 4] });
+	});
+
+	it('approves all shown requests at once, but not one that arrived meanwhile', () => {
+		const plan = planApproval(['ben@example.org'], requests, ['anna@example.org', 'BEN@example.org']);
+		// Ben already is a member: his request goes, no second member row.
+		expect(plan).toEqual({ add: [{ email: 'anna@example.org', name: 'Anna' }], remove: [2, 3, 4] });
+	});
+
+	it('does nothing for a request that is gone', () => {
+		expect(planApproval([], requests, ['dora@example.org'])).toEqual({ add: [], remove: [] });
 	});
 });

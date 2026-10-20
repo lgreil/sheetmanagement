@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { archiveGaps, doneFileIds, isDone, planMissingParts, type Gap } from './missing-parts.ts';
+import { archiveGaps, doneFileIds, isDone, planMissingParts, reportedGaps, type Gap } from './missing-parts.ts';
 
 const HEADER = ['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt'];
 const gap = (fileId: string, status: Gap['status'] = 'missing', piece = 'Bolero', part = `Stimme ${fileId}`): Gap => ({
@@ -128,5 +128,38 @@ describe('doneFileIds', () => {
 	it('reads the ticked rows as they are', () => {
 		expect(doneFileIds([HEADER, row(gap('a'), 'TRUE'), row(gap('b')), ['', '', '', '', 'TRUE']])).toEqual(['a']);
 		expect(doneFileIds([])).toEqual([]);
+	});
+});
+
+describe('reportedGaps', () => {
+	const report = (id: string, fileId: string, kind: 'missing' | 'scan' | 'pages' | 'wrong' | 'other', marked?: Gap['status']) => ({
+		id,
+		part: fileId ? `Stimme ${fileId}` : '',
+		fileId,
+		kind,
+		comment: '',
+		marked
+	});
+
+	it('counts app-only reports with the status their kind stands for', () => {
+		const gaps = reportedGaps([], [report('r1', 'a', 'missing'), report('r2', 'b', 'pages'), report('r3', 'c', 'scan')]);
+		expect(gaps.map((g) => [g.id, g.status])).toEqual([
+			['r1', 'missing'],
+			['r2', 'incomplete'],
+			['r3', 'incomplete']
+		]);
+	});
+
+	it('leaves out reports on parts whose file name already marks a gap', () => {
+		expect(reportedGaps(['a'], [report('r1', 'a', 'missing'), report('r2', 'b', 'wrong')]).map((g) => g.id)).toEqual(['r2']);
+	});
+
+	it('counts several reports on one file once, but every whole-piece report', () => {
+		const gaps = reportedGaps([], [report('r1', 'a', 'scan'), report('r2', 'a', 'missing'), report('r3', '', 'missing'), report('r4', '', 'other')]);
+		expect(gaps.map((g) => g.id)).toEqual(['r1', 'r3', 'r4']);
+	});
+
+	it('uses the word the app put in the file name when the archive index has not caught up yet', () => {
+		expect(reportedGaps([], [report('r1', 'a', 'missing', 'empty')])[0].status).toBe('empty');
 	});
 });

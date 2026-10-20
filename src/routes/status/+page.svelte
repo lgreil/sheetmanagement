@@ -49,8 +49,15 @@
 	{/if}
 	<a class="link" href="https://github.com/lgreil/sheetmanagement/blob/main/docs/setup-google.md">{t.status.setupGuide}</a>
 </div>
+<p class="version">{t.nav.appName} v{__APP_VERSION__}</p>
 
 <style>
+	.version {
+		margin-top: var(--space-5);
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+	}
+
 	.checks {
 		display: grid;
 		gap: var(--space-3);

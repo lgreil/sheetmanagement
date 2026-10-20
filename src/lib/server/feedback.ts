@@ -140,9 +140,11 @@ export async function markReportedFile(id: string, status: MarkableStatus): Prom
 	return true;
 }
 
+/** An anonymous wish keeps no name or email in the sheet; its +1s still count per person. */
 export async function addWish(
 	user: User,
-	wish: { kind: WishKind; title: string; composer: string; link: string; description: string }
+	wish: { kind: WishKind; title: string; composer: string; link: string; description: string },
+	{ anonymous = false } = {}
 ): Promise<void> {
 	const table = await readTab('wishes');
 	await appendRecords('wishes', table, [
@@ -153,7 +155,7 @@ export async function addWish(
 			link: wish.link,
 			description: wish.description,
 			status: t.feedbackValues.wishStatus.open,
-			submittedBy: who(user),
+			submittedBy: anonymous ? '' : who(user),
 			submittedAt: today(),
 			id: newId()
 		}

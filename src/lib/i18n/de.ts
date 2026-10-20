@@ -11,7 +11,19 @@ export const de = {
 		myParts: 'Meine Noten',
 		wishes: 'Wünsche',
 		reports: 'Meldungen',
-		admin: 'Verwaltung'
+		gaps: 'Fehlende Stimmen',
+		naming: 'Dateinamen',
+		admin: 'Mitglieder & Rechte',
+		setup: 'Tabelle einrichten',
+		status: 'Status',
+		more: 'Mehr',
+		menu: 'Alle Seiten',
+		close: 'Menü schließen',
+		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
+	},
+	footer: {
+		links: 'Das Orchester im Netz',
+		source: 'Quellcode'
 	},
 	theme: {
 		label: 'Farbschema',
@@ -21,6 +33,7 @@ export const de = {
 	},
 	home: {
 		greeting: 'Willkommen',
+		title: (orchestra: string) => `Notenarchiv des ${orchestra}`,
 		intro: 'Noten, Konzerte und Programme an einem Ort, direkt aus Google Drive und dem Probenkalender.',
 		nextConcert: 'Nächstes Konzert',
 		nextConcertEmpty: 'Sobald der Kalender verbunden ist, steht hier das nächste Konzert mit Programm.',
@@ -28,7 +41,26 @@ export const de = {
 		program: 'Programm',
 		nextRehearsal: 'Nächste Probe',
 		toConcert: 'Zum Konzert',
-		quickLinks: 'Schnellzugriff'
+		quickLinks: 'Alle Bereiche',
+		todo: {
+			title: 'Wartet auf dich',
+			reports: (n: number) => (n === 1 ? 'offene Meldung' : 'offene Meldungen'),
+			wishes: (n: number) => (n === 1 ? 'offener Wunsch' : 'offene Wünsche'),
+			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen')
+		},
+		/** One line under each page on the start page. */
+		describe: {
+			'/meine-noten': 'Deine Stimmen fürs nächste Konzert, in Programmreihenfolge.',
+			'/konzerte': 'Proben und Konzerte mit Programm.',
+			'/stuecke': 'Das komplette Notenarchiv mit allen Stimmen.',
+			'/fehlende-stimmen': 'Welche Stimmen fehlen oder unvollständig sind.',
+			'/namen': 'Dateinamen prüfen und in die Namenskonvention bringen.',
+			'/wuensche': 'Stücke und Ideen vorschlagen, anderen zustimmen.',
+			'/meldungen': 'Gemeldete Probleme mit Noten bearbeiten.',
+			'/admin': 'Mitglieder, Gruppen, Rechte und Zugangsanfragen.',
+			'/setup': 'Die Repertoire-Tabelle anlegen oder ergänzen.',
+			'/status': 'Ob die Verbindung zu Google funktioniert.'
+		} as Record<string, string>
 	},
 	pieces: {
 		title: 'Stücke',
@@ -55,6 +87,7 @@ export const de = {
 		}
 	},
 	piece: {
+		details: 'Details',
 		back: 'Alle Stücke',
 		openFolder: 'Ordner in Google Drive',
 		recording: 'Hörbeispiel',
@@ -144,13 +177,36 @@ export const de = {
 		preparesFor: 'Probe für',
 		description: 'Notiz aus dem Kalender'
 	},
+	naming: {
+		title: 'Dateinamen',
+		lead: 'Welche Dateien nicht der Namenskonvention „<Kurztitel> - <Stimme>.pdf“ folgen, mit einem Vorschlag. Umbenannt wird nur, was du auswählst.',
+		counts: (rename: number, unclear: number, folders: number) =>
+			`${rename} Vorschläge · ${unclear} unklar · in ${folders} Ordnern`,
+		shortTitle: 'Kurztitel',
+		shortTitleHint: 'Steht vor jeder Stimme. Kurz halten, damit die Stimme auf dem Handy lesbar bleibt.',
+		long: 'lang fürs Handy',
+		unclear: 'unklar',
+		unclearHint: (words: string) => `Nicht erkannt: ${words}. Bitte von Hand umbenennen.`,
+		rename: (n: number) => (n === 1 ? '1 Datei umbenennen' : `${n} Dateien umbenennen`),
+		renamed: (n: number) => (n === 1 ? '1 Datei umbenannt.' : `${n} Dateien umbenannt.`),
+		all: 'Alle auswählen',
+		none: 'Alle Dateinamen folgen der Konvention.',
+		onlyUnclear: 'Nur noch Unklares',
+		noDriveWrite: 'Umbenennen ist aus: Die App darf Drive nur lesen (DRIVE_WRITE ist nicht gesetzt).',
+		tooMany: (n: number) => `Höchstens ${n} Dateien auf einmal, bitte in Teilen umbenennen.`,
+		gone: 'Diesen Ordner gibt es nicht mehr. Bitte die Seite neu laden.',
+		failed: (names: string[]) => `Nicht umbenannt: ${names.join(', ')}`,
+		filter: { all: 'Alle Ordner', rename: 'Mit Vorschlägen', unclear: 'Mit Unklarem' },
+		failedLoad: 'Das Notenarchiv konnte gerade nicht geladen werden.'
+	},
 	gaps: {
 		title: 'Fehlende Stimmen',
 		lead: 'Alle Lücken im Notenarchiv, aus den Dateinamen (FEHLT, LEER, UNVOLLSTÄNDIG) und den offenen Meldungen. Ersetzt die Listen in Drive.',
 		all: 'Alle',
 		current: 'Aktuelle Programme',
-		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'unvollständig', reports: 'Meldungen' },
-		reported: 'Gemeldet',
+		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'unvollständig', reports: 'davon nur gemeldet' },
+		reported: 'gemeldet',
+		reportedHint: 'In der App gemeldet. Der Dateiname in Drive sagt es noch nicht.',
 		none: 'Keine Lücken im Archiv.',
 		noneHere: 'In dieser Auswahl gibt es keine Lücken.',
 		failed: 'Das Notenarchiv konnte gerade nicht geladen werden.',
@@ -248,6 +304,10 @@ export const de = {
 		noRequests: 'Keine offenen Anfragen.',
 		approve: 'Freischalten',
 		decline: 'Ablehnen',
+		approveAll: (n: number) => `Alle ${n} freischalten`,
+		declineAll: 'Alle ablehnen',
+		confirmDeclineAll: (n: number) => `Wirklich alle ${n} Anfragen ablehnen?`,
+		requestGone: 'Diese Anfrage gibt es nicht mehr.',
 		members: 'Mitglieder',
 		noMembers: 'Noch keine Mitglieder eingetragen.',
 		addMember: 'Mitglied hinzufügen',
@@ -584,6 +644,9 @@ export const de = {
 		status: 'Status',
 		setStatus: 'Speichern',
 		submittedBy: (name: string, date: string) => `Von ${name} · ${date}`,
+		anonymous: 'anonym',
+		anonymousLabel: 'Anonym einreichen',
+		anonymousHint: 'Dein Name wird nicht gespeichert, auch nicht für die Verwaltung. Du kannst den Wunsch dann später nicht mehr bearbeiten oder zurückziehen.',
 		invalidLink: 'Der Link muss mit http:// oder https:// beginnen.',
 		titleMissing: 'Bitte einen Titel angeben.',
 		descriptionMissing: 'Bitte beschreiben, was die App können soll.',

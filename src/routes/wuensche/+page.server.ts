@@ -36,7 +36,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			answer: wish.answer,
 			submittedAt: wish.submittedAt,
 			// Who asked is for admins; everyone else sees only how many agree.
-			submittedBy: canManage ? wish.submittedBy : undefined,
+			submittedBy: canManage ? wish.submittedBy || t.wishes.anonymous : undefined,
 			votes: wish.votes.length,
 			voted: wish.votes.includes(me),
 			pieceId: wish.kind === 'piece' && wish.title ? pieceByTitle.get(searchText(wish.title)) : undefined
@@ -69,16 +69,15 @@ export const actions: Actions = {
 		if (link === undefined) return fail(400, { message: t.wishes.invalidLink, kind });
 		if (kind === 'piece' && !title) return fail(400, { message: t.wishes.titleMissing, kind });
 		if (kind === 'feature' && !description) return fail(400, { message: t.wishes.descriptionMissing, kind });
-		const result = await save(() =>
-			addWish(user, {
-				kind,
-				// A feature request's title is the start of its description, so the sheet stays readable.
-				title: kind === 'piece' ? title : title || description.split('\n')[0].slice(0, 80),
-				composer: kind === 'piece' ? formText(data, 'composer') : '',
-				link,
-				description
-			})
-		);
+		const wish = {
+			kind,
+			// A feature request's title is the start of its description, so the sheet stays readable.
+			title: kind === 'piece' ? title : title || description.split('\n')[0].slice(0, 80),
+			composer: kind === 'piece' ? formText(data, 'composer') : '',
+			link,
+			description
+		};
+		const result = await save(() => addWish(user, wish, { anonymous: data.get('anonymous') === 'on' }));
 		return 'status' in result ? result : { added: true, kind };
 	},
 

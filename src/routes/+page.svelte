@@ -1,26 +1,29 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
-	import Icon, { type IconName } from '#lib/components/Icon.svelte';
+	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { navGroups } from '#lib/nav.ts';
 
 	let { data } = $props();
 
-	const links: { href: string; label: string; text: string; icon: IconName }[] = $derived([
-		{ href: '/stuecke', label: t.nav.pieces, text: t.pieces.lead, icon: 'music' },
-		{ href: '/konzerte', label: t.nav.concerts, text: t.concerts.lead, icon: 'calendar' },
-		{ href: '/meine-noten', label: t.nav.myParts, text: t.myParts.lead, icon: 'user' },
-		...(data.auth === 'on' ? [{ href: '/wuensche', label: t.nav.wishes, text: t.wishes.lead, icon: 'bulb' as const }] : []),
-		...(data.rights.includes('stuecke.bearbeiten')
-			? [{ href: '/meldungen', label: t.nav.reports, text: t.reports.short, icon: 'flag' as const }]
-			: [])
-	]);
+	// Every page by group, so the start page doubles as a map of the app.
+	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
+	const todo = $derived(
+		data.todo
+			? [
+					{ href: '/meldungen', count: data.todo.reports, text: t.home.todo.reports },
+					{ href: '/wuensche', count: data.todo.wishes, text: t.home.todo.wishes },
+					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests }
+				].filter((item) => item.count > 0)
+			: []
+	);
 </script>
 
 <Title />
 
 <section class="hero">
 	<p class="eyebrow">{t.home.greeting}</p>
-	<h1>{data.orchestraName}</h1>
+	<h1>{t.home.title(data.orchestraName)}</h1>
 	<p class="intro">{t.home.intro}</p>
 </section>
 
@@ -45,6 +48,9 @@
 			</span>
 			<span class="card-arrow"><Icon name="arrow" size={18} /></span>
 		</a>
+		<a class="btn my-parts" href="/meine-noten?konzert={encodeURIComponent(concert.id)}">
+			<Icon name="user" size={18} />{t.myParts.forConcert(concert.displayTitle)}
+		</a>
 		{#if data.nextRehearsal}
 			{@const rehearsal = data.nextRehearsal}
 			<a class="rehearsal" href="/konzerte/{encodeURIComponent(rehearsal.id)}">
@@ -61,17 +67,33 @@
 	{/if}
 </section>
 
+{#if todo.length}
+	<section class="todo" aria-label={t.home.todo.title}>
+		<h2 class="section-title">{t.home.todo.title}</h2>
+		<ul>
+			{#each todo as item (item.href)}
+				<li><a href={item.href}><strong>{item.count}</strong> {item.text(item.count)}<Icon name="arrow" size={16} /></a></li>
+			{/each}
+		</ul>
+	</section>
+{/if}
+
 <h2 class="section-title">{t.home.quickLinks}</h2>
-<div class="grid">
-	{#each links as link (link.href)}
-		<a href={link.href} class="card">
-			<span class="card-icon"><Icon name={link.icon} /></span>
-			<span class="card-body">
-				<strong>{link.label}</strong>
-				<span>{link.text}</span>
-			</span>
-			<span class="card-arrow"><Icon name="arrow" size={18} /></span>
-		</a>
+<div class="groups">
+	{#each groups as group (group.key)}
+		<section class="group">
+			<h3>{group.label}</h3>
+			{#each group.items as item (item.href)}
+				<a href={item.href} class="card">
+					<span class="card-icon"><Icon name={item.icon} /></span>
+					<span class="card-body">
+						<strong>{item.label}</strong>
+						{#if t.home.describe[item.href]}<span>{t.home.describe[item.href]}</span>{/if}
+					</span>
+					<span class="card-arrow"><Icon name="arrow" size={18} /></span>
+				</a>
+			{/each}
+		</section>
 	{/each}
 </div>
 
@@ -219,10 +241,61 @@
 		margin-bottom: var(--space-3);
 	}
 
-	.grid {
+	.my-parts {
+		justify-self: start;
+		margin-top: var(--space-3);
+	}
+
+	.todo {
+		margin-bottom: var(--space-6);
+	}
+
+	.todo ul {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.todo a {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-4);
+		border: 1px solid color-mix(in oklab, var(--warn) 35%, var(--border));
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--warn) 8%, var(--surface));
+		font-size: 0.9375rem;
+	}
+
+	.todo a:hover {
+		border-color: var(--warn);
+	}
+
+	.todo strong {
+		color: var(--warn);
+	}
+
+	.groups {
 		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-		gap: var(--space-3);
+		grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+		gap: var(--space-5) var(--space-4);
+	}
+
+	.group {
+		display: grid;
+		align-content: start;
+		gap: var(--space-2);
+	}
+
+	.group h3 {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 
 	.card {

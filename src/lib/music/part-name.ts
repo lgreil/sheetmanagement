@@ -1,5 +1,5 @@
 import type { Instrument, InstrumentFamily, NamingRules } from '#lib/config/index.ts';
-import { formatNumbers, parseNumeral, tokenize } from './text.ts';
+import { formatNumbers, isOrdinal, parseNumeral, tokenize } from './text.ts';
 import type { PartKind, PartStatus } from './types.ts';
 
 interface AliasEntry {
@@ -47,6 +47,8 @@ export interface ParsedPart {
 	notes: string[];
 	status: PartStatus;
 	featured: boolean;
+	/** Words the parser couldn't place; a name with some isn't safe to rename automatically. */
+	unrecognized: string[];
 	/** Sort position: instrument order, then part number. */
 	order: number;
 }
@@ -72,7 +74,13 @@ export function parsePartName(
 	matcher: InstrumentMatcher,
 	prefix = ''
 ): ParsedPart {
-	let name = fileName.trim().replace(/\.[a-z0-9]{2,4}$/i, '');
+	let name = fileName
+		.trim()
+		.replace(/\.[a-z0-9]{2,4}$/i, '')
+		// The extension typed into the name as well: "Pianopdf.pdf"
+		.replace(/(?<=[a-z])pdf$/i, '')
+		// A copy's suffix from Drive or the desktop: "Horn- (1).pdf"
+		.replace(/\s+\(\d+\)$/, '');
 	const featured = name.startsWith(naming.featuredPrefix);
 	if (featured) name = name.slice(naming.featuredPrefix.length).trim();
 	if (prefix && name.startsWith(prefix)) name = name.slice(prefix.length);
@@ -96,7 +104,7 @@ export function parsePartName(
 		.map((key) => key.split(' '))
 		.sort((a, b) => b.length - a.length);
 
-	// Notes can span several words ("Bass-Fassung"), so they are matched like instruments.
+	// Notes can span several words ("mit Notizen"), so they are matched like instruments.
 	const noteKeys = Object.keys(naming.partNotes)
 		.map((key) => ({ tokens: tokenize(key), text: naming.partNotes[key] }))
 		.sort((a, b) => b.tokens.length - a.tokens.length);
@@ -106,7 +114,9 @@ export function parsePartName(
 	const items: Item[] = [];
 	const unknown: string[] = [];
 	let status: PartStatus = 'ok';
-	let pendingNumber: number | undefined;
+	let pendingNumbers: number[] = [];
+	/** A key written before the instrument: "F Horn", "B-flat Clarinet". */
+	let pendingTransposition: string | undefined;
 	let joiner = '&';
 	let afterUnknownWord = false;
 
@@ -122,6 +132,36 @@ export function parsePartName(
 			}
 		}
 		return [undefined, at];
+	};
+
+	/** "B.C."/"BC" (bass clef) or "T.C."/"TC" (treble clef), as tokens at `at`. */
+	const clefAt = (at: number): { note: string; length: number } | undefined => {
+		const token = tokens[at];
+		if ((token === 'b' || token === 't') && tokens[at + 1] === 'c') return { note: `${token.toUpperCase()}.C.`, length: 2 };
+		if (token === 'bc' || token === 'tc') return { note: `${token[0].toUpperCase()}.C.`, length: 1 };
+		return undefined;
+	};
+
+	/** An unambiguous key directly followed by an instrument: [key, index of the instrument]. */
+	const keyBeforeInstrument = (at: number): [string, number] | undefined => {
+		const [transposition, after] = readTransposition(at, false);
+		return transposition && matchAt(tokens, after, matcher) ? [transposition, after] : undefined;
+	};
+
+	/** Part numbers before the instrument, maybe with a key: "1. Violine", "1. und 2. F Horn", "2nd B-flat Trumpet". */
+	const numbersBeforeInstrument = (at: number): { numbers: number[]; transposition?: string; after: number } | undefined => {
+		const numbers: number[] = [];
+		let k = at;
+		while (parseNumeral(tokens[k]) !== undefined) {
+			numbers.push(parseNumeral(tokens[k])!);
+			k++;
+			if (['+', '&', ',', 'und'].includes(tokens[k]) && parseNumeral(tokens[k + 1]) !== undefined) k++;
+			else break;
+		}
+		if (!numbers.length) return undefined;
+		if (matchAt(tokens, k, matcher)) return { numbers, after: k };
+		const key = keyBeforeInstrument(k);
+		return key ? { numbers, transposition: key[0], after: key[1] } : undefined;
 	};
 
 	let i = 0;
@@ -140,19 +180,22 @@ export function parsePartName(
 			afterUnknownWord = false;
 			const item: Item = {
 				instrument: match.instrument,
-				numbers: pendingNumber ? [pendingNumber] : [],
+				numbers: pendingNumbers,
+				transposition: pendingTransposition,
 				joiner
 			};
-			pendingNumber = undefined;
+			pendingNumbers = [];
+			pendingTransposition = undefined;
 			joiner = '&';
 			i += match.tokens.length;
 
 			// Numbers and transposition may come in either order: "Horn in F 2", "Saxophon Eb 1+2".
 			for (let round = 0; round < 2; round++) {
 				// Clef markings for baritone parts: "B.C." (bass clef), "T.C." (treble clef).
-				if ((tokens[i] === 'b' || tokens[i] === 't') && tokens[i + 1] === 'c') {
-					notes.push(`${tokens[i].toUpperCase()}.C.`);
-					i += 2;
+				const clef = clefAt(i);
+				if (clef) {
+					if (!notes.includes(clef.note)) notes.push(clef.note);
+					i += clef.length;
 				}
 				let joined = false;
 				while (parseNumeral(tokens[i]) !== undefined) {
@@ -184,13 +227,23 @@ export function parsePartName(
 			continue;
 		}
 
-		const wasAfterUnknownWord = afterUnknownWord;
+		// "Section II Violine": II belongs to "Section". An ordinal ("1st") never does.
+		const wasAfterUnknownWord = afterUnknownWord && !isOrdinal(token);
 		afterUnknownWord = false;
+		const leading = numbersBeforeInstrument(i);
+		const clef = clefAt(i);
 		if (statusWords[token]) {
 			status = statusWords[token];
-		} else if (parseNumeral(token) !== undefined && !wasAfterUnknownWord && matchAt(tokens, i + 1, matcher)) {
-			// "1. Violine", "2.Flöte" (but not "Section II Violine", where II belongs to "Section")
-			pendingNumber = parseNumeral(token);
+		} else if (clef && (items.length > 0 || matchAt(tokens, i + clef.length, matcher))) {
+			// "Phantom-BC-Baritone", "Baritone Viola TC": the clef of the part next to it.
+			if (!notes.includes(clef.note)) notes.push(clef.note);
+			i += clef.length;
+			continue;
+		} else if (leading && (!wasAfterUnknownWord || leading.numbers.length > 1)) {
+			// "1. Violine", "2.Flöte" (but not "Section II Violine", where II belongs to "Section";
+			// a list like "Dance 1. und 2. F Horn" is clear even after a word)
+			({ numbers: pendingNumbers, transposition: pendingTransposition, after: i } = leading);
+			continue;
 		} else if (parseNumeral(token) !== undefined && voice && readTransposition(i + 1, false, true)[0]) {
 			// Flexible voices written as "3Es", "1C": voice 3 in Es.
 			const [transposition, after] = readTransposition(i + 1, false, true);
@@ -206,6 +259,11 @@ export function parsePartName(
 				i = after;
 				continue;
 			}
+		} else if (keyBeforeInstrument(i)) {
+			const [transposition, after] = keyBeforeInstrument(i)!;
+			pendingTransposition = transposition;
+			i = after;
+			continue;
 		} else {
 			unknown.push(token);
 			afterUnknownWord = true;
@@ -245,9 +303,12 @@ export function parsePartName(
 	});
 
 	// Voice parts of singers ("Gesang SA", "Gesang B") keep their short voice names.
+	let unrecognized = unknown;
 	if (items.length > 0 && items.every((item) => item.instrument.family === 'gesang')) {
-		const voices = unknown.filter((token) => /^[satb]{1,4}$/.test(token)).map((t) => t.toUpperCase());
+		const isVoice = (token: string) => /^[satb]{1,4}$/.test(token);
+		const voices = unknown.filter(isVoice).map((t) => t.toUpperCase());
 		if (voices.length) label += ` ${voices.join(' ')}`;
+		unrecognized = unknown.filter((token) => !isVoice(token));
 	}
 
 	const soloNote = naming.partNotes.solo ?? 'Solo';
@@ -290,6 +351,7 @@ export function parsePartName(
 		notes,
 		status,
 		featured,
+		unrecognized,
 		order
 	};
 }
