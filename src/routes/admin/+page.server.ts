@@ -1,11 +1,12 @@
 import { fail } from '@sveltejs/kit';
-import { normalizeEmail, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
+import { currentStatus, normalizeEmail, planApproval, resolveAccess, RIGHTS, splitGroups, type Right } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
 import { config } from '#lib/config/index.ts';
 import { splitNames } from '#lib/music/instrument-groups.ts';
-import { formatInstrument, parseInstrument, playableInstruments } from '#lib/music/my-parts.ts';
+import { commonInstruments, parseInstruments, playableInstruments } from '#lib/music/my-parts.ts';
+import { readMemberForm, today, writable } from '#lib/server/members.ts';
 import { getAccessList, getInstrumentGroups } from '#lib/server/repertoire.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import { requireSetting } from '#lib/server/services.ts';
@@ -18,6 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	requireRight(locals, 'mitglieder.verwalten');
 
 	const [list, groups] = await Promise.all([getAccessList(), getInstrumentGroups()]);
+	const day = today();
 	const auth = authConfig();
 	let sheetUrl: string | undefined;
 	try {
@@ -32,15 +34,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 		bootstrapAdmins: auth.mode === 'on' ? auth.bootstrapAdmins : [],
 		requests: list?.requests.map(({ email, name, requestedAt }) => ({ email, name, requestedAt })) ?? [],
 		members:
-			list?.members.map(({ email, name, instrument, groups }) => {
-				const choice = parseInstrument(instrument ?? '', config);
+			list?.members.map(({ email, name, instrument, groups, orchestras, status, pausedUntil }) => {
 				return {
 					email,
 					name,
 					instrument,
-					// For the edit form: the instrument as picked from the list, if the text is one.
-					choice: choice ? { instrument: choice.instrument, number: choice.number ?? 0 } : null,
+					// For the edit form: the instruments as picked from the list.
+					choices: parseInstruments(instrument ?? '', config),
 					groups,
+					orchestras,
+					status,
+					pausedUntil,
+					// A pause whose date has passed already counts as active.
+					current: currentStatus({ status, pausedUntil }, day),
 					// What they may do, from their own grants and their groups'.
 					rights: [...resolveAccess({ email, name }, list, auth.mode === 'on' ? auth.bootstrapAdmins : []).rights].filter(
 						(right) => right !== 'ansehen'
@@ -59,7 +65,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 					rows: Object.entries(config.sharedParts ?? {}).map(([part, players]) => ({ row: 0, part, players, mutual: false, note: '' }))
 				},
 		instruments: config.instruments.filter((instrument) => !instrument.voice).map((instrument) => instrument.name),
-		playable: playableInstruments(config)
+		playable: playableInstruments(config),
+		common: commonInstruments(config),
+		orchestras: config.orchestras
 	};
 };
 
@@ -134,17 +142,12 @@ export const actions: Actions = {
 		change(locals, async () => {
 			const data = await request.formData();
 			const email = normalizeEmail(field(data, 'email'));
-			const instrument = field(data, 'instrument');
-			if (instrument && !playableInstruments(config).includes(instrument)) return t.admin.unknownInstrument;
-			const number = Number(field(data, 'number'));
+			const form = readMemberForm(data);
+			if ('problem' in form) return form.problem;
 			const members = await readTab('members');
 			const row = members.rows.find((r) => normalizeEmail(r.values.email) === email);
 			if (!row) return t.admin.memberGone;
-			await updateRecord('members', members, row.row, {
-				name: field(data, 'name'),
-				instrument: instrument ? formatInstrument({ instrument, ...(number >= 1 && number <= 8 ? { number } : {}) }) : '',
-				groups: splitGroups(field(data, 'groups')).join(', ')
-			});
+			await updateRecord('members', members, row.row, writable(members, { ...form.values, groups: splitGroups(field(data, 'groups')).join(', ') }));
 		}),
 
 	removeMember: ({ request, locals }) =>

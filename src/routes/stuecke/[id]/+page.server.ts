@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
+import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText } from '#lib/server/feedback.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
@@ -53,6 +53,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 						: ('not-set-up' as const),
 			canClose,
 			instruments: playableInstruments(config),
+			common: commonInstruments(config),
 			present: [...new Set((detail?.parts ?? []).filter((part) => part.status !== 'missing').flatMap((part) => part.instruments))]
 		},
 		piece: {
@@ -112,7 +113,7 @@ export const actions: Actions = {
 		if (kind === 'missing' && !fileId && instrument) {
 			if (!playableInstruments(config).includes(instrument)) return fail(400, { reportError: t.reports.unknownPart });
 			const number = Number(formText(data, 'missingNumber'));
-			missingLabel = formatInstrument({ instrument, ...(number >= 1 && number <= 8 ? { number } : {}) });
+			missingLabel = formatInstrument({ instrument, numbers: number >= 1 && number <= 8 ? [number] : [] });
 		}
 
 		try {

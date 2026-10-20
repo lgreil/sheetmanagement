@@ -9,11 +9,11 @@ import type { Part, PieceDetail } from './types.ts';
  * the file-name parser read, plus the orchestra's shared parts (B-Stimmen …).
  */
 
-/** What a member plays, e.g. Geige 2 or Klarinette (any part). */
+/** What a member plays, e.g. Geige I & II or Klarinette (any part). */
 export interface InstrumentChoice {
 	instrument: string;
-	/** Undefined: every part of the instrument. */
-	number?: number;
+	/** Part numbers, ascending. Empty: every part of the instrument. */
+	numbers: number[];
 }
 
 const matchers = new WeakMap<OrchestraConfig, InstrumentMatcher>();
@@ -23,21 +23,63 @@ const matcherFor = (config: OrchestraConfig) => {
 	return matcher;
 };
 
-/**
- * Reads what members write in "Instrument", the way part file names are read:
- * "Geige 2", "2. Violine", "Violin II", "Cello", "Klarinette in B". Null if no instrument is recognised.
- */
-export function parseInstrument(text: string, config: OrchestraConfig): InstrumentChoice | null {
-	if (!text.trim()) return null;
-	const parsed = parsePartName(text, 'text/plain', config.naming, matcherFor(config));
-	const voice = parsed.voices[0];
-	if (!voice) return null;
-	return voice.numbers.length === 1 ? { instrument: voice.instrument, number: voice.numbers[0] } : { instrument: voice.instrument };
+const ascending = (numbers: number[]) => [...new Set(numbers)].sort((a, b) => a - b);
+
+/** Adds an instrument; the same one twice gets all its numbers, or every part if one entry says so. */
+function addChoice(choices: InstrumentChoice[], instrument: string, numbers: number[]) {
+	const known = choices.find((choice) => choice.instrument === instrument);
+	if (!known) choices.push({ instrument, numbers: ascending(numbers) });
+	else if (known.numbers.length) known.numbers = numbers.length ? ascending([...known.numbers, ...numbers]) : [];
 }
 
-/** "Geige II", "Klarinette": how a choice is shown and stored back in "Instrument". */
+/**
+ * Reads what members write in "Instrument", the way part file names are read, comma-separated
+ * for several: "Geige I & II, Viola", "2. Violine", "Cello", "Flöte, Oboe II". One entry per
+ * instrument, in the order written; unrecognised parts are left out.
+ */
+export function parseInstruments(text: string, config: OrchestraConfig): InstrumentChoice[] {
+	const choices: InstrumentChoice[] = [];
+	for (const item of text.split(/[,;]/)) {
+		if (!item.trim()) continue;
+		for (const voice of parsePartName(item, 'text/plain', config.naming, matcherFor(config)).voices) {
+			addChoice(choices, voice.instrument, voice.numbers);
+		}
+	}
+	return choices;
+}
+
+/** The first instrument only, where one is enough (e.g. a missing part's label). */
+export function parseInstrument(text: string, config: OrchestraConfig): InstrumentChoice | null {
+	return parseInstruments(text, config)[0] ?? null;
+}
+
+/** "Geige I & II", "Klarinette": how a choice is shown and stored back in "Instrument". */
 export function formatInstrument(choice: InstrumentChoice): string {
-	return choice.number ? `${choice.instrument} ${formatNumbers([choice.number])}` : choice.instrument;
+	return choice.numbers.length ? `${choice.instrument} ${formatNumbers(choice.numbers)}` : choice.instrument;
+}
+
+/** "Geige I & II, Viola" */
+export function formatInstruments(choices: InstrumentChoice[]): string {
+	return choices.map(formatInstrument).join(', ');
+}
+
+/** Part numbers members pick from. */
+export const PART_NUMBERS = [1, 2, 3, 4];
+
+/**
+ * Reads the instrument picker's fields: "instrument" once per row, "number" as "<row>:<n>".
+ * Unknown instruments and empty rows are dropped; the same instrument twice is merged.
+ */
+export function choicesFromForm(data: FormData, allowed: string[]): InstrumentChoice[] {
+	const instruments = data.getAll('instrument').map((value) => String(value));
+	const numbers = data.getAll('number').map((value) => String(value).split(':').map(Number));
+	const choices: InstrumentChoice[] = [];
+	instruments.forEach((instrument, row) => {
+		if (allowed.includes(instrument)) {
+			addChoice(choices, instrument, numbers.filter(([r, n]) => r === row && PART_NUMBERS.includes(n)).map(([, n]) => n));
+		}
+	});
+	return choices;
 }
 
 /** Shared parts that include the instrument, e.g. Klarinette → ["B-Stimmen", "Holz"]. */
@@ -55,7 +97,7 @@ function isOwn(part: Part, choice: InstrumentChoice): boolean {
 	return part.voices.some(
 		(voice) =>
 			voice.instrument === choice.instrument &&
-			(choice.number === undefined || voice.numbers.length === 0 || voice.numbers.includes(choice.number))
+			(!choice.numbers.length || !voice.numbers.length || voice.numbers.some((n) => choice.numbers.includes(n)))
 	);
 }
 
@@ -80,7 +122,7 @@ export function matchParts(parts: Part[], choice: InstrumentChoice, config: Orch
 	if (regular.length) own = regular;
 	// "Geige II" beats a plain "Geige", which is then usually the first violins' part.
 	const exact = own.filter((part) =>
-		part.voices.some((voice) => voice.instrument === choice.instrument && choice.number !== undefined && voice.numbers.includes(choice.number))
+		part.voices.some((voice) => voice.instrument === choice.instrument && voice.numbers.some((n) => choice.numbers.includes(n)))
 	);
 	if (exact.length) own = exact;
 	const shared = parts.filter((part) => !own.includes(part) && part.instruments.some((name) => groups.has(name)));
@@ -94,7 +136,7 @@ export function matchParts(parts: Part[], choice: InstrumentChoice, config: Orch
 export type Coverage = 'own' | 'shared' | 'problem' | 'none';
 
 export function coverage(parts: Part[], instrument: string, config: OrchestraConfig): Coverage {
-	const { own, shared } = matchParts(parts, { instrument }, config);
+	const { own, shared } = matchParts(parts, { instrument, numbers: [] }, config);
 	if (own.some((part) => part.status === 'ok')) return 'own';
 	if (shared.some((part) => part.status === 'ok')) return 'shared';
 	return own.length || shared.length ? 'problem' : 'none';
@@ -141,4 +183,10 @@ export function playableInstruments(config: OrchestraConfig): string[] {
 	return config.instruments
 		.filter((instrument) => !instrument.voice && instrument.family !== 'sonstige' && instrument.name !== 'Holz' && instrument.name !== 'Blech')
 		.map((instrument) => instrument.name);
+}
+
+/** The usual orchestra instruments, offered first; every instrument when the config marks none. */
+export function commonInstruments(config: OrchestraConfig): string[] {
+	const marked = config.instruments.filter((instrument) => instrument.common).map((instrument) => instrument.name);
+	return marked.length ? marked : config.instruments.map((instrument) => instrument.name);
 }

@@ -40,6 +40,6 @@ describe('groups in Meine Noten', () => {
 		const groups = toSharedParts([{ part: 'Percussion', players: ['Schlagwerk', 'Mallet Percussion'], mutual: true }]);
 		const withGroups = { ...config, sharedParts: groups };
 		expect(sharedPartsFor('Schlagwerk', withGroups)).toContain('Mallet Percussion');
-		expect(matchParts(parts, { instrument: 'Schlagwerk' }, withGroups).shared.map((p) => p.id)).toEqual(['m']);
+		expect(matchParts(parts, { instrument: 'Schlagwerk', numbers: [] }, withGroups).shared.map((p) => p.id)).toEqual(['m']);
 	});
 });

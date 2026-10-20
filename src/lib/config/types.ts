@@ -27,6 +27,11 @@ export interface Instrument {
 	 * rather than an instrument. Shown as "Stimme 3" with the instruments that follow.
 	 */
 	voice?: boolean;
+	/**
+	 * One of the usual orchestra instruments, offered first in instrument lists; the rest
+	 * are behind "Mehr Instrumente …". When no instrument has it, every one is offered.
+	 */
+	common?: boolean;
 }
 
 export interface NamingRules {

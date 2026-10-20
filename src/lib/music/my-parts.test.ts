@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { config } from '#lib/config/index.ts';
-import { coverage, formatInstrument, matchParts, mergedFileName, parseInstrument, playedParts, programInstruments } from './my-parts.ts';
+import {
+	choicesFromForm,
+	commonInstruments,
+	coverage,
+	formatInstrument,
+	formatInstruments,
+	matchParts,
+	mergedFileName,
+	parseInstrument,
+	parseInstruments,
+	playableInstruments,
+	playedParts,
+	programInstruments
+} from './my-parts.ts';
 import { createInstrumentMatcher, parsePartName } from './part-name.ts';
 import type { Part } from './types.ts';
 
@@ -28,12 +41,12 @@ const labels = (parts: Part[]) => parts.map((p) => p.label);
 
 describe('parseInstrument', () => {
 	it.each([
-		['Geige 2', { instrument: 'Geige', number: 2 }],
-		['2. Violine', { instrument: 'Geige', number: 2 }],
-		['Violin II', { instrument: 'Geige', number: 2 }],
-		['Cello', { instrument: 'Violoncello' }],
-		['Klarinette in B', { instrument: 'Klarinette' }],
-		['Dirigent', { instrument: 'Partitur' }],
+		['Geige 2', { instrument: 'Geige', numbers: [2] }],
+		['2. Violine', { instrument: 'Geige', numbers: [2] }],
+		['Violin II', { instrument: 'Geige', numbers: [2] }],
+		['Cello', { instrument: 'Violoncello', numbers: [] }],
+		['Klarinette in B', { instrument: 'Klarinette', numbers: [] }],
+		['Dirigent', { instrument: 'Partitur', numbers: [] }],
 		['Tröte', null],
 		['', null]
 	])('%j → %j', (text, expected) => {
@@ -41,8 +54,78 @@ describe('parseInstrument', () => {
 	});
 
 	it('formats a choice like a part name', () => {
-		expect(formatInstrument({ instrument: 'Geige', number: 2 })).toBe('Geige II');
-		expect(formatInstrument({ instrument: 'Viola' })).toBe('Viola');
+		expect(formatInstrument({ instrument: 'Geige', numbers: [2] })).toBe('Geige II');
+		expect(formatInstrument({ instrument: 'Viola', numbers: [] })).toBe('Viola');
+	});
+});
+
+describe('parseInstruments', () => {
+	it.each([
+		['Geige I & II, Viola', [{ instrument: 'Geige', numbers: [1, 2] }, { instrument: 'Viola', numbers: [] }]],
+		['Flöte, Oboe II', [{ instrument: 'Flöte', numbers: [] }, { instrument: 'Oboe', numbers: [2] }]],
+		['Trompete I & III', [{ instrument: 'Trompete', numbers: [1, 3] }]],
+		['Violoncello & Kontrabass', [{ instrument: 'Violoncello', numbers: [] }, { instrument: 'Kontrabass', numbers: [] }]],
+		// The same instrument twice: its numbers together, or every part if one entry has none.
+		['Geige II; Geige I', [{ instrument: 'Geige', numbers: [1, 2] }]],
+		['Geige II, Geige', [{ instrument: 'Geige', numbers: [] }]],
+		['Tröte, Cello', [{ instrument: 'Violoncello', numbers: [] }]],
+		['', []]
+	])('%j', (text, expected) => {
+		expect(parseInstruments(text, config)).toEqual(expected);
+	});
+
+	it('round-trips through the stored notation', () => {
+		for (const text of ['Geige I & II, Viola', 'Flöte, Oboe II', 'Trompete I–III']) {
+			expect(formatInstruments(parseInstruments(text, config))).toBe(text);
+		}
+	});
+});
+
+describe('choicesFromForm', () => {
+	const form = (entries: [string, string][]) => {
+		const data = new FormData();
+		for (const [name, value] of entries) data.append(name, value);
+		return data;
+	};
+	const allowed = playableInstruments(config);
+
+	it('reads one row per instrument with its numbers', () => {
+		const data = form([
+			['instrument', 'Geige'],
+			['number', '0:2'],
+			['number', '0:1'],
+			['instrument', 'Viola'],
+			['instrument', '']
+		]);
+		expect(choicesFromForm(data, allowed)).toEqual([
+			{ instrument: 'Geige', numbers: [1, 2] },
+			{ instrument: 'Viola', numbers: [] }
+		]);
+	});
+
+	it('drops unknown instruments and numbers, and merges duplicates', () => {
+		const data = form([
+			['instrument', 'Tröte'],
+			['number', '0:1'],
+			['instrument', 'Horn'],
+			['number', '1:9'],
+			['number', '1:3'],
+			['instrument', 'Horn'],
+			['number', '2:1']
+		]);
+		expect(choicesFromForm(data, allowed)).toEqual([{ instrument: 'Horn', numbers: [1, 3] }]);
+	});
+});
+
+describe('commonInstruments', () => {
+	it('offers the usual orchestra instruments first', () => {
+		expect(commonInstruments(config)).toContain('Geige');
+		expect(commonInstruments(config)).not.toContain('Blockflöte');
+	});
+
+	it('offers every instrument when the config marks none', () => {
+		const plain = { ...config, instruments: config.instruments.map(({ common: _, ...instrument }) => instrument) };
+		expect(commonInstruments(plain)).toHaveLength(config.instruments.length);
 	});
 });
 
@@ -59,35 +142,40 @@ describe('matchParts', () => {
 	];
 
 	it('finds the part with the right number', () => {
-		expect(labels(matchParts(parts, { instrument: 'Geige', number: 2 }, config).own)).toEqual(['Geige II']);
+		expect(labels(matchParts(parts, { instrument: 'Geige', numbers: [2] }, config).own)).toEqual(['Geige II']);
 	});
 
 	it('gives every part of the instrument when no number is known', () => {
-		expect(labels(matchParts(parts, { instrument: 'Geige' }, config).own)).toEqual(['Geige I', 'Geige II']);
+		expect(labels(matchParts(parts, { instrument: 'Geige', numbers: [] }, config).own)).toEqual(['Geige I', 'Geige II']);
+	});
+
+	it('finds every numbered part a member plays', () => {
+		expect(labels(matchParts(parts, { instrument: 'Geige', numbers: [1, 2] }, config).own)).toEqual(['Geige I', 'Geige II']);
+		expect(labels(matchParts(parts, { instrument: 'Geige', numbers: [1, 3] }, config).own)).toEqual(['Geige I']);
 	});
 
 	it('finds combined parts and the shared parts for the instrument', () => {
-		const clarinet = matchParts(parts, { instrument: 'Klarinette', number: 2 }, config);
+		const clarinet = matchParts(parts, { instrument: 'Klarinette', numbers: [2] }, config);
 		expect(labels(clarinet.own)).toEqual(['Klarinette I & II in B']);
 		expect(labels(clarinet.shared)).toEqual(['B-Stimmen']);
-		expect(labels(matchParts(parts, { instrument: 'Kontrabass' }, config).own)).toEqual(['Violoncello & Kontrabass']);
+		expect(labels(matchParts(parts, { instrument: 'Kontrabass', numbers: [] }, config).own)).toEqual(['Violoncello & Kontrabass']);
 	});
 
 	it('prefers the numbered part over a plain one, and leaves out the soloist', () => {
 		// As in the archive: "Lets_get_Loud-Violin.pdf" next to "…-ViolinII.pdf", and a solo violin.
 		const loud = [part('Loud - Violin.pdf'), part('Loud - Violin II.pdf'), part('Loud - Violin III.pdf'), part('@Loud - Violine Solo.pdf')];
-		expect(labels(matchParts(loud, { instrument: 'Geige', number: 2 }, config).own)).toEqual(['Geige II']);
+		expect(labels(matchParts(loud, { instrument: 'Geige', numbers: [2] }, config).own)).toEqual(['Geige II']);
 		// Without "Geige IV", the plain part is the best there is.
-		expect(labels(matchParts(loud, { instrument: 'Geige', number: 4 }, config).own)).toEqual(['Geige']);
-		expect(labels(matchParts([part('Loud - Violine Solo.pdf')], { instrument: 'Geige', number: 2 }, config).own)).toEqual(['Geige']);
+		expect(labels(matchParts(loud, { instrument: 'Geige', numbers: [4] }, config).own)).toEqual(['Geige']);
+		expect(labels(matchParts([part('Loud - Violine Solo.pdf')], { instrument: 'Geige', numbers: [2] }, config).own)).toEqual(['Geige']);
 	});
 
 	it('gives the conductor the score', () => {
-		expect(labels(matchParts(parts, { instrument: 'Partitur' }, config).own)).toEqual(['Partitur']);
+		expect(labels(matchParts(parts, { instrument: 'Partitur', numbers: [] }, config).own)).toEqual(['Partitur']);
 	});
 
 	it('finds nothing for an instrument the piece lacks', () => {
-		expect(matchParts(parts, { instrument: 'Tuba' }, config)).toEqual({ own: [], shared: [] });
+		expect(matchParts(parts, { instrument: 'Tuba', numbers: [] }, config)).toEqual({ own: [], shared: [] });
 	});
 
 	it('only uses the section that is played', () => {

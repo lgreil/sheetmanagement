@@ -60,7 +60,15 @@
 			<ThemeToggle />
 			{#if data.user}
 				<form class="account" method="POST" action="/auth/logout">
-					<span class="avatar" title={t.auth.signedInAs(data.user.email)}>{data.user.name.charAt(0).toUpperCase()}</span>
+					<a
+						class="avatar"
+						href="/profil"
+						class:active={isActive('/profil', path)}
+						title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
+						aria-label={t.profile.title}
+					>
+						{data.user.name.charAt(0).toUpperCase()}
+					</a>
 					<button class="logout" title={t.auth.logout} aria-label={t.auth.logout}><Icon name="logout" size={18} /></button>
 				</form>
 			{/if}
@@ -365,6 +373,12 @@
 		color: var(--accent);
 		font-size: 0.875rem;
 		font-weight: 700;
+	}
+
+	.avatar:hover,
+	.avatar.active {
+		outline: 2px solid var(--accent);
+		outline-offset: 1px;
 	}
 
 	.logout {

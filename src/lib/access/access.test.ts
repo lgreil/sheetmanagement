@@ -1,7 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { planProgramSave, parseEntries, programVersion } from '#lib/repertoire/program-edit.ts';
 import { readTable } from '#lib/repertoire/sheet.ts';
-import { buildAccessList, lacksSurname, maskEmail, parseEmailList, planApproval, resolveAccess, RIGHTS } from './access.ts';
+import {
+	buildAccessList,
+	countingMembers,
+	currentStatus,
+	lacksSurname,
+	maskEmail,
+	parseDay,
+	parseEmailList,
+	parseStatus,
+	planApproval,
+	playsIn,
+	resolveAccess,
+	RIGHTS
+} from './access.ts';
 
 const list = buildAccessList({
 	members: [
@@ -138,5 +151,69 @@ describe('maskEmail and lacksSurname', () => {
 		expect(lacksSurname(' Anna ')).toBe(true);
 		expect(lacksSurname('Anna Müller')).toBe(false);
 		expect(lacksSurname('anna@example.org')).toBe(false);
+	});
+});
+
+describe('member status and orchestras', () => {
+	const members = buildAccessList({
+		members: [
+			['E-Mail', 'Name', 'Instrument', 'Gruppen', 'Orchester', 'Status', 'Pausiert bis'],
+			['a@example.org', 'Anna A', 'Geige I & II', '', 'EO, A', '', ''],
+			['b@example.org', 'Ben B', 'Cello', '', '', 'Pausiert', '31.3.2027'],
+			['c@example.org', 'Carl C', 'Horn', '', 'a', 'inaktiv', ''],
+			['d@example.org', 'Dora D', 'Oboe', '', 'B', 'pausiert', '']
+		]
+	}).members;
+
+	it('reads orchestras, status and the end of a pause', () => {
+		expect(members.map((m) => [m.orchestras, m.status, m.pausedUntil])).toEqual([
+			[['EO', 'A'], 'aktiv', undefined],
+			[[], 'pausiert', '2027-03-31'],
+			[['a'], 'inaktiv', undefined],
+			[['B'], 'pausiert', undefined]
+		]);
+	});
+
+	it.each([
+		['', 'aktiv'],
+		['Aktiv', 'aktiv'],
+		['pausiert', 'pausiert'],
+		['Pause', 'pausiert'],
+		['INAKTIV', 'inaktiv'],
+		['weg', 'aktiv']
+	])('status %j → %s', (text, status) => {
+		expect(parseStatus(text)).toBe(status);
+	});
+
+	it.each([
+		['2027-03-31', '2027-03-31'],
+		['2027-3-1', '2027-03-01'],
+		['1.3.2027', '2027-03-01'],
+		['31.2.2027', undefined],
+		['März', undefined],
+		['', undefined]
+	])('day %j → %j', (text, day) => {
+		expect(parseDay(text)).toBe(day);
+	});
+
+	it('ends a pause the day after its date', () => {
+		const paused = { status: 'pausiert' as const, pausedUntil: '2027-03-31' };
+		expect(currentStatus(paused, '2027-03-31')).toBe('pausiert');
+		expect(currentStatus(paused, '2027-04-01')).toBe('aktiv');
+		expect(currentStatus({ status: 'pausiert' }, '2099-01-01')).toBe('pausiert');
+		expect(currentStatus({ status: 'inaktiv', pausedUntil: '2020-01-01' }, '2027-01-01')).toBe('inaktiv');
+	});
+
+	it('counts members without orchestras for every orchestra', () => {
+		expect(playsIn(members[0], 'A')).toBe(true);
+		expect(playsIn(members[0], 'B')).toBe(false);
+		expect(playsIn(members[1], 'B')).toBe(true);
+		expect(playsIn(members[3], undefined)).toBe(true);
+	});
+
+	it('counts only active members of the concert orchestra', () => {
+		expect(countingMembers(members, 'A', '2027-01-01').map((m) => m.name)).toEqual(['Anna A']);
+		expect(countingMembers(members, 'A', '2027-04-01').map((m) => m.name)).toEqual(['Anna A', 'Ben B']);
+		expect(countingMembers(members, undefined, '2027-04-01').map((m) => m.name)).toEqual(['Anna A', 'Ben B']);
 	});
 });

@@ -14,12 +14,22 @@ export const ACCESS_TABS = ['members', 'groups', 'rights', 'requests'] as const;
 export type AccessTab = (typeof ACCESS_TABS)[number];
 export type AccessValues = Partial<Record<AccessTab, string[][]>>;
 
+/** Paused or inactive members keep their access, but don't count for coverage. */
+export const MEMBER_STATUSES = ['aktiv', 'pausiert', 'inaktiv'] as const;
+export type MemberStatus = (typeof MEMBER_STATUSES)[number];
+
 export interface Member {
 	row: number;
 	email: string;
 	name: string;
+	/** As entered, e.g. "Geige I & II, Viola"; read with parseInstruments. */
 	instrument?: string;
 	groups: string[];
+	/** Short orchestra names ("EO", "A"). Empty: not set, so the member counts for every orchestra. */
+	orchestras: string[];
+	status: MemberStatus;
+	/** "2027-03-31": paused up to and including this day. */
+	pausedUntil?: string;
 }
 
 export interface Group {
@@ -78,7 +88,16 @@ export function buildAccessList(values: AccessValues): AccessList {
 			problems.push({ kind: 'duplicate-member', tab: LAYOUT.members.tab, row, value: v.email });
 			continue;
 		}
-		const member = { row, email, name: v.name || email, instrument: v.instrument || undefined, groups: splitGroups(v.groups) };
+		const member: Member = {
+			row,
+			email,
+			name: v.name || email,
+			instrument: v.instrument || undefined,
+			groups: splitGroups(v.groups),
+			orchestras: splitGroups(v.orchestras),
+			status: parseStatus(v.status),
+			pausedUntil: parseDay(v.pausedUntil)
+		};
 		members.push(member);
 		membersByEmail.set(email, member);
 	}
@@ -181,3 +200,40 @@ export function maskEmail(email: string): string {
 
 /** A name without a second word ("Anna") can't be told apart from another Anna. */
 export const lacksSurname = (name: string) => !/\S\s+\S/.test(name.trim()) && !name.includes('@');
+
+/** Empty or unknown counts as active, so a member is never left out by a typo. */
+export function parseStatus(text: string): MemberStatus {
+	const value = normalize(text);
+	return MEMBER_STATUSES.find((status) => value.startsWith(status.slice(0, 4))) ?? 'aktiv';
+}
+
+/** "2027-03-31" or "31.3.2027" → "2027-03-31"; anything else is no date. */
+export function parseDay(text: string): string | undefined {
+	const value = text.trim();
+	const iso = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+	const german = value.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+	const [year, month, day] = iso ? [iso[1], iso[2], iso[3]].map(Number) : german ? [german[3], german[2], german[1]].map(Number) : [];
+	if (!year) return undefined;
+	const date = new Date(Date.UTC(year, month - 1, day));
+	if (date.getUTCMonth() !== month - 1 || date.getUTCDate() !== day) return undefined;
+	return date.toISOString().slice(0, 10);
+}
+
+/** A pause with an end date is over the day after it; that needs no write to the sheet. */
+export function currentStatus(member: Pick<Member, 'status' | 'pausedUntil'>, today: string): MemberStatus {
+	return member.status === 'pausiert' && member.pausedUntil && member.pausedUntil < today ? 'aktiv' : member.status;
+}
+
+/** Whether a member plays in the orchestra; members without orchestras count for all of them. */
+export function playsIn(member: Pick<Member, 'orchestras'>, orchestra: string | undefined): boolean {
+	return !orchestra || !member.orchestras.length || member.orchestras.some((name) => normalize(name) === normalize(orchestra));
+}
+
+/** Members who count for a concert's instrumentation: active ones in its orchestra. */
+export function countingMembers<M extends Pick<Member, 'orchestras' | 'status' | 'pausedUntil'>>(
+	members: M[],
+	orchestra: string | undefined,
+	today: string
+): M[] {
+	return members.filter((member) => currentStatus(member, today) === 'aktiv' && playsIn(member, orchestra));
+}

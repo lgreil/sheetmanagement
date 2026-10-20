@@ -7,19 +7,33 @@
 	/** One concert on "Meine Noten": its programme with the member's parts, and the merged PDF. */
 	let {
 		concert,
-		choice,
+		label,
 		canMerge
-	}: { concert: PageData['concerts'][number]; choice: PageData['choice']; canMerge: boolean } = $props();
+	}: {
+		concert: PageData['concerts'][number];
+		/** What the member plays, e.g. "Geige I & II, Viola"; empty before they picked. */
+		label: string;
+		canMerge: boolean;
+	} = $props();
 
 	type Piece = (typeof concert.pieces)[number];
-	type Shown = Piece['own'][number];
-	/** Per piece: its own parts, or the shared ones when there is no own part. */
-	const playable = (piece: Piece): Shown[] => {
+	type Match = Piece['matches'][number];
+	type Shown = Match['own'][number];
+	/** Per instrument: its own parts, or the shared ones when there is no own part. */
+	const playable = (match: Match): Shown[] => {
 		const ok = (parts: Shown[]) => parts.filter((part) => part.pdf && part.status === 'ok');
-		return ok(piece.own).length ? ok(piece.own) : ok(piece.shared);
+		return ok(match.own).length ? ok(match.own) : ok(match.shared);
 	};
-	const files = $derived(concert.pieces.flatMap((piece) => playable(piece).map((part) => ({ ...part, piece: piece.title }))));
-	const found = $derived(concert.pieces.filter((piece) => piece.own.length || piece.shared.length).length);
+	const hasPart = (match: Match) => match.own.length > 0 || match.shared.length > 0;
+	/** Per piece, the parts of every instrument; a part two instruments share only once. */
+	const files = $derived(
+		concert.pieces.flatMap((piece) => {
+			const parts = piece.matches.flatMap(playable).filter((part, i, all) => all.findIndex((p) => p.id === part.id) === i);
+			return parts.map((part) => ({ ...part, piece: piece.title }));
+		})
+	);
+	const found = $derived(concert.pieces.filter((piece) => piece.matches.some(hasPart)).length);
+	const several = $derived(concert.pieces.some((piece) => piece.matches.length > 1));
 
 	let progress = $state<string | null>(null);
 	let mergeError = $state<string | null>(null);
@@ -56,7 +70,7 @@
 
 	/** Merges the parts in the browser: Workers on the free plan have too little CPU time for it. */
 	async function merge() {
-		if (!choice) return;
+		if (!label) return;
 		mergeError = null;
 		skipped = [];
 		try {
@@ -85,7 +99,7 @@
 			const blob = new Blob([(await merged.save()) as BlobPart], { type: 'application/pdf' });
 			const link = document.createElement('a');
 			link.href = URL.createObjectURL(blob);
-			link.download = mergedFileName(concert.title, choice.label);
+			link.download = mergedFileName(concert.title, label);
 			link.click();
 			setTimeout(() => URL.revokeObjectURL(link.href), 60_000);
 		} catch (error) {
@@ -104,7 +118,7 @@
 			<a class="concert-title" href="/konzerte/{encodeURIComponent(concert.id)}">{concert.title}</a>
 			{#if concert.label}<p class="muted">{concert.label}</p>{/if}
 		</div>
-		{#if choice && concert.pieces.length}
+		{#if label && concert.pieces.length}
 			<div class="merge">
 				{#if canMerge}
 					<button class="btn" onclick={merge} disabled={!!progress || !files.length} title={t.myParts.mergeHint}>
@@ -132,7 +146,7 @@
 	{:else}
 		<ol class="pieces">
 			{#each concert.pieces as piece, i (i)}
-				<li class="piece" class:none={choice && !piece.own.length && !piece.shared.length}>
+				<li class="piece" class:none={label && !piece.matches.some(hasPart)}>
 					<span class="position">{piece.position ?? i + 1}</span>
 					<div class="body">
 						<div class="title">
@@ -148,33 +162,38 @@
 						</div>
 						{#if !piece.hasMusic}
 							<span class="hint">{t.myParts.noMusic}</span>
-						{:else if choice}
-							{#if piece.own.length || piece.shared.length}
-								<ul class="parts">
-									{#each [...piece.own.map((p) => ({ ...p, shared: false })), ...piece.shared.map((p) => ({ ...p, shared: true }))] as part (part.id)}
-										<li>
-											<!-- A missing part is only a placeholder: nothing to open. -->
-											<svelte:element
-												this={part.status === 'missing' ? 'span' : 'a'}
-												class="part"
-												class:problem={part.status !== 'ok'}
-												class:missing={part.status === 'missing'}
-												href={part.status === 'missing' ? undefined : part.url}
-												target={part.status === 'missing' ? undefined : '_blank'}
-												rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
-											>
-												<Icon name="file" size={16} />
-												<span>{part.label}</span>
-												{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
-												{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
-												{#each part.notes as note (note)}<span class="tag">{note}</span>{/each}
-											</svelte:element>
-										</li>
-									{/each}
-								</ul>
-							{:else}
-								<span class="hint warn"><Icon name="alert" size={14} />{t.myParts.noPart(choice.label)}</span>
-							{/if}
+						{:else}
+							{#each piece.matches as match (match.label)}
+								<div class="match">
+									{#if several}<span class="instrument">{match.label}</span>{/if}
+									{#if hasPart(match)}
+										<ul class="parts">
+											{#each [...match.own.map((p) => ({ ...p, shared: false })), ...match.shared.map((p) => ({ ...p, shared: true }))] as part (part.id)}
+												<li>
+													<!-- A missing part is only a placeholder: nothing to open. -->
+													<svelte:element
+														this={part.status === 'missing' ? 'span' : 'a'}
+														class="part"
+														class:problem={part.status !== 'ok'}
+														class:missing={part.status === 'missing'}
+														href={part.status === 'missing' ? undefined : part.url}
+														target={part.status === 'missing' ? undefined : '_blank'}
+														rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
+													>
+														<Icon name="file" size={16} />
+														<span>{part.label}</span>
+														{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
+														{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
+														{#each part.notes as note (note)}<span class="tag">{note}</span>{/each}
+													</svelte:element>
+												</li>
+											{/each}
+										</ul>
+									{:else}
+										<span class="hint warn"><Icon name="alert" size={14} />{t.myParts.noPart(match.label)}</span>
+									{/if}
+								</div>
+							{/each}
 						{/if}
 					</div>
 				</li>
@@ -284,6 +303,19 @@
 		gap: 4px;
 		color: var(--accent);
 		font-size: 0.8125rem;
+	}
+
+	.match {
+		display: grid;
+		gap: var(--space-1);
+	}
+
+	.instrument {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 700;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.parts {
