@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { lacksSurname, maskEmail } from '#lib/access/access.ts';
 	import { config } from '#lib/config/index.ts';
 	import { formatDay } from '#lib/events/format.ts';
@@ -10,16 +11,9 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
-
 	/** Disables the buttons while a change is saved, and keeps the scroll position. */
-	const submit = () => {
-		busy = true;
-		return async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: true });
-			busy = false;
-		};
-	};
+	const saving = new FormState();
+	const submit = saving.submit({ reset: true });
 
 	/** Emails are shortened unless asked for; the edit form always shows the full one. */
 	let showEmails = $state(false);
@@ -98,11 +92,11 @@
 				<div class="bulk">
 					<form method="POST" action="?/approve" use:enhance={submit}>
 						{#each data.requests as request (request.email)}<input type="hidden" name="email" value={request.email} />{/each}
-						<button class="button" disabled={busy}>{t.admin.approveAll(data.requests.length)}</button>
+						<button class="button" disabled={saving.busy}>{t.admin.approveAll(data.requests.length)}</button>
 					</form>
 					<form method="POST" action="?/decline" use:enhance={submit} onsubmit={confirmDeclineAll(data.requests.length)}>
 						{#each data.requests as request (request.email)}<input type="hidden" name="email" value={request.email} />{/each}
-						<button class="ghost" disabled={busy}>{t.admin.declineAll}</button>
+						<button class="ghost" disabled={saving.busy}>{t.admin.declineAll}</button>
 					</form>
 				</div>
 			{/if}
@@ -117,11 +111,11 @@
 						</span>
 						<form method="POST" action="?/approve" use:enhance={submit}>
 							<input type="hidden" name="email" value={request.email} />
-							<button class="button" disabled={busy}>{t.admin.approve}</button>
+							<button class="button" disabled={saving.busy}>{t.admin.approve}</button>
 						</form>
 						<form method="POST" action="?/decline" use:enhance={submit}>
 							<input type="hidden" name="email" value={request.email} />
-							<button class="ghost" disabled={busy}>{t.admin.decline}</button>
+							<button class="ghost" disabled={saving.busy}>{t.admin.decline}</button>
 						</form>
 					</li>
 				{/each}
@@ -151,15 +145,12 @@
 								class="edit"
 								method="POST"
 								action="?/editMember"
-								use:enhance={() => {
-									busy = true;
-									return async ({ update, result }) => {
-										await update({ reset: false });
-										busy = false;
-										// A link stays open, so it can be copied.
-										if (result.type === 'success' && !result.data?.link) editing = null;
-									};
-								}}
+								use:enhance={saving.submit({
+									// A link stays open, so it can be copied.
+									onSuccess: (result) => {
+										if (!result?.link) editing = null;
+									}
+								})}
 							>
 								<input type="hidden" name="email" value={member.email} />
 								<p class="full-email muted small">{member.email}</p>
@@ -184,16 +175,16 @@
 									{/if}
 									<div class="link-actions">
 										{#if member.link === 'active'}
-											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="show" formnovalidate>{t.admin.linkShow}</button>
-											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="new" formnovalidate onclick={confirmLink(t.admin.confirmNewLink(member.name))}>{t.admin.linkNew}</button>
-											<button class="ghost danger" disabled={busy} formaction="?/link" name="mode" value="revoke" formnovalidate onclick={confirmLink(t.admin.confirmRevokeLink(member.name))}>{t.admin.linkRevoke}</button>
+											<button class="ghost" disabled={saving.busy} formaction="?/link" name="mode" value="show" formnovalidate>{t.admin.linkShow}</button>
+											<button class="ghost" disabled={saving.busy} formaction="?/link" name="mode" value="new" formnovalidate onclick={confirmLink(t.admin.confirmNewLink(member.name))}>{t.admin.linkNew}</button>
+											<button class="ghost danger" disabled={saving.busy} formaction="?/link" name="mode" value="revoke" formnovalidate onclick={confirmLink(t.admin.confirmRevokeLink(member.name))}>{t.admin.linkRevoke}</button>
 										{:else}
-											<button class="ghost" disabled={busy} formaction="?/link" name="mode" value="new" formnovalidate>{t.admin.linkCreate}</button>
+											<button class="ghost" disabled={saving.busy} formaction="?/link" name="mode" value="new" formnovalidate>{t.admin.linkCreate}</button>
 										{/if}
 									</div>
 								</div>
 								<div class="edit-actions">
-									<button class="button" disabled={busy}><Icon name="check" size={16} />{t.admin.save}</button>
+									<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.admin.save}</button>
 									<button class="ghost" type="button" onclick={() => (editing = null)}>{t.admin.cancel}</button>
 								</div>
 							</form>
@@ -225,10 +216,10 @@
 								<span class="muted small">{t.admin.effectiveRights}: {member.rights.map(rightLabel).join(', ')}</span>
 							{/if}
 						</span>
-						<button class="ghost" disabled={busy} onclick={() => (editing = member.email)}>{t.admin.edit}</button>
+						<button class="ghost" disabled={saving.busy} onclick={() => (editing = member.email)}>{t.admin.edit}</button>
 						<form method="POST" action="?/removeMember" use:enhance={submit} onsubmit={confirmRemove(member.name)}>
 							<input type="hidden" name="email" value={member.email} />
-							<button class="icon-button" disabled={busy} title={t.admin.remove} aria-label={t.admin.remove}>
+							<button class="icon-button" disabled={saving.busy} title={t.admin.remove} aria-label={t.admin.remove}>
 								<Icon name="trash" size={16} />
 							</button>
 						</form>
@@ -249,7 +240,7 @@
 				{t.admin.groups}
 				<input name="groups" list="group-names" autocomplete="off" placeholder={t.admin.groupsHint} />
 			</label>
-			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.add}</button>
+			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
 	</section>
 
@@ -276,8 +267,8 @@
 								{/each}
 							</div>
 							<div class="edit-actions">
-								<button class="button" disabled={busy}><Icon name="check" size={16} />{t.admin.save}</button>
-								<button class="icon-button" disabled={busy} formaction="?/removeRole" title={t.admin.remove} aria-label={t.admin.remove} onclick={confirmLink(t.admin.confirmRemoveRole(role.name))}>
+								<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.admin.save}</button>
+								<button class="icon-button" disabled={saving.busy} formaction="?/removeRole" title={t.admin.remove} aria-label={t.admin.remove} onclick={confirmLink(t.admin.confirmRemoveRole(role.name))}>
 									<Icon name="trash" size={16} />
 								</button>
 							</div>
@@ -288,7 +279,7 @@
 		{/if}
 		{#if data.missingRoles.length}
 			<form method="POST" action="?/addRoles" use:enhance={submit}>
-				<button class="ghost preset" disabled={busy}><Icon name="plus" size={16} />{t.admin.addPresetRoles(data.missingRoles.join(', '))}</button>
+				<button class="ghost preset" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.addPresetRoles(data.missingRoles.join(', '))}</button>
 			</form>
 		{/if}
 
@@ -301,7 +292,7 @@
 					<label class="check"><input type="checkbox" name="right" value={option.right} />{option.label}</label>
 				{/each}
 			</div>
-			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.add}</button>
+			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
 	</section>
 
@@ -319,7 +310,7 @@
 						<form method="POST" action="?/revoke" use:enhance={submit}>
 							<input type="hidden" name="who" value={grant.who} />
 							<input type="hidden" name="right" value={grant.right} />
-							<button class="ghost" disabled={busy}>{t.admin.revoke}</button>
+							<button class="ghost" disabled={saving.busy}>{t.admin.revoke}</button>
 						</form>
 					</li>
 				{/each}
@@ -339,7 +330,7 @@
 					{/each}
 				</select>
 			</label>
-			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.grant}</button>
+			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.grant}</button>
 		</form>
 	</section>
 
@@ -364,7 +355,7 @@
 						<form method="POST" action="?/removeGroup" use:enhance={submit}>
 							<input type="hidden" name="row" value={group.row} />
 							<input type="hidden" name="part" value={group.part} />
-							<button class="ghost" disabled={busy}>{t.admin.remove}</button>
+							<button class="ghost" disabled={saving.busy}>{t.admin.remove}</button>
 						</form>
 					{/if}
 				</li>
@@ -381,7 +372,7 @@
 				<input name="players" required autocomplete="off" placeholder="Schlagwerk, Mallet Percussion" />
 			</label>
 			<label class="check"><input type="checkbox" name="mutual" />{t.admin.mutualLabel}</label>
-			<button class="button" disabled={busy}><Icon name="plus" size={16} />{t.admin.add}</button>
+			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
 	</section>
 

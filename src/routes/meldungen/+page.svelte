@@ -1,20 +1,14 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
-
-	const submit = () => {
-		busy = true;
-		return async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: true });
-			busy = false;
-		};
-	};
+	const saving = new FormState();
+	const submit = saving.submit({ reset: true });
 </script>
 
 <Title title={t.reports.title} />
@@ -60,7 +54,7 @@
 								{:else}
 									<form method="POST" action="?/confirmMissing" use:enhance={submit} title={t.reports.confirmMissingHint(report.placeholder.name)}>
 										<input type="hidden" name="id" value={report.id} />
-										<button class="btn small" disabled={busy}><Icon name="check" size={14} />{t.reports.confirmMissing}</button>
+										<button class="btn small" disabled={saving.busy}><Icon name="check" size={14} />{t.reports.confirmMissing}</button>
 									</form>
 									<span class="muted small">{t.reports.confirmMissingHint(report.placeholder.name)}</span>
 								{/if}
@@ -75,7 +69,7 @@
 										{#each data.statusWords as option (option.status)}<option value={option.status}>{option.word}</option>{/each}
 									</select>
 								</label>
-								<button class="btn small ghost" disabled={busy}><Icon name="file" size={14} />{t.reports.mark}</button>
+								<button class="btn small ghost" disabled={saving.busy}><Icon name="file" size={14} />{t.reports.mark}</button>
 							</form>
 						{/if}
 					</div>
@@ -86,10 +80,10 @@
 								<span class="sr-only">{t.reports.note}</span>
 								<input name="note" maxlength="500" placeholder={t.reports.noteHint} autocomplete="off" />
 							</label>
-							<button class="btn small" disabled={busy}><Icon name="check" size={14} />{t.reports.close}</button>
+							<button class="btn small" disabled={saving.busy}><Icon name="check" size={14} />{t.reports.close}</button>
 						{:else}
 							<input type="hidden" name="note" value={report.note} />
-							<button class="btn small ghost" disabled={busy}>{t.reports.reopen}</button>
+							<button class="btn small ghost" disabled={saving.busy}>{t.reports.reopen}</button>
 						{/if}
 					</form>
 				</li>

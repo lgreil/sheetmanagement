@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { config } from '#lib/config/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
@@ -7,7 +8,7 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
+	const saving = new FormState();
 	// After a refused save, the form keeps what was typed.
 	const values = $derived(form?.values ?? (data.state === 'ready' ? data.values : undefined));
 	// The form's own copy, so a suggestion can be taken over before saving.
@@ -49,13 +50,7 @@
 	<div class="layout">
 	<form
 		method="POST"
-		use:enhance={() => {
-			busy = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				busy = false;
-			};
-		}}
+		use:enhance={saving.submit()}
 	>
 		<input type="hidden" name="version" value={data.version} />
 		{#each FIELDS as field (field.name)}
@@ -79,10 +74,10 @@
 		</label>
 		<div class="actions">
 			{#if data.list}
-				<button class="btn" name="liste" value={data.list.filter} disabled={busy}><Icon name="check" size={16} />{t.details.saveNext}</button>
+				<button class="btn" name="liste" value={data.list.filter} disabled={saving.busy}><Icon name="check" size={16} />{t.details.saveNext}</button>
 				<a class="btn ghost" href="/stuecke/angaben?filter={data.list.filter}">{t.details.backToList}</a>
 			{:else}
-				<button class="btn" disabled={busy}><Icon name="check" size={16} />{t.pieceEditor.save}</button>
+				<button class="btn" disabled={saving.busy}><Icon name="check" size={16} />{t.pieceEditor.save}</button>
 				<a class="btn ghost" href="/stuecke/{encodeURIComponent(data.piece.id)}">{t.pieceEditor.cancel}</a>
 			{/if}
 		</div>

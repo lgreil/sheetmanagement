@@ -9,7 +9,7 @@ import { buildSignups, type Signups } from '#lib/signups/signups.ts';
 import { buildRepertoire, LAYOUT, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
 import { cached } from './cache.ts';
 import { getCatalog } from './catalog.ts';
-import { runInBackground } from './env.ts';
+import { appEnv, runInBackground } from './env.ts';
 import type { GoogleClient } from './google/client.ts';
 import { appendRows, getSpreadsheetInfo, getValues, tabRange } from './google/sheets.ts';
 import { getSchedule } from './schedule.ts';
@@ -101,20 +101,21 @@ async function syncSheet(client: GoogleClient, spreadsheetId: string, repertoire
 
 /**
  * Mirrors the archive's gaps into "Fehlende Stimmen": one write, only when something
- * changed. Returns the file ids ticked "erledigt".
+ * changed. Returns whether anything was written.
  */
-async function syncMissingParts(values: string[][], archive: PieceDetail[], links: Links): Promise<string[]> {
+async function syncMissingParts(values: string[][], archive: PieceDetail[], links: Links): Promise<boolean> {
 	const gaps = archiveGaps(archive, (id) => links.pieceByFolder.get(id)?.title);
 	const plan = planMissingParts(values, gaps);
-	if (plan.ok && plan.changed) await replaceRows('missingParts', plan.body);
-	return plan.done;
+	if (!plan.ok || !plan.changed) return false;
+	await replaceRows('missingParts', plan.body);
+	return true;
 }
 
 export type RepertoireResult =
 	| { ok: true; repertoire: Repertoire; links: Links; storedAt: number }
 	| { ok: false; reason: 'not-configured' | 'not-set-up' | 'failed'; missingTabs?: string[] };
 
-let lastSyncFailure = 0;
+type RawSheet = Awaited<ReturnType<typeof readSheet>>;
 
 interface SheetSnapshot {
 	repertoire: Repertoire;
@@ -128,62 +129,91 @@ interface SheetSnapshot {
 	signups: Signups | null;
 }
 
-function loadSheet(force: boolean) {
+/**
+ * The sheet as read, in memory and KV. KV lets a new Worker instance check who's a
+ * member without waiting for Google, which matters most right after signing in. It's
+ * only written when the sheet changed, so the free tier's 1,000 writes a day last.
+ */
+function loadRawSheet(force: boolean) {
 	const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
 	const { client } = getGoogle();
-	return cached<SheetSnapshot>({
-		key: `repertoire:v5:${spreadsheetId}`,
+	return cached<RawSheet>({
+		key: `sheet:v1:${spreadsheetId}`,
 		maxAgeMs: SHEET_MAX_AGE_MS,
-		// Memory only: a KV write per minute would use up the free tier's 1,000 writes a day.
-		build: async () => {
-			let sheet = await readSheet(client, spreadsheetId);
-			let repertoire = buildRepertoire(sheet.values);
-			// Syncing needs both sources, otherwise rows the sheet already has look new.
-			const sources = await loadSources();
-			if (sources.complete && Date.now() - lastSyncFailure > 10 * SHEET_MAX_AGE_MS) {
-				try {
-					if (await syncSheet(client, spreadsheetId, repertoire, sources)) {
-						sheet = await readSheet(client, spreadsheetId);
-						repertoire = buildRepertoire(sheet.values);
-					}
-				} catch (error) {
-					// Probably read-only access to the sheet. Reading still works; retry later.
-					lastSyncFailure = Date.now();
-					console.error('Adding new pieces and concerts to the sheet failed:', error);
-				}
-			}
-			// Uses the tab from the read above, so it costs at most one write. Without the
-			// archive every row would look gone, so it waits for Drive.
-			let missingPartsDone = doneFileIds(sheet.missingParts ?? []);
-			if (sheet.missingParts && sources.archive && Date.now() - lastSyncFailure > 10 * SHEET_MAX_AGE_MS) {
-				try {
-					const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
-					missingPartsDone = await syncMissingParts(sheet.missingParts, sources.archive, links);
-				} catch (error) {
-					lastSyncFailure = Date.now();
-					console.error('Updating the missing parts in the sheet failed:', error);
-				}
-			}
-			return {
-				repertoire,
-				access: buildAccessList(sheet.access),
-				feedback: buildFeedback(sheet.feedback),
-				missingPartsDone,
-				instrumentGroups: readInstrumentGroups(
-					sheet.instrumentGroups,
-					config.instruments.map((instrument) => instrument.name)
-				),
-				signups: sheet.signups ? buildSignups(sheet.signups) : null
-			};
-		},
+		build: () => readSheet(client, spreadsheetId),
+		kv: appEnv().CACHE,
 		waitUntil: runInBackground,
 		force
 	});
 }
 
+// Built once per sheet snapshot and Worker instance, not on every request.
+const snapshots = new WeakMap<RawSheet, SheetSnapshot>();
+
+async function loadSheet(force: boolean): Promise<{ value: SheetSnapshot; sheet: RawSheet; storedAt: number }> {
+	const { value: sheet, storedAt } = await loadRawSheet(force);
+	let snapshot = snapshots.get(sheet);
+	if (!snapshot) {
+		snapshot = {
+			repertoire: buildRepertoire(sheet.values),
+			access: buildAccessList(sheet.access),
+			feedback: buildFeedback(sheet.feedback),
+			missingPartsDone: doneFileIds(sheet.missingParts ?? []),
+			instrumentGroups: readInstrumentGroups(
+				sheet.instrumentGroups,
+				config.instruments.map((instrument) => instrument.name)
+			),
+			signups: sheet.signups ? buildSignups(sheet.signups) : null
+		};
+		snapshots.set(sheet, snapshot);
+	}
+	return { value: snapshot, sheet, storedAt };
+}
+
+/** Adding new pieces and concerts runs this often at most, per Worker instance. */
+const SYNC_INTERVAL_MS = 5 * 60 * 1000;
+/** After a failed write (probably read-only access to the sheet), wait longer. */
+const SYNC_BACKOFF_MS = 30 * 60 * 1000;
+let nextSync = 0;
+
+/**
+ * Adds new Drive folders and calendar concerts to the sheet and mirrors the archive's
+ * gaps into "Fehlende Stimmen". Runs after the response, so no page waits for writes.
+ */
+function syncInBackground() {
+	if (Date.now() < nextSync) return;
+	nextSync = Date.now() + SYNC_INTERVAL_MS;
+	const sync = async () => {
+		// Syncing needs both sources, otherwise rows the sheet already has look new.
+		const sources = await loadSources();
+		if (!sources.complete) return;
+		// A fresh read: in a cached copy, rows added meanwhile would look missing and be added twice.
+		const {
+			value: { repertoire },
+			sheet: { missingParts }
+		} = await loadSheet(true);
+		const { client } = getGoogle();
+		const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
+		let wrote = await syncSheet(client, spreadsheetId, repertoire, sources);
+		// Without the archive every row would look gone, so it waits for Drive.
+		if (missingParts && sources.archive) {
+			const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
+			wrote = (await syncMissingParts(missingParts, sources.archive, links)) || wrote;
+		}
+		if (wrote) await loadRawSheet(true);
+	};
+	runInBackground(
+		sync().catch((error) => {
+			nextSync = Date.now() + SYNC_BACKOFF_MS;
+			console.error('Updating the sheet from Drive and the calendar failed:', error);
+		})
+	);
+}
+
 export async function getRepertoire({ force = false } = {}): Promise<RepertoireResult> {
 	try {
 		const [{ value, storedAt }, sources] = await Promise.all([loadSheet(force), loadSources()]);
+		syncInBackground();
 		const links = linkSources(value.repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
 		return { ok: true, repertoire: value.repertoire, links, storedAt };
 	} catch (error) {
@@ -196,13 +226,17 @@ export async function getRepertoire({ force = false } = {}): Promise<RepertoireR
 
 /** Members, groups, rights and access requests; null when the sheet can't be read. */
 export async function getAccessList({ force = false } = {}): Promise<AccessList | null> {
+	return (await readAccessList({ force })).list;
+}
+
+/** Like getAccessList, but tells a sheet that isn't set up apart from one that failed to load. */
+export async function readAccessList({ force = false } = {}): Promise<{ list: AccessList | null; failed: boolean }> {
 	try {
-		return (await loadSheet(force)).value.access;
+		return { list: (await loadSheet(force)).value.access, failed: false };
 	} catch (error) {
-		if (!(error instanceof NotConfiguredError) && !(error instanceof SheetNotSetUpError)) {
-			console.error('Loading the member list failed:', error);
-		}
-		return null;
+		if (error instanceof NotConfiguredError || error instanceof SheetNotSetUpError) return { list: null, failed: false };
+		console.error('Loading the member list failed:', error);
+		return { list: null, failed: true };
 	}
 }
 

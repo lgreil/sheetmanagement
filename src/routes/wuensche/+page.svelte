@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { page } from '$app/state';
 	import { goto } from '$app/navigation';
 	import { WISH_STATUSES, type WishKind } from '#lib/feedback/feedback.ts';
@@ -9,7 +10,6 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
 	let adding = $state(false);
 
 	// The tab is also in the URL (?art=funktion), so a link can point at feature requests.
@@ -29,14 +29,8 @@
 		if (!confirm(t.wishes.confirmDelete(title))) event.preventDefault();
 	};
 
-	const submit = () => {
-		busy = true;
-		return async ({ update, result }: { update: (options?: { reset?: boolean }) => Promise<void>; result: { type: string } }) => {
-			await update({ reset: result.type === 'success' });
-			busy = false;
-			if (result.type === 'success') adding = false;
-		};
-	};
+	const saving = new FormState();
+	const submit = saving.submit({ reset: true, onSuccess: () => (adding = false) });
 </script>
 
 <Title title={t.wishes.title} />
@@ -98,7 +92,7 @@
 				<span>{t.wishes.anonymousLabel} <span class="muted">{t.wishes.anonymousHint}</span></span>
 			</label>
 			<div class="actions">
-				<button class="btn" disabled={busy}><Icon name="plus" size={16} />{t.wishes.send}</button>
+				<button class="btn" disabled={saving.busy}><Icon name="plus" size={16} />{t.wishes.send}</button>
 				<button class="btn ghost" type="button" onclick={() => (adding = false)}>{t.reports.cancel}</button>
 			</div>
 		</form>
@@ -115,7 +109,7 @@
 						<button
 							class="vote-button"
 							class:voted={wish.voted}
-							disabled={busy}
+							disabled={saving.busy}
 							aria-pressed={wish.voted}
 							title={wish.voted ? t.wishes.unvote : t.wishes.vote}
 						>
@@ -152,7 +146,7 @@
 							{#if wish.canDelete}
 								<form method="POST" action="?/delete" use:enhance={submit} onsubmit={confirmDelete(wish.title)}>
 									<input type="hidden" name="id" value={wish.id} />
-									<button class="delete" disabled={busy} title={t.wishes.delete} aria-label={t.wishes.delete}>
+									<button class="delete" disabled={saving.busy} title={t.wishes.delete} aria-label={t.wishes.delete}>
 										<Icon name="trash" size={16} />
 									</button>
 								</form>
@@ -173,7 +167,7 @@
 									{t.wishes.answer}
 									<input name="answer" value={wish.answer} maxlength="1000" autocomplete="off" />
 								</label>
-								<button class="btn small ghost" disabled={busy}>{t.wishes.setStatus}</button>
+								<button class="btn small ghost" disabled={saving.busy}>{t.wishes.setStatus}</button>
 							</form>
 						{/if}
 					</div>

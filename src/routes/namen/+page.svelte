@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { checkSection } from '#lib/music/naming.ts';
@@ -16,7 +17,6 @@
 	/** Files left out of a rename, by file id. */
 	let skipped = $state<Record<string, boolean>>({});
 	let filter = $state<'all' | 'rename' | 'unclear'>('rename');
-	let busy = $state<string | null>(null);
 
 	// Recomputed whenever a short title changes, with the same code the server uses before renaming.
 	const sections = $derived(
@@ -36,13 +36,8 @@
 		)
 	);
 
-	const submit = (key: string) => () => {
-		busy = key;
-		return async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: false });
-			busy = null;
-		};
-	};
+	const saving = new FormState();
+	const submit = saving.submit();
 </script>
 
 <Title title={t.naming.title} />
@@ -75,7 +70,7 @@
 					</a>
 				</div>
 
-				<form method="POST" action="?/rename" use:enhance={submit(section.key)}>
+				<form method="POST" action="?/rename" use:enhance={submit}>
 					<input type="hidden" name="key" value={section.key} />
 					<label class="short">
 						<span>{t.naming.shortTitle}</span>
@@ -126,7 +121,7 @@
 						<p class="msg ok" role="status"><Icon name="check" size={16} />{t.naming.renamed(form.renamed)}</p>
 					{/if}
 					{#if section.chosen.length}
-						<button class="btn" disabled={!data.driveWrite || busy !== null || section.chosen.length > data.maxRenames}>
+						<button class="btn" disabled={!data.driveWrite || saving.busy || section.chosen.length > data.maxRenames}>
 							<Icon name="check" size={16} />{t.naming.rename(section.chosen.length)}
 						</button>
 					{/if}

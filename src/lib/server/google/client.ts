@@ -13,9 +13,13 @@ export class GoogleApiError extends Error {
 
 type Params = Record<string, string | number | boolean | undefined>;
 
+/** Google normally answers within a second or two; a request hanging longer fails instead of holding up the page. */
+const REQUEST_TIMEOUT_MS = 12_000;
+
 /**
  * Thin authenticated JSON client for Google REST APIs.
  * Retries once on an expired token (401) and once on rate limits or server errors.
+ * Every request gives up after REQUEST_TIMEOUT_MS.
  */
 export class GoogleClient {
 	/** Number of HTTP requests made, to keep an eye on the Workers subrequest limit. */
@@ -47,7 +51,8 @@ export class GoogleClient {
 					authorization: `Bearer ${token}`,
 					...(body === undefined ? {} : { 'content-type': 'application/json' })
 				},
-				body: body === undefined ? undefined : JSON.stringify(body)
+				body: body === undefined ? undefined : JSON.stringify(body),
+				signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 			});
 			lastStatus = response.status;
 
@@ -82,6 +87,7 @@ export class GoogleClient {
 		for (let attempt = 0; ; attempt++) {
 			const token = await this.tokens.getToken({ forceRefresh: attempt > 0 });
 			this.requestCount++;
+			// No timeout here: the body is streamed on after this returns, and a large PDF may take a while.
 			const response = await this.fetchImpl(target, { headers: { authorization: `Bearer ${token}` } });
 			if (response.ok) return response;
 			if (response.status === 401 && attempt === 0) continue;

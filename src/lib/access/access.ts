@@ -141,6 +141,8 @@ export interface Access {
 	bootstrapAdmin: boolean;
 	/** Signed in with a personal access link, so maybe without a Google account. */
 	viaLink?: boolean;
+	/** The member list couldn't be read just now (Google slow or down), so membership is unknown. */
+	unavailable?: boolean;
 	rights: Set<Right>;
 }
 

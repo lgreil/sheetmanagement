@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
 
@@ -18,7 +19,7 @@
 	let open = $state(false);
 	const shown = $derived(open || !!result?.archiveError);
 	const values = $derived(result?.values ?? {});
-	let busy = $state(false);
+	const saving = new FormState();
 </script>
 
 <section class="add">
@@ -26,13 +27,7 @@
 		<form
 			method="POST"
 			action={kind === 'concert' ? '?/addConcert' : '?/addPiece'}
-			use:enhance={() => {
-				busy = true;
-				return async ({ update }) => {
-					await update({ reset: false });
-					busy = false;
-				};
-			}}
+			use:enhance={saving.submit()}
 		>
 			<h2>{kind === 'concert' ? t.archive.addConcert : t.archive.addPiece}</h2>
 			<p class="lead">{kind === 'concert' ? t.archive.addConcertLead : t.archive.addPieceLead}</p>
@@ -64,7 +59,7 @@
 				<label class="field">{t.archive.catalogue}<input name="catalogue" maxlength="200" value={values.catalogue ?? ''} autocomplete="off" /></label>
 			{/if}
 			<div class="actions">
-				<button class="btn" disabled={busy}><Icon name="plus" size={16} />{t.archive.add}</button>
+				<button class="btn" disabled={saving.busy}><Icon name="plus" size={16} />{t.archive.add}</button>
 				<button class="btn ghost" type="button" onclick={() => (open = false)}>{t.reports.cancel}</button>
 			</div>
 		</form>
