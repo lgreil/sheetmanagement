@@ -17,7 +17,7 @@ describe('navGroups', () => {
 	it('adds the reports and the file-name check for people who look after the sheet music', () => {
 		const groups = hrefs('on', ['ansehen', 'stuecke.bearbeiten']);
 		expect(groups.mitmachen).toEqual(['/wuensche', '/meldungen']);
-		expect(groups.archiv).toEqual(['/stuecke', '/fehlende-stimmen', '/namen']);
+		expect(groups.archiv).toEqual(['/stuecke', '/fehlende-stimmen', '/stuecke/angaben', '/namen']);
 	});
 
 	it('gives admins every page', () => {

@@ -50,7 +50,12 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 			items: [
 				{ href: '/stuecke', label: t.nav.pieces, icon: 'music', primary: true },
 				{ href: '/fehlende-stimmen', label: t.nav.gaps, icon: 'alert' },
-				...(has(rights, 'stuecke.bearbeiten') ? [{ href: '/namen', label: t.nav.naming, icon: 'file' as const }] : [])
+				...(has(rights, 'stuecke.bearbeiten')
+					? [
+							{ href: '/stuecke/angaben', label: t.nav.details, icon: 'sparkle' as const },
+							{ href: '/namen', label: t.nav.naming, icon: 'file' as const }
+						]
+					: [])
 			]
 		},
 		{

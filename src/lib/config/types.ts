@@ -123,6 +123,11 @@ export interface OrchestraConfig {
 	 */
 	sharedParts?: Record<string, string[]>;
 	/**
+	 * Genres offered when editing a piece, together with the ones already in the sheet.
+	 * Suggestions from Wikidata or the year are only made in these words.
+	 */
+	genres?: string[];
+	/**
 	 * Roles offered in /admin ("Standardrollen anlegen"): groups with a set of rights.
 	 * Once added they're ordinary rows in "Gruppen" and "Rechte" and can be changed freely.
 	 */

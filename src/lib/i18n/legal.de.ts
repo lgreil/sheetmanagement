@@ -44,7 +44,8 @@ export const legal = {
 					`Für die Zugangsverwaltung gibt es eine Mitgliederliste in einer Google-Tabelle des Orchesters. Sie wird von Personen gepflegt, die Mitglieder freischalten dürfen (z. B. dem Vorstand).`
 				],
 				list: [
-					'Mitglieder: E-Mail-Adresse, Name, Instrument, Gruppen (z. B. „Vorstand“) und vergebene Rechte',
+					'Mitglieder: E-Mail-Adresse, Name, Instrumente, Orchester, Status (aktiv, pausiert mit Datum, inaktiv), Gruppen und Rollen (z. B. „Vorstand“) und vergebene Rechte. Name, Instrumente, Orchester und Status kannst du im Profil selbst ändern.',
+					'Zugang per Link: Für Mitglieder ohne Google-Konto kann die Verwaltung einen persönlichen Anmeldelink erzeugen. In der Tabelle steht dazu nur eine Versionsnummer; ein neuer Link macht den alten ungültig.',
 					'Zugangsanfragen: E-Mail-Adresse, Name und Datum der Anfrage. Sie werden gelöscht, sobald über die Anfrage entschieden ist.',
 					'Mitgliedsdaten werden gelöscht, wenn du austrittst oder es verlangst.'
 				]
@@ -57,6 +58,19 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Zu- und Absagen',
+				paragraphs: [
+					'Wenn du für eine Probe oder ein Konzert zu- oder absagst, speichert die App deine Antwort mit Name, E-Mail-Adresse, Datum, dem Instrument für diesen Termin und deinem Kommentar in der Google-Tabelle des Orchesters. Alle Mitglieder sehen nur, wie viele je Stimme zugesagt haben; wer was geantwortet hat und die Kommentare sehen nur Personen mit dem Recht dazu (z. B. Dirigat und Organisation). Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Probenbetrieb des Vereins). Du kannst deine Antwort jederzeit zurückziehen.'
+				]
+			},
+			{
+				heading: 'Angaben zu Stücken nachschlagen',
+				paragraphs: [
+					'Wer Angaben zu Stücken pflegt, kann auf Knopfdruck bei Wikidata (Wikimedia Foundation, USA) nach dem Werk suchen. Dabei schickt dein Browser den Titel des Stücks und den eingetragenen Komponisten an Wikidata; wie bei jedem Seitenaufruf erfährt Wikimedia dabei deine IP-Adresse. Daten über dich oder andere Mitglieder werden nicht übertragen. Es gilt die Datenschutzerklärung der Wikimedia Foundation (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
+					'„Aus den Noten lesen“ liest den Text der ersten Seiten einer PDF nur in deinem Browser und übernimmt daraus ausschließlich Komponist, Arrangeur und Werkverzeichnis. „Hörbeispiel auf YouTube suchen“ öffnet die YouTube-Suche in einem neuen Fenster; dort gilt die Datenschutzerklärung von Google.'
+				]
+			},
+			{
 				heading: 'Cookies und Speicher im Browser',
 				paragraphs: [
 					'Die App nutzt nur technisch notwendige Cookies, keine Analyse-, Tracking- oder Werbe-Cookies. Dafür ist keine Einwilligung nötig (§ 25 Abs. 2 Nr. 2 TDDDG).'
@@ -64,6 +78,8 @@ export const legal = {
 				list: [
 					'„session“: hält dich angemeldet. Enthält deinen Namen und deine E-Mail-Adresse, ist gegen Veränderung gesichert und läuft nach 30 Tagen ab, beim Abmelden sofort.',
 					'„oauth_state“: schützt die Anmeldung vor Missbrauch und wird nach höchstens 10 Minuten gelöscht.',
+					'„instrument“: merkt sich auf „Meine Noten“, welches Instrument du spielst, wenn du nicht angemeldet bist. Läuft nach einem Jahr ab.',
+					'„konzerte-ansicht“: merkt sich, ob du die Konzerte als Liste oder Kalender sehen willst. Läuft nach einem Jahr ab.',
 					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast. Diese Angabe verlässt deinen Browser nicht.'
 				]
 			},

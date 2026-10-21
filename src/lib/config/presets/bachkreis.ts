@@ -173,6 +173,7 @@ export const bachkreis: OrchestraConfig = {
 	},
 
 	// EO = Ehemaligenorchester; the A and B orchestras may follow later.
+	genres: ['Barock', 'Klassik', 'Romantik', 'Moderne', 'Filmmusik', 'Musical', 'Oper', 'Ballett', 'Pop', 'Rock', 'Jazz', 'Weihnachten', 'Marsch', 'Volksmusik'],
 	roles: [
 		{ name: 'Dirigat', description: 'Plant Programme und sieht, wer kommt.', rights: ['programme.bearbeiten', 'anmeldungen.sehen'] },
 		{ name: 'Notenwart', description: 'Pflegt Noten, Stücke und das Archiv.', rights: ['stuecke.bearbeiten', 'archiv.bearbeiten'] },
