@@ -8,8 +8,8 @@ import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
-import { getLibrary, type Library, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList, getFeedback, getMusicConfig, getSignups } from '#lib/server/repertoire.ts';
+import { getLibrary, namedItem, type Library, type ProgramItem } from '#lib/server/library.ts';
+import { getAccessList, getFeedback, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -136,6 +136,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library, concert?.orchestra) : null,
 		saved: url.searchParams.has('gespeichert'),
 		sheet: library.sheet,
+		sharedFrom: concert?.sharedFrom,
+		sharedWith: concert?.sharedWith ?? [],
 		// For planners: open piece wishes for this concert or any time, shown in the editor.
 		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0
 	};
@@ -148,11 +150,23 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const lookup = (id: string) => (schedule.ok ? schedule.byId.get(id) : undefined);
 	// A rehearsal belongs to the orchestra of the concert it prepares for.
 	const orchestra = concert?.orchestra ?? (event.concertId ? library.concertsById.get(event.concertId)?.orchestra : undefined);
+	// The rehearsal plan (#65): what's rehearsed when, edited per concert.
+	const plan = await getRehearsalPlan();
+	const planned = (id: string) => (plan?.byEvent.get(id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
+	const planConcert = event.type === 'konzert' ? event : event.concertId ? lookup(event.concertId) : undefined;
+	const canPlan = locals.access.rights.has('programme.bearbeiten') && !!planConcert?.rehearsalIds.length;
 	return {
 		kind: 'event' as const,
 		signups: await signups(event, orchestra, locals),
 		event: { ...event, description: plainText(event.description) },
-		rehearsals: event.rehearsalIds.map(lookup).filter((e): e is ShownEvent => !!e),
+		rehearsals: event.rehearsalIds
+			.map(lookup)
+			.filter((e): e is ShownEvent => !!e)
+			.map((rehearsal) => ({ ...rehearsal, planned: planned(rehearsal.id).map((item) => item.title) })),
+		rehearsalPlan: {
+			items: event.type === 'konzert' ? [] : planned(event.id),
+			editUrl: canPlan ? `/konzerte/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined
+		},
 		concert: event.concertId ? lookup(event.concertId) : undefined,
 		mapUrl: mapUrl(event.location),
 		program

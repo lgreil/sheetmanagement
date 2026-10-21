@@ -195,7 +195,32 @@ export const de = {
 		archive: 'Aus der Chronik',
 		dateUnknown: 'Datum unbekannt',
 		preparesFor: 'Probe für',
+		sharedFrom: 'Gleiches Programm wie',
+		sharedWith: 'Dieses Programm gilt auch für',
 		description: 'Notiz aus dem Kalender'
+	},
+	rehearsalPlan: {
+		title: 'Geprobt wird',
+		planned: 'Geprobt:',
+		empty: 'Für diese Probe ist noch nicht eingetragen, welche Stücke dran sind.',
+		edit: 'Probenplan bearbeiten',
+		pageTitle: (concert: string) => `Probenplan: ${concert}`,
+		lead: 'Für jede Probe die Stücke antippen, die dran sind. Der Plan landet im Blatt „Proben“ der Repertoire-Tabelle.',
+		all: 'Alle',
+		none: 'Keine',
+		past: 'vorbei',
+		count: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
+		notInProgram: 'nicht im Programm',
+		noProgram: 'Für dieses Konzert ist noch kein Programm eingetragen. Trag zuerst das Programm ein, dann den Probenplan.',
+		noRehearsals: 'Für dieses Konzert stehen keine Proben im Kalender.',
+		notSetUp: 'In der Repertoire-Tabelle fehlt das Blatt „Proben“. Bitte einmal „Tabelle einrichten“ ausführen.',
+		notAConcert: 'Einen Probenplan gibt es nur für Konzerte aus dem Kalender.',
+		programLink: 'Programm bearbeiten',
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		saved: 'Probenplan gespeichert.',
+		conflict: 'Jemand hat den Probenplan inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
+		failed: 'Der Probenplan konnte nicht gelesen werden.'
 	},
 	naming: {
 		title: 'Dateinamen',
@@ -609,7 +634,19 @@ export const de = {
 		saved: 'Programm gespeichert.',
 		conflict: 'Jemand hat das Programm inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
 		notInSheet: 'Dieses Konzert steht noch nicht in der Repertoire-Tabelle. Bestätigte Konzerte aus dem Kalender werden automatisch eingetragen, unsichere („(?)“) erst später.',
-		noResults: 'Kein Stück gefunden.'
+		noResults: 'Kein Stück gefunden.',
+		sharedFrom: (concert: string) => `Dieses Konzert spielt das Programm von „${concert}“. Änderungen dort gelten auch hier.`,
+		editSource: 'Dort bearbeiten',
+		ownProgram: 'Wenn du hier speicherst, bekommt dieses Konzert ein eigenes Programm.',
+		sharedWith: (concerts: string) => `Dieses Programm gilt auch für ${concerts}.`,
+		share: 'Programm von einem anderen Konzert übernehmen',
+		shareLead: 'Für Konzerte mit gleichem Programm, z. B. das zweite Weihnachtskonzert. Das Programm wird dann nur einmal gepflegt.',
+		shareSource: 'Konzert',
+		shareReplaces: 'Die Einträge dieses Konzerts werden dabei entfernt.',
+		shareButton: 'Übernehmen',
+		shareCount: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
+		shareUnknown: 'Dieses Konzert hat kein Programm, das übernommen werden kann.',
+		shareNeedsSetup: 'In der Tabelle fehlt die Spalte „Programm wie“ im Blatt „Konzerte“. Bitte einmal „Tabelle einrichten“ ausführen.'
 	},
 	status: {
 		title: 'Status',
@@ -688,6 +725,8 @@ export const de = {
 				title: 'Anlass',
 				location: 'Ort',
 				orchestra: 'Orchester',
+				/** Another concert's "Anlass": this one plays the same programme (#70). */
+				sameProgramAs: 'Programm wie',
 				eventId: 'Kalender-Event-ID'
 			}
 		},
@@ -802,6 +841,16 @@ export const de = {
 				instrument: 'Instrument',
 				comment: 'Kommentar',
 				answeredAt: 'Datum',
+				eventId: 'Termin-ID'
+			}
+		},
+		/** Which pieces are rehearsed at which rehearsal (#65); one row per rehearsal and piece. */
+		rehearsals: {
+			tab: 'Proben',
+			columns: {
+				rehearsal: 'Probe',
+				piece: 'Stück',
+				notes: 'Notiz',
 				eventId: 'Termin-ID'
 			}
 		}

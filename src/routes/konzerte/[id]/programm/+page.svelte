@@ -23,6 +23,7 @@
 	let entries = $state<Entry[]>(data.state === 'ready' ? data.entries.map((entry) => ({ ...entry, key: nextKey++ })) : []);
 	let query = $state('');
 	const saving = new FormState();
+	const sharing = new FormState();
 	let dragged = $state<number | null>(null);
 
 	const matches = $derived.by(() => {
@@ -71,6 +72,22 @@
 	<p class="notice">{t.editor.notInSheet}</p>
 {:else}
 	{#if form?.message}<p class="message" role="alert">{form.message}</p>{/if}
+
+	{#if data.sharedFrom}
+		<p class="shared">
+			<Icon name="link" size={16} />
+			<span>
+				{t.editor.sharedFrom(data.sharedFrom.title)}
+				<a href="/konzerte/{encodeURIComponent(data.sharedFrom.id)}/programm">{t.editor.editSource}</a>.
+				{t.editor.ownProgram}
+			</span>
+		</p>
+	{:else if data.sharedWith.length}
+		<p class="shared">
+			<Icon name="link" size={16} />
+			<span>{t.editor.sharedWith(data.sharedWith.map((other) => `„${other.title}“`).join(', '))}</span>
+		</p>
+	{/if}
 
 	<div class="search">
 		<label class="field">
@@ -220,6 +237,7 @@
 
 	<form
 		method="POST"
+		action="?/save"
 		use:enhance={saving.submit()}
 	>
 		<input type="hidden" name="entries" value={payload} />
@@ -228,6 +246,28 @@
 		<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.editor.save}</button>
 		<a class="cancel" href="/konzerte/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
 	</form>
+
+	{#if data.shareOptions.length && !data.sharedWith.length}
+		<details class="share" open={!entries.length && !data.sharedFrom}>
+			<summary><Icon name="link" size={16} />{t.editor.share}</summary>
+			<p class="muted small">{t.editor.shareLead}</p>
+			<form method="POST" action="?/share" use:enhance={sharing.submit()}>
+				<input type="hidden" name="version" value={data.version} />
+				<label class="select">
+					<span class="muted">{t.editor.shareSource}</span>
+					<select name="source" required>
+						{#each data.shareOptions as option (option.name)}
+							<option value={option.name} selected={option.name === data.sharedFrom?.title}>
+								{option.title}{option.label ? ` · ${option.label}` : ''} · {t.editor.shareCount(option.count)}
+							</option>
+						{/each}
+					</select>
+				</label>
+				<button class="button secondary" disabled={sharing.busy}><Icon name="link" size={16} />{t.editor.shareButton}</button>
+			</form>
+			{#if data.entries.length && !data.sharedFrom}<p class="muted small">{t.editor.shareReplaces}</p>{/if}
+		</details>
+	{/if}
 {/if}
 
 <style>
@@ -472,6 +512,73 @@
 
 	.message {
 		background: color-mix(in oklab, var(--danger) 10%, transparent);
+	}
+
+	.shared {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-2);
+		margin-bottom: var(--space-4);
+		padding: var(--space-3) var(--space-4);
+		border-radius: var(--radius-m);
+		background: var(--accent-soft);
+	}
+
+	.shared :global(svg) {
+		flex: none;
+		margin-top: 3px;
+		color: var(--accent);
+	}
+
+	.shared a {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.share {
+		margin-top: var(--space-6);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	.share summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.share form {
+		flex-wrap: wrap;
+		align-items: flex-end;
+		margin-top: var(--space-3);
+	}
+
+	.select {
+		display: grid;
+		gap: var(--space-1);
+		flex: 1 1 260px;
+		min-width: 0;
+	}
+
+	.select select {
+		width: 100%;
+		height: 40px;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+	}
+
+	.button.secondary {
+		border: 1px solid var(--border);
+		background: var(--bg);
+		color: var(--accent);
 	}
 
 	@media (max-width: 560px) {

@@ -16,7 +16,8 @@ const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	reports: 'id',
 	wishes: 'id',
 	missingParts: 'fileId',
-	signups: 'eventId'
+	signups: 'eventId',
+	rehearsals: 'eventId'
 };
 /** Filled by the app; edits there are overwritten, so they get a warning. */
 const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
@@ -41,7 +42,9 @@ const WIDTHS: Record<string, number> = {
 	date: 110,
 	comment: 280,
 	description: 320,
-	answer: 240
+	answer: 240,
+	rehearsal: 280,
+	sameProgramAs: 240
 };
 
 const HEADER_BACKGROUND = { red: 0.93, green: 0.94, blue: 0.96 };
@@ -197,6 +200,8 @@ export async function setUpSheet(
 	const dropdowns: [TabKey, string, object][] = [
 		['program', 'concert', fromColumn('concerts', 'title')],
 		['program', 'piece', fromColumn('pieces', 'title')],
+		['concerts', 'sameProgramAs', fromColumn('concerts', 'title')],
+		['rehearsals', 'piece', fromColumn('pieces', 'title')],
 		['rights', 'right', { type: 'ONE_OF_LIST', values: RIGHTS.map((right) => ({ userEnteredValue: right })) }],
 		['members', 'status', { type: 'ONE_OF_LIST', values: MEMBER_STATUSES.map((status) => ({ userEnteredValue: status })) }],
 		['reports', 'kind', list(t.feedbackValues.reportKind)],

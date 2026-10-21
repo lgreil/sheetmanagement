@@ -90,15 +90,18 @@ describe('setUpSheet', () => {
 			'Wünsche',
 			'Fehlende Stimmen',
 			'Instrumentgruppen',
-			'Anmeldungen'
+			'Anmeldungen',
+			'Proben'
 		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
-		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Kalender-Event-ID']);
+		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Programm wie', 'Kalender-Event-ID']);
 		expect(fake.tabs[2].values[0]).toEqual(['Konzert', 'Nr.', 'Stück', 'Notiz']);
 
 		const dropdowns = fake.requests.filter((r) => 'setDataValidation' in r) as any[];
 		expect(dropdowns.map((r) => r.setDataValidation.rule.condition.values)).toEqual([
+			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
+			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			RIGHTS.map((right) => ({ userEnteredValue: right })),
@@ -120,8 +123,8 @@ describe('setUpSheet', () => {
 		expect(fake.tabs[10].values[0]).toEqual(['Stimme', 'Gespielt von', 'Gegenseitig', 'Notiz']);
 
 		const protections = (fake.requests as any[]).filter((r) => r.addProtectedRange).map((r) => r.addProtectedRange.protectedRange);
-		// Drive folder id, event id, report id, wish id, file id and the sign-ups' event id …
-		expect(protections.filter((p) => p.description === 'sheetmanagement: id column')).toHaveLength(6);
+		// Drive folder id, event id, report id, wish id, file id and the sign-ups' and rehearsals' event ids …
+		expect(protections.filter((p) => p.description === 'sheetmanagement: id column')).toHaveLength(7);
 		// … and piece, part and status of "Fehlende Stimmen", all warning only.
 		const generated = protections.filter((p) => p.description === 'sheetmanagement: generated column');
 		expect(generated.map((p) => p.range.startColumnIndex)).toEqual([0, 1, 2]);

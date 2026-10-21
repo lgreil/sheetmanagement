@@ -85,6 +85,9 @@
 					{rehearsal.date.time ? `· ${rehearsal.date.time}` : ''}
 					· {t.concerts.relative(rehearsal.daysUntil)}
 				</span>
+				{#if data.rehearsing.length}
+					<span class="rehearsing">{t.rehearsalPlan.planned} {data.rehearsing.join(' · ')}</span>
+				{/if}
 			</a>
 		{/if}
 	{:else}
@@ -307,6 +310,11 @@
 
 	.rehearsal:hover {
 		color: var(--text);
+	}
+
+	.rehearsing {
+		flex-basis: 100%;
+		font-size: 0.875rem;
 	}
 
 	.section-title {
