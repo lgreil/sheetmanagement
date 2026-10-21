@@ -17,3 +17,11 @@ binding = "CACHE"
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"
+
+# Demo with invented sample data instead of Google, signed in as a demo user (#121).
+# Locally: pnpm dev:demo. Deployed: pnpm build && pnpm wrangler deploy --env demo
+# (a separate Worker, "noten-demo"; it needs no secrets). Bindings aren't inherited, so the
+# demo runs without the KV cache, which it doesn't need.
+[env.demo]
+name = "noten-demo"
+vars = { DEMO = "true", ORCHESTRA_NAME = "Musterorchester", ORCHESTRA_SHORT_NAME = "Muster" }

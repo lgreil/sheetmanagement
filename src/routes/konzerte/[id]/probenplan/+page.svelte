@@ -73,7 +73,7 @@
 					<span class="name">{piece.title}</span>
 					<span class="times">
 						{#if piece.total}
-							{t.rehearsalPlan.times(piece.total)}{#if piece.upcoming < piece.total}<span class="muted"> · {t.rehearsalPlan.stillToCome(piece.upcoming)}</span>{/if}
+							{t.rehearsalPlan.times(piece.total)}{#if piece.upcoming < piece.total}<span class="muted">{` · ${t.rehearsalPlan.stillToCome(piece.upcoming)}`}</span>{/if}
 						{:else}
 							{t.rehearsalPlan.never}
 						{/if}

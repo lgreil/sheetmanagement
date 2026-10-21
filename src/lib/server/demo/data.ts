@@ -1,0 +1,337 @@
+import { config } from '#lib/config/index.ts';
+import { t } from '#lib/i18n/index.ts';
+import { LAYOUT, type TabKey } from '#lib/repertoire/sheet.ts';
+import { eventDay } from '#lib/repertoire/dates.ts';
+
+/**
+ * Invented sample data for the demo mode (#121): an archive in Drive, a calendar around
+ * today and a filled-in Repertoire sheet. Piece titles are public works; people, emails and
+ * places are made up. Ids are fixed, so links stay the same between restarts.
+ */
+
+export const DEMO_IDS = {
+	archive: 'demo-archive-folder',
+	program: 'demo-program-folder',
+	calendar: 'demo-calendar@example.org',
+	sheet: 'demo-repertoire-sheet'
+};
+
+export const DEMO_ADMIN = { email: 'verwaltung@example.org', name: 'Vera Verwaltung' };
+export const DEMO_MEMBER = { email: 'mia@example.org', name: 'Mia Beispiel' };
+
+export interface DemoFile {
+	id: string;
+	name: string;
+	mimeType: string;
+	parents: string[];
+	modifiedTime: string;
+	shortcutDetails?: { targetId: string; targetMimeType: string };
+	/** For the generated PDF. */
+	pdf?: { title: string; composer?: string; arranger?: string; part: string };
+}
+
+export interface DemoEvent {
+	id: string;
+	summary: string;
+	location?: string;
+	description?: string;
+	start: { date?: string; dateTime?: string };
+	end: { date?: string; dateTime?: string };
+}
+
+const FOLDER = 'application/vnd.google-apps.folder';
+const SHORTCUT = 'application/vnd.google-apps.shortcut';
+const PDF = 'application/pdf';
+const DOC = 'application/vnd.google-apps.document';
+const MODIFIED = '2026-09-01T12:00:00Z';
+
+const STRINGS = ['Geige I', 'Geige II', 'Viola', 'Violoncello', 'Kontrabass'];
+const WINDS = ['Flöte', 'Oboe', 'Klarinette in B', 'Fagott', 'Horn in F', 'Trompete in B'];
+
+interface SamplePiece {
+	id: string;
+	folder: string;
+	short: string;
+	title: string;
+	composer?: string;
+	arranger?: string;
+	category?: 'christmas';
+	parts: string[];
+	/** Parts with a status word: a placeholder doc for FEHLT, a PDF otherwise. */
+	gaps?: Record<string, 'FEHLT' | 'LEER' | 'UNVOLLSTÄNDIG'>;
+}
+
+const PIECES: SamplePiece[] = [
+	{
+		id: 'demo-nachtmusik',
+		folder: 'Mozart KV 525 - Eine kleine Nachtmusik',
+		short: 'Kleine Nachtmusik',
+		title: 'Eine kleine Nachtmusik',
+		composer: 'Wolfgang Amadeus Mozart',
+		parts: ['Partitur', ...STRINGS]
+	},
+	{
+		id: 'demo-egmont',
+		folder: 'Beethoven Op. 84 - Egmont Ouvertüre',
+		short: 'Egmont',
+		title: 'Egmont Ouvertüre',
+		composer: 'Ludwig van Beethoven',
+		parts: ['Partitur', ...WINDS, 'Pauke', ...STRINGS],
+		gaps: { Kontrabass: 'FEHLT' }
+	},
+	{
+		id: 'demo-jesu',
+		folder: 'Bach BWV 147 - Jesu bleibet meine Freude',
+		short: 'Jesu bleibet',
+		title: 'Jesu bleibet meine Freude',
+		composer: 'Johann Sebastian Bach',
+		parts: ['Partitur', 'Oboe', ...STRINGS],
+		gaps: { Viola: 'UNVOLLSTÄNDIG' }
+	},
+	{
+		id: 'demo-morgenstimmung',
+		folder: 'Grieg Op. 46 - Morgenstimmung',
+		short: 'Morgenstimmung',
+		title: 'Morgenstimmung',
+		composer: 'Edvard Grieg',
+		parts: ['Partitur', 'Flöte', 'Oboe', 'Klarinette in B', 'Horn in F', ...STRINGS]
+	},
+	{
+		id: 'demo-007',
+		folder: 'Themes from 007',
+		short: '007',
+		title: 'Themes from 007',
+		composer: 'John Barry',
+		arranger: 'Mia Musterfrau',
+		parts: ['Partitur', 'Flöte', 'Klarinette in B', 'Alt-Saxophon', 'Trompete in B', 'Posaune', 'Schlagwerk', ...STRINGS]
+	},
+	{
+		id: 'demo-sleigh',
+		folder: 'Sleigh Ride',
+		short: 'Sleigh Ride',
+		title: 'Sleigh Ride',
+		composer: 'Leroy Anderson',
+		category: 'christmas',
+		parts: ['Partitur', 'Flöte', 'Trompete in B', 'Schlagwerk', ...STRINGS]
+	},
+	{
+		id: 'demo-stille-nacht',
+		folder: 'Stille Nacht',
+		short: 'Stille Nacht',
+		title: 'Stille Nacht',
+		composer: 'Franz Xaver Gruber',
+		arranger: 'Paul Probe',
+		category: 'christmas',
+		parts: ['Partitur', ...STRINGS],
+		gaps: { Violoncello: 'LEER' }
+	}
+];
+
+/** The archive: piece folders, a Christmas category folder, and a current-programme folder with shortcuts. */
+export function demoFiles(): DemoFile[] {
+	const christmas = 'demo-category-christmas';
+	const eo = 'demo-program-eo';
+	const files: DemoFile[] = [
+		{ id: DEMO_IDS.archive, name: '90 | Notenarchiv', mimeType: FOLDER, parents: ['demo-root'], modifiedTime: MODIFIED },
+		{ id: DEMO_IDS.program, name: '01 | Aktuelles Programm', mimeType: FOLDER, parents: ['demo-root'], modifiedTime: MODIFIED },
+		{ id: christmas, name: '00 | Weihnachtsstücke', mimeType: FOLDER, parents: [DEMO_IDS.archive], modifiedTime: MODIFIED },
+		{ id: eo, name: 'Programm Ehemaligenorchester', mimeType: FOLDER, parents: [DEMO_IDS.program], modifiedTime: MODIFIED }
+	];
+	for (const piece of PIECES) {
+		files.push({
+			id: piece.id,
+			name: piece.folder,
+			mimeType: FOLDER,
+			parents: [piece.category ? christmas : DEMO_IDS.archive],
+			modifiedTime: MODIFIED
+		});
+		piece.parts.forEach((part, i) => {
+			const gap = piece.gaps?.[part];
+			const prefix = part === 'Partitur' ? '@' : '';
+			files.push({
+				id: `${piece.id}-${i}`,
+				name: `${prefix}${piece.short} - ${part}${gap ? ` - ${gap}` : ''}${gap === 'FEHLT' ? '' : '.pdf'}`,
+				mimeType: gap === 'FEHLT' ? DOC : PDF,
+				parents: [piece.id],
+				modifiedTime: MODIFIED,
+				pdf: gap === 'FEHLT' ? undefined : { title: piece.title, composer: piece.composer, arranger: piece.arranger, part }
+			});
+		});
+	}
+	// The next concert's pieces, linked into the current programme like people do by hand.
+	for (const id of ['demo-egmont', 'demo-morgenstimmung', 'demo-007', 'demo-nachtmusik']) {
+		const piece = PIECES.find((p) => p.id === id)!;
+		files.push({
+			id: `${id}-shortcut`,
+			name: piece.folder,
+			mimeType: SHORTCUT,
+			parents: [eo],
+			modifiedTime: MODIFIED,
+			shortcutDetails: { targetId: id, targetMimeType: FOLDER }
+		});
+	}
+	return files;
+}
+
+const DAY_MS = 86_400_000;
+
+/** Days from today, in the orchestra's time zone, as "2026-10-24". */
+function day(offset: number, now: number): string {
+	return eventDay({ start: new Date(now + offset * DAY_MS).toISOString(), allDay: false }, config.timeZone);
+}
+
+/** Rehearsals and concerts around today, so there's always something upcoming and something past. */
+export function demoEvents(now: number): DemoEvent[] {
+	const timed = (id: string, summary: string, offset: number, from: string, to: string, location = 'Aula, Musterschule'): DemoEvent => ({
+		id,
+		summary,
+		location,
+		start: { dateTime: `${day(offset, now)}T${from}:00` },
+		end: { dateTime: `${day(offset, now)}T${to}:00` }
+	});
+	return [
+		timed('demo-sommerkonzert', 'Sommerkonzert', -60, '17:00', '19:00', 'Stadthalle Musterstadt'),
+		timed('demo-probe-1', 'Probe Herbstkonzert 🎶', -10, '10:00', '13:00'),
+		timed('demo-probe-2', 'Probe Herbstkonzert 🎶', -3, '10:00', '13:00'),
+		timed('demo-probe-3', 'Probe Herbstkonzert 🎶', 4, '10:00', '13:00'),
+		timed('demo-probe-4', 'Probe Herbstkonzert 🎶', 11, '10:00', '13:00'),
+		timed('demo-probe-5', 'Probe Herbstkonzert 🎶', 18, '10:00', '13:00'),
+		timed('demo-generalprobe', 'Generalprobe Herbstkonzert', 24, '15:00', '18:00', 'Stadthalle Musterstadt'),
+		{
+			...timed('demo-herbstkonzert', 'Herbstkonzert', 25, '17:00', '19:00', 'Stadthalle Musterstadt'),
+			description: 'Einlass ab 16:30. Eintritt frei, Spenden willkommen.'
+		},
+		timed('demo-probenwochenende', 'Probenwochenende (?)', 39, '10:00', '17:00', 'Jugendherberge am See'),
+		timed('demo-probe-weihnacht-1', 'Probe Weihnachtskonzert', 46, '10:00', '13:00'),
+		timed('demo-probe-weihnacht-2', 'Probe Weihnachtskonzert', 53, '10:00', '13:00'),
+		timed('demo-weihnacht-1', '1. Weihnachtskonzert', 60, '17:00', '18:30', 'Kirche am Markt'),
+		timed('demo-weihnacht-2', '2. Weihnachtskonzert', 61, '17:00', '18:30', 'Kirche am Markt')
+	];
+}
+
+/** A tab with its header row from the app's own layout, and rows given by column key. */
+function tab<K extends TabKey>(key: K, rows: Partial<Record<keyof (typeof LAYOUT)[K]['columns'] & string, string>>[]): [string, string[][]] {
+	const columns = LAYOUT[key].columns as Record<string, string>;
+	const keys = Object.keys(columns);
+	return [LAYOUT[key].tab, [keys.map((k) => columns[k]), ...rows.map((row) => keys.map((k) => (row as Record<string, string>)[k] ?? ''))]];
+}
+
+/** The Repertoire sheet, filled in as if the orchestra had used the app for a while. */
+export function demoSheet(now: number): Map<string, string[][]> {
+	const herbst = `Herbstkonzert ${day(25, now).slice(0, 4)}`;
+	const weihnacht = `Weihnachtskonzert ${day(60, now).slice(0, 4)}`;
+	const weihnacht2 = `${weihnacht} (${day(61, now).slice(8, 10)}.${day(61, now).slice(5, 7)}.)`;
+	const sommer = `Sommerkonzert ${day(-60, now).slice(0, 4)}`;
+	const label = (offset: number) => `Probe Herbstkonzert 🎶 · ${day(offset, now)}`;
+	const titles = Object.fromEntries(PIECES.map((p) => [p.id, p.title]));
+	const at = (offset: number) => day(offset, now);
+	const program = (concert: string, pieces: string[]) => pieces.map((piece, i) => ({ concert, position: String(i + 1), piece }));
+
+	return new Map([
+		tab('pieces', [
+			...PIECES.map((p) => ({ title: p.title, composer: p.composer?.split(' ').at(-1) ?? '', arranger: p.arranger ?? '', driveFolderId: p.id })),
+			// Played long ago, no sheet music in the archive.
+			{ title: 'Ungarischer Tanz Nr. 5', composer: 'Brahms', genre: 'Romantik' }
+		]),
+		tab('concerts', [
+			{ date: '1962-12', title: 'Weihnachtskonzert 1962', location: 'Alte Turnhalle', orchestra: 'EO' },
+			{ date: '1998-04', title: 'Frühjahrskonzert 1998', orchestra: 'EO' },
+			{ date: at(-60), title: sommer, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-sommerkonzert' },
+			{ date: at(25), title: herbst, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-herbstkonzert' },
+			{ date: at(60), title: weihnacht, location: 'Kirche am Markt', orchestra: 'EO', eventId: 'demo-weihnacht-1' },
+			{ date: at(61), title: weihnacht2, location: 'Kirche am Markt', orchestra: 'EO', eventId: 'demo-weihnacht-2', sameProgramAs: weihnacht }
+		]),
+		tab('program', [
+			...program('Weihnachtskonzert 1962', ['Stille Nacht', 'Ungarischer Tanz Nr. 5']),
+			...program('Frühjahrskonzert 1998', [titles['demo-nachtmusik'], titles['demo-morgenstimmung']]),
+			...program(sommer, [titles['demo-nachtmusik'], titles['demo-007']]),
+			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']]),
+			...program(weihnacht, [titles['demo-sleigh'], titles['demo-jesu'], titles['demo-stille-nacht']])
+		]),
+		tab('rehearsals', [
+			{ rehearsal: label(-10), piece: titles['demo-egmont'], eventId: 'demo-probe-1' },
+			{ rehearsal: label(-10), piece: titles['demo-morgenstimmung'], eventId: 'demo-probe-1' },
+			{ rehearsal: label(-3), piece: titles['demo-egmont'], notes: 'nur Durchführung', eventId: 'demo-probe-2' },
+			{ rehearsal: label(-3), piece: titles['demo-007'], eventId: 'demo-probe-2' },
+			{ rehearsal: label(4), piece: titles['demo-007'], eventId: 'demo-probe-3' },
+			{ rehearsal: label(4), piece: titles['demo-nachtmusik'], eventId: 'demo-probe-3' }
+		]),
+		tab('members', [
+			{ email: DEMO_ADMIN.email, name: DEMO_ADMIN.name, groups: 'Vorstand', orchestras: 'EO', status: 'aktiv' },
+			{ email: DEMO_MEMBER.email, name: DEMO_MEMBER.name, instrument: 'Geige II', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'david@example.org', name: 'David Dirigent', groups: 'Dirigat', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'nora@example.org', name: 'Nora Notenwart', instrument: 'Viola', groups: 'Notenwart', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'jonas@example.org', name: 'Jonas Geiger', instrument: 'Geige I', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'lea@example.org', name: 'Lea Lang', instrument: 'Geige I', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'paul@example.org', name: 'Paul Probe', instrument: 'Violoncello', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'ida@example.org', name: 'Ida Ibach', instrument: 'Flöte', orchestras: 'EO', status: 'aktiv' },
+			{ email: 'tim@example.org', name: 'Tim Trompeter', instrument: 'Trompete', orchestras: 'EO, A', status: 'aktiv' },
+			{ email: 'karl@example.org', name: 'Karl Klarinette', instrument: 'Klarinette', orchestras: 'EO', status: 'pausiert', pausedUntil: at(90) },
+			{ email: 'bea@example.org', name: 'Bea Bass', instrument: 'Kontrabass', orchestras: 'EO', status: 'aktiv' }
+		]),
+		tab(
+			'groups',
+			(config.roles ?? []).map((role) => ({ name: role.name, description: role.description }))
+		),
+		tab(
+			'rights',
+			(config.roles ?? []).flatMap((role) => role.rights.map((right) => ({ who: role.name, right })))
+		),
+		tab('requests', [{ email: 'neu@example.org', name: 'Nele Neu', requestedAt: at(-1) }]),
+		tab('reports', [
+			{
+				piece: titles['demo-jesu'],
+				pieceId: 'demo-jesu',
+				part: 'Viola',
+				fileId: 'demo-jesu-3',
+				kind: t.feedbackValues.reportKind.pages,
+				comment: 'Seite 2 fehlt.',
+				status: t.feedbackValues.reportStatus.open,
+				reportedBy: `${DEMO_MEMBER.name} <${DEMO_MEMBER.email}>`,
+				reportedAt: at(-5),
+				id: 'demo-report-1'
+			}
+		]),
+		tab('wishes', [
+			{
+				kind: t.feedbackValues.wishKind.piece,
+				title: 'Bolero',
+				composer: 'Maurice Ravel',
+				description: 'Wäre toll fürs nächste Sommerkonzert!',
+				status: t.feedbackValues.wishStatus.open,
+				submittedBy: `Jonas Geiger <jonas@example.org>`,
+				submittedAt: at(-20),
+				votes: 'lea@example.org, ida@example.org, mia@example.org',
+				id: 'demo-wish-1'
+			},
+			{
+				kind: t.feedbackValues.wishKind.feature,
+				title: 'Metronom in der App',
+				description: 'Zum Üben zu Hause.',
+				status: t.feedbackValues.wishStatus.planned,
+				answer: 'Schauen wir uns an.',
+				submittedBy: `Paul Probe <paul@example.org>`,
+				submittedAt: at(-30),
+				id: 'demo-wish-2'
+			}
+		]),
+		tab('missingParts', []),
+		tab('signups', [
+			...[
+				['jonas@example.org', 'Jonas Geiger', 'yes'],
+				['lea@example.org', 'Lea Lang', 'yes'],
+				['paul@example.org', 'Paul Probe', 'maybe'],
+				['ida@example.org', 'Ida Ibach', 'no'],
+				['nora@example.org', 'Nora Notenwart', 'yes']
+			].map(([who, name, answer]) => ({
+				event: `Probe Herbstkonzert 🎶 · ${at(4)}`,
+				who,
+				name,
+				answer: t.signups.answerValues[answer as 'yes' | 'maybe' | 'no'],
+				comment: answer === 'maybe' ? 'Komme evtl. später' : '',
+				answeredAt: at(-1),
+				eventId: 'demo-probe-3'
+			}))
+		])
+	]);
+}

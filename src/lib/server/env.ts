@@ -30,12 +30,19 @@ export interface AppEnv {
 	LEGAL_ADDRESS?: string;
 	/** Contact email for privacy questions. */
 	LEGAL_EMAIL?: string;
+	/** "true": sample data instead of Google, signed in as a demo user; for trying the app (#121). */
+	DEMO?: string;
 	/** KV namespace binding from wrangler.toml; optional, memory is used without it. */
 	CACHE?: KvStore;
 }
 
 export function appEnv(): AppEnv {
 	return env as unknown as AppEnv;
+}
+
+/** Demo mode: invented sample data in memory instead of Google, no real accounts. */
+export function isDemo(): boolean {
+	return ['true', '1', 'yes', 'on'].includes((appEnv().DEMO ?? '').trim().toLowerCase());
 }
 
 /** Lets work continue after the response is sent (e.g. a cache refresh). */

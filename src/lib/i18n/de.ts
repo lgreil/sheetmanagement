@@ -417,6 +417,14 @@ export const de = {
 		onlineFailed: 'Wikidata ist gerade nicht erreichbar.',
 		busy: 'Wikidata bittet um eine kurze Pause. In einer Minute geht es wieder.'
 	},
+	demo: {
+		label: 'Demo',
+		note: 'Erfundene Beispieldaten. Änderungen bleiben nur bis zum Neustart.',
+		viewAs: 'Ansehen als',
+		admin: 'Verwaltung',
+		member: 'Mitglied',
+		reset: 'Zurücksetzen'
+	},
 	viewer: {
 		show: 'Noten ansehen',
 		hide: 'Noten ausblenden',
