@@ -68,7 +68,7 @@
 										{#each data.statusWords as option (option.status)}<option value={option.status}>{option.word}</option>{/each}
 									</select>
 								</label>
-								<button class="btn small ghost" disabled={saving.busy}><Icon name="file" size={14} />{t.reports.mark}</button>
+								<button class="btn small ghost" disabled={saving.busy}><Icon name="text" size={14} />{t.reports.mark}</button>
 							</form>
 						{/if}
 					</div>

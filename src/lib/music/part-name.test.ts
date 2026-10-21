@@ -13,7 +13,7 @@ describe('parsePartName', () => {
 		['BWV 147 - Geige II.pdf', 'Geige II', 'stimme'],
 		['@BWV 147 - Partitur.pdf', 'Partitur', 'partitur'],
 		['Sword Dance - Trompete I in B.pdf', 'Trompete I in B', 'stimme'],
-		['Fame - Geige III / Viola.pdf', 'Geige III / Viola', 'sammelstimme'],
+		['Fame - Geige III / Viola.pdf', 'Geige III / Bratsche', 'sammelstimme'],
 		['Fame - Pauke & Schlagwerk.pdf', 'Pauke & Schlagwerk', 'sammelstimme'],
 		['Fame - Blech III in hoch B.pdf', 'Blech III in hoch B', 'stimme'],
 		['Fame - C-Stimmen in Es.pdf', 'C-Stimmen in Es', 'stimme'],
@@ -27,7 +27,7 @@ describe('parsePartName', () => {
 		['Querfl”Te 1 & 2.pdf', 'Flöte I & II', 'sammelstimme'],
 		['1. Trompete-1. Klarinette.pdf', 'Trompete I & Klarinette I', 'sammelstimme'],
 		['Part 1 Violin.pdf', 'Stimme 1: Geige', 'stimme'],
-		['Thriller - Part 4 + 5 Cello.pdf', 'Stimme 4 & 5: Violoncello', 'sammelstimme'],
+		['Thriller - Part 4 + 5 Cello.pdf', 'Stimme 4 & 5: Cello', 'sammelstimme'],
 		['Stimme 3 in B.pdf', 'Stimme 3 in B', 'stimme'],
 		['Bariton B.C..pdf', 'Bariton', 'stimme'],
 		['Kontrabass / Stringbass.pdf', 'Kontrabass', 'stimme'],
@@ -47,7 +47,7 @@ describe('parsePartName', () => {
 		['Christmas_Memories-E-Bass.pdf', 'E-Bass', 'stimme'],
 		['Fame - Bass-Klarinette.pdf', 'Bassklarinette', 'stimme'],
 		['Fame - Bass-Posaune.pdf', 'Bassposaune', 'stimme'],
-		['Feuerwerksmusik-Cello_und_Bass.pdf', 'Violoncello & Kontrabass', 'sammelstimme'],
+		['Feuerwerksmusik-Cello_und_Bass.pdf', 'Cello & Kontrabass', 'sammelstimme'],
 		['Barcarolle-Bass-Clarinet-Trombone.pdf', 'Bassklarinette & Posaune', 'sammelstimme'],
 		['Thriller - Part 5 Trombone Baritone BC Bassoonpdf.pdf', 'Stimme 5: Posaune & Bariton & Fagott', 'sammelstimme'],
 		['Viva_la_Vida-Pianopdf.pdf', 'Klavier', 'stimme'],
@@ -69,7 +69,7 @@ describe('parsePartName', () => {
 	});
 
 	it('reads movements, flexible voices and voice parts', () => {
-		expect(parse('Dvorak_9-4_Viola.pdf', 'Dvorak_9-')).toMatchObject({ label: 'Viola', notes: ['Satz 4'] });
+		expect(parse('Dvorak_9-4_Viola.pdf', 'Dvorak_9-')).toMatchObject({ label: 'Bratsche', fileLabel: 'Viola', notes: ['Satz 4'] });
 		expect(parse('Te_Deum-3Es.pdf', 'Te_Deum-').label).toBe('Stimme 3 in Es');
 		expect(parse('Te_Deum-1C.pdf', 'Te_Deum-').label).toBe('Stimme 1 in C');
 		expect(parse('Transeamus-Gesang-SA.pdf', 'Transeamus-').label).toBe('Gesang SA');

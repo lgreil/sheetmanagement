@@ -1,5 +1,15 @@
 <script lang="ts" module>
 	// Inline icons (24×24, stroke-based) so the app needs no icon package.
+	/**
+	 * One meaning per icon, so an icon always says the same thing:
+	 * home Übersicht · parts Meine Noten · user the person, profile · music the archive, a piece ·
+	 * calendar dates · clock time and duration · loan rented music · file a single PDF ·
+	 * flag reporting a problem · alert something missing or wrong · check done ·
+	 * list a checklist · users attendance, people · bulb ideas, wishes · sparkle suggestions ·
+	 * link connections and shareable links · share sending elsewhere · download keeping on the
+	 * device · print · edit · text file names · table the sheet, tabular lists · sliders setup ·
+	 * activity connection status · refresh reloading · shield rights · eye looking at the pages.
+	 */
 	const paths = {
 		home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
 		music: 'M9 18V5l12-2v13M9 18a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm12-2a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z',
@@ -46,7 +56,14 @@
 		share: 'M4 12v7a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7M16 6l-4-4-4 4M12 2v13',
 		users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
 		list: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
-		download: 'M12 3v12M7 10l5 5 5-5M5 21h14'
+		download: 'M12 3v12M7 10l5 5 5-5M5 21h14',
+		parts: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M10 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm0 0v-6l5-1.5',
+		loan: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
+		text: 'M4 7V4h16v3M9 20h6M12 4v16',
+		table: 'M3 4h18v16H3zM3 10h18M3 15h18M10 4v16',
+		sliders: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
+		activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
+		eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'
 	} as const;
 
 	export type IconName = keyof typeof paths;

@@ -54,7 +54,7 @@
 			<strong>{name}</strong>
 			<span>{data.email}</span>
 		</div>
-		<a class="btn secondary" href="/meine-noten"><Icon name="user" size={16} />{t.nav.myParts}</a>
+		<a class="btn secondary" href="/meine-noten"><Icon name="parts" size={16} />{t.nav.myParts}</a>
 	</section>
 
 	{#if !data.member}

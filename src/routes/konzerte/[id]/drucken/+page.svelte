@@ -32,7 +32,7 @@
 	<p class="hint">{hints[data.kind]}</p>
 	<div class="buttons">
 		{#if data.kind === 'musikfolge' && data.items.length}
-			<a class="btn ghost" href="{concertUrl}/musikfolge.csv" download><Icon name="download" size={16} />{t.musicReport.csv}</a>
+			<a class="btn ghost" href="{concertUrl}/musikfolge.csv" download><Icon name="table" size={16} />{t.musicReport.csv}</a>
 		{/if}
 		<button class="btn" onclick={() => window.print()} disabled={!data.items.length}><Icon name="print" size={16} />{t.print.print}</button>
 	</div>

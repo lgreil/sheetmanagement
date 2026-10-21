@@ -55,7 +55,7 @@ describe('parseInstrument', () => {
 
 	it('formats a choice like a part name', () => {
 		expect(formatInstrument({ instrument: 'Geige', numbers: [2] })).toBe('Geige II');
-		expect(formatInstrument({ instrument: 'Viola', numbers: [] })).toBe('Viola');
+		expect(formatInstrument({ instrument: 'Viola', numbers: [] })).toBe('Bratsche');
 	});
 });
 
@@ -75,7 +75,7 @@ describe('parseInstruments', () => {
 	});
 
 	it('round-trips through the stored notation', () => {
-		for (const text of ['Geige I & II, Viola', 'Flöte, Oboe II', 'Trompete I–III']) {
+		for (const text of ['Geige I & II, Bratsche', 'Flöte, Oboe II', 'Trompete I–III']) {
 			expect(formatInstruments(parseInstruments(text, config))).toBe(text);
 		}
 	});
@@ -158,7 +158,7 @@ describe('matchParts', () => {
 		const clarinet = matchParts(parts, { instrument: 'Klarinette', numbers: [2] }, config);
 		expect(labels(clarinet.own)).toEqual(['Klarinette I & II in B']);
 		expect(labels(clarinet.shared)).toEqual(['B-Stimmen']);
-		expect(labels(matchParts(parts, { instrument: 'Kontrabass', numbers: [] }, config).own)).toEqual(['Violoncello & Kontrabass']);
+		expect(labels(matchParts(parts, { instrument: 'Kontrabass', numbers: [] }, config).own)).toEqual(['Cello & Kontrabass']);
 	});
 
 	it('prefers the numbered part over a plain one, and leaves out the soloist', () => {

@@ -69,7 +69,7 @@ describe('coverage', () => {
 		expect(sections.map((s) => [s.label, s.yes, s.no, s.open])).toEqual([
 			['Geige I', ['Anna A'], [], []],
 			['Geige II', [], ['Ben B'], []],
-			['Viola', [], [], ['Carl C']],
+			['Bratsche', [], [], ['Carl C']],
 			['Kontrabass', ['Gast'], [], []]
 		]);
 		expect(totals(sections)).toEqual({ yes: 2, maybe: 0, no: 1, open: 1 });
@@ -77,6 +77,6 @@ describe('coverage', () => {
 
 	it('leaves out paused members and other orchestras', () => {
 		const labels = coverage([], members, config, { orchestra: 'A', today: '2026-10-20' }).map((s) => s.label);
-		expect(labels).toEqual(['Oboe', 'Viola']);
+		expect(labels).toEqual(['Oboe', 'Bratsche']);
 	});
 });

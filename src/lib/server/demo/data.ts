@@ -62,9 +62,34 @@ interface SamplePiece {
 	parts: string[];
 	/** Parts with a status word: a placeholder doc for FEHLT, a PDF otherwise. */
 	gaps?: Record<string, 'FEHLT' | 'LEER' | 'UNVOLLSTÄNDIG'>;
+	/** Old file names as scanned years ago, for trying the naming check on /namen. */
+	rawNames?: string[];
 }
 
 const PIECES: SamplePiece[] = [
+	{
+		id: 'demo-cancan',
+		folder: 'Offenbach - Can-Can',
+		short: 'Can-Can',
+		title: 'Can-Can',
+		composer: 'Jacques Offenbach',
+		duration: '2:30',
+		parts: [],
+		rawNames: [
+			'CanCan_Score.pdf',
+			'CanCan_Flute1.pdf',
+			'CanCan_Clarinet_Bb_1.pdf',
+			'Can Can - Trumpet in Bb 2.pdf',
+			'cancan violin1.pdf',
+			'cancan violin2.pdf',
+			'CanCan-Viola.pdf',
+			'CanCan-Cello.pdf',
+			'CanCan-Bass.pdf',
+			'CanCan Timpani.pdf',
+			'Can-Can - Percussion.pdf',
+			'Can-Can - Horn in F.pdf'
+		]
+	},
 	{
 		id: 'demo-nachtmusik',
 		folder: 'Mozart KV 525 - Eine kleine Nachtmusik',
@@ -158,6 +183,16 @@ export function demoFiles(): DemoFile[] {
 			mimeType: FOLDER,
 			parents: [piece.category ? christmas : DEMO_IDS.archive],
 			modifiedTime: MODIFIED
+		});
+		piece.rawNames?.forEach((name, i) => {
+			files.push({
+				id: `${piece.id}-raw-${i}`,
+				name,
+				mimeType: PDF,
+				parents: [piece.id],
+				modifiedTime: MODIFIED,
+				pdf: { title: piece.title, composer: piece.composer, part: name.replace(/\.pdf$/i, '') }
+			});
 		});
 		piece.parts.forEach((part, i) => {
 			const gap = piece.gaps?.[part];

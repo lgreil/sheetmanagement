@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { instrumentLabel } from '#lib/music/instrument-label.ts';
 	import type { Coverage } from '#lib/music/my-parts.ts';
 	import { t } from '#lib/i18n/index.ts';
 
@@ -43,7 +44,7 @@
 				<tr>
 					<th class="piece" scope="col">{t.instrumentation.piece}</th>
 					{#each columns as column (column.name)}
-						<th scope="col" class="instrument" class:played={column.played}><span>{column.name}</span></th>
+						<th scope="col" class="instrument" class:played={column.played}><span>{instrumentLabel(column.name)}</span></th>
 					{/each}
 				</tr>
 			</thead>
@@ -56,7 +57,7 @@
 						</th>
 						{#each columns as column (column.name)}
 							{@const cell = row.cells[column.index]}
-							<td class={row.hasMusic ? cell : 'empty'} title="{column.name}: {t.instrumentation.legend[cell]}">
+							<td class={row.hasMusic ? cell : 'empty'} title="{instrumentLabel(column.name)}: {t.instrumentation.legend[cell]}">
 								{row.hasMusic ? SYMBOL[cell] : ''}
 							</td>
 						{/each}

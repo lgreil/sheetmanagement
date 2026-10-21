@@ -134,7 +134,7 @@
 			{/if}
 			<div class="actions">
 				{#if card.partsUrl}
-					<a class="btn" href={card.partsUrl}><Icon name="user" size={16} />{t.nav.myParts}</a>
+					<a class="btn" href={card.partsUrl}><Icon name="parts" size={16} />{t.nav.myParts}</a>
 				{/if}
 				<a class="btn ghost" href={eventUrl(card.event)}>{t.home.details}</a>
 			</div>

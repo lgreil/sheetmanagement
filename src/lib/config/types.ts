@@ -16,8 +16,13 @@ export type InstrumentFamily =
 	| 'sonstige';
 
 export interface Instrument {
-	/** Name as used in file names and shown in the app, e.g. "Geige". */
+	/** Name as used in file names, the sheet and the naming check, e.g. "Geige". */
 	name: string;
+	/**
+	 * Shown in the app instead of the name, when the file names use a different word:
+	 * "Bratsche" for files named "Viola", so the strings read Geige · Bratsche · Cello.
+	 */
+	label?: string;
 	family: InstrumentFamily;
 	/**
 	 * Other spellings found in file names, e.g. ["Violine", "Violin"]. Matched as whole

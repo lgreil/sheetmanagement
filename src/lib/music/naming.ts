@@ -172,16 +172,17 @@ export function checkSection(
 		}
 		parsed = parsed!;
 		const check: NameCheck = { id: file.id, name: file.name, state: 'unclear', label: parsed.label, unrecognized: parsed.unrecognized };
+		// File names follow the convention's words ("Geige"), whatever the app shows ("Violine").
 		if (parsed.kind === 'audio') return { check: { ...check, state: 'skip' as const } };
 		if (parsed.kind === 'sonstiges' || parsed.unrecognized.length || !short) return { check };
 
 		movement ??= parsed.notes.find((note) => note.startsWith(`${movementWord} `));
 		const isClef = (note: string) => /^[BT]\.C\.$/.test(note);
-		const notes = parsed.notes.filter((note) => !note.startsWith(`${movementWord} `) && note !== parsed!.label && !isClef(note));
+		const notes = parsed.notes.filter((note) => !note.startsWith(`${movementWord} `) && note !== parsed!.fileLabel && !isClef(note));
 		const featured = parsed.kind === 'partitur' || parsed.kind === 'solo' ? naming.featuredPrefix : '';
 		const extension = file.mimeType.startsWith(GOOGLE_APPS) ? '' : (/\.[a-z0-9]{2,4}$/i.exec(file.name)?.[0].toLowerCase() ?? '');
 		const status = parsed.status === 'ok' ? '' : `${sep}${naming.status[parsed.status]}`;
-		const label = [parsed.label, ...parsed.notes.filter(isClef)];
+		const label = [parsed.fileLabel, ...parsed.notes.filter(isClef)];
 		const build = (extra: string[]) =>
 			// "Bariton B.C." + ".pdf" would end in "..": the extension's dot is enough.
 			[featured, short, movement ? sep + movement : '', sep, [...label, ...extra].join(' '), status]
@@ -218,6 +219,9 @@ export function checkSection(
 const escape = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 /** The convention's placeholder for a missing part: "<Kurztitel> - <Stimme> - FEHLT", a Google Doc in the piece folder. */
+/** Files renamed per request on /namen: free Workers allow 50 Google requests per call. */
+export const RENAME_BATCH = 10;
+
 export function placeholderName(
 	files: NamingFile[],
 	title: string,
