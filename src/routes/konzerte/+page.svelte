@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
 	import AddToArchive from '#lib/components/AddToArchive.svelte';
@@ -138,7 +139,9 @@
 
 {#if data.subscribeUrl && !data.error}
 	<div class="ui-actions subscribe">
-		<a href={data.subscribeUrl} target="_blank" rel="noopener noreferrer"><Icon name="calendar" size={16} />{t.concerts.subscribe}</a>
+		<!-- Signed in: the personal feed with own answers and the plan first (#122); the shared calendar stays. -->
+		{#if page.data.user}<a href="/profil#kalender"><Icon name="calendar" size={16} />{t.concerts.ownCalendar}</a>{/if}
+		<a href={data.subscribeUrl} target="_blank" rel="noopener noreferrer"><Icon name="external" size={16} />{t.concerts.subscribe}</a>
 	</div>
 {/if}
 

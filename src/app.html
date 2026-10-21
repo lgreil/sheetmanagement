@@ -5,6 +5,10 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="color-scheme" content="light dark" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" type="image/png" />
+		<!-- Installable on phones (#62); the manifest carries the orchestra's name. -->
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link rel="apple-touch-icon" href="%sveltekit.assets%/logo.png" />
+		<meta name="mobile-web-app-capable" content="yes" />
 		<script>
 			// Apply the saved theme before first paint to avoid a flash.
 			try {

@@ -34,6 +34,8 @@ export interface Member {
 	pausedUntil?: string;
 	/** Personal access link: 0 none, n > 0 link n is valid, -n link n was revoked (see server/auth/links.ts). */
 	linkVersion: number;
+	/** Personal calendar feed, counted the same way (see server/auth/feed.ts). */
+	feedVersion: number;
 }
 
 export interface Group {
@@ -101,7 +103,8 @@ export function buildAccessList(values: AccessValues): AccessList {
 			orchestras: splitGroups(v.orchestras),
 			status: parseStatus(v.status),
 			pausedUntil: parseDay(v.pausedUntil),
-			linkVersion: parseLinkVersion(v.linkVersion)
+			linkVersion: parseLinkVersion(v.linkVersion),
+			feedVersion: parseLinkVersion(v.feedVersion)
 		};
 		members.push(member);
 		membersByEmail.set(email, member);

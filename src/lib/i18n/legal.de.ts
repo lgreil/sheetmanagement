@@ -64,6 +64,12 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Kalender-Link',
+				paragraphs: [
+					'Im Profil kannst du einen persönlichen Kalender-Link erzeugen, den deine Kalender-App abonniert. Er enthält die Termine deiner Orchester, deine eigene Zu- oder Absage und was geprobt wird. In der Tabelle steht dazu nur eine Versionsnummer. Wer den Link hat, sieht diese Angaben; mit „Neuen Link erzeugen“ oder „Link sperren“ wird der alte sofort ungültig.'
+				]
+			},
+			{
 				heading: 'Anwesenheit bei Proben',
 				paragraphs: [
 					'Nach einer Probe können Personen mit dem Recht „Anwesenheit erfassen“ (z. B. Dirigat und Organisation) eintragen, wer da war. Gespeichert werden nur Termin, Name, E-Mail-Adresse und ob du anwesend warst, im Blatt „Anwesenheit“ der Google-Tabelle des Orchesters. Daraus zeigt die App, bei wie vielen Proben vor einem Konzert du dabei warst.',

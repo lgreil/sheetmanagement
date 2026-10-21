@@ -31,6 +31,19 @@
 
 	afterNavigate(() => (menuOpen = false));
 
+	// Offline in the rehearsal hall (#62): pages come from the service worker's cache, so say so.
+	let online = $state(true);
+	$effect(() => {
+		const update = () => (online = navigator.onLine);
+		update();
+		addEventListener('online', update);
+		addEventListener('offline', update);
+		return () => {
+			removeEventListener('online', update);
+			removeEventListener('offline', update);
+		};
+	});
+
 	// A thin bar while the next page loads. Shown only after a moment, so quick
 	// navigations don't flicker; a slow Google answer no longer looks like a dead click.
 	let loading = $state(false);
@@ -55,6 +68,7 @@
 		<div class="progress" role="progressbar" aria-label={t.common.loading}></div>
 	{/if}
 	{#if data.demo}<DemoBanner role={data.demo.role} />{/if}
+	{#if !online}<p class="offline no-print" role="status"><Icon name="alert" size={16} />{t.pwa.offline}</p>{/if}
 	<header class="topbar">
 		<div class="topbar-inner">
 			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>
@@ -146,6 +160,17 @@
 </div>
 
 <style>
+	.offline {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-4);
+		background: color-mix(in oklab, var(--warn) 16%, var(--surface));
+		font-size: 0.875rem;
+		text-align: center;
+	}
+
 	.progress {
 		position: fixed;
 		top: 0;
