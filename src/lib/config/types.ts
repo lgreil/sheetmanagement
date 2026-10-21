@@ -132,6 +132,11 @@ export interface OrchestraConfig {
 	 * Once added they're ordinary rows in "Gruppen" and "Rechte" and can be changed freely.
 	 */
 	roles?: RolePreset[];
+	/**
+	 * The music list for the collecting society on the print page ("Musikfolge (GEMA)").
+	 * On unless false; its words are in the texts, so another country's society only needs a translation.
+	 */
+	musicReport?: boolean;
 	/** The orchestra's website, socials and newsletter, in the footer and on the start page. */
 	links?: OrchestraLink[];
 	/**

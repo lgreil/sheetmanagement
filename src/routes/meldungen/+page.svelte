@@ -14,7 +14,6 @@
 <Title title={t.reports.title} />
 <PageHeader title={t.reports.title} lead={t.reports.pageLead} />
 
-<p class="overview"><a href="/fehlende-stimmen"><Icon name="file" size={16} />{t.gaps.link}</a></p>
 
 {#if data.state === 'not-set-up'}
 	<p class="msg info">{t.reports.notSetUp}</p>
@@ -134,17 +133,6 @@
 		font-size: 0.8125rem;
 	}
 
-	.overview {
-		margin-bottom: var(--space-4);
-	}
-
-	.overview a {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		color: var(--accent);
-		font-weight: 600;
-	}
 
 	h2 {
 		display: flex;

@@ -4,16 +4,19 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
-import { getFeedback, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { getFeedback, getLoans, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
+import { formatDay } from '#lib/events/format.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import { workKey } from '#lib/music/piece-name.ts';
+import { formatDuration } from '#lib/repertoire/duration.ts';
 import { concertSummary, getLibrary, namedItem, type Library, type LibraryPiece } from '#lib/server/library.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-	const [library, feedback, plan] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan()]);
+	const [library, feedback, plan, loans] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan(), getLoans()]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
 		if (!library.catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
@@ -73,6 +76,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			parts: (detail?.parts ?? []).map((part) => ({ ...part, url: partUrl(part.id, part.mimeType, locals.access.viaLink) })),
 			sections: (detail?.sections ?? []).map((section) => ({ ...section, folderUrl: folderUrl(section.folderId) })),
 			info: {
+				duration: sheet?.duration ? formatDuration(sheet.duration) : undefined,
+				publisher: sheet?.publisher,
 				arranger: sheet?.arranger,
 				genre: sheet?.genre,
 				difficulty: sheet?.difficulty,
@@ -87,6 +92,14 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 					planned: againWish?.status === 'planned'
 				}
 			: null,
+		// Rented or borrowed (#119): from whom and until when, so it goes back in time.
+		loans: loansOf(loans?.loans ?? [], sheet?.title ?? piece.title).map((loan) => ({
+			from: loan.from,
+			dueAt: loan.dueAt ? formatDay(loan.dueAt, config.locale) : loan.dueText || undefined,
+			state: loanState(loan, library.today),
+			days: daysUntilDue(loan, library.today)
+		})),
+		canManageLoans: canClose && !!loans,
 		// Coming up: concerts with this piece on the programme and rehearsals that plan it.
 		upcoming: upcoming(library, piece, plan?.byEvent),
 		playedAt: piece.playedAt

@@ -145,10 +145,13 @@ export function planSync(
 }
 
 /** Puts values into the sheet's own column order; unknown columns stay empty. */
-export function toSheetRow<K extends string>(values: Partial<Record<K, string>>, indexes: Partial<Record<K, number>>): string[] {
+export function toSheetRow<K extends string, V extends string | boolean = string>(
+	values: Partial<Record<K, V>>,
+	indexes: Partial<Record<K, number>>
+): (V | '')[] {
 	const width = Math.max(-1, ...Object.values<number | undefined>(indexes).map((i) => i ?? -1)) + 1;
-	const row = Array<string>(width).fill('');
-	for (const [key, value] of Object.entries(values) as [K, string | undefined][]) {
+	const row = Array<V | ''>(width).fill('');
+	for (const [key, value] of Object.entries(values) as [K, V | undefined][]) {
 		const index = indexes[key];
 		if (index !== undefined && value) row[index] = value;
 	}

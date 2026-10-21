@@ -54,6 +54,5 @@ export const load: PageServerLoad = async ({ locals }) => {
 			incomplete: count('incomplete'),
 			reports: pieces.reduce((sum, piece) => sum + piece.reports.length, 0)
 		},
-		canManage: locals.access.rights.has('stuecke.bearbeiten')
 	};
 };

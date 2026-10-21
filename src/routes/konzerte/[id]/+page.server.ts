@@ -8,8 +8,13 @@ import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
-import { getLibrary, namedItem, type Library, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList, getFeedback, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { concertCheck } from '#lib/repertoire/concert-check.ts';
+import { reportGaps } from '#lib/repertoire/music-report.ts';
+import { loansOf } from '#lib/loans/loans.ts';
+import { attendanceSummary } from '#lib/attendance/attendance.ts';
+import type { RehearsalPlan } from '#lib/rehearsals/plan.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -106,6 +111,116 @@ async function signups(event: ShownEvent, orchestra: string | undefined, locals:
 	};
 }
 
+/**
+ * Attendance (#120). A rehearsal that has begun: how many came, for those who take it.
+ * A concert: per member, how many of its rehearsals they came to, overall and per piece,
+ * for those who take attendance; members see only their own count.
+ */
+async function attendance(event: ShownEvent, library: Library, plan: RehearsalPlan | null, locals: App.Locals) {
+	const canTake = locals.access.rights.has('anwesenheit.erfassen');
+	const user = feedbackUser(locals);
+	const isRehearsal = event.type === 'probe' || event.type === 'generalprobe';
+	if (isRehearsal) {
+		if (!canTake || event.daysUntil > 0) return null;
+		const taken = await getAttendance();
+		if (!taken) return { kind: 'rehearsal' as const, state: 'not-set-up' as const };
+		const entries = [...(taken.byEvent.get(event.id)?.values() ?? [])];
+		return {
+			kind: 'rehearsal' as const,
+			state: 'ready' as const,
+			present: entries.filter((entry) => entry.present).length,
+			of: entries.length,
+			url: `/konzerte/${encodeURIComponent(event.id)}/anwesenheit`
+		};
+	}
+	if (event.type !== 'konzert' || !user) return null;
+	const [taken, access] = await Promise.all([getAttendance(), canTake ? getAccessList() : null]);
+	if (!taken) return null;
+	const email = normalizeEmail(user.email);
+	const planned = (id: string) => (plan?.byEvent.get(id) ?? []).map((entry) => normalize(entry.pieceName));
+	const concert = library.concertsById.get(event.id);
+	const orchestra = concert?.orchestra;
+	// Ticked present at least once; unticked rows of the conductor or the board don't count.
+	const recorded = new Set(
+		event.rehearsalIds.flatMap((id) => [...(taken.byEvent.get(id)?.values() ?? [])].filter((entry) => entry.present).map((entry) => entry.email))
+	);
+	// Players: active members with an instrument; anyone else once they were ticked present.
+	const people = canTake
+		? [
+				...new Set([
+					...countingMembers(access?.members ?? [], orchestra, library.today)
+						.filter((member) => member.instrument)
+						.map((member) => member.email),
+					...recorded
+				])
+			]
+		: [email];
+	const summary = attendanceSummary(taken, event.rehearsalIds, people, planned);
+	if (!summary.taken) return null;
+	// Own count for anyone with a row: a player who missed every rehearsal sees that too.
+	const hasRow = event.rehearsalIds.some((id) => taken.byEvent.get(id)?.has(email));
+	const mine = hasRow ? summary.members.find((member) => member.email === email) : undefined;
+	if (!canTake) return { kind: 'concert' as const, taken: summary.taken, mine: mine && { present: mine.present, of: mine.of }, table: null };
+	// Columns: the programme's pieces that were planned at a rehearsal with attendance taken.
+	const program = concert?.sheet?.program ?? [];
+	const columns = program
+		.map((entry, i) => ({ key: normalize(entry.pieceName), title: concert?.program[i]?.title ?? entry.pieceName }))
+		.filter((column) => summary.members.some((member) => member.pieces.get(column.key)?.of));
+	const names = new Map([...(access?.members ?? [])].map((member) => [member.email, member.name]));
+	for (const id of event.rehearsalIds) for (const entry of taken.byEvent.get(id)?.values() ?? []) if (!names.has(entry.email)) names.set(entry.email, entry.name);
+	const rows = summary.members
+		.map((member) => ({
+			name: names.get(member.email) ?? member.email,
+			present: member.present,
+			of: member.of,
+			pieces: columns.map((column) => member.pieces.get(column.key) ?? null)
+		}))
+		// Who missed most first: that's what the conductor looks for before the concert.
+		.sort((a, b) => a.present / (a.of || 1) - b.present / (b.of || 1) || a.name.localeCompare(b.name, config.locale));
+	return {
+		kind: 'concert' as const,
+		taken: summary.taken,
+		mine: mine && { present: mine.present, of: mine.of },
+		table: { columns: columns.map((column) => column.title), rows }
+	};
+}
+
+/** After the concert, the check stays this long: for the music list and returning rented music. */
+const CHECK_AFTER_DAYS = 60;
+
+/** The planners' "Konzert-Check" (#117–#119 together); null when it doesn't apply. */
+async function check(concert: LibraryConcert | undefined, event: ShownEvent | undefined, library: Library, plan: RehearsalPlan | null) {
+	if (!concert?.sheet) return null;
+	const past = isPastConcert(concert, library.today);
+	if (past && (!event || event.daysUntil < -CHECK_AFTER_DAYS)) return null;
+	const loans = (await getLoans())?.loans ?? [];
+	const names = concert.sheet.program.map((entry) => entry.pieceName);
+	const rehearsalIds = event?.rehearsalIds ?? [];
+	const planned = new Set(rehearsalIds.flatMap((id) => (plan?.byEvent.get(id) ?? []).map((entry) => normalize(entry.pieceName))));
+	const gaps = new Set(reportGaps(reportPieces(library, concert)).map((gap) => gap.title));
+	const id = encodeURIComponent(concert.id);
+	const items = concertCheck({
+		past,
+		program: concert.program.map((item) => ({ title: item.title, status: item.status, duration: item.duration, inReport: !gaps.has(item.title) })),
+		rehearsals: rehearsalIds.length,
+		unplanned: [...new Set(names.map(normalize))].filter((name) => !planned.has(name)).length,
+		loans: [...new Set(names)].flatMap((name) =>
+			loansOf(loans, name).map((loan) => ({
+				title: namedItem(library, loan.pieceName).title,
+				dueBeforeConcert: !!loan.dueAt && loan.dueAt < concert.dateKey
+			}))
+		),
+		urls: {
+			program: `/konzerte/${id}/programm`,
+			plan: rehearsalIds.length ? `/konzerte/${id}/probenplan` : undefined,
+			report: config.musicReport === false ? undefined : `/konzerte/${id}/drucken?art=musikfolge`,
+			loans: '/leihmaterial',
+			gaps: '/fehlende-stimmen'
+		}
+	});
+	return items.length ? items : null;
+}
+
 async function openWishes(concertTitle: string) {
 	const wishes = (await getFeedback())?.wishes ?? [];
 	return wishes.filter(
@@ -139,7 +254,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		sharedFrom: concert?.sharedFrom,
 		sharedWith: concert?.sharedWith ?? [],
 		// For planners: open piece wishes for this concert or any time, shown in the editor.
-		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0
+		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0,
+		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null
 	};
 
 	if (!event) {
@@ -155,9 +271,32 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const planned = (id: string) => (plan?.byEvent.get(id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
 	const planConcert = event.type === 'konzert' ? event : event.concertId ? lookup(event.concertId) : undefined;
 	const canPlan = locals.access.rights.has('programme.bearbeiten') && !!planConcert?.rehearsalIds.length;
+	// The "Planung" view (concerts only): for those who plan the programme or take attendance.
+	const rights = locals.access.rights;
+	const lastRehearsal = event.rehearsalIds
+		.map(lookup)
+		.filter((e): e is ShownEvent => !!e && e.daysUntil <= 0)
+		.at(-1);
+	const planning =
+		event.type === 'konzert' && (rights.has('programme.bearbeiten') || rights.has('anwesenheit.erfassen'))
+			? {
+					printUrl: items.length ? `/konzerte/${encodeURIComponent(event.id)}/drucken` : undefined,
+					reportUrl:
+						items.length && rights.has('programme.bearbeiten') && config.musicReport !== false
+							? `/konzerte/${encodeURIComponent(event.id)}/drucken?art=musikfolge`
+							: undefined,
+					attendanceUrl:
+						lastRehearsal && rights.has('anwesenheit.erfassen')
+							? { href: `/konzerte/${encodeURIComponent(lastRehearsal.id)}/anwesenheit`, label: lastRehearsal.date.long }
+							: undefined
+				}
+			: null;
 	return {
 		kind: 'event' as const,
+		planning,
 		signups: await signups(event, orchestra, locals),
+		attendance: await attendance(event, library, plan, locals),
+		attendanceSaved: url.searchParams.has('anwesenheit'),
 		event: { ...event, description: plainText(event.description) },
 		rehearsals: event.rehearsalIds
 			.map(lookup)

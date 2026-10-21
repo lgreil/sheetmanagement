@@ -29,6 +29,8 @@ export interface WorkDetails {
 	kinds: string[];
 	/** A video id, rare for works. */
 	youtube?: string;
+	/** Seconds, from "duration" (P2047). */
+	duration?: number;
 }
 
 type Fetch = typeof fetch;
@@ -116,6 +118,19 @@ export function catalogueClaims(claims: Json): { number: string; catalogue?: str
 		.filter((entry: { number: string }) => entry.number);
 }
 
+const SECONDS_PER_UNIT: Record<string, number> = { Q11574: 1, Q7727: 60, Q25235: 3600 };
+
+/** The duration (P2047) in seconds, if it's given in seconds, minutes or hours: { amount: "+25", unit: ".../Q7727" } → 1500. */
+export function durationOf(claims: Json): number | undefined {
+	for (const claim of claims.P2047 ?? []) {
+		const value = claim.mainsnak?.datavalue?.value;
+		const factor = SECONDS_PER_UNIT[String(value?.unit ?? '').split('/').at(-1) ?? ''];
+		const amount = Number.parseFloat(value?.amount ?? '');
+		if (factor && amount > 0) return Math.round(amount * factor);
+	}
+	return undefined;
+}
+
 /** Generic kinds that say nothing about a piece: "musical work", "composition". */
 const GENERIC = new Set(['Q105543609', 'Q207628', 'Q2188189', 'Q17537576']);
 
@@ -156,7 +171,8 @@ export async function workDetails(id: string, fetchImpl: Fetch = fetch): Promise
 		catalogue,
 		year: yearOf(claims),
 		kinds: [...new Set(kinds.map((kind) => labelOf(names.entities?.[kind])).filter(Boolean))],
-		youtube: claims.P1651?.[0]?.mainsnak?.datavalue?.value
+		youtube: claims.P1651?.[0]?.mainsnak?.datavalue?.value,
+		duration: durationOf(claims)
 	};
 }
 

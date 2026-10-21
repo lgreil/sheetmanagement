@@ -37,7 +37,7 @@ export async function readTab<K extends TabKey>(key: K): Promise<Table<Columns<K
 export async function appendRecords<K extends TabKey>(
 	key: K,
 	table: Table<Columns<K>>,
-	records: Partial<Record<Columns<K>, string>>[]
+	records: Partial<Record<Columns<K>, string | boolean>>[]
 ): Promise<void> {
 	if (records.length === 0) return;
 	const needed = [...new Set(records.flatMap((record) => Object.keys(record).filter((k) => record[k as Columns<K>])))];
@@ -55,7 +55,7 @@ export function updateRecord<K extends TabKey>(
 	key: K,
 	table: Table<Columns<K>>,
 	row: number,
-	values: Partial<Record<Columns<K>, string>>
+	values: Partial<Record<Columns<K>, string | boolean>>
 ): Promise<void> {
 	return updateRecords(key, table, [{ row, values }]);
 }
@@ -64,7 +64,7 @@ export function updateRecord<K extends TabKey>(
 export async function updateRecords<K extends TabKey>(
 	key: K,
 	table: Table<Columns<K>>,
-	updates: { row: number; values: Partial<Record<Columns<K>, string>> }[]
+	updates: { row: number; values: Partial<Record<Columns<K>, string | boolean>> }[]
 ): Promise<void> {
 	if (updates.length === 0) return;
 	const columns = [...new Set(updates.flatMap((update) => Object.keys(update.values) as Columns<K>[]))];

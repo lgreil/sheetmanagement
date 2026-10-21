@@ -3,7 +3,7 @@ import { config } from '#lib/config/index.ts';
 import { gapsOf, nextWithGaps, parseGapFilter } from '#lib/repertoire/details.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
-import { checkPieceValues, EDITABLE, findPieceRow, pieceValues, pieceVersion, renameInProgram, type PieceValues } from '#lib/repertoire/piece-edit.ts';
+import { checkPieceValues, EDITABLE, findPieceRow, pieceValues, pieceVersion, renameInProgram, writableValues, type PieceValues } from '#lib/repertoire/piece-edit.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
@@ -39,6 +39,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		piece: { id: piece.id, title: piece.title, folderName: piece.detail?.folderName, category: piece.category },
 		values,
 		version: pieceVersion(row),
+		// Columns an older sheet lacks; their fields wait until "Tabelle einrichten" adds them.
+		missing: EDITABLE.filter((column) => repertoire.ok && repertoire.repertoire.tables.pieces.missing.includes(column)),
 		genres,
 		composers: [...new Set([...config.naming.knownComposers, ...used((p) => p.sheet?.composer)])],
 		files,
@@ -67,7 +69,7 @@ export const actions: Actions = {
 			const checked = checkPieceValues(submitted, table, row.row);
 			if ('problem' in checked) return fail(400, { message: t.pieceEditor.problems[checked.problem], values: submitted });
 
-			await updateRecord('pieces', table, row.row, checked.values);
+			await updateRecord('pieces', table, row.row, writableValues(checked.values, table));
 			// Programme rows name pieces by title: a rename has to follow there, or they lose the piece.
 			const oldTitle = row.values.title;
 			if (oldTitle && oldTitle !== checked.values.title) {

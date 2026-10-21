@@ -4,6 +4,7 @@ import type { Catalog } from '#lib/music/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import type { PieceDetail, PieceStatus, PieceSummary } from '#lib/music/types.ts';
 import { eventDay, formatFuzzyDate, fuzzyDateKey, parseFuzzyDate, type FuzzyDate, type FuzzyDateLabel } from '#lib/repertoire/dates.ts';
+import type { ReportPiece } from '#lib/repertoire/music-report.ts';
 import { normalize, type SheetConcert, type SheetPiece } from '#lib/repertoire/sheet.ts';
 import { getCatalog } from './catalog.ts';
 import { getRepertoire, type RepertoireResult } from './repertoire.ts';
@@ -25,6 +26,8 @@ export interface ProgramItem {
 	pieceId?: string;
 	status?: PieceStatus;
 	notes?: string;
+	/** Seconds, from the piece's "Dauer". */
+	duration?: number;
 }
 
 export interface LibraryConcert {
@@ -140,7 +143,8 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 						subtitle: piece ? [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined : undefined,
 						pieceId: piece?.id,
 						status: piece?.status,
-						notes: entry.notes
+						notes: entry.notes,
+						duration: piece?.sheet?.duration
 					};
 				})
 			})
@@ -218,8 +222,24 @@ export function namedItem(library: Library, name: string, notes?: string): Progr
 		subtitle: piece ? [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined : undefined,
 		pieceId: piece?.id,
 		status: piece?.status,
-		notes
+		notes,
+		duration: piece?.sheet?.duration
 	};
+}
+
+/** A concert's programme as the music list for the collecting society needs it (#118). */
+export function reportPieces(library: Library, concert: LibraryConcert): ReportPiece[] {
+	return concert.program.map((item) => {
+		const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
+		return {
+			pieceId: item.pieceId,
+			title: item.title,
+			composer: piece?.composer,
+			arranger: piece?.sheet?.arranger,
+			publisher: piece?.sheet?.publisher,
+			duration: item.duration
+		};
+	});
 }
 
 /** Only what a concert list shows. */

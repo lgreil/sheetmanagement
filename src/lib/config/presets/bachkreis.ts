@@ -175,13 +175,21 @@ export const bachkreis: OrchestraConfig = {
 	// EO = Ehemaligenorchester; the A and B orchestras may follow later.
 	genres: ['Barock', 'Klassik', 'Romantik', 'Moderne', 'Filmmusik', 'Musical', 'Oper', 'Ballett', 'Pop', 'Rock', 'Jazz', 'Weihnachten', 'Marsch', 'Volksmusik'],
 	roles: [
-		{ name: 'Dirigat', description: 'Plant Programme und sieht, wer kommt.', rights: ['programme.bearbeiten', 'anmeldungen.sehen'] },
+		{
+			name: 'Dirigat',
+			description: 'Plant Programme, sieht, wer kommt, und erfasst, wer da war.',
+			rights: ['programme.bearbeiten', 'anmeldungen.sehen', 'anwesenheit.erfassen']
+		},
 		{ name: 'Notenwart', description: 'Pflegt Noten, Stücke und das Archiv.', rights: ['stuecke.bearbeiten', 'archiv.bearbeiten'] },
-		{ name: 'Orga', description: 'Organisiert Proben und Konzerte und sieht, wer kommt.', rights: ['anmeldungen.sehen'] },
+		{
+			name: 'Orga',
+			description: 'Organisiert Proben und Konzerte, sieht, wer kommt, und erfasst, wer da war.',
+			rights: ['anmeldungen.sehen', 'anwesenheit.erfassen']
+		},
 		{
 			name: 'Vorstand',
 			description: 'Verwaltet Mitglieder und Rechte.',
-			rights: ['mitglieder.verwalten', 'programme.bearbeiten', 'stuecke.bearbeiten', 'archiv.bearbeiten', 'anmeldungen.sehen']
+			rights: ['mitglieder.verwalten', 'programme.bearbeiten', 'stuecke.bearbeiten', 'archiv.bearbeiten', 'anmeldungen.sehen', 'anwesenheit.erfassen']
 		}
 	],
 	orchestras: ['EO', 'A', 'B'],

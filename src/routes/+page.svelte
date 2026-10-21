@@ -44,14 +44,32 @@
 			.sort((a, b) => a.event.daysUntil - b.event.daysUntil)
 	);
 
-	// Every page by group, so the start page doubles as a map of the app.
-	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
+	// Every page by group, so the start page doubles as a map of the app. A workspace is one
+	// entry, its pages named underneath; the tabs on its pages lead on from there.
+	const groups = $derived(
+		navGroups({ auth: data.auth, rights: data.rights }).map((group) =>
+			group.workspace && group.items.length > 1
+				? {
+						...group,
+						items: [{ ...group.items[0], label: group.label, description: group.items.map((item) => item.label).join(' · ') }]
+					}
+				: { ...group, items: group.items.map((item) => ({ ...item, description: t.home.describe[item.href] })) }
+		)
+	);
+	// The workspaces share one heading, so the map stays short.
+	const work = $derived(groups.filter((group) => group.workspace));
+	const sections = $derived([
+		...groups.filter((group) => !group.workspace),
+		...(work.length ? [{ key: 'arbeit', label: t.home.work, items: work.flatMap((group) => group.items) }] : [])
+	]);
 	const todo = $derived(
 		data.todo
 			? [
 					{ href: '/meldungen', count: data.todo.reports, text: t.home.todo.reports },
 					{ href: '/wuensche', count: data.todo.wishes, text: t.home.todo.wishes },
-					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests }
+					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests },
+					{ href: '/leihmaterial', count: data.todo.loans, text: t.home.todo.loans },
+					{ href: data.todo.attendanceUrl ?? '/konzerte', count: data.todo.attendance, text: t.home.todo.attendance }
 				].filter((item) => item.count > 0)
 			: []
 	);
@@ -132,7 +150,7 @@
 
 <h2 class="section-title">{t.home.quickLinks}</h2>
 <div class="groups">
-	{#each groups as group (group.key)}
+	{#each sections as group (group.key)}
 		<section>
 			<h3 class="ui-label">{group.label}</h3>
 			<ul class="ui-list">
@@ -142,7 +160,7 @@
 							<span class="row-icon"><Icon name={item.icon} size={18} /></span>
 							<span class="row-body">
 								<strong>{item.label}</strong>
-								{#if t.home.describe[item.href]}<span>{t.home.describe[item.href]}</span>{/if}
+								{#if item.description}<span>{item.description}</span>{/if}
 							</span>
 							<span class="chevron"><Icon name="chevron" size={18} /></span>
 						</a>

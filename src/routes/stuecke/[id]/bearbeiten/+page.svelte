@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
+	import { guardUnsaved } from '#lib/unsaved.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { config } from '#lib/config/index.ts';
 	import { eventDay } from '#lib/repertoire/dates.ts';
@@ -19,6 +20,7 @@
 		current = { ...(values ?? {}) };
 	});
 	const apply = (field: string, value: string) => (current[field] = value);
+	guardUnsaved(() => !saving.busy && !!values && Object.keys(current).some((key) => (current[key] ?? '') !== (values[key as keyof typeof values] ?? '')));
 	/** Today in the orchestra's time zone, as the sheet writes dates: "2026-10-21". */
 	const today = () => eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
 
@@ -30,9 +32,14 @@
 		{ name: 'arranger' },
 		{ name: 'genre', list: 'genre-list' },
 		{ name: 'difficulty' },
+		{ name: 'duration', placeholder: t.pieceEditor.durationHint },
+		{ name: 'publisher', placeholder: t.pieceEditor.publisherHint },
 		{ name: 'reviewedAt', placeholder: t.pieceEditor.reviewedHint },
 		{ name: 'recording', wide: true, type: 'url', placeholder: t.pieceEditor.recordingHint }
 	] as const;
+	// Fields for columns the sheet doesn't have yet stay hidden until setup adds them.
+	const fields = $derived(FIELDS.filter((field) => data.state !== 'ready' || !(data.missing as string[]).includes(field.name)));
+	const missingNames = $derived(data.state === 'ready' ? data.missing.map((column) => columns[column]).join(', ') : '');
 </script>
 
 <Title title={t.pieceEditor.title(data.piece.title)} />
@@ -62,7 +69,7 @@
 		use:enhance={saving.submit()}
 	>
 		<input type="hidden" name="version" value={data.version} />
-		{#each FIELDS as field (field.name)}
+		{#each fields as field (field.name)}
 			<label class="field" class:wide={'wide' in field}>
 				{columns[field.name]}
 				<span class="input">
@@ -86,6 +93,7 @@
 			{columns.notes}
 			<textarea name="notes" maxlength="1000" bind:value={current.notes}></textarea>
 		</label>
+		{#if missingNames}<p class="hint wide">{t.pieceEditor.missingColumns(missingNames)}</p>{/if}
 		<div class="actions">
 			{#if data.list}
 				<button class="btn" name="liste" value={data.list.filter} disabled={saving.busy}><Icon name="check" size={16} />{t.details.saveNext}</button>
@@ -186,5 +194,10 @@
 		display: flex;
 		flex-wrap: wrap;
 		gap: var(--space-2);
+	}
+
+	.hint {
+		color: var(--text-muted);
+		font-size: 0.875rem;
 	}
 </style>

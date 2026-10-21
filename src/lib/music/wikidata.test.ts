@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { composerAsUsual, searchQueries, searchWorks, suggestGenre, workDetails, yearOf } from './wikidata.ts';
+import { composerAsUsual, durationOf, searchQueries, searchWorks, suggestGenre, workDetails, yearOf } from './wikidata.ts';
 
 /** A fake Wikidata: answers by the request's parameters. */
 function fakeFetch(answer: (params: URLSearchParams) => unknown) {
@@ -113,5 +113,20 @@ describe('suggestGenre', () => {
 		[{ kinds: ['Ballett'] }, undefined]
 	])('%j → %s', (hints, expected) => {
 		expect(suggestGenre(hints, genres)).toBe(expected);
+	});
+});
+
+describe('durationOf', () => {
+	const quantity = (amount: string, unit: string) => ({ mainsnak: { datavalue: { value: { amount, unit: `http://www.wikidata.org/entity/${unit}` } } } });
+
+	it('reads minutes, seconds and hours', () => {
+		expect(durationOf({ P2047: [quantity('+25', 'Q7727')] })).toBe(1500);
+		expect(durationOf({ P2047: [quantity('+450', 'Q11574')] })).toBe(450);
+		expect(durationOf({ P2047: [quantity('+1.5', 'Q25235')] })).toBe(5400);
+	});
+
+	it('skips unknown units and missing claims', () => {
+		expect(durationOf({ P2047: [quantity('+3', 'Q1'), quantity('+7', 'Q7727')] })).toBe(420);
+		expect(durationOf({})).toBeUndefined();
 	});
 });

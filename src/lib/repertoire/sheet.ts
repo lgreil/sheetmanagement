@@ -2,6 +2,7 @@ import { safeLink } from '#lib/links.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
+import { parseDuration } from './duration.ts';
 
 /** Tab and column names of the Repertoire sheet, in the order /setup creates them. */
 export const LAYOUT = t.sheet;
@@ -11,7 +12,7 @@ export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
 export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
 export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
 /** Columns added later that an older sheet works without, so they aren't reported missing. */
-const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { concerts: ['sameProgramAs'] };
+const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { pieces: ['duration', 'publisher'], concerts: ['sameProgramAs'] };
 
 /** The raw cell values of the repertoire tabs, header row included. */
 export type SheetValues = Record<RepertoireTab, string[][]>;
@@ -75,6 +76,9 @@ export interface SheetPiece {
 	reviewedAt?: string;
 	/** A link to listen to, e.g. on YouTube; only http(s). */
 	recording?: string;
+	/** In seconds, read from "Dauer"; undefined when empty or unreadable. */
+	duration?: number;
+	publisher?: string;
 	driveFolderId?: string;
 }
 
@@ -194,6 +198,8 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			notes: optional(v.notes),
 			reviewedAt: optional(v.reviewedAt),
 			recording: safeLink(v.recording),
+			duration: parseDuration(v.duration),
+			publisher: optional(v.publisher),
 			driveFolderId: optional(folder)
 		};
 		pieces.push(piece);

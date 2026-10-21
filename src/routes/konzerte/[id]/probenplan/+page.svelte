@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
+	import { guardUnsaved } from '#lib/unsaved.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -39,6 +40,10 @@
 	});
 	const unplanned = $derived(counts.filter((piece) => piece.inProgram && !piece.total).length);
 	const concertUrl = $derived(`/konzerte/${encodeURIComponent(data.concert.id)}`);
+
+	// svelte-ignore state_referenced_locally
+	const saved = payload;
+	guardUnsaved(() => payload !== saved && !saving.busy);
 </script>
 
 <Title title={t.rehearsalPlan.edit} />

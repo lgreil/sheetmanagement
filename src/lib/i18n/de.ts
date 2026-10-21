@@ -11,6 +11,7 @@ export const de = {
 		myParts: 'Meine Noten',
 		wishes: 'Wünsche',
 		reports: 'Meldungen',
+		loans: 'Leihmaterial',
 		gaps: 'Fehlende Stimmen',
 		naming: 'Dateinamen',
 		admin: 'Mitglieder & Rechte',
@@ -22,7 +23,8 @@ export const de = {
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
 		crumbs: 'Seitenpfad',
-		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
+		groups: { musik: 'Proben & Noten', mitmachen: 'Mitmachen', pflege: 'Noten pflegen', verwaltung: 'Verwaltung' },
+		workspace: 'Bereich'
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
@@ -48,21 +50,27 @@ export const de = {
 		morePieces: (n: number) => `+ ${n} weitere`,
 		nextRehearsal: 'Nächste Probe',
 		quickLinks: 'Alle Bereiche',
+		work: 'Aufgaben im Orchester',
 		todo: {
 			title: 'Wartet auf dich',
 			reports: (n: number) => (n === 1 ? 'offene Meldung' : 'offene Meldungen'),
 			wishes: (n: number) => (n === 1 ? 'offener Wunsch' : 'offene Wünsche'),
-			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen')
+			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen'),
+			loans: (n: number) => (n === 1 ? 'Rückgabe steht an' : 'Rückgaben stehen an'),
+			attendance: (n: number) => (n === 1 ? 'Probe ohne Anwesenheit' : 'Proben ohne Anwesenheit')
 		},
 		/** One line under each page on the start page. */
 		describe: {
 			'/meine-noten': 'Deine Stimmen fürs nächste Konzert, in Programmreihenfolge.',
 			'/konzerte': 'Proben und Konzerte mit Programm.',
+			'/profil': 'Dein Instrument, deine Orchester und ob du gerade dabei bist.',
 			'/stuecke': 'Das komplette Notenarchiv mit allen Stimmen.',
+			'/stuecke/angaben': 'Fehlende Komponisten, Genres, Dauer und Hörbeispiele ergänzen.',
 			'/fehlende-stimmen': 'Welche Stimmen fehlen und wo Seiten fehlen.',
 			'/namen': 'Dateinamen prüfen und in die Namenskonvention bringen.',
 			'/wuensche': 'Stücke und Ideen vorschlagen, anderen zustimmen.',
 			'/meldungen': 'Gemeldete Probleme mit Noten bearbeiten.',
+			'/leihmaterial': 'Geliehene Noten und wann sie zurückmüssen.',
 			'/admin': 'Mitglieder, Gruppen, Rechte und Zugangsanfragen.',
 			'/setup': 'Die Repertoire-Tabelle anlegen oder ergänzen.',
 			'/status': 'Ob die Verbindung zu Google funktioniert.'
@@ -145,6 +153,8 @@ export const de = {
 		playedAtNoSheet: 'Sobald die Repertoire-Tabelle eingerichtet ist, steht hier, in welchen Konzerten dieses Stück gespielt wurde.',
 		noMusic: 'Für dieses Stück gibt es keine Noten im Archiv. Es steht nur in der Repertoire-Tabelle.',
 		info: {
+			duration: 'Dauer',
+			publisher: 'Verlag',
 			arranger: 'Arrangement',
 			genre: 'Genre',
 			difficulty: 'Schwierigkeit',
@@ -198,7 +208,65 @@ export const de = {
 		preparesFor: 'Probe für',
 		sharedFrom: 'Gleiches Programm wie',
 		sharedWith: 'Dieses Programm gilt auch für',
-		description: 'Notiz aus dem Kalender'
+		description: 'Notiz aus dem Kalender',
+		views: { label: 'Ansicht', overview: 'Übersicht', planning: 'Planung' },
+		tools: 'Werkzeuge',
+		lastAttendance: 'Anwesenheit der letzten Probe'
+	},
+	attendance: {
+		title: 'Anwesenheit',
+		pageTitle: (event: string) => `Anwesenheit: ${event}`,
+		lead: 'Antippen, wer da war. Zusagen sind schon angehakt; wer „vielleicht“ oder abgesagt hat, steht auch in der Liste und lässt sich genauso anhaken. Gespeichert wird im Blatt „Anwesenheit“.',
+		take: 'Anwesenheit erfassen',
+		edit: 'Anwesenheit bearbeiten',
+		present: (n: number, of: number) => `${n} von ${of} da`,
+		notTaken: 'Für diese Probe ist noch keine Anwesenheit erfasst.',
+		allYes: 'Alle Zusagen',
+		none: 'Niemand',
+		search: 'Name suchen …',
+		save: 'Speichern',
+		saved: 'Anwesenheit gespeichert.',
+		cancel: 'Abbrechen',
+		answered: { yes: 'Zusage', maybe: 'vielleicht', no: 'Absage' } as Record<string, string>,
+		notYet: 'Die Anwesenheit lässt sich erfassen, sobald die Probe begonnen hat.',
+		notARehearsal: 'Anwesenheit gibt es nur für Proben.',
+		notSetUp: 'In der Repertoire-Tabelle fehlt das Blatt „Anwesenheit“. Bitte einmal „Tabelle einrichten“ ausführen.',
+		nobody: 'Für diese Probe gibt es keine Mitglieder und keine Zusagen.',
+		conflict: 'Jemand hat die Anwesenheit inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
+		failed: 'Die Anwesenheit konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		mine: (present: number, of: number) => `Du warst bei ${present} von ${of} ${of === 1 ? 'Probe' : 'Proben'}, für die Anwesenheit erfasst ist.`,
+		overview: 'Anwesenheit bei den Proben',
+		overviewLead: (taken: number) => (taken === 1 ? 'Aus 1 Probe mit erfasster Anwesenheit.' : `Aus ${taken} Proben mit erfasster Anwesenheit.`),
+		overviewHint: 'Nur für die Person selbst und alle mit dem Recht „Anwesenheit erfassen“ sichtbar.',
+		person: 'Name',
+		total: 'Proben',
+		count: (present: number, of: number) => `${present}/${of}`
+	},
+	/** The planners' checklist on a concert page, worked out from the data. */
+	check: {
+		title: 'Konzert-Check',
+		lead: 'Was für dieses Konzert schon steht und was noch fehlt.',
+		allDone: 'Alles erledigt',
+		open: (n: number) => (n === 1 ? '1 Punkt offen' : `${n} Punkte offen`),
+		program: (n: number) => (n === 1 ? 'Programm mit 1 Stück eingetragen' : `Programm mit ${n} Stücken eingetragen`),
+		noProgram: 'Noch kein Programm eingetragen',
+		partsComplete: 'Alle Stimmen im Archiv',
+		partGaps: (pieces: string) => `Bei ${pieces} fehlen Stimmen oder Seiten`,
+		planComplete: 'Jedes Stück ist in einer Probe eingeplant',
+		duration: (minutes: number) => `Dauer ca. ${minutes} Min.`,
+		durationGaps: (pieces: string) => `Bei ${pieces} fehlt die Dauer`,
+		loansDue: (titles: string) => `Leihmaterial muss vor dem Konzert zurück: ${titles}`,
+		returnLoans: (titles: string) => `Leihmaterial zurückgeben: ${titles}`,
+		reportReady: 'Musikfolge für die GEMA ist vollständig',
+		reportGaps: (pieces: string) => `Musikfolge: Bei ${pieces} fehlen noch Angaben`
+	},
+	duration: {
+		label: 'Dauer',
+		/** "ca. 74 Min. (2 Stücke ohne Dauer)" */
+		total: (minutes: number, missing: number) =>
+			`ca. ${minutes} Min.${missing ? ` (${missing === 1 ? '1 Stück' : `${missing} Stücke`} ohne Dauer)` : ''}`,
+		unknown: 'Dauer noch unbekannt',
+		hint: 'Die Dauer steht beim Stück („Angaben bearbeiten“) und wird hier zusammengezählt.'
 	},
 	rehearsalPlan: {
 		title: 'Geprobt wird',
@@ -463,6 +531,7 @@ export const de = {
 		'stuecke.bearbeiten': 'Angaben zu Stücken bearbeiten',
 		'archiv.bearbeiten': 'Frühere Konzerte und Stücke eintragen',
 		'anmeldungen.sehen': 'Zu- und Absagen aller sehen',
+		'anwesenheit.erfassen': 'Anwesenheit bei Proben erfassen und sehen',
 		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
 	},
 	admin: {
@@ -595,7 +664,31 @@ export const de = {
 		print: 'Drucken',
 		back: 'Zurück zum Konzert',
 		empty: 'Für dieses Konzert ist noch kein Programm eingetragen.',
-		program: 'Programm'
+		program: 'Programm',
+		totalLength: (minutes: number) => `Dauer ca. ${minutes} Minuten`
+	},
+	/** The music list for the collecting society (#118). Another country: other words here, or musicReport: false in the config. */
+	musicReport: {
+		tab: 'Musikfolge (GEMA)',
+		title: 'Musikfolge',
+		hint: 'Für die GEMA-Meldung: Werke mit Komponist, Bearbeiter, Verlag und Dauer. Als CSV laden und ins Formular übernehmen.',
+		csv: 'Als CSV laden',
+		columns: {
+			position: 'Nr.',
+			title: 'Titel',
+			composer: 'Komponist',
+			arranger: 'Bearbeiter',
+			publisher: 'Verlag',
+			duration: 'Dauer'
+		},
+		gaps: (n: number) => (n === 1 ? 'Bei 1 Stück fehlen noch Angaben:' : `Bei ${n} Stücken fehlen noch Angaben:`),
+		missing: { composer: 'Komponist', publisher: 'Verlag', duration: 'Dauer' } as Record<string, string>,
+		complete: 'Alle Angaben sind da.',
+		fullNames: 'Die GEMA möchte Komponisten mit vollem Namen, z. B. „Ludwig van Beethoven“ statt „Beethoven“.',
+		fill: 'Ergänzen',
+		organizer: 'Veranstalter',
+		date: 'Datum',
+		venue: 'Ort'
 	},
 	archive: {
 		addConcert: 'Früheres Konzert eintragen',
@@ -633,8 +726,12 @@ export const de = {
 		problems: {
 			'title-missing': 'Bitte einen Titel angeben.',
 			'title-taken': 'Diesen Titel hat schon ein anderes Stück. Programme finden Stücke über den Titel, er muss eindeutig sein.',
-			'bad-link': 'Das Hörbeispiel muss ein Link sein, der mit http:// oder https:// beginnt.'
-		}
+			'bad-link': 'Das Hörbeispiel muss ein Link sein, der mit http:// oder https:// beginnt.',
+			'bad-duration': 'Die Dauer ist nicht lesbar. Möglich sind z. B. 7:30, 7 Min. oder 1:02:00.'
+		},
+		durationHint: 'z. B. 7:30',
+		publisherHint: 'z. B. Bärenreiter, für die GEMA-Meldung',
+		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
 	},
 	editor: {
 		suggestions: 'Vorschläge',
@@ -743,6 +840,10 @@ export const de = {
 				notes: 'Notiz',
 				reviewedAt: 'Geprüft am',
 				recording: 'Hörbeispiel',
+				/** "7:30"; adds up to the programme's length (#117). */
+				duration: 'Dauer',
+				/** For the GEMA music list (#118). */
+				publisher: 'Verlag',
 				driveFolderId: 'Drive-Ordner-ID'
 			}
 		},
@@ -881,6 +982,29 @@ export const de = {
 				notes: 'Notiz',
 				eventId: 'Termin-ID'
 			}
+		},
+		/** Rented or borrowed sheet music (#119); one row per loan. */
+		loans: {
+			tab: 'Leihmaterial',
+			columns: {
+				piece: 'Stück',
+				from: 'Von',
+				borrowedAt: 'Ausgeliehen am',
+				dueAt: 'Zurück bis',
+				returned: 'Zurückgegeben',
+				notes: 'Notiz'
+			}
+		},
+		/** Who came to a rehearsal (#120); one row per rehearsal and person. */
+		attendance: {
+			tab: 'Anwesenheit',
+			columns: {
+				event: 'Termin',
+				who: 'Wer',
+				name: 'Name',
+				present: 'Anwesend',
+				eventId: 'Termin-ID'
+			}
 		}
 	},
 	/** Values of the dropdown columns in "Meldungen" and "Wünsche", as they appear in the sheet. */
@@ -948,6 +1072,45 @@ export const de = {
 		noFile: 'Diese Meldung betrifft keine einzelne Datei.',
 		driveFailed: 'Gespeichert, aber in Drive konnte nichts geändert werden. Ist das Dienstkonto Bearbeiter des Noten-Ordners?'
 	},
+	loans: {
+		title: 'Leihmaterial',
+		lead: 'Geliehene Noten von Verlagen oder anderen Orchestern, mit Rückgabedatum. Steht auch im Blatt „Leihmaterial“.',
+		open: 'Ausgeliehen',
+		returned: 'Zurückgegeben',
+		noOpen: 'Gerade ist nichts ausgeliehen.',
+		from: (from: string) => `von ${from}`,
+		borrowedAt: (day: string) => `seit ${day}`,
+		dueAt: (day: string) => `zurück bis ${day}`,
+		dueUnknown: 'ohne Rückgabedatum',
+		due: (days: number) =>
+			days < -1 ? `seit ${-days} Tagen überfällig` : days === -1 ? 'seit gestern überfällig' : days === 0 ? 'heute fällig' : days === 1 ? 'morgen fällig' : `in ${days} Tagen fällig`,
+		returnedAt: 'zurückgegeben',
+		markReturned: 'Zurückgegeben',
+		reopen: 'Doch noch da',
+		add: 'Leihmaterial eintragen',
+		addLead: 'Für Noten, die zurückmüssen. Zwei Wochen vor dem Datum steht die Rückgabe unter „Wartet auf dich“.',
+		piece: 'Stück',
+		pieceHint: 'Titel aus dem Archiv',
+		fromLabel: 'Von (Verlag oder Orchester)',
+		borrowedLabel: 'Ausgeliehen am',
+		dueLabel: 'Zurück bis',
+		notes: 'Notiz (optional)',
+		notesHint: 'z. B. Leihgebühr, Ansprechpartner',
+		save: 'Eintragen',
+		saved: 'Eingetragen.',
+		problems: {
+			'piece-missing': 'Bitte ein Stück angeben.',
+			'from-missing': 'Bitte angeben, von wem die Noten sind.',
+			'bad-date': 'Das Datum ist nicht lesbar. Möglich sind 2026-12-15 oder 15.12.2026.'
+		} as Record<string, string>,
+		notSetUp: 'In der Repertoire-Tabelle fehlt das Blatt „Leihmaterial“. Bitte einmal „Tabelle einrichten“ ausführen.',
+		failed: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.',
+		gone: 'Dieser Eintrag hat sich in der Tabelle geändert. Bitte die Seite neu laden.',
+		onPiece: 'Leihmaterial',
+		onPieceHint: 'Bitte nur mit Bleistift eintragen und pünktlich zurückgeben.',
+		manage: 'Alles Leihmaterial',
+		pastReturned: (n: number) => (n === 1 ? '1 zurückgegeben' : `${n} zurückgegeben`)
+	},
 	wishes: {
 		title: 'Wünsche',
 		lead: 'Stücke, die wir spielen, bestellen oder digitalisieren sollten, und Ideen für die App.',
@@ -994,7 +1157,11 @@ export const de = {
 		backHome: 'Zur Übersicht',
 		loading: 'Seite lädt',
 		saveFailed: 'Speichern hat nicht geklappt. Deine Eingaben sind noch da – bitte versuch es noch einmal.',
-		saveUnavailable: 'Google antwortet gerade nicht, deshalb wurde nichts gespeichert. Deine Eingaben sind noch da – versuch es gleich noch einmal.'
+		saveUnavailable: 'Google antwortet gerade nicht, deshalb wurde nichts gespeichert. Deine Eingaben sind noch da – versuch es gleich noch einmal.',
+		unsaved: 'Deine Änderungen sind noch nicht gespeichert. Seite trotzdem verlassen?',
+		share: 'Teilen',
+		copied: 'Kopiert. Jetzt z. B. in WhatsApp einfügen.',
+		copyFailed: 'Kopieren hat nicht geklappt.'
 	},
 	error: {
 		title: 'Da ist etwas schiefgelaufen',

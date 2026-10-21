@@ -34,7 +34,6 @@
 				<li class={kind}><strong>{data.counts[kind]}</strong> {t.gaps.counts[kind]}</li>
 			{/if}
 		{/each}
-		{#if data.canManage}<li class="manage"><a href="/meldungen">{t.gaps.manage} →</a></li>{/if}
 	</ul>
 
 	{#if filters.length > 1}
@@ -117,14 +116,6 @@
 		background: color-mix(in oklab, var(--warn) 12%, transparent);
 	}
 
-	.counts .manage {
-		background: none;
-	}
-
-	.counts .manage a {
-		color: var(--accent);
-		font-weight: 600;
-	}
 
 	.filters {
 		display: flex;

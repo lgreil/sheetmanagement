@@ -1,11 +1,14 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
+	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 	import type { ProgramItem } from '#lib/server/library.ts';
 	import Icon from './Icon.svelte';
 
-	let { items }: { items: ProgramItem[] } = $props();
+	/** `total`: a last row with the programme's length, once any piece has a duration. */
+	let { items, total = false }: { items: ProgramItem[]; total?: boolean } = $props();
 	// Numbers are shown only when the programme has them; old programmes often don't.
 	const numbered = $derived(items.some((item) => item.position !== undefined));
+	const length = $derived(programLength(items.map((item) => item.duration)));
 </script>
 
 <ol class="program">
@@ -27,10 +30,17 @@
 						</span>
 					{/if}
 				</span>
+				{#if item.duration}<span class="duration">{formatDuration(item.duration)}</span>{/if}
 				{#if item.pieceId}<span class="chevron"><Icon name="chevron" size={18} /></span>{/if}
 			</svelte:element>
 		</li>
 	{/each}
+	{#if total && length.known}
+		<li class="total">
+			<Icon name="clock" size={16} />
+			<span>{t.duration.total(roundMinutes(length.seconds), length.missing)}</span>
+		</li>
+	{/if}
 </ol>
 
 <style>
@@ -103,6 +113,23 @@
 
 	.note {
 		font-style: italic;
+	}
+
+	.duration {
+		flex: none;
+		color: var(--text-muted);
+		font-size: 0.875rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.total {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		padding: var(--space-2) var(--space-4);
+		background: var(--surface-2);
+		color: var(--text-muted);
+		font-size: 0.875rem;
 	}
 
 	.chevron {

@@ -55,6 +55,9 @@ interface SamplePiece {
 	title: string;
 	composer?: string;
 	arranger?: string;
+	/** "Dauer" and "Verlag" in the sheet; some left empty, so the gaps show. */
+	duration?: string;
+	publisher?: string;
 	category?: 'christmas';
 	parts: string[];
 	/** Parts with a status word: a placeholder doc for FEHLT, a PDF otherwise. */
@@ -68,6 +71,8 @@ const PIECES: SamplePiece[] = [
 		short: 'Kleine Nachtmusik',
 		title: 'Eine kleine Nachtmusik',
 		composer: 'Wolfgang Amadeus Mozart',
+		duration: '17:30',
+		publisher: 'Bärenreiter',
 		parts: ['Partitur', ...STRINGS]
 	},
 	{
@@ -76,6 +81,8 @@ const PIECES: SamplePiece[] = [
 		short: 'Egmont',
 		title: 'Egmont Ouvertüre',
 		composer: 'Ludwig van Beethoven',
+		duration: '8:30',
+		publisher: 'Breitkopf & Härtel',
 		parts: ['Partitur', ...WINDS, 'Pauke', ...STRINGS],
 		gaps: { Kontrabass: 'FEHLT' }
 	},
@@ -85,6 +92,7 @@ const PIECES: SamplePiece[] = [
 		short: 'Jesu bleibet',
 		title: 'Jesu bleibet meine Freude',
 		composer: 'Johann Sebastian Bach',
+		duration: '3:30',
 		parts: ['Partitur', 'Oboe', ...STRINGS],
 		gaps: { Viola: 'UNVOLLSTÄNDIG' }
 	},
@@ -94,6 +102,8 @@ const PIECES: SamplePiece[] = [
 		short: 'Morgenstimmung',
 		title: 'Morgenstimmung',
 		composer: 'Edvard Grieg',
+		duration: '3:45',
+		publisher: 'Edition Peters',
 		parts: ['Partitur', 'Flöte', 'Oboe', 'Klarinette in B', 'Horn in F', ...STRINGS]
 	},
 	{
@@ -103,6 +113,7 @@ const PIECES: SamplePiece[] = [
 		title: 'Themes from 007',
 		composer: 'John Barry',
 		arranger: 'Mia Musterfrau',
+		publisher: 'Hal Leonard',
 		parts: ['Partitur', 'Flöte', 'Klarinette in B', 'Alt-Saxophon', 'Trompete in B', 'Posaune', 'Schlagwerk', ...STRINGS]
 	},
 	{
@@ -112,6 +123,8 @@ const PIECES: SamplePiece[] = [
 		title: 'Sleigh Ride',
 		composer: 'Leroy Anderson',
 		category: 'christmas',
+		duration: '3:00',
+		publisher: 'Mills Music',
 		parts: ['Partitur', 'Flöte', 'Trompete in B', 'Schlagwerk', ...STRINGS]
 	},
 	{
@@ -122,6 +135,7 @@ const PIECES: SamplePiece[] = [
 		composer: 'Franz Xaver Gruber',
 		arranger: 'Paul Probe',
 		category: 'christmas',
+		duration: '3:15',
 		parts: ['Partitur', ...STRINGS],
 		gaps: { Violoncello: 'LEER' }
 	}
@@ -229,7 +243,14 @@ export function demoSheet(now: number): Map<string, string[][]> {
 
 	return new Map([
 		tab('pieces', [
-			...PIECES.map((p) => ({ title: p.title, composer: p.composer?.split(' ').at(-1) ?? '', arranger: p.arranger ?? '', driveFolderId: p.id })),
+			...PIECES.map((p) => ({
+				title: p.title,
+				composer: p.composer?.split(' ').at(-1) ?? '',
+				arranger: p.arranger ?? '',
+				duration: p.duration ?? '',
+				publisher: p.publisher ?? '',
+				driveFolderId: p.id
+			})),
 			// Played long ago, no sheet music in the archive.
 			{ title: 'Ungarischer Tanz Nr. 5', composer: 'Brahms', genre: 'Romantik' }
 		]),
@@ -332,6 +353,28 @@ export function demoSheet(now: number): Map<string, string[][]> {
 				answeredAt: at(-1),
 				eventId: 'demo-probe-3'
 			}))
+		]),
+		// Rented music: one due before the concert, one later, one back already.
+		tab('loans', [
+			{ piece: titles['demo-007'], from: 'Notenverleih Muster', borrowedAt: at(-40), dueAt: at(10), notes: 'Leihgebühr 60 €, Rücksendung per Post' },
+			{ piece: titles['demo-egmont'], from: 'Stadtorchester Musterstadt', borrowedAt: at(-30), dueAt: at(45) },
+			{ piece: titles['demo-sleigh'], from: 'Kreismusikschule', borrowedAt: at(-400), dueAt: at(-300), returned: 'TRUE' }
+		]),
+		// Who came to the past rehearsals; Ida missed both.
+		tab('attendance', [
+			...[
+				['jonas@example.org', 'Jonas Geiger', 'TRUE', 'TRUE'],
+				['lea@example.org', 'Lea Lang', 'TRUE', 'FALSE'],
+				['mia@example.org', DEMO_MEMBER.name, 'TRUE', 'TRUE'],
+				['nora@example.org', 'Nora Notenwart', 'FALSE', 'TRUE'],
+				['paul@example.org', 'Paul Probe', 'TRUE', 'TRUE'],
+				['ida@example.org', 'Ida Ibach', 'FALSE', 'FALSE'],
+				['tim@example.org', 'Tim Trompeter', 'TRUE', 'TRUE'],
+				['bea@example.org', 'Bea Bass', 'TRUE', 'FALSE']
+			].flatMap(([who, name, first, second]) => [
+				{ event: label(-10), who, name, present: first, eventId: 'demo-probe-1' },
+				{ event: label(-3), who, name, present: second, eventId: 'demo-probe-2' }
+			])
 		])
 	]);
 }

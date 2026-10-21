@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
+	import { guardUnsaved } from '#lib/unsaved.svelte.ts';
 	import { flip } from 'svelte/animate';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
+	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -16,6 +18,7 @@
 		title: string;
 		subtitle?: string;
 		notes: string;
+		duration?: number;
 	}
 
 	let nextKey = 0;
@@ -34,10 +37,13 @@
 		return data.pieces.filter((piece) => words.every((word) => piece.search.includes(word))).slice(0, 8);
 	});
 
-	function add(piece: { name: string; title: string; subtitle?: string }) {
-		entries.push({ key: nextKey++, piece: piece.name, title: piece.title, subtitle: piece.subtitle, notes: '' });
+	function add(piece: { name: string; title: string; subtitle?: string; duration?: number }) {
+		entries.push({ key: nextKey++, piece: piece.name, title: piece.title, subtitle: piece.subtitle, duration: piece.duration, notes: '' });
 		query = '';
 	}
+
+	// The programme's length while it's put together (#117).
+	const length = $derived(programLength(entries.map((entry) => entry.duration)));
 
 	function move(from: number, to: number) {
 		if (to < 0 || to >= entries.length || from === to) return;
@@ -46,6 +52,9 @@
 	}
 
 	const payload = $derived(JSON.stringify(entries.map(({ piece, notes }) => ({ piece, notes }))));
+	// svelte-ignore state_referenced_locally
+	const saved = payload;
+	guardUnsaved(() => payload !== saved && !saving.busy && !sharing.busy);
 
 	// Suggestions taken into the programme; on saving, their wishes become "geplant".
 	let takenWishes = $state<string[]>([]);
@@ -54,7 +63,7 @@
 	const open = (list: Suggestion[]) => list.filter((s) => !s.name || !inProgram.has(s.name));
 	function take(suggestion: Suggestion) {
 		if (!suggestion.name) return;
-		add({ name: suggestion.name, title: suggestion.title, subtitle: suggestion.subtitle });
+		add({ name: suggestion.name, title: suggestion.title, subtitle: suggestion.subtitle, duration: suggestion.duration });
 		takenWishes.push(...suggestion.wishIds);
 	}
 	const year = (key?: string) => key?.slice(0, 4);
@@ -208,7 +217,9 @@
 					<span class="number">{i + 1}</span>
 					<span class="body">
 						<strong>{entry.title}</strong>
-						{#if entry.subtitle}<span class="muted">{entry.subtitle}</span>{/if}
+						{#if entry.subtitle || entry.duration}
+							<span class="muted">{[entry.subtitle, entry.duration && formatDuration(entry.duration)].filter(Boolean).join(' · ')}</span>
+						{/if}
 						<input
 							class="note"
 							bind:value={entry.notes}
@@ -237,6 +248,10 @@
 				</li>
 			{/each}
 		</ol>
+		<p class="length" aria-live="polite">
+			<Icon name="clock" size={16} />
+			{length.known ? t.duration.total(roundMinutes(length.seconds), length.missing) : t.duration.unknown}
+		</p>
 	{:else}
 		<p class="notice">{t.editor.empty}</p>
 	{/if}
@@ -368,6 +383,15 @@
 	.none {
 		padding: var(--space-3);
 		color: var(--text-muted);
+	}
+
+	.length {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin: calc(-1 * var(--space-2)) var(--space-1) var(--space-4);
+		color: var(--text-muted);
+		font-size: 0.875rem;
 	}
 
 	.entries {

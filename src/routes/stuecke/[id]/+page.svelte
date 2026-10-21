@@ -133,6 +133,20 @@
 	<p class="placeholder">{t.piece.noMusic}</p>
 {/if}
 
+{#each data.loans as loan, i (i)}
+	<!-- Rented music: whose it is and when it goes back, before anyone writes in it. -->
+	<div class="loan {loan.state}" role="note">
+		<Icon name={loan.state === 'overdue' ? 'alert' : 'clock'} size={18} />
+		<p>
+			<strong>{t.loans.onPiece}</strong>
+			{[loan.from && t.loans.from(loan.from), loan.dueAt && t.loans.dueAt(loan.dueAt)].filter(Boolean).join(', ')}
+			{#if loan.days !== undefined && loan.state !== 'open'}· {t.loans.due(loan.days)}{/if}
+			<span class="loan-hint">{t.loans.onPieceHint}</span>
+		</p>
+		{#if data.canManageLoans}<a href="/leihmaterial">{t.loans.manage}</a>{/if}
+	</div>
+{/each}
+
 <ProblemReports
 	reports={data.reports.open}
 	status={data.reports.state}
@@ -326,6 +340,46 @@
 {/if}
 
 <style>
+	.loan {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+		margin-bottom: var(--space-5);
+		padding: var(--space-3) var(--space-4);
+		border-radius: var(--radius-m);
+		background: var(--accent-soft);
+	}
+
+	.loan.overdue {
+		background: color-mix(in oklab, var(--danger) 12%, transparent);
+	}
+
+	.loan.due-soon {
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+	}
+
+	.loan :global(svg) {
+		flex: none;
+	}
+
+	.loan p {
+		flex: 1;
+		min-width: min(100%, 220px);
+	}
+
+	.loan-hint {
+		display: block;
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.loan a {
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
 	.head {
 		display: grid;
 		gap: var(--space-2);
