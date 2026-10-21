@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -42,7 +43,7 @@
 
 <Title title={t.rehearsalPlan.edit} />
 
-<a class="back" href={concertUrl}><Icon name="back" size={18} />{data.concert.title}</a>
+<Crumbs items={[{ href: '/konzerte', label: t.concerts.title }, { href: concertUrl, label: data.concert.title }]} />
 
 <header class="head">
 	<h1>{t.rehearsalPlan.pageTitle(data.concert.title)}</h1>
@@ -136,14 +137,6 @@
 {/if}
 
 <style>
-	.back {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
-		color: var(--text-muted);
-		font-weight: 500;
-	}
 
 	.head {
 		display: grid;

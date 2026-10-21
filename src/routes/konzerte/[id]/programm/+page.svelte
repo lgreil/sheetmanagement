@@ -4,6 +4,7 @@
 	import { flip } from 'svelte/animate';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
+	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -61,7 +62,12 @@
 
 <Title title={t.editor.edit} />
 
-<a class="back" href="/konzerte/{encodeURIComponent(data.concert.id)}"><Icon name="back" size={18} />{data.concert.title}</a>
+<Crumbs
+	items={[
+		{ href: '/konzerte', label: t.concerts.title },
+		{ href: `/konzerte/${encodeURIComponent(data.concert.id)}`, label: data.concert.title }
+	]}
+/>
 
 <header class="head">
 	<h1>{t.editor.title(data.concert.title)}</h1>
@@ -271,14 +277,6 @@
 {/if}
 
 <style>
-	.back {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
-		color: var(--text-muted);
-		font-weight: 500;
-	}
 
 	.head {
 		display: grid;

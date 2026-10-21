@@ -8,6 +8,7 @@
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
+	import Segmented from '#lib/components/Segmented.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
@@ -72,6 +73,10 @@
 		{ value: 'concerts', label: t.concerts.filters.concerts },
 		{ value: 'rehearsals', label: t.concerts.filters.rehearsals }
 	];
+	const views = [
+		{ value: 'list' as const, label: t.concerts.list, icon: 'menu' as const },
+		{ value: 'calendar' as const, label: t.concerts.calendar, icon: 'calendar' as const }
+	];
 </script>
 
 <Title title={t.concerts.title} />
@@ -85,50 +90,28 @@
 		<a href="/status">{t.pieces.checkStatus}</a>
 	</div>
 {:else}
+	<!-- One row: what to show on the left, how to show it on the right. -->
 	<div class="toolbar">
-		<div class="chips" role="radiogroup" aria-label="Filter">
-			{#each filters as option (option.value)}
-				<button
-					class="chip"
-					class:active={filter === option.value}
-					role="radio"
-					aria-checked={filter === option.value}
-					onclick={() => (filter = option.value)}
-				>
-					{option.label}
-				</button>
-			{/each}
-		</div>
-		<div class="views" role="radiogroup" aria-label={t.concerts.view}>
-			<button class="view" class:active={view === 'list'} role="radio" aria-checked={view === 'list'} onclick={() => show('list')}>
-				<Icon name="menu" size={16} />{t.concerts.list}
-			</button>
-			<button class="view" class:active={view === 'calendar'} role="radio" aria-checked={view === 'calendar'} onclick={() => show('calendar')}>
-				<Icon name="calendar" size={16} />{t.concerts.calendar}
-			</button>
-		</div>
-		{#if data.subscribeUrl}
-			<a class="subscribe" href={data.subscribeUrl} target="_blank" rel="noopener noreferrer">
-				<Icon name="calendar" size={16} />
-				{t.concerts.subscribe}
-			</a>
-		{/if}
+		<Segmented options={filters} bind:value={filter} label="Filter" />
+		<Segmented options={views} value={view} label={t.concerts.view} iconOnly onchange={show} />
 	</div>
 
 	{#if view === 'calendar'}
 		<CalendarView events={calendarEvents} today={data.today} concertTitles={data.concertTitles} />
 	{:else}
-	<h2 class="section">{t.concerts.upcoming}</h2>
 	{#if months.length === 0}
 		<p class="none">{t.concerts.noUpcoming}</p>
 	{:else}
 		{#each months as month (month.key)}
-			<h3 class="month">{month.label}</h3>
-			<ul class="list">
+			<h2 class="ui-label month">{month.label}</h2>
+			<ul class="ui-list">
 				{#each month.events as event (event.id)}
 					<li class:next={event.id === next}>
-						{#if event.id === next}<span class="next-label">{t.concerts.next}</span>{/if}
-						<EventRow {event} concertTitle={event.concertId ? data.concertTitles[event.concertId] : undefined} />
+						<EventRow
+							{event}
+							concertTitle={event.concertId ? data.concertTitles[event.concertId] : undefined}
+							badge={event.id === next ? t.concerts.next : undefined}
+						/>
 					</li>
 				{/each}
 			</ul>
@@ -143,14 +126,20 @@
 	<details class="past-block">
 		<summary class="section past">{t.concerts.past} <span class="past-count">{data.past.length}</span></summary>
 		{#each pastYears as year (year.label)}
-			<h3 class="month">{year.label}</h3>
-			<ul class="list">
+			<h3 class="ui-label month">{year.label}</h3>
+			<ul class="ui-list">
 				{#each year.concerts as concert (concert.id)}
 					<li><ConcertRow {concert} /></li>
 				{/each}
 			</ul>
 		{/each}
 	</details>
+{/if}
+
+{#if data.subscribeUrl && !data.error}
+	<div class="ui-actions subscribe">
+		<a href={data.subscribeUrl} target="_blank" rel="noopener noreferrer"><Icon name="calendar" size={16} />{t.concerts.subscribe}</a>
+	</div>
 {/if}
 
 {#if data.archive.canAdd}
@@ -164,87 +153,11 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-3);
-		margin-bottom: var(--space-4);
-	}
-
-	.chips {
-		display: flex;
-		gap: var(--space-2);
-	}
-
-	.chip {
-		padding: 6px 14px;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--surface);
-		color: var(--text-muted);
-		font: inherit;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-		transition:
-			background 0.15s,
-			color 0.15s,
-			border-color 0.15s;
-	}
-
-	.chip:hover {
-		color: var(--text);
-	}
-
-	.chip.active {
-		border-color: var(--accent);
-		background: var(--accent);
-		color: var(--accent-contrast);
-	}
-
-	.views {
-		display: inline-flex;
-		padding: 3px;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--surface);
-	}
-
-	.view {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		padding: 4px 12px;
-		border: 0;
-		border-radius: 999px;
-		background: none;
-		color: var(--text-muted);
-		font: inherit;
-		font-size: 0.875rem;
-		font-weight: 500;
-		cursor: pointer;
-	}
-
-	.view.active {
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-weight: 600;
+		margin-bottom: var(--space-5);
 	}
 
 	li.next {
-		position: relative;
-		box-shadow: inset 4px 0 0 var(--accent);
 		background: color-mix(in oklab, var(--accent) 6%, transparent);
-	}
-
-	.next-label {
-		position: absolute;
-		top: 6px;
-		right: var(--space-4);
-		padding: 0 var(--space-2);
-		border-radius: 999px;
-		background: var(--accent);
-		color: var(--accent-contrast);
-		font-size: 0.6875rem;
-		font-weight: 700;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
 	}
 
 	.past-block summary {
@@ -258,12 +171,8 @@
 	}
 
 	.subscribe {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-		color: var(--accent);
-		font-size: 0.875rem;
-		font-weight: 600;
+		justify-content: center;
+		margin-top: var(--space-6);
 	}
 
 	.section {
@@ -277,26 +186,11 @@
 	}
 
 	.month {
-		margin: var(--space-4) 0 var(--space-2) var(--space-1);
-		color: var(--text-muted);
-		font-size: 0.8125rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
+		margin-top: var(--space-5);
 	}
 
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		overflow: hidden;
-	}
-
-	.list li + li {
-		border-top: 1px solid var(--border);
+	.month:first-of-type {
+		margin-top: 0;
 	}
 
 	.none,

@@ -2,6 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { t } from '#lib/i18n/index.ts';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
+	import Crumbs from '#lib/components/Crumbs.svelte';
+	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -62,6 +64,15 @@
 		reporting = true;
 	};
 
+	/** The piece's few actions as tiles under the title, like on a contact card. */
+	const tiles = $derived(
+		[
+			piece.folderUrl && { href: piece.folderUrl, icon: 'folder' as const, label: t.piece.folder, external: true },
+			piece.recording && { href: piece.recording, icon: 'headphones' as const, label: t.piece.recording, external: true },
+			data.canEdit && { href: `/stuecke/${encodeURIComponent(piece.id)}/bearbeiten`, icon: 'edit' as const, label: t.piece.editShort, external: false }
+		].filter((tile) => !!tile)
+	);
+
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
 	);
@@ -69,7 +80,7 @@
 
 <Title title={piece.title} />
 
-<a class="back" href="/stuecke"><Icon name="back" size={18} />{t.piece.back}</a>
+<Crumbs items={[{ href: '/stuecke', label: t.pieces.title }]} />
 
 <header class="head">
 	{#if piece.composer || piece.catalogue}
@@ -83,45 +94,43 @@
 	{/if}
 	<h1>{piece.title}</h1>
 	<div class="facts">
-		{#if piece.status === 'none'}
-			<span>{t.pieces.status.none}</span>
-		{:else}
-			<span>{t.pieces.parts(piece.partCount)}</span>
-		{/if}
+		<span>{piece.status === 'none' ? t.pieces.status.none : t.pieces.parts(piece.partCount)}</span>
 		{#each piece.programs as program (program)}<span class="tag program">{program}</span>{/each}
 		{#if piece.category}<span class="tag">{piece.category}</span>{/if}
-		{#if piece.folderUrl}
-			<a class="drive" href={piece.folderUrl} target="_blank" rel="noopener noreferrer">
-				<Icon name="folder" size={16} />
-				{t.piece.openFolder}
-			</a>
-		{/if}
-		{#if piece.recording}
-			<a class="drive" href={piece.recording} target="_blank" rel="noopener noreferrer nofollow">
-				<Icon name="headphones" size={16} />
-				{t.piece.recording}
-			</a>
-		{/if}
-		{#if data.canEdit}
-			<a class="drive" href="/stuecke/{encodeURIComponent(piece.id)}/bearbeiten">
-				<Icon name="file" size={16} />
-				{t.piece.edit}
-			</a>
-		{/if}
 	</div>
+	{#if gaps > 0}
+		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
+	{/if}
 	{#if data.saved}
 		<p class="msg ok" role="status">
 			<Icon name="check" size={16} />{t.piece.saved}
 			{#if data.renamedIn}{t.pieceEditor.renamed(data.renamedIn)}{/if}
 		</p>
 	{/if}
-	{#if gaps > 0}
-		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
-	{/if}
 </header>
 
+{#if tiles.length || canReport}
+	<div class="tiles">
+		{#each tiles as tile (tile.icon)}
+			<a
+				class="tile"
+				href={tile.href}
+				target={tile.external ? '_blank' : undefined}
+				rel={tile.external ? 'noopener noreferrer nofollow' : undefined}
+			>
+				<Icon name={tile.icon} size={20} /><span>{tile.label}</span>
+			</a>
+		{/each}
+		{#if canReport}
+			<button class="tile" class:active={reporting} aria-expanded={reporting} onclick={() => (reporting = !reporting)}>
+				<Icon name="flag" size={20} /><span>{t.piece.reportShort}</span>
+			</button>
+		{/if}
+	</div>
+{/if}
+
 {#if piece.status === 'none'}
-	<p class="no-music">{t.piece.noMusic}</p>
+	<p class="placeholder">{t.piece.noMusic}</p>
 {/if}
 
 <ProblemReports
@@ -133,9 +142,22 @@
 	common={data.reports.common}
 	present={data.reports.present}
 	result={form}
+	trigger={false}
 	bind:open={reporting}
 	bind:fileId={reportFile}
 />
+
+{#if data.upcoming.length}
+	<!-- Where the piece is next: the concert it's played at and the rehearsals that plan it. -->
+	<section class="block">
+		<h2 class="ui-label">{t.piece.upcoming}</h2>
+		<ul class="ui-list">
+			{#each data.upcoming as event (event.id)}
+				<li><EventRow {event} /></li>
+			{/each}
+		</ul>
+	</section>
+{/if}
 
 {#if sections.length > 1 && current}
 	<div class="sections" role="tablist" aria-label={t.piece.sections}>
@@ -167,8 +189,8 @@
 {/if}
 
 {#each groups as group (`${current?.key}:${group.key}`)}
-	<section class="group">
-		<h2>{t.piece.groups[group.key]}</h2>
+	<section class="block">
+		<h2 class="ui-label">{t.piece.groups[group.key]}</h2>
 		<ul class="parts">
 			{#each group.parts as part (part.id)}
 				<li class:flagged={reported.has(part.id)}>
@@ -184,7 +206,7 @@
 						title={part.fileName}
 					>
 						<span class="icon">
-							<Icon name={part.kind === 'audio' ? 'headphones' : 'file'} size={18} />
+							<Icon name={part.kind === 'audio' ? 'headphones' : 'file'} size={16} />
 						</span>
 						<span class="label">
 							<span class="name">{part.label}</span>
@@ -199,7 +221,7 @@
 						{#if part.status !== 'ok'}
 							<span class="status {part.status}">{t.piece.partStatus[part.status]}</span>
 						{/if}
-						{#if part.status !== 'missing'}<span class="open"><Icon name="external" size={16} /></span>{/if}
+						{#if part.status !== 'missing'}<span class="open"><Icon name="external" size={14} /></span>{/if}
 					</svelte:element>
 					{#if canReport && part.status !== 'missing'}
 						<button
@@ -217,26 +239,14 @@
 	</section>
 {/each}
 
-<!-- Most used first: the parts above, then details, concerts and related pieces. -->
-{#if info.length}
-	<dl class="info" aria-label={t.piece.details}>
-		{#each info as item (item.key)}
-			<div class:wide={item.key === 'notes'}>
-				<dt>{item.label}</dt>
-				<dd>{item.value}</dd>
-			</div>
-		{/each}
-	</dl>
-{/if}
-
 {#if reportedMissing.length}
-	<section class="group">
-		<h2>{t.piece.reportedMissing}</h2>
+	<section class="block">
+		<h2 class="ui-label">{t.piece.reportedMissing}</h2>
 		<ul class="parts">
 			{#each reportedMissing as report (report.id)}
 				<li>
 					<div class="part missing" title={t.piece.reportedMissingHint}>
-						<span class="icon"><Icon name="file" size={18} /></span>
+						<span class="icon"><Icon name="file" size={16} /></span>
 						<span class="label"><span class="name">{report.part}</span></span>
 						<span class="status reported">{t.gaps.reported}</span>
 					</div>
@@ -246,26 +256,40 @@
 	</section>
 {/if}
 
-{#snippet pieceLinks(title: string, pieces: typeof data.moreByComposer)}
-	<section class="more">
-		{#if title}<h2>{title}</h2>{/if}
-		<ul class="more-list">
-			{#each pieces as other (other.id)}
-				<li>
-					<a href="/stuecke/{other.id}">
-						<span class="more-title">{other.title}</span>
-						{#if other.catalogue}<span class="muted">{other.catalogue}</span>{/if}
-						{#each other.programs as program (program)}<span class="tag program">{program}</span>{/each}
-					</a>
-				</li>
+{#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
+
+<!-- Below the parts: what the piece is, where it was played, related pieces. -->
+{#if info.length}
+	<section class="block">
+		<h2 class="ui-label">{t.piece.details}</h2>
+		<dl class="ui-card info">
+			{#each info as item (item.key)}
+				<div class:wide={item.key === 'notes'}>
+					<dt>{item.label}</dt>
+					<dd>{item.value}</dd>
+				</div>
 			{/each}
-		</ul>
+		</dl>
 	</section>
+{/if}
+
+{#snippet pieceLinks(pieces: typeof data.moreByComposer)}
+	<ul class="more-list">
+		{#each pieces as other (other.id)}
+			<li>
+				<a href="/stuecke/{other.id}">
+					<span class="more-title">{other.title}</span>
+					{#if other.catalogue}<span class="muted">{other.catalogue}</span>{/if}
+					{#each other.programs as program (program)}<span class="tag program">{program}</span>{/each}
+				</a>
+			</li>
+		{/each}
+	</ul>
 {/snippet}
 
-<section class="played">
+<section class="block">
 	<div class="played-head">
-		<h2>{t.piece.playedAt}</h2>
+		<h2 class="ui-label">{t.piece.playedAt}</h2>
 		{#if data.again}
 			<form method="POST" action="?/again" use:enhance={() => async ({ update }) => update({ reset: false })}>
 				<button class="again" class:mine={data.again.mine} aria-pressed={data.again.mine} title={t.piece.againHint}>
@@ -278,7 +302,7 @@
 	{#if form?.againError}<p class="placeholder" role="alert">{form.againError}</p>{/if}
 	{#if data.again?.planned}<p class="planned"><Icon name="check" size={14} />{t.piece.againPlanned}</p>{/if}
 	{#if data.playedAt.length}
-		<ul class="concerts">
+		<ul class="ui-list">
 			{#each data.playedAt as concert (concert.id)}
 				<li><ConcertRow {concert} /></li>
 			{/each}
@@ -289,45 +313,19 @@
 </section>
 
 {#if data.otherVersions.length}
-	{@render pieceLinks(t.piece.otherVersions, data.otherVersions)}
+	<section class="block">
+		<h2 class="ui-label">{t.piece.otherVersions}</h2>
+		{@render pieceLinks(data.otherVersions)}
+	</section>
 {/if}
 {#if piece.composer && data.moreByComposer.length}
-	<details class="more-by">
-		<summary>{t.piece.moreBy(piece.composer)} <span class="muted">({data.moreByComposer.length})</span></summary>
-		{@render pieceLinks('', data.moreByComposer)}
+	<details class="block ui-disclosure more-by">
+		<summary>{t.piece.moreBy(piece.composer)} <span class="muted">{data.moreByComposer.length}</span></summary>
+		{@render pieceLinks(data.moreByComposer)}
 	</details>
 {/if}
 
-{#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
-
 <style>
-	.more-by {
-		margin-top: var(--space-6);
-	}
-
-	.more-by summary {
-		font-size: 1.125rem;
-		font-weight: 600;
-		cursor: pointer;
-	}
-
-	.more-by :global(.more) {
-		margin-top: var(--space-3);
-	}
-
-	.back {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
-		color: var(--text-muted);
-		font-weight: 500;
-	}
-
-	.back:hover {
-		color: var(--accent);
-	}
-
 	.head {
 		display: grid;
 		gap: var(--space-2);
@@ -349,6 +347,87 @@
 		text-decoration-color: var(--accent);
 	}
 
+	.facts {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+		color: var(--text-muted);
+	}
+
+	.tag {
+		padding: 1px var(--space-2);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.tag.program {
+		background: var(--accent);
+		color: var(--accent-contrast);
+	}
+
+	.gaps {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		color: var(--warn);
+		font-size: 0.9375rem;
+	}
+
+	/* The piece's actions as equal tiles, like on a contact card. */
+	.tiles {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+		gap: var(--space-2);
+		max-width: 440px;
+		margin-bottom: var(--space-6);
+	}
+
+	.tile {
+		display: grid;
+		justify-items: center;
+		align-content: center;
+		gap: 6px;
+		min-height: 68px;
+		padding: var(--space-2);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		color: var(--accent);
+		font: inherit;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+		transition:
+			transform var(--fast) var(--ease),
+			background var(--fast) var(--ease);
+	}
+
+	.tile span {
+		color: var(--text);
+		text-align: center;
+	}
+
+	.tile:hover {
+		background: var(--surface-2);
+	}
+
+	.tile:active {
+		transform: scale(0.96);
+	}
+
+	.tile.active {
+		background: var(--accent-soft);
+	}
+
+	.block {
+		margin-bottom: var(--space-6);
+	}
+
 	.sections {
 		display: flex;
 		gap: var(--space-2);
@@ -362,32 +441,27 @@
 		flex: none;
 		align-items: center;
 		gap: var(--space-2);
-		padding: 8px 14px;
-		border: 1px solid var(--border);
+		min-height: 38px;
+		padding: 0 14px;
+		border: 0;
 		border-radius: 999px;
-		background: var(--surface);
+		background: var(--surface-2);
 		color: var(--text);
 		font: inherit;
+		font-size: 0.9375rem;
 		font-weight: 600;
 		cursor: pointer;
 		transition:
-			background 0.15s,
-			border-color 0.15s,
-			color 0.15s;
-	}
-
-	.section-tab:hover {
-		border-color: var(--accent);
+			background var(--fast) var(--ease),
+			color var(--fast) var(--ease);
 	}
 
 	/* The complete work is for looking things up, so it's quieter until chosen. */
 	.section-tab.complete:not(.active) {
-		border-style: dashed;
 		color: var(--text-muted);
 	}
 
 	.section-tab.active {
-		border-color: var(--accent);
 		background: var(--accent);
 		color: var(--accent-contrast);
 	}
@@ -423,7 +497,7 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1) var(--space-3);
-		margin: 0 0 var(--space-4) var(--space-1);
+		margin: 0 0 var(--space-5) var(--space-1);
 		color: var(--text-muted);
 		font-size: 0.875rem;
 	}
@@ -436,171 +510,67 @@
 		font-weight: 600;
 	}
 
-	.more {
-		margin-top: var(--space-6);
-	}
-
-	.more h2 {
-		margin: 0 0 var(--space-2) var(--space-1);
-		color: var(--text-muted);
-		font-size: 0.8125rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.more-list {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-		gap: var(--space-2);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
-	.more-list a {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-1) var(--space-2);
-		height: 100%;
-		padding: var(--space-3);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		transition: border-color 0.15s;
-	}
-
-	.more-list a:hover {
-		border-color: var(--accent);
-	}
-
-	.more-title {
-		font-weight: 600;
-		overflow-wrap: anywhere;
-	}
-
-	.muted {
-		color: var(--text-muted);
-		font-size: 0.875rem;
-	}
-
-	.facts {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-3);
-		color: var(--text-muted);
-	}
-
-	.tag {
-		padding: 1px var(--space-2);
-		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-size: 0.8125rem;
-		font-weight: 600;
-	}
-
-	.tag.program {
-		background: var(--accent);
-		color: var(--accent-contrast);
-	}
-
-	.drive {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
-		padding: 6px 14px;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--surface);
-		color: var(--text);
-		font-size: 0.875rem;
-		font-weight: 500;
-		transition: border-color 0.15s;
-	}
-
-	.drive:hover {
-		border-color: var(--accent);
-	}
-
-	.gaps {
-		display: flex;
-		align-items: center;
-		gap: var(--space-2);
-		color: var(--warn);
-		font-size: 0.9375rem;
-	}
-
-	.group {
-		margin-bottom: var(--space-5);
-	}
-
-	.group h2,
-	.played h2 {
-		margin: 0 0 var(--space-2) var(--space-1);
-		color: var(--text-muted);
-		font-size: 0.8125rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
+	/* One card per group; on wide screens the rows sit in columns, divided by hairlines. */
 	.parts {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-		gap: var(--space-2);
+		grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 		margin: 0;
 		padding: 0;
 		list-style: none;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		overflow: hidden;
+	}
+
+	.parts li {
+		position: relative;
+		box-shadow:
+			0 1px 0 var(--hairline),
+			1px 0 0 var(--hairline);
 	}
 
 	.part {
 		display: flex;
 		align-items: center;
 		gap: var(--space-3);
-		min-height: 56px;
+		min-height: 54px;
 		height: 100%;
-		padding: var(--space-2) var(--space-3);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		transition:
-			border-color 0.15s,
-			box-shadow 0.15s,
-			transform 0.15s;
+		padding: var(--space-2) var(--space-4);
+		transition: background var(--fast) var(--ease);
 	}
 
 	a.part:hover {
-		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
-		box-shadow: var(--shadow);
-		transform: translateY(-1px);
-	}
-
-	.parts li {
-		position: relative;
+		background: var(--surface-2);
 	}
 
 	.part.with-flag {
-		padding-right: 44px;
+		padding-right: 48px;
 	}
 
 	.flag {
 		position: absolute;
 		top: 50%;
-		right: 6px;
+		right: 8px;
 		display: grid;
 		place-items: center;
-		width: 32px;
-		height: 32px;
+		width: 34px;
+		height: 34px;
 		border: 0;
-		border-radius: 8px;
+		border-radius: 10px;
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;
 		transform: translateY(-50%);
-		opacity: 0.55;
+		opacity: 0.45;
+		transition:
+			opacity var(--fast) var(--ease),
+			background var(--fast) var(--ease);
+	}
+
+	li:hover .flag {
+		opacity: 0.8;
 	}
 
 	.flag:hover,
@@ -612,14 +582,11 @@
 	}
 
 	.flagged .part {
-		border-color: color-mix(in oklab, var(--warn) 45%, var(--border));
+		background: color-mix(in oklab, var(--warn) 6%, transparent);
 	}
 
 	.part.missing {
-		border-style: dashed;
-		background: transparent;
 		color: var(--text-muted);
-		opacity: 0.75;
 		cursor: default;
 	}
 
@@ -627,9 +594,9 @@
 		display: grid;
 		place-items: center;
 		flex: none;
-		width: 36px;
-		height: 36px;
-		border-radius: 10px;
+		width: 32px;
+		height: 32px;
+		border-radius: 9px;
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -684,29 +651,42 @@
 		display: grid;
 		flex: none;
 		color: var(--text-muted);
+		opacity: 0;
+		transition: opacity var(--fast) var(--ease);
 	}
 
-	.part:hover .open {
+	.part:hover .open,
+	.part:focus-visible .open {
+		opacity: 1;
 		color: var(--accent);
 	}
 
-	.no-music {
+	/* No hover on touch screens: the hint that a part opens elsewhere stays visible. */
+	@media (hover: none) {
+		.open {
+			opacity: 0.6;
+		}
+	}
+
+	.placeholder {
 		margin-bottom: var(--space-5);
-		padding: var(--space-4);
+		padding: var(--space-4) var(--space-5);
 		border: 1px dashed var(--border);
-		border-radius: var(--radius-m);
+		border-radius: var(--radius-l);
 		color: var(--text-muted);
+	}
+
+	.hint {
+		margin: calc(-1 * var(--space-4)) var(--space-1) var(--space-7);
+		color: var(--text-muted);
+		font-size: 0.8125rem;
 	}
 
 	.info {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-		gap: var(--space-3);
-		margin: var(--space-6) 0 0;
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
+		gap: var(--space-4);
+		margin: 0;
 	}
 
 	.info .wide {
@@ -727,67 +707,43 @@
 		overflow-wrap: anywhere;
 	}
 
-	.played {
-		margin-top: var(--space-6);
-	}
-
-	.concerts {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		overflow: hidden;
-	}
-
-	.concerts li + li {
-		border-top: 1px solid var(--border);
-	}
-
-	.placeholder {
-		padding: var(--space-4);
-		border: 1px dashed var(--border);
-		border-radius: var(--radius-m);
-	}
-
-	.played p,
-	.hint {
-		color: var(--text-muted);
-		font-size: 0.9375rem;
-	}
-
-	.hint {
-		margin-top: var(--space-4);
-		font-size: 0.8125rem;
-	}
-
 	.played-head {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		justify-content: space-between;
 		gap: var(--space-2);
+		margin-bottom: var(--space-2);
+	}
+
+	.played-head .ui-label {
+		margin-bottom: 0;
 	}
 
 	.again {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-1);
-		height: 34px;
+		min-height: 36px;
 		padding: 0 var(--space-3);
-		border: 1px solid var(--border);
+		border: 0;
 		border-radius: 999px;
-		background: var(--surface);
+		background: var(--surface-2);
 		color: var(--text);
 		font: inherit;
 		font-size: 0.875rem;
 		font-weight: 600;
 		cursor: pointer;
+		transition:
+			background var(--fast) var(--ease),
+			transform var(--fast) var(--ease);
+	}
+
+	.again:active {
+		transform: scale(0.96);
 	}
 
 	.again.mine {
-		border-color: var(--accent);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -804,5 +760,46 @@
 		margin-bottom: var(--space-2);
 		color: var(--ok);
 		font-size: 0.875rem;
+	}
+
+	.more-list {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.more-list a {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		height: 100%;
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		transition: background var(--fast) var(--ease);
+	}
+
+	.more-list a:hover {
+		background: var(--surface-2);
+	}
+
+	.more-title {
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.muted {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+		font-weight: 400;
+	}
+
+	.more-by[open] summary {
+		margin-bottom: var(--space-3);
 	}
 </style>

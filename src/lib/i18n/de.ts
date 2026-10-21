@@ -21,6 +21,7 @@ export const de = {
 		details: 'Angaben ergänzen',
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
+		crumbs: 'Seitenpfad',
 		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
 	},
 	footer: {
@@ -34,9 +35,11 @@ export const de = {
 		dark: 'Dunkel'
 	},
 	home: {
-		greeting: 'Willkommen',
 		title: (orchestra: string) => `Notenarchiv des ${orchestra}`,
-		intro: 'Noten, Konzerte und Programme an einem Ort, direkt aus Google Drive und dem Probenkalender.',
+		hello: (name: string) => `Hallo ${name}`,
+		upNext: 'Als Nächstes',
+		details: 'Details',
+		allDates: 'Alle Termine',
 		nextConcert: 'Nächstes Konzert',
 		nextConcertEmpty: 'Sobald der Kalender verbunden ist, steht hier das nächste Konzert mit Programm.',
 		noNextConcert: 'Gerade ist kein Konzert im Kalender eingetragen.',
@@ -44,7 +47,6 @@ export const de = {
 		pieces: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
 		morePieces: (n: number) => `+ ${n} weitere`,
 		nextRehearsal: 'Nächste Probe',
-		toConcert: 'Zum Konzert',
 		quickLinks: 'Alle Bereiche',
 		todo: {
 			title: 'Wartet auf dich',
@@ -96,8 +98,10 @@ export const de = {
 		details: 'Details',
 		reportedMissing: 'Als fehlend gemeldet',
 		reportedMissingHint: 'Gemeldet, aber noch nicht bestätigt. Nach der Bestätigung steht ein Platzhalter im Ordner.',
-		back: 'Alle Stücke',
-		openFolder: 'Ordner in Google Drive',
+		folder: 'Drive-Ordner',
+		editShort: 'Bearbeiten',
+		reportShort: 'Melden',
+		upcoming: 'Demnächst',
 		recording: 'Hörbeispiel',
 		edit: 'Angaben bearbeiten',
 		saved: 'Gespeichert.',
@@ -154,7 +158,6 @@ export const de = {
 		lead: 'Kommende Konzerte und Proben, direkt aus dem Probenkalender.',
 		empty: 'Sobald der Probenkalender verbunden ist, erscheinen hier alle Konzerte und Proben.',
 		failed: 'Der Kalender konnte gerade nicht geladen werden. Versuch es gleich noch einmal.',
-		upcoming: 'Demnächst',
 		past: 'Vergangene Konzerte',
 		noUpcoming: 'Gerade stehen keine Termine im Kalender.',
 		subscribe: 'Kalender abonnieren',
@@ -180,9 +183,6 @@ export const de = {
 		forConcert: (title: string) => `für ${title}`
 	},
 	concert: {
-		back: 'Alle Termine',
-		when: 'Wann',
-		where: 'Wo',
 		map: 'Karte',
 		openInCalendar: 'Im Google Kalender',
 		rehearsals: 'Proben',
@@ -284,8 +284,6 @@ export const de = {
 		title: 'Meine Noten',
 		lead: 'Deine Stimmen für das nächste Konzert, in Programmreihenfolge.',
 		empty: 'Nach der Anmeldung findest du hier deine Stimmen für jedes Konzert.',
-		forConcert: (concert: string) => `Meine Noten fürs ${concert}`,
-		forRehearsal: 'Meine Noten für diese Probe',
 		wholeProgram: 'Für diese Probe ist noch nicht eingetragen, was geprobt wird. Hier ist das ganze Programm.',
 		concert: 'Konzert',
 		jumpTo: 'Springen zu',
@@ -459,6 +457,7 @@ export const de = {
 		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
 	},
 	admin: {
+		setupSections: 'Einrichtung',
 		title: 'Verwaltung',
 		lead: 'Mitglieder freischalten und Rechte vergeben. Alles steht auch in der Repertoire-Tabelle.',
 		openSheet: 'Tabelle öffnen',
@@ -553,8 +552,8 @@ export const de = {
 	profile: {
 		title: 'Profil',
 		lead: 'Was du spielst und ob du gerade dabei bist. Danach richten sich „Meine Noten“ und die Besetzung.',
+		settings: 'Einstellungen',
 		notMember: 'Das Profil gibt es für eingetragene Mitglieder. Ohne Anmeldung merkt sich „Meine Noten“ dein Instrument im Browser.',
-		email: 'E-Mail',
 		name: 'Vor- und Nachname',
 		instruments: 'Instrumente',
 		orchestras: 'Orchester',

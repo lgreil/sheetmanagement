@@ -82,7 +82,15 @@
 		<p class="message ok" role="status"><Icon name="check" size={16} />{t.admin.saved}</p>
 	{/if}
 
-	<label class="check show-emails"><input type="checkbox" bind:checked={showEmails} />{t.admin.showEmails}</label>
+	<div class="top">
+		<div class="ui-actions">
+			<a href="/meldungen"><Icon name="flag" size={16} />{t.nav.reports}</a>
+			{#if data.sheetUrl}
+				<a href={data.sheetUrl} target="_blank" rel="noopener noreferrer"><Icon name="external" size={16} />{t.admin.openSheet}</a>
+			{/if}
+		</div>
+		<label class="check show-emails"><input type="checkbox" bind:checked={showEmails} />{t.admin.showEmails}</label>
+	</div>
 
 	<section>
 		<div class="section-head">
@@ -231,8 +239,9 @@
 			<p class="empty">{t.admin.noMembers}</p>
 		{/if}
 
+		<details class="add-toggle">
+			<summary><Icon name="plus" size={16} />{t.admin.addMember}</summary>
 		<form class="add" method="POST" action="?/addMember" use:enhance={submit}>
-			<h3>{t.admin.addMember}</h3>
 			<label>{t.admin.email}<input name="email" type="email" required autocomplete="off" /></label>
 			<label>{t.admin.name}<input name="name" autocomplete="off" /></label>
 			<label>{t.admin.instrument}<input name="instrument" autocomplete="off" /></label>
@@ -242,10 +251,13 @@
 			</label>
 			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
+		</details>
 	</section>
 
-	<section>
-		<h2>{t.admin.roles}</h2>
+	<!-- Set up once, rarely changed: folded, one line each. -->
+	<p class="ui-label setup-label">{t.admin.setupSections}</p>
+	<details class="ui-disclosure fold">
+		<summary><h2>{t.admin.roles}</h2><span class="count">{data.roles.length}</span></summary>
 		<p class="muted lead">{t.admin.rolesLead}</p>
 		{#if data.bootstrapAdmins.length}
 			<p class="muted small">{t.admin.bootstrap(data.bootstrapAdmins.map(mail).join(', '))}</p>
@@ -294,10 +306,10 @@
 			</div>
 			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
-	</section>
+	</details>
 
-	<section>
-		<h2>{t.admin.singleRights}</h2>
+	<details class="ui-disclosure fold">
+		<summary><h2>{t.admin.singleRights}</h2><span class="count">{data.grants.length}</span></summary>
 		<p class="muted lead">{t.admin.singleRightsLead}</p>
 		{#if data.grants.length}
 			<ul class="list">
@@ -332,10 +344,10 @@
 			</label>
 			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.grant}</button>
 		</form>
-	</section>
+	</details>
 
-	<section>
-		<h2>{t.admin.instrumentGroups}</h2>
+	<details class="ui-disclosure fold">
+		<summary><h2>{t.admin.instrumentGroups}</h2><span class="count">{data.instrumentGroups.rows.length}</span></summary>
 		<p class="muted lead">{t.admin.instrumentGroupsLead}</p>
 		{#if !data.instrumentGroups.own}<p class="muted small">{t.admin.instrumentGroupsDefaults}</p>{/if}
 		{#if data.instrumentGroups.unknown.length}
@@ -374,7 +386,7 @@
 			<label class="check"><input type="checkbox" name="mutual" />{t.admin.mutualLabel}</label>
 			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>
 		</form>
-	</section>
+	</details>
 
 	<datalist id="instrument-names">
 		{#each data.instruments as name (name)}<option value={name}></option>{/each}
@@ -386,13 +398,6 @@
 		{#each data.groups as group (group.name)}<option value={group.name}>{group.description}</option>{/each}
 		{#each data.members as member (member.email)}<option value={member.email}>{member.name}</option>{/each}
 	</datalist>
-
-	<a class="link" href="/meldungen"><Icon name="flag" size={16} />{t.nav.reports}</a>
-	{#if data.sheetUrl}
-		<a class="link" href={data.sheetUrl} target="_blank" rel="noopener noreferrer">
-			<Icon name="external" size={16} />{t.admin.openSheet}
-		</a>
-	{/if}
 {/if}
 
 <style>
@@ -451,9 +456,10 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
 		overflow: hidden;
 	}
 
@@ -466,7 +472,7 @@
 	}
 
 	.row + .row {
-		border-top: 1px solid var(--border);
+		border-top: 1px solid var(--hairline);
 	}
 
 	.main {
@@ -521,10 +527,88 @@
 		align-items: end;
 		gap: var(--space-3);
 		margin-top: var(--space-3);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		padding: var(--space-5);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
+	}
+
+	.top {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2) var(--space-4);
+		margin-bottom: var(--space-5);
+	}
+
+	.top .show-emails {
+		margin-bottom: 0;
+	}
+
+	.add-toggle {
+		margin-top: var(--space-3);
+	}
+
+	.add-toggle > summary {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-height: 40px;
+		padding: 0 var(--space-4);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.add-toggle > summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.add-toggle[open] > summary {
+		display: none;
+	}
+
+	.setup-label {
+		margin-top: var(--space-7);
+	}
+
+	.fold {
+		padding: var(--space-1) var(--space-5);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+	}
+
+	.fold + .fold {
+		margin-top: var(--space-3);
+	}
+
+	.fold[open] {
+		padding-bottom: var(--space-5);
+	}
+
+	.fold > summary h2 {
+		margin: 0;
+		color: var(--text);
+		font-size: 1rem;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.fold > summary .count {
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+	}
+
+	.fold .list {
+		box-shadow: none;
 	}
 
 	.show-emails {

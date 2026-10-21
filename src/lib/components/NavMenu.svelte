@@ -1,10 +1,20 @@
 <script lang="ts">
+	import { fade, fly } from 'svelte/transition';
 	import { t } from '#lib/i18n/index.ts';
 	import { isActive, type NavGroup } from '#lib/nav.ts';
 	import Icon from './Icon.svelte';
+	import ThemeToggle from './ThemeToggle.svelte';
 
-	/** Every page by group: a panel below the header on wide screens, a sheet above the tab bar on phones. */
-	let { groups, path, open = $bindable(false) }: { groups: NavGroup[]; path: string; open?: boolean } = $props();
+	/**
+	 * Every page by group: a panel below the header on wide screens, a sheet above the tab bar
+	 * on phones. Below the pages: who is signed in, the colour scheme and signing out.
+	 */
+	let {
+		groups,
+		path,
+		user,
+		open = $bindable(false)
+	}: { groups: NavGroup[]; path: string; user: { name: string; email: string } | null; open?: boolean } = $props();
 
 	function onkeydown(event: KeyboardEvent) {
 		if (open && event.key === 'Escape') open = false;
@@ -14,27 +24,49 @@
 <svelte:window {onkeydown} />
 
 {#if open}
-	<button class="backdrop" aria-label={t.nav.close} onclick={() => (open = false)}></button>
-	<div class="panel" id="nav-menu" role="dialog" aria-label={t.nav.menu}>
-		{#each groups as group (group.key)}
-			<section>
-				<h2>{group.label}</h2>
-				<ul>
-					{#each group.items as item (item.href)}
-						<li>
-							<a
-								href={item.href}
-								class:active={isActive(item.href, path)}
-								aria-current={isActive(item.href, path) ? 'page' : undefined}
-								onclick={() => (open = false)}
-							>
-								<Icon name={item.icon} size={18} />{item.label}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			</section>
-		{/each}
+	<button class="backdrop" aria-label={t.nav.close} onclick={() => (open = false)} transition:fade={{ duration: 150 }}></button>
+	<div class="panel" id="nav-menu" role="dialog" aria-label={t.nav.menu} transition:fly={{ y: 10, duration: 200, opacity: 0 }}>
+		<div class="groups">
+			{#each groups as group (group.key)}
+				<section>
+					<h2>{group.label}</h2>
+					<ul>
+						{#each group.items as item (item.href)}
+							<li>
+								<a
+									href={item.href}
+									class:active={isActive(item.href, path)}
+									aria-current={isActive(item.href, path) ? 'page' : undefined}
+									onclick={() => (open = false)}
+								>
+									<span class="icon"><Icon name={item.icon} size={18} /></span>{item.label}
+								</a>
+							</li>
+						{/each}
+					</ul>
+				</section>
+			{/each}
+		</div>
+
+		<div class="account">
+			{#if user}
+				<a class="who" href="/profil" onclick={() => (open = false)}>
+					<span class="avatar" aria-hidden="true">{user.name.charAt(0).toUpperCase()}</span>
+					<span class="who-text">
+						<strong>{user.name}</strong>
+						<span>{user.email}</span>
+					</span>
+				</a>
+			{/if}
+			<div class="settings">
+				<ThemeToggle />
+				{#if user}
+					<form method="POST" action="/auth/logout">
+						<button class="logout"><Icon name="logout" size={16} />{t.auth.logout}</button>
+					</form>
+				{/if}
+			</div>
+		</div>
 	</div>
 {/if}
 
@@ -44,7 +76,9 @@
 		inset: 0;
 		z-index: 20;
 		border: 0;
-		background: rgb(0 0 0 / 0.18);
+		background: rgb(0 0 0 / 0.22);
+		backdrop-filter: blur(2px);
+		-webkit-backdrop-filter: blur(2px);
 		cursor: default;
 	}
 
@@ -54,23 +88,29 @@
 		top: calc(var(--header-height) + var(--space-2));
 		right: max(var(--space-4), calc((100vw - var(--content-width)) / 2 + var(--space-4)));
 		display: grid;
-		grid-template-columns: repeat(2, minmax(180px, 1fr));
-		gap: var(--space-4) var(--space-5);
-		width: min(480px, calc(100vw - 2 * var(--space-4)));
-		padding: var(--space-4) var(--space-5);
-		border: 1px solid var(--border);
+		gap: var(--space-4);
+		width: min(500px, calc(100vw - 2 * var(--space-4)));
+		max-height: calc(100dvh - var(--header-height) - var(--space-5));
+		padding: var(--space-5);
+		overflow-y: auto;
+		border: 1px solid var(--hairline);
 		border-radius: var(--radius-l);
 		background: var(--surface);
-		box-shadow: var(--shadow), 0 12px 40px rgb(0 0 0 / 0.12);
-		animation: drop 0.14s ease-out;
+		box-shadow: var(--shadow-raised);
+	}
+
+	.groups {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: var(--space-4) var(--space-5);
 	}
 
 	h2 {
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
 		font-size: 0.75rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
+		font-weight: 650;
+		letter-spacing: 0.07em;
 		text-transform: uppercase;
 	}
 
@@ -85,11 +125,19 @@
 	a {
 		display: flex;
 		align-items: center;
-		gap: var(--space-2);
-		padding: var(--space-2);
+		gap: var(--space-3);
+		min-height: 40px;
+		padding: var(--space-1) var(--space-2);
 		margin: 0 calc(-1 * var(--space-2));
-		border-radius: var(--radius-s);
+		border-radius: 10px;
 		font-weight: 500;
+		transition: background var(--fast) var(--ease);
+	}
+
+	.icon {
+		display: grid;
+		place-items: center;
+		color: var(--text-muted);
 	}
 
 	a:hover {
@@ -101,11 +149,75 @@
 		background: var(--accent-soft);
 	}
 
-	@keyframes drop {
-		from {
-			opacity: 0;
-			transform: translateY(-6px);
-		}
+	a.active .icon {
+		color: inherit;
+	}
+
+	.account {
+		display: grid;
+		gap: var(--space-3);
+		padding-top: var(--space-4);
+		border-top: 1px solid var(--hairline);
+	}
+
+	.who {
+		margin: 0;
+		padding: var(--space-2);
+	}
+
+	.avatar {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 36px;
+		height: 36px;
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.who-text {
+		display: grid;
+		min-width: 0;
+		line-height: 1.3;
+	}
+
+	.who-text span {
+		overflow: hidden;
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.settings {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-3);
+	}
+
+	.logout {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 36px;
+		padding: 0 var(--space-3);
+		border: 0;
+		border-radius: 10px;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.logout:hover {
+		background: var(--surface-2);
+		color: var(--danger);
 	}
 
 	@media (max-width: 720px) {
@@ -115,9 +227,12 @@
 			left: var(--space-2);
 			bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-2));
 			width: auto;
-			grid-template-columns: repeat(2, minmax(0, 1fr));
-			gap: var(--space-4);
+			max-height: calc(100dvh - var(--tabbar-height) - var(--header-height));
 			padding: var(--space-4);
+		}
+
+		.groups {
+			gap: var(--space-4);
 		}
 	}
 </style>

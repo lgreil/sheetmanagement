@@ -1,12 +1,12 @@
 <script lang="ts">
 	import '../app.css';
+	import { fade } from 'svelte/transition';
 	import { afterNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
-	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import Toast from '#lib/components/Toast.svelte';
 	import { isActive, navGroups, primaryNav } from '#lib/nav.ts';
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
@@ -73,26 +73,28 @@
 				</button>
 			</nav>
 
-			<ThemeToggle />
+			<!-- Signing out and the colour scheme live in "Mehr" and on the profile. -->
 			{#if data.user}
-				<form class="account" method="POST" action="/auth/logout">
-					<a
-						class="avatar"
-						href="/profil"
-						class:active={isActive('/profil', path)}
-						title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
-						aria-label={t.profile.title}
-					>
-						{data.user.name.charAt(0).toUpperCase()}
-					</a>
-					<button class="logout" title={t.auth.logout} aria-label={t.auth.logout}><Icon name="logout" size={18} /></button>
-				</form>
+				<a
+					class="avatar"
+					href="/profil"
+					class:active={isActive('/profil', path)}
+					title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
+					aria-label={t.profile.title}
+				>
+					{data.user.name.charAt(0).toUpperCase()}
+				</a>
 			{/if}
 		</div>
 	</header>
 
 	<main>
-		{@render children()}
+		<!-- A soft fade between pages; staying on a page (filters, forms) doesn't replay it. -->
+		{#key path}
+			<div class="page" in:fade={{ duration: 160 }}>
+				{@render children()}
+			</div>
+		{/key}
 		<footer class="footer">
 			{#if links.length}
 				<ul class="links" aria-label={t.footer.links}>
@@ -130,7 +132,7 @@
 		</button>
 	</nav>
 
-	<NavMenu {groups} {path} bind:open={menuOpen} />
+	<NavMenu {groups} {path} user={data.user ?? null} bind:open={menuOpen} />
 	<Toast />
 </div>
 
@@ -172,16 +174,16 @@
 		top: 0;
 		z-index: 10;
 		height: var(--header-height);
-		background: color-mix(in oklab, var(--surface) 85%, transparent);
-		backdrop-filter: saturate(1.4) blur(14px);
-		-webkit-backdrop-filter: saturate(1.4) blur(14px);
-		border-bottom: 1px solid var(--border);
+		background: color-mix(in oklab, var(--bg) 78%, transparent);
+		backdrop-filter: saturate(1.6) blur(20px);
+		-webkit-backdrop-filter: saturate(1.6) blur(20px);
+		border-bottom: 1px solid var(--hairline);
 	}
 
 	.topbar-inner {
 		display: flex;
 		align-items: center;
-		gap: var(--space-5);
+		gap: var(--space-4);
 		max-width: var(--content-width);
 		height: 100%;
 		margin: 0 auto;
@@ -216,8 +218,8 @@
 
 	.logo {
 		flex: none;
-		width: 40px;
-		height: 40px;
+		width: 36px;
+		height: 36px;
 	}
 
 	.nav-desktop {
@@ -232,10 +234,11 @@
 		white-space: nowrap;
 		border-radius: 999px;
 		color: var(--text-muted);
+		font-size: 0.9375rem;
 		font-weight: 500;
 		transition:
-			color 0.15s,
-			background 0.15s;
+			color var(--fast) var(--ease),
+			background var(--fast) var(--ease);
 	}
 
 	.nav-desktop .more {
@@ -266,6 +269,10 @@
 		max-width: var(--content-width);
 		margin: 0 auto;
 		padding: var(--space-6) var(--space-4) var(--space-7);
+	}
+
+	.page {
+		display: flow-root;
 	}
 
 	.tabbar {
@@ -317,10 +324,10 @@
 			grid-auto-columns: 1fr;
 			height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
 			padding-bottom: env(safe-area-inset-bottom);
-			background: color-mix(in oklab, var(--surface) 88%, transparent);
-			backdrop-filter: saturate(1.4) blur(14px);
-			-webkit-backdrop-filter: saturate(1.4) blur(14px);
-			border-top: 1px solid var(--border);
+			background: color-mix(in oklab, var(--bg) 80%, transparent);
+			backdrop-filter: saturate(1.6) blur(20px);
+			-webkit-backdrop-filter: saturate(1.6) blur(20px);
+			border-top: 1px solid var(--hairline);
 		}
 
 		.tabbar a,
@@ -337,7 +344,14 @@
 			font-size: 0.6875rem;
 			font-weight: 500;
 			color: var(--text-muted);
-			transition: color 0.15s;
+			transition:
+				color var(--fast) var(--ease),
+				transform var(--fast) var(--ease);
+		}
+
+		.tabbar a:active,
+		.tabbar button:active {
+			transform: scale(0.94);
 		}
 
 		.tabbar a span,
@@ -358,9 +372,9 @@
 		display: grid;
 		justify-items: center;
 		gap: var(--space-3);
-		margin-top: var(--space-6);
-		padding-top: var(--space-4);
-		border-top: 1px solid var(--border);
+		margin-top: var(--space-7);
+		padding-top: var(--space-5);
+		border-top: 1px solid var(--hairline);
 		font-size: 0.8125rem;
 		color: var(--text-muted);
 	}
@@ -399,45 +413,23 @@
 		color: var(--accent);
 	}
 
-	.account {
-		display: flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-left: var(--space-2);
-	}
-
 	.avatar {
 		display: grid;
 		place-items: center;
-		width: 32px;
-		height: 32px;
+		flex: none;
+		width: 34px;
+		height: 34px;
+		margin-left: var(--space-1);
 		border-radius: 999px;
 		background: var(--accent-soft);
 		color: var(--accent);
 		font-size: 0.875rem;
 		font-weight: 700;
+		transition: box-shadow var(--fast) var(--ease);
 	}
 
 	.avatar:hover,
 	.avatar.active {
-		outline: 2px solid var(--accent);
-		outline-offset: 1px;
-	}
-
-	.logout {
-		display: grid;
-		place-items: center;
-		width: 36px;
-		height: 36px;
-		border: 0;
-		border-radius: 999px;
-		background: none;
-		color: var(--text-muted);
-		cursor: pointer;
-	}
-
-	.logout:hover {
-		background: var(--surface-2);
-		color: var(--text);
+		box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--accent);
 	}
 </style>
