@@ -5,6 +5,7 @@ import { t } from '#lib/i18n/index.ts';
 import type { MarkableStatus } from '#lib/music/status-word.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { placeholderName } from '#lib/music/naming.ts';
+import { fileWords } from '#lib/music/instrument-label.ts';
 import { folderUrl } from '#lib/server/catalog.ts';
 import { confirmMissingPart, formText, markReportedFile, setReportStatus } from '#lib/server/feedback.ts';
 import { getLibrary } from '#lib/server/library.ts';
@@ -47,7 +48,8 @@ function placeholderFor(library: Awaited<ReturnType<typeof getLibrary>>, pieceId
 	if (!detail) return undefined;
 	const files = detail.parts.filter((p) => p.section === '').map(({ id, fileName, mimeType }) => ({ id, name: fileName, mimeType }));
 	return {
-		name: placeholderName(files, detail.title, part, config.naming, detail),
+		// The report names the part as the app shows it; the file uses the convention's words.
+		name: placeholderName(files, detail.title, fileWords(part), config.naming, detail),
 		folderId: detail.id,
 		folderUrl: folderUrl(detail.id),
 		// Someone made it already, e.g. by hand: then there's nothing to create.

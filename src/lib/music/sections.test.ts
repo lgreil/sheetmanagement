@@ -98,7 +98,7 @@ describe('catalog sections', () => {
 		const piece = catalog.byId.get('dvorak')!;
 		expect(piece.sections.map((s) => s.label)).toEqual(['1. Satz', '4. Satz']);
 		expect(piece.parts.every((p) => !p.notes.some((note) => note.startsWith('Satz')))).toBe(true);
-		expect(piece.parts.filter((p) => p.section === 's4').map((p) => p.label)).toEqual(['Partitur', 'Viola']);
+		expect(piece.parts.filter((p) => p.section === 's4').map((p) => p.label)).toEqual(['Partitur', 'Bratsche']);
 	});
 
 	it('keeps a plain piece as one unnamed section', () => {

@@ -18,9 +18,12 @@ export class NotConfiguredError extends Error {
 
 let google: { json: string; write: boolean; client: GoogleClient; email: string } | null = null;
 
-/** Whether the app may change files in Drive (DRIVE_WRITE=true). Off by default: reading needs no more. */
+/**
+ * Whether the app may change files in Drive (DRIVE_WRITE=true). Off by default: reading needs
+ * no more. The demo's Drive is in memory, so renaming and placeholders can be tried there.
+ */
 export function driveWriteEnabled(): boolean {
-	if (isDemo()) return false;
+	if (isDemo()) return true;
 	return ['true', '1', 'yes', 'on'].includes((appEnv().DRIVE_WRITE ?? '').trim().toLowerCase());
 }
 

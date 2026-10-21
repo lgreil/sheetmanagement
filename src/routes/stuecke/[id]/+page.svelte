@@ -136,7 +136,7 @@
 {#each data.loans as loan, i (i)}
 	<!-- Rented music: whose it is and when it goes back, before anyone writes in it. -->
 	<div class="loan {loan.state}" role="note">
-		<Icon name={loan.state === 'overdue' ? 'alert' : 'clock'} size={18} />
+		<Icon name={loan.state === 'overdue' ? 'alert' : 'loan'} size={18} />
 		<p>
 			<strong>{t.loans.onPiece}</strong>
 			{[loan.from && t.loans.from(loan.from), loan.dueAt && t.loans.dueAt(loan.dueAt)].filter(Boolean).join(', ')}

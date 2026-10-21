@@ -1,5 +1,6 @@
 import type { OrchestraConfig } from '#lib/config/index.ts';
 import { createInstrumentMatcher, parsePartName, type InstrumentMatcher } from './part-name.ts';
+import { instrumentLabel } from './instrument-label.ts';
 import { formatNumbers } from './text.ts';
 import type { Part, PieceDetail } from './types.ts';
 
@@ -53,9 +54,10 @@ export function parseInstrument(text: string, config: OrchestraConfig): Instrume
 	return parseInstruments(text, config)[0] ?? null;
 }
 
-/** "Geige I & II", "Klarinette": how a choice is shown and stored back in "Instrument". */
+/** "Violine I & II", "Klarinette": how a choice is shown and stored back in "Instrument" (read again through the aliases). */
 export function formatInstrument(choice: InstrumentChoice): string {
-	return choice.numbers.length ? `${choice.instrument} ${formatNumbers(choice.numbers)}` : choice.instrument;
+	const name = instrumentLabel(choice.instrument);
+	return choice.numbers.length ? `${name} ${formatNumbers(choice.numbers)}` : name;
 }
 
 /** "Geige I & II, Viola" */

@@ -169,7 +169,7 @@
 					<Icon name="file" size={16} />{busy === 'score' ? t.suggest.reading : t.suggest.fromScore}
 				</button>
 				<button class="btn ghost small" type="button" onclick={() => (viewing = !viewing)} aria-pressed={viewing}>
-					<Icon name="music" size={16} />{viewing ? t.viewer.hide : t.viewer.show}
+					<Icon name="eye" size={16} />{viewing ? t.viewer.hide : t.viewer.show}
 				</button>
 			</div>
 		{/if}

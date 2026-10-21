@@ -91,7 +91,7 @@
 	<h1>{title}</h1>
 	<div class="head-actions">
 		{#if partsUrl}
-			<a class="btn" href={partsUrl}><Icon name="user" size={18} />{t.nav.myParts}</a>
+			<a class="btn" href={partsUrl}><Icon name="parts" size={18} />{t.nav.myParts}</a>
 		{/if}
 		<div class="ui-actions"><ShareButton {title} text={shareText} url={page.url.pathname} /></div>
 	</div>
@@ -148,7 +148,7 @@
 	{#if data.kind === 'event' && !isConcert && data.concert}
 		<li>
 			<a class="fact" href="/konzerte/{encodeURIComponent(data.concert.id)}">
-				<span class="icon concert"><Icon name="sparkle" size={18} /></span>
+				<span class="icon concert"><Icon name="link" size={18} /></span>
 				<span class="fact-body">
 					<span class="over">{t.concert.preparesFor}</span>
 					<strong>{data.concert.displayTitle}</strong>
@@ -223,7 +223,7 @@
 				<li><a href={planning.printUrl}><Icon name="print" size={18} /><span>{t.print.handout} · {t.print.setlist}</span><Icon name="chevron" size={18} /></a></li>
 			{/if}
 			{#if planning.reportUrl}
-				<li><a href={planning.reportUrl}><Icon name="file" size={18} /><span>{t.musicReport.tab}</span><Icon name="chevron" size={18} /></a></li>
+				<li><a href={planning.reportUrl}><Icon name="table" size={18} /><span>{t.musicReport.tab}</span><Icon name="chevron" size={18} /></a></li>
 			{/if}
 		</ul>
 	</section>

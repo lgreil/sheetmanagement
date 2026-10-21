@@ -68,9 +68,10 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'F-Stimmen', family: 'sonstige' },
 		{ name: 'Stimme', family: 'sonstige', aliases: ['Part'], voice: true },
 
+		// The app says Geige · Bratsche · Cello · Kontrabass; the files keep their words (Viola, Violoncello).
 		{ name: 'Geige', family: 'streicher', common: true, aliases: ['Geigen', 'Violine', 'Violinen', 'Violin', 'Violins'] },
-		{ name: 'Viola', family: 'streicher', common: true, aliases: ['Violen', 'Bratsche', 'Violas', 'Vioa'] },
-		{ name: 'Violoncello', family: 'streicher', common: true, aliases: ['Cello', 'Celli', 'Cellos', 'Violoncellos'] },
+		{ name: 'Viola', label: 'Bratsche', family: 'streicher', common: true, aliases: ['Violen', 'Bratsche', 'Bratschen', 'Violas', 'Vioa'] },
+		{ name: 'Violoncello', label: 'Cello', family: 'streicher', common: true, aliases: ['Cello', 'Celli', 'Cellos', 'Violoncellos'] },
 		{
 			name: 'Kontrabass',
 			family: 'streicher',

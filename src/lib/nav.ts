@@ -44,7 +44,7 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 			key: 'musik',
 			label: t.nav.groups.musik,
 			items: [
-				{ href: '/meine-noten', label: t.nav.myParts, icon: 'user', primary: true },
+				{ href: '/meine-noten', label: t.nav.myParts, icon: 'parts', primary: true },
 				{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar', primary: true },
 				{ href: '/stuecke', label: t.nav.pieces, icon: 'music', primary: true }
 			]
@@ -72,8 +72,8 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 						{ href: '/meldungen', label: t.nav.reports, icon: 'flag' },
 						{ href: '/fehlende-stimmen', label: t.nav.gaps, icon: 'alert' },
 						{ href: '/stuecke/angaben', label: t.nav.details, icon: 'sparkle' },
-						{ href: '/namen', label: t.nav.naming, icon: 'file' },
-						{ href: '/leihmaterial', label: t.nav.loans, icon: 'clock' }
+						{ href: '/namen', label: t.nav.naming, icon: 'text' },
+						{ href: '/leihmaterial', label: t.nav.loans, icon: 'loan' }
 					]
 				: []
 		},
@@ -86,8 +86,8 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 				// Setup and status are open while sign-in is off; that's how a deployment is set up.
 				...(admin || auth === 'off'
 					? [
-							{ href: '/setup', label: t.nav.setup, icon: 'file' as const },
-							{ href: '/status', label: t.nav.status, icon: 'refresh' as const }
+							{ href: '/setup', label: t.nav.setup, icon: 'sliders' as const },
+							{ href: '/status', label: t.nav.status, icon: 'activity' as const }
 						]
 					: [])
 			]

@@ -1,15 +1,14 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { FormState } from '#lib/forms.svelte.ts';
+	import { invalidateAll } from '$app/navigation';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import { checkSection } from '#lib/music/naming.ts';
+	import { checkSection, RENAME_BATCH } from '#lib/music/naming.ts';
 	import { createInstrumentMatcher } from '#lib/music/part-name.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
 	const matcher = createInstrumentMatcher(config.instruments);
 	/** Short titles people changed, by section; the rest use the guess. */
@@ -36,8 +35,57 @@
 		)
 	);
 
-	const saving = new FormState();
-	const submit = saving.submit();
+	type Job = { key: string; shortTitle: string; ids: string[] };
+	/** While renaming: how far it got. Afterwards: what happened, and for which folders. */
+	let progress = $state<{ key: string; done: number; total: number } | null>(null);
+	let result = $state<{ renamed: number; failed: string[]; keys: string[] } | null>(null);
+
+	async function post(body: object) {
+		const response = await fetch('/namen/umbenennen', {
+			method: 'POST',
+			headers: { 'content-type': 'application/json' },
+			body: JSON.stringify(body)
+		});
+		if (!response.ok) throw new Error((await response.json().catch(() => null))?.message ?? String(response.status));
+		return (await response.json()) as { renamed: string[]; failed: string[] };
+	}
+
+	/** Renames one piece's files in small batches, with the bar in that piece moving after each batch. */
+	async function rename(jobs: Job[]) {
+		const total = jobs.reduce((sum, job) => sum + job.ids.length, 0);
+		if (!total || progress) return;
+		progress = { key: jobs[0].key, done: 0, total };
+		result = null;
+		let renamed = 0;
+		const failed: string[] = [];
+		try {
+			for (const job of jobs) {
+				for (let i = 0; i < job.ids.length; i += RENAME_BATCH) {
+					const ids = job.ids.slice(i, i + RENAME_BATCH);
+					try {
+						const answer = await post({ key: job.key, shortTitle: job.shortTitle, ids });
+						renamed += answer.renamed.length;
+						failed.push(...answer.failed);
+					} catch (error) {
+						failed.push(`${ids.length} × ${(error as Error).message}`);
+					}
+					progress.done = Math.min(total, progress.done + ids.length);
+				}
+			}
+			// Once at the end: the archive is read again, so the new names show.
+			await post({ refresh: true }).catch(() => {});
+			await invalidateAll();
+		} finally {
+			result = { renamed, failed, keys: jobs.map((job) => job.key) };
+			progress = null;
+		}
+	}
+
+	const jobOf = (section: (typeof sections)[number]): Job => ({
+		key: section.key,
+		shortTitle: section.shortTitle,
+		ids: section.chosen.map((check) => check.id)
+	});
 </script>
 
 <Title title={t.naming.title} />
@@ -70,8 +118,12 @@
 					</a>
 				</div>
 
-				<form method="POST" action="?/rename" use:enhance={submit}>
-					<input type="hidden" name="key" value={section.key} />
+				<form
+					onsubmit={(event) => {
+						event.preventDefault();
+						rename([jobOf(section)]);
+					}}
+				>
 					<label class="short">
 						<span>{t.naming.shortTitle}</span>
 						<input
@@ -115,13 +167,28 @@
 						{/each}
 					</ul>
 
-					{#if form?.key === section.key && form.message}
-						<p class="msg error" role="alert">{form.message}</p>
-					{:else if form?.key === section.key && form.renamed}
-						<p class="msg ok" role="status"><Icon name="check" size={16} />{t.naming.renamed(form.renamed)}</p>
+					{#if progress?.key === section.key}
+						<div class="running">
+							<div
+								class="bar"
+								role="progressbar"
+								aria-valuemin="0"
+								aria-valuemax={progress.total}
+								aria-valuenow={progress.done}
+								aria-label={t.naming.progress(progress.done, progress.total)}
+							>
+								<span style="width: {(100 * progress.done) / progress.total}%"></span>
+							</div>
+							<p aria-live="polite">{t.naming.progress(progress.done, progress.total)}</p>
+						</div>
+					{:else if result && result.keys[0] === section.key}
+						<p class="msg {result.failed.length ? 'error' : 'ok'}" role="status">
+							<Icon name={result.failed.length ? 'alert' : 'check'} size={16} />
+							{t.naming.renamed(result.renamed)}{result.failed.length ? ` ${t.naming.failed(result.failed)}` : ''}
+						</p>
 					{/if}
-					{#if section.chosen.length}
-						<button class="btn" disabled={!data.driveWrite || saving.busy || section.chosen.length > data.maxRenames}>
+					{#if section.chosen.length && progress?.key !== section.key}
+						<button class="btn" disabled={!data.driveWrite || !!progress}>
 							<Icon name="check" size={16} />{t.naming.rename(section.chosen.length)}
 						</button>
 					{/if}
@@ -134,6 +201,26 @@
 <style>
 	.msg {
 		margin-bottom: var(--space-4);
+	}
+
+	.running {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	.bar {
+		height: 8px;
+		overflow: hidden;
+		border-radius: 999px;
+		background: var(--surface-2);
+	}
+
+	.bar span {
+		display: block;
+		height: 100%;
+		border-radius: inherit;
+		background: var(--accent);
+		transition: width 0.3s var(--ease);
 	}
 
 	.summary {

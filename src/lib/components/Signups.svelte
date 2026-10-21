@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { instrumentLabel } from '#lib/music/instrument-label.ts';
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
@@ -57,7 +58,7 @@
 							<option value="">{t.signups.ownInstrument(signups.ownInstrument)}</option>
 							{#each signups.ownSections as name (name)}<option value={name}>{name}</option>{/each}
 							<optgroup label="…">
-								{#each otherSections as name (name)}<option value={name}>{name}</option>{/each}
+								{#each otherSections as name (name)}<option value={name}>{instrumentLabel(name)}</option>{/each}
 							</optgroup>
 						</select>
 					</label>

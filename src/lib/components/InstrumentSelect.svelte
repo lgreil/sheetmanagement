@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { instrumentLabel } from '#lib/music/instrument-label.ts';
 	import { t } from '#lib/i18n/index.ts';
 
 	/**
@@ -60,11 +61,11 @@
 		{#if group.label}
 			{#if shown(group.names).length}
 				<optgroup label={group.label}>
-					{#each shown(group.names) as instrument (instrument)}<option value={instrument}>{instrument}</option>{/each}
+					{#each shown(group.names) as instrument (instrument)}<option value={instrument}>{instrumentLabel(instrument)}</option>{/each}
 				</optgroup>
 			{/if}
 		{:else}
-			{#each shown(group.names) as instrument (instrument)}<option value={instrument}>{instrument}</option>{/each}
+			{#each shown(group.names) as instrument (instrument)}<option value={instrument}>{instrumentLabel(instrument)}</option>{/each}
 		{/if}
 	{/each}
 	{#if hidden}<option value={MORE}>{t.instruments.more}</option>{/if}

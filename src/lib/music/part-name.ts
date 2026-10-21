@@ -38,7 +38,10 @@ interface Item {
 }
 
 export interface ParsedPart {
+	/** As shown in the app, with the instruments' display labels: "Bratsche". */
 	label: string;
+	/** As the naming convention writes it, with the instruments' file-name words: "Viola". */
+	fileLabel: string;
 	kind: PartKind;
 	family?: InstrumentFamily;
 	instruments: string[];
@@ -283,9 +286,9 @@ export function parsePartName(
 	const voiceIndex = items.findIndex((item) => item.instrument.voice);
 	if (voiceIndex > 0) items.unshift(...items.splice(voiceIndex, 1));
 
-	const describe = (item: Item) =>
+	const describe = (item: Item, display: boolean) =>
 		[
-			item.instrument.name,
+			display ? (item.instrument.label ?? item.instrument.name) : item.instrument.name,
 			// Voices are counted ("Stimme 3"), instrument parts use roman numbers ("Horn II").
 			item.instrument.voice ? item.numbers.join(' & ') : formatNumbers(item.numbers),
 			item.transposition ? `in ${item.transposition}` : ''
@@ -294,27 +297,35 @@ export function parsePartName(
 			.join(' ');
 
 	// A voice ("Stimme 3") followed by instruments reads "Stimme 3: Flöte & Oboe".
-	let label = '';
-	items.forEach((item, index) => {
-		const text = describe(item);
-		if (index === 0) label = text;
-		else if (items[index - 1].instrument.voice && index === 1) label += `: ${text}`;
-		else label += ` ${item.joiner} ${text}`;
-	});
+	const join = (display: boolean) => {
+		let text = '';
+		items.forEach((item, index) => {
+			const part = describe(item, display);
+			if (index === 0) text = part;
+			else if (items[index - 1].instrument.voice && index === 1) text += `: ${part}`;
+			else text += ` ${item.joiner} ${part}`;
+		});
+		return text;
+	};
+	let label = join(true);
+	let fileLabel = join(false);
 
 	// Voice parts of singers ("Gesang SA", "Gesang B") keep their short voice names.
 	let unrecognized = unknown;
 	if (items.length > 0 && items.every((item) => item.instrument.family === 'gesang')) {
 		const isVoice = (token: string) => /^[satb]{1,4}$/.test(token);
 		const voices = unknown.filter(isVoice).map((t) => t.toUpperCase());
-		if (voices.length) label += ` ${voices.join(' ')}`;
+		if (voices.length) {
+			label += ` ${voices.join(' ')}`;
+			fileLabel += ` ${voices.join(' ')}`;
+		}
 		unrecognized = unknown.filter((token) => !isVoice(token));
 	}
 
 	const soloNote = naming.partNotes.solo ?? 'Solo';
 	if (items.length === 0 && notes.includes(soloNote)) {
 		// "Barcarolle-Solo.pdf": the solo part, instrument not named.
-		label = soloNote;
+		label = fileLabel = soloNote;
 	}
 
 	const first = items[0];
@@ -330,7 +341,7 @@ export function parsePartName(
 
 	if (!label) {
 		// Nothing recognised: show the readable rest of the name.
-		label = name.replace(/[_]+/g, ' ').replace(/\s+-\s+/g, ' – ').trim() || fileName;
+		label = fileLabel = name.replace(/[_]+/g, ' ').replace(/\s+-\s+/g, ' – ').trim() || fileName;
 	}
 
 	const instrumentIndex = first ? (matcher.order.get(first.instrument) ?? 999) : 999;
@@ -342,6 +353,7 @@ export function parsePartName(
 
 	return {
 		label,
+		fileLabel,
 		kind,
 		family: first?.instrument.family,
 		instruments: [...new Set(items.filter((i) => !i.instrument.voice).map((i) => i.instrument.name))],
