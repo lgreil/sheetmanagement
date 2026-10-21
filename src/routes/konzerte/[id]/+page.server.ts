@@ -271,8 +271,29 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const planned = (id: string) => (plan?.byEvent.get(id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
 	const planConcert = event.type === 'konzert' ? event : event.concertId ? lookup(event.concertId) : undefined;
 	const canPlan = locals.access.rights.has('programme.bearbeiten') && !!planConcert?.rehearsalIds.length;
+	// The "Planung" view (concerts only): for those who plan the programme or take attendance.
+	const rights = locals.access.rights;
+	const lastRehearsal = event.rehearsalIds
+		.map(lookup)
+		.filter((e): e is ShownEvent => !!e && e.daysUntil <= 0)
+		.at(-1);
+	const planning =
+		event.type === 'konzert' && (rights.has('programme.bearbeiten') || rights.has('anwesenheit.erfassen'))
+			? {
+					printUrl: items.length ? `/konzerte/${encodeURIComponent(event.id)}/drucken` : undefined,
+					reportUrl:
+						items.length && rights.has('programme.bearbeiten') && config.musicReport !== false
+							? `/konzerte/${encodeURIComponent(event.id)}/drucken?art=musikfolge`
+							: undefined,
+					attendanceUrl:
+						lastRehearsal && rights.has('anwesenheit.erfassen')
+							? { href: `/konzerte/${encodeURIComponent(lastRehearsal.id)}/anwesenheit`, label: lastRehearsal.date.long }
+							: undefined
+				}
+			: null;
 	return {
 		kind: 'event' as const,
+		planning,
 		signups: await signups(event, orchestra, locals),
 		attendance: await attendance(event, library, plan, locals),
 		attendanceSaved: url.searchParams.has('anwesenheit'),

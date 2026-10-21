@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
 	import { t } from '#lib/i18n/index.ts';
-	import { isActive, type NavGroup } from '#lib/nav.ts';
+	import type { NavGroup } from '#lib/nav.ts';
 	import Icon from './Icon.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -11,10 +11,16 @@
 	 */
 	let {
 		groups,
-		path,
+		current,
 		user,
 		open = $bindable(false)
-	}: { groups: NavGroup[]; path: string; user: { name: string; email: string } | null; open?: boolean } = $props();
+	}: {
+		groups: NavGroup[];
+		/** The current page's entry, the most specific one. */
+		current: string | undefined;
+		user: { name: string; email: string } | null;
+		open?: boolean;
+	} = $props();
 
 	function onkeydown(event: KeyboardEvent) {
 		if (open && event.key === 'Escape') open = false;
@@ -35,8 +41,8 @@
 							<li>
 								<a
 									href={item.href}
-									class:active={isActive(item.href, path)}
-									aria-current={isActive(item.href, path) ? 'page' : undefined}
+									class:active={item.href === current}
+									aria-current={item.href === current ? 'page' : undefined}
 									onclick={() => (open = false)}
 								>
 									<span class="icon"><Icon name={item.icon} size={18} /></span>{item.label}

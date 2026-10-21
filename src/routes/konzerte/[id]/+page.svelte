@@ -1,11 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { replaceState } from '$app/navigation';
 	import { t } from '#lib/i18n/index.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
+	import Segmented from '#lib/components/Segmented.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -51,6 +53,23 @@
 	);
 	const check = $derived(data.program.check);
 	const checkOpen = $derived(check?.filter((item) => !item.ok).length ?? 0);
+
+	/**
+	 * Planners get two views of a concert: what every member sees, and "Planung" with the
+	 * check, the tools, the instrumentation and attendance. Members see one calm page.
+	 */
+	const planning = $derived(data.kind === 'event' ? data.planning : null);
+	// svelte-ignore state_referenced_locally
+	let view = $state<'overview' | 'planung'>(page.url.searchParams.has('planung') ? 'planung' : 'overview');
+	function changeView(next: 'overview' | 'planung') {
+		const url = new URL(page.url.href);
+		if (next === 'planung') url.searchParams.set('planung', '');
+		else url.searchParams.delete('planung');
+		// Linkable, without a new history entry for every switch.
+		replaceState(url, {});
+	}
+	const overview = $derived(!planning || view === 'overview');
+	const planner = $derived(!planning || view === 'planung');
 	const showPlan = $derived(
 		data.kind === 'event' &&
 			!isConcert &&
@@ -78,6 +97,21 @@
 	</div>
 </header>
 
+{#if planning}
+	<div class="views">
+		<Segmented
+			label={t.concert.views.label}
+			options={[
+				{ value: 'overview', label: t.concert.views.overview, icon: 'calendar' },
+				{ value: 'planung', label: checkOpen ? `${t.concert.views.planning} · ${checkOpen}` : t.concert.views.planning, icon: 'list' }
+			]}
+			bind:value={view}
+			onchange={changeView}
+		/>
+	</div>
+{/if}
+
+{#if overview}
 <!-- The facts as one calm list: when, where, what it belongs to. -->
 <ul class="ui-list facts">
 	<li>
@@ -140,8 +174,9 @@
 		<p class="ui-card description">{data.event.description}</p>
 	</section>
 {/if}
+{/if}
 
-{#if check}
+{#if check && planner}
 	<!-- For planners: what's done and what's still open, worked out from the data. -->
 	<details class="block check" open={checkOpen > 0}>
 		<summary>
@@ -166,6 +201,35 @@
 	</details>
 {/if}
 
+{#if planning && view === 'planung'}
+	<!-- Everything a planner works with for this concert, one tap each. -->
+	<section class="block">
+		<h2 class="ui-label">{t.concert.tools}</h2>
+		<ul class="ui-list tools">
+			{#if data.program.canEdit}
+				<li><a href="/konzerte/{id}/programm"><Icon name="edit" size={18} /><span>{t.editor.edit}</span><Icon name="chevron" size={18} /></a></li>
+			{/if}
+			{#if data.kind === 'event' && data.rehearsalPlan.editUrl}
+				<li><a href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={18} /><span>{t.rehearsalPlan.edit}</span><Icon name="chevron" size={18} /></a></li>
+			{/if}
+			{#if planning.attendanceUrl}
+				<li>
+					<a href={planning.attendanceUrl.href}>
+						<Icon name="users" size={18} /><span>{t.concert.lastAttendance}<small>{planning.attendanceUrl.label}</small></span><Icon name="chevron" size={18} />
+					</a>
+				</li>
+			{/if}
+			{#if planning.printUrl}
+				<li><a href={planning.printUrl}><Icon name="print" size={18} /><span>{t.print.handout} · {t.print.setlist}</span><Icon name="chevron" size={18} /></a></li>
+			{/if}
+			{#if planning.reportUrl}
+				<li><a href={planning.reportUrl}><Icon name="file" size={18} /><span>{t.musicReport.tab}</span><Icon name="chevron" size={18} /></a></li>
+			{/if}
+		</ul>
+	</section>
+{/if}
+
+{#if overview}
 {#if data.kind === 'event' && data.attendance?.kind === 'rehearsal'}
 	<section class="block">
 		<h2 class="ui-label">{t.attendance.title}</h2>
@@ -229,7 +293,8 @@
 		{/if}
 		{#if data.program.items.length}
 			<ProgramList items={data.program.items} total />
-			<p class="hint">{t.concert.programHint}</p>
+			<!-- Where it's kept only matters to those who keep it. -->
+			{#if data.program.canEdit}<p class="hint">{t.concert.programHint}</p>{/if}
 		{:else}
 			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
 		{/if}
@@ -284,6 +349,9 @@
 		{:else}
 			<p class="placeholder">{t.concert.noRehearsals}</p>
 		{/if}
+		{#if data.attendance?.kind === 'concert' && data.attendance.mine}
+			<p class="note mine"><Icon name="users" size={16} /><span>{t.attendance.mine(data.attendance.mine.present, data.attendance.mine.of)}</span></p>
+		{/if}
 	</section>
 {:else if data.kind === 'event' && showPlan}
 	<section class="block">
@@ -303,11 +371,12 @@
 	</section>
 {/if}
 
-{#if data.kind === 'event' && data.attendance?.kind === 'concert'}
+{/if}
+
+{#if planner && data.kind === 'event' && data.attendance?.kind === 'concert' && data.attendance.table}
 	{@const summary = data.attendance}
 	<section class="block">
 		<h2 class="ui-label">{t.attendance.overview}</h2>
-		{#if summary.mine}<p class="note"><Icon name="users" size={16} /><span>{t.attendance.mine(summary.mine.present, summary.mine.of)}</span></p>{/if}
 		{#if summary.table}
 			<div class="ui-card attendance">
 				<p class="hint">{t.attendance.overviewLead(summary.taken)} {t.attendance.overviewHint}</p>
@@ -338,7 +407,7 @@
 	</section>
 {/if}
 
-{#if isConcert && data.program.instrumentation}
+{#if planner && isConcert && data.program.instrumentation}
 	<InstrumentationMatrix {...data.program.instrumentation} />
 {/if}
 
@@ -384,6 +453,47 @@
 		font-weight: 500;
 		letter-spacing: 0;
 		text-transform: none;
+	}
+
+	.views {
+		margin-bottom: var(--space-5);
+	}
+
+	.tools a {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		min-height: 52px;
+		padding: var(--space-2) var(--space-4);
+		transition: background var(--fast) var(--ease);
+	}
+
+	.tools a:hover {
+		background: var(--surface-2);
+	}
+
+	.tools a > :global(svg:first-child) {
+		color: var(--accent);
+	}
+
+	.tools a > :global(svg:last-child) {
+		color: var(--text-muted);
+	}
+
+	.tools span {
+		display: grid;
+		flex: 1;
+		font-weight: 600;
+	}
+
+	.tools small {
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+		font-weight: 400;
+	}
+
+	.note.mine {
+		margin-top: var(--space-3);
 	}
 
 	.head-actions {

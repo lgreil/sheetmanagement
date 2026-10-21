@@ -9,7 +9,8 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
-	import { isActive, navGroups, primaryNav } from '#lib/nav.ts';
+	import WorkspaceTabs from '#lib/components/WorkspaceTabs.svelte';
+	import { currentItem, navGroups, primaryNav, workspaceOf } from '#lib/nav.ts';
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
 
 	let { data, children } = $props();
@@ -17,8 +18,12 @@
 	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
 	const nav = $derived(primaryNav(groups));
 	const path = $derived(page.url.pathname);
+	// The most specific entry counts: "Angaben ergänzen" lights up "Mehr", not "Archiv".
+	const current = $derived(currentItem(groups, path)?.item.href);
+	const isCurrent = (href: string) => (href === '/' ? path === '/' : href === current);
 	// "Mehr" is highlighted on the pages only it links to.
-	const inMore = $derived(!nav.some((item) => isActive(item.href, path)) && groups.some((g) => g.items.some((item) => isActive(item.href, path))));
+	const inMore = $derived(!!current && !nav.some((item) => item.href === current));
+	const workspace = $derived(workspaceOf(groups, path));
 	let menuOpen = $state(false);
 
 	const links = orchestraLinks(config.links);
@@ -60,7 +65,7 @@
 
 			<nav class="nav-desktop" aria-label="Hauptnavigation">
 				{#each nav as item (item.href)}
-					<a href={item.href} class:active={isActive(item.href, path)} aria-current={isActive(item.href, path) ? 'page' : undefined}>
+					<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
 						{item.label}
 					</a>
 				{/each}
@@ -80,7 +85,7 @@
 				<a
 					class="avatar"
 					href="/profil"
-					class:active={isActive('/profil', path)}
+					class:active={path === '/profil'}
 					title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
 					aria-label={t.profile.title}
 				>
@@ -92,6 +97,8 @@
 
 	<main>
 		<!-- A soft fade between pages; staying on a page (filters, forms) doesn't replay it. -->
+		<!-- Outside the fade: the tabs stay put while switching between the workspace's pages. -->
+		{#if workspace}<WorkspaceTabs group={workspace} {current} />{/if}
 		{#key path}
 			<div class="page" in:fade={{ duration: 160 }}>
 				{@render children()}
@@ -123,7 +130,7 @@
 
 	<nav class="tabbar" aria-label="Hauptnavigation">
 		{#each nav as item (item.href)}
-			<a href={item.href} class:active={isActive(item.href, path)} aria-current={isActive(item.href, path) ? 'page' : undefined}>
+			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
 				<Icon name={item.icon} size={22} />
 				<span>{item.label}</span>
 			</a>
@@ -134,7 +141,7 @@
 		</button>
 	</nav>
 
-	<NavMenu {groups} {path} user={data.user ?? null} bind:open={menuOpen} />
+	<NavMenu {groups} {current} user={data.user ?? null} bind:open={menuOpen} />
 	<Toast />
 </div>
 

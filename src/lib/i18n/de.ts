@@ -23,7 +23,8 @@ export const de = {
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
 		crumbs: 'Seitenpfad',
-		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
+		groups: { musik: 'Proben & Noten', mitmachen: 'Mitmachen', pflege: 'Noten pflegen', verwaltung: 'Verwaltung' },
+		workspace: 'Bereich'
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
@@ -49,6 +50,7 @@ export const de = {
 		morePieces: (n: number) => `+ ${n} weitere`,
 		nextRehearsal: 'Nächste Probe',
 		quickLinks: 'Alle Bereiche',
+		work: 'Aufgaben im Orchester',
 		todo: {
 			title: 'Wartet auf dich',
 			reports: (n: number) => (n === 1 ? 'offene Meldung' : 'offene Meldungen'),
@@ -206,7 +208,10 @@ export const de = {
 		preparesFor: 'Probe für',
 		sharedFrom: 'Gleiches Programm wie',
 		sharedWith: 'Dieses Programm gilt auch für',
-		description: 'Notiz aus dem Kalender'
+		description: 'Notiz aus dem Kalender',
+		views: { label: 'Ansicht', overview: 'Übersicht', planning: 'Planung' },
+		tools: 'Werkzeuge',
+		lastAttendance: 'Anwesenheit der letzten Probe'
 	},
 	attendance: {
 		title: 'Anwesenheit',

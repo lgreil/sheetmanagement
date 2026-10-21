@@ -84,7 +84,6 @@
 
 	<div class="top">
 		<div class="ui-actions">
-			<a href="/meldungen"><Icon name="flag" size={16} />{t.nav.reports}</a>
 			{#if data.sheetUrl}
 				<a href={data.sheetUrl} target="_blank" rel="noopener noreferrer"><Icon name="external" size={16} />{t.admin.openSheet}</a>
 			{/if}
