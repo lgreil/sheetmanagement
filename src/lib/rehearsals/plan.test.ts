@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRehearsalPlan, parsePlanEdit, planRehearsalSave, planVersion } from './plan.ts';
+import { buildRehearsalPlan, parsePlanEdit, plannedInProgramOrder, planRehearsalSave, planVersion } from './plan.ts';
 
 const HEADER = ['Probe', 'Stück', 'Notiz', 'Termin-ID'];
 
@@ -63,5 +63,21 @@ describe('planVersion', () => {
 		expect(planVersion(other.table, ['probe-2'])).toBe(before);
 		const changed = buildRehearsalPlan([HEADER, ['', 'Bolero', 'Notiz', 'probe-2']]);
 		expect(planVersion(changed.table, ['probe-2'])).not.toBe(before);
+	});
+});
+
+describe('plannedInProgramOrder', () => {
+	it('keeps the programme order and adds pieces from outside it at the end', () => {
+		const program = [
+			{ pieceId: 'a', title: 'Bolero' },
+			{ title: 'Ohne Noten' },
+			{ pieceId: 'b', title: 'Sleigh Ride' }
+		];
+		const planned = [
+			{ pieceId: 'x', title: 'Einspielstück' },
+			{ pieceId: 'b', title: 'Sleigh Ride' },
+			{ title: 'ohne noten' }
+		];
+		expect(plannedInProgramOrder(program, planned).map((item) => item.title)).toEqual(['Ohne Noten', 'Sleigh Ride', 'Einspielstück']);
 	});
 });

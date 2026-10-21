@@ -165,7 +165,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			.map((rehearsal) => ({ ...rehearsal, planned: planned(rehearsal.id).map((item) => item.title) })),
 		rehearsalPlan: {
 			items: event.type === 'konzert' ? [] : planned(event.id),
-			editUrl: canPlan ? `/konzerte/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined
+			editUrl: canPlan ? `/konzerte/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined,
+			// The member's parts for this rehearsal (#115): planned pieces, else the whole programme.
+			partsUrl:
+				event.type !== 'konzert' && !event.past && (planned(event.id).length || library.concertsById.get(planConcert?.id ?? '')?.program.length)
+					? `/meine-noten?probe=${encodeURIComponent(event.id)}`
+					: undefined
 		},
 		concert: event.concertId ? lookup(event.concertId) : undefined,
 		mapUrl: mapUrl(event.location),

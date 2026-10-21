@@ -97,3 +97,15 @@ export function planRehearsalSave(table: RehearsalTable, edit: PlanEdit, labels:
 	}
 	return { append, remove };
 }
+
+/**
+ * The pieces for one rehearsal, in the concert's programme order: programme pieces that are
+ * planned, then planned pieces that aren't in the programme. Matched by piece id, else by title.
+ */
+export function plannedInProgramOrder<T extends { pieceId?: string; title: string }>(program: T[], planned: T[]): T[] {
+	const key = (item: T) => item.pieceId ?? `title:${normalize(item.title)}`;
+	const wanted = new Set(planned.map(key));
+	const inProgram = program.filter((item) => wanted.has(key(item)));
+	const seen = new Set(inProgram.map(key));
+	return [...inProgram, ...planned.filter((item) => !seen.has(key(item)))];
+}

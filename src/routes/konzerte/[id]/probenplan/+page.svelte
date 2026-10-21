@@ -27,6 +27,16 @@
 			Object.fromEntries(Object.entries(selected).map(([id, names]) => [id, order.filter((name) => names.includes(name))]))
 		);
 	});
+	// How often each piece is planned, live while ticking (#116).
+	const counts = $derived.by(() => {
+		if (data.state !== 'ready') return [];
+		return data.pieces.map((piece) => ({
+			...piece,
+			total: data.rehearsals.filter((rehearsal) => selected[rehearsal.id].includes(piece.name)).length,
+			upcoming: data.rehearsals.filter((rehearsal) => !rehearsal.past && selected[rehearsal.id].includes(piece.name)).length
+		}));
+	});
+	const unplanned = $derived(counts.filter((piece) => piece.inProgram && !piece.total).length);
 	const concertUrl = $derived(`/konzerte/${encodeURIComponent(data.concert.id)}`);
 </script>
 
@@ -52,6 +62,25 @@
 	</p>
 {:else}
 	{#if form?.message}<p class="message" role="alert">{form.message}</p>{/if}
+
+	<section class="overview" aria-labelledby="overview-title">
+		<h2 id="overview-title">{t.rehearsalPlan.overview}</h2>
+		{#if unplanned}<p class="warn">{t.rehearsalPlan.unplanned(unplanned)}</p>{/if}
+		<ul>
+			{#each counts as piece (piece.name)}
+				<li class:missing={piece.inProgram && !piece.total}>
+					<span class="name">{piece.title}</span>
+					<span class="times">
+						{#if piece.total}
+							{t.rehearsalPlan.times(piece.total)}{#if piece.upcoming < piece.total}<span class="muted"> · {t.rehearsalPlan.stillToCome(piece.upcoming)}</span>{/if}
+						{:else}
+							{t.rehearsalPlan.never}
+						{/if}
+					</span>
+				</li>
+			{/each}
+		</ul>
+	</section>
 
 	<ol class="rehearsals">
 		{#each data.rehearsals as rehearsal (rehearsal.id)}
@@ -129,6 +158,62 @@
 
 	.muted {
 		font-size: 0.875rem;
+	}
+
+	.overview {
+		display: grid;
+		gap: var(--space-2);
+		margin-bottom: var(--space-4);
+		padding: var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	.overview h2 {
+		margin: 0;
+		font-size: 1rem;
+	}
+
+	.overview ul {
+		display: grid;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.9375rem;
+	}
+
+	.overview li {
+		display: flex;
+		justify-content: space-between;
+		gap: var(--space-3);
+		padding: var(--space-1) 0;
+	}
+
+	.overview li + li {
+		border-top: 1px solid var(--border);
+	}
+
+	.overview .name {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.overview .times {
+		flex: none;
+		font-weight: 600;
+		text-align: right;
+	}
+
+	.overview li.missing .times,
+	.warn {
+		color: var(--warn);
+	}
+
+	.warn {
+		margin: 0;
+		font-size: 0.875rem;
+		font-weight: 600;
 	}
 
 	.rehearsals {

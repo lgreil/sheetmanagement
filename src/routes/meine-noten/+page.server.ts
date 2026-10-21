@@ -5,8 +5,9 @@ import { t } from '#lib/i18n/index.ts';
 import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
-import { getLibrary, isPastConcert, type LibraryConcert } from '#lib/server/library.ts';
-import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
+import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
+import { getLibrary, isPastConcert, namedItem, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { getAccessList, getMusicConfig, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -42,8 +43,27 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
 	return { shown, focus };
 }
 
+/**
+ * One rehearsal asked for in the URL (#115): the pieces planned for it, in the programme's
+ * order, else the whole programme of the concert it prepares for, with a note saying so.
+ */
+async function rehearsalOf(library: Library, id: string | null) {
+	const event = id && library.schedule.ok ? library.schedule.byId.get(id) : undefined;
+	if (!event || (event.type !== 'probe' && event.type !== 'generalprobe')) return null;
+	const program = (event.concertId && library.concertsById.get(event.concertId)?.program) || [];
+	const planned = ((await getRehearsalPlan())?.byEvent.get(event.id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
+	return {
+		id: event.id,
+		title: event.displayTitle,
+		label: [event.date.long, event.date.time].filter(Boolean).join(' · '),
+		items: planned.length ? plannedInProgramOrder(program, planned) : program,
+		note: planned.length ? undefined : program.length ? t.myParts.wholeProgram : undefined
+	};
+}
+
 export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const [library, access, music] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig()]);
+	const rehearsal = await rehearsalOf(library, url.searchParams.get('probe'));
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
 
 	// What to show: asked for in the URL, else from "Mitglieder" (it follows members to every
@@ -52,8 +72,8 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const choices = parseInstruments(text, config);
 
 	const { shown: concerts, focus } = pickConcerts(library.concerts, library.today, url.searchParams.get('konzert'), member);
-	const piecesOf = (concert: LibraryConcert) =>
-		concert.program.map((item) => {
+	const piecesOf = (items: ProgramItem[]) =>
+		items.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
 			return {
@@ -81,13 +101,18 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 		pausedUntil: member?.pausedUntil,
 		instruments: CHOICES,
 		common: commonInstruments(config),
-		concerts: concerts.map((concert) => ({
-			id: concert.id,
-			title: concert.title,
-			label: concert.label?.long,
-			pieces: piecesOf(concert)
-		})),
-		focus: focus?.id ?? null,
+		concerts: [
+			// A rehearsal asked for in the URL comes first, above the concerts.
+			...(rehearsal ? [{ id: rehearsal.id, title: rehearsal.title, label: rehearsal.label, note: rehearsal.note, pieces: piecesOf(rehearsal.items) }] : []),
+			...concerts.map((concert) => ({
+				id: concert.id,
+				title: concert.title,
+				label: concert.label?.long,
+				note: undefined as string | undefined,
+				pieces: piecesOf(concert.program)
+			}))
+		],
+		focus: rehearsal?.id ?? focus?.id ?? null,
 		// Merging fetches the PDFs through the app, which is for signed-in members only.
 		canMerge: locals.auth === 'on' && locals.access.member
 	};

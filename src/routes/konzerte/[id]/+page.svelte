@@ -151,7 +151,7 @@
 				<p class="placeholder">{t.concert.noRehearsals}</p>
 			{/if}
 		</section>
-	{:else if data.event.type !== 'sonstiges' && (data.rehearsalPlan.items.length || data.rehearsalPlan.editUrl)}
+	{:else if data.event.type !== 'sonstiges' && (data.rehearsalPlan.items.length || data.rehearsalPlan.editUrl || data.rehearsalPlan.partsUrl)}
 		<section class="block">
 			<div class="block-head">
 				<h2>{t.rehearsalPlan.title}</h2>
@@ -159,6 +159,9 @@
 					<a class="edit" href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={16} />{t.rehearsalPlan.edit}</a>
 				{/if}
 			</div>
+			{#if data.rehearsalPlan.partsUrl}
+				<a class="btn my-parts" href={data.rehearsalPlan.partsUrl}><Icon name="user" size={16} />{t.myParts.forRehearsal}</a>
+			{/if}
 			{#if data.rehearsalPlan.items.length}
 				<ProgramList items={data.rehearsalPlan.items} />
 			{:else}
