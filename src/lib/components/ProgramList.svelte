@@ -38,14 +38,15 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
 		overflow: hidden;
 	}
 
 	li + li {
-		border-top: 1px solid var(--border);
+		border-top: 1px solid var(--hairline);
 	}
 
 	.item {
@@ -54,7 +55,7 @@
 		gap: var(--space-3);
 		min-height: 56px;
 		padding: var(--space-3) var(--space-4);
-		transition: background 0.12s;
+		transition: background var(--fast) var(--ease);
 	}
 
 	a.item:hover {

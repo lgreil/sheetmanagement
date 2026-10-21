@@ -74,9 +74,12 @@
 		{/if}
 	</div>
 
-	<div class="coverage">
-		<h2>{t.signups.coverage}</h2>
-		<p class="muted">{t.signups.summary(signups.totals.yes, signups.totals.maybe, signups.totals.no, signups.totals.open)}</p>
+	<!-- Who comes, per section: one line folded, the full list on demand. -->
+	<details class="coverage ui-disclosure">
+		<summary>
+			<span class="coverage-title">{t.signups.coverage}</span>
+			<span class="summary">{t.signups.summary(signups.totals.yes, signups.totals.maybe, signups.totals.no, signups.totals.open)}</span>
+		</summary>
 		{#if signups.sections.length}
 			<ul class="sections">
 				{#each signups.sections as section (section.label)}
@@ -115,18 +118,40 @@
 				{#each signups.comments as comment, i (i)}<li><strong>{comment.name}:</strong> {comment.comment}</li>{/each}
 			</ul>
 		{/if}
-	</div>
+	</details>
 </section>
 
 <style>
 	.signups {
 		display: grid;
-		gap: var(--space-4);
-		margin-bottom: var(--space-5);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		gap: var(--space-3);
+		margin-bottom: var(--space-6);
+		padding: var(--space-4) var(--space-5);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
+	}
+
+	.coverage {
+		padding-top: var(--space-2);
+		border-top: 1px solid var(--hairline);
+	}
+
+	.coverage summary {
+		flex-wrap: wrap;
+		column-gap: var(--space-3);
+		font-size: 0.9375rem;
+	}
+
+	.coverage[open] summary {
+		margin-bottom: var(--space-2);
+	}
+
+	.summary {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+		font-weight: 400;
 	}
 
 	h2 {
@@ -153,16 +178,24 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-1);
-		height: 40px;
+		height: var(--tap);
 		padding: 0 var(--space-4);
-		border: 1px solid var(--border);
+		border: 1px solid transparent;
 		border-radius: 999px;
-		background: var(--bg);
+		background: var(--surface-2);
 		color: var(--text);
+		transition:
+			background var(--fast) var(--ease),
+			border-color var(--fast) var(--ease),
+			transform var(--fast) var(--ease);
 		font: inherit;
 		font-size: 0.9375rem;
 		font-weight: 600;
 		cursor: pointer;
+	}
+
+	.answer:active {
+		transform: scale(0.97);
 	}
 
 	.answer.yes.chosen {

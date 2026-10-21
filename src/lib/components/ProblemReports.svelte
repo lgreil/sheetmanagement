@@ -25,7 +25,8 @@
 		present = [],
 		result,
 		open = $bindable(false),
-		fileId = $bindable('')
+		fileId = $bindable(''),
+		trigger = true
 	}: {
 		reports: OpenReport[];
 		status: 'ready' | 'sign-in' | 'not-set-up' | 'no-parts';
@@ -40,6 +41,8 @@
 		result?: { reportError?: string; reported?: boolean } | null;
 		open?: boolean;
 		fileId?: string;
+		/** Its own "Problem melden" button; off when the page offers one elsewhere. */
+		trigger?: boolean;
 	} = $props();
 
 	const saving = new FormState();
@@ -55,7 +58,7 @@
 	});
 </script>
 
-{#if reports.length || status !== 'no-parts'}
+{#if reports.length || result?.reported || open || (trigger && status !== 'no-parts') || (status === 'not-set-up' && canClose)}
 	<section class="reports" id="melden" bind:this={dialog}>
 		{#if reports.length}
 			<div class="known">
@@ -140,7 +143,7 @@
 						<button class="btn ghost" type="button" onclick={() => (open = false)}>{t.reports.cancel}</button>
 					</div>
 				</form>
-			{:else}
+			{:else if trigger}
 				<button class="btn ghost" onclick={() => (open = true)}><Icon name="flag" size={16} />{t.reports.report}</button>
 			{/if}
 		{:else if status === 'not-set-up' && canClose}
@@ -163,8 +166,8 @@
 
 	.known {
 		padding: var(--space-3) var(--space-4);
-		border: 1px solid color-mix(in oklab, var(--warn) 40%, var(--border));
-		border-radius: var(--radius-m);
+		border: 1px solid color-mix(in oklab, var(--warn) 30%, var(--hairline));
+		border-radius: var(--radius-l);
 		background: color-mix(in oklab, var(--warn) 8%, var(--surface));
 	}
 
@@ -201,10 +204,11 @@
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		gap: var(--space-3);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		padding: var(--space-5);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
 	}
 
 	.form h3,

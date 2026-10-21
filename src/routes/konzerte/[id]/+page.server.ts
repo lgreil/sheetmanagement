@@ -162,7 +162,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		rehearsals: event.rehearsalIds
 			.map(lookup)
 			.filter((e): e is ShownEvent => !!e)
-			.map((rehearsal) => ({ ...rehearsal, planned: planned(rehearsal.id).map((item) => item.title) })),
+			.map((rehearsal) => ({ ...rehearsal, planned: planned(rehearsal.id).map(({ title, pieceId }) => ({ title, pieceId })) })),
 		rehearsalPlan: {
 			items: event.type === 'konzert' ? [] : planned(event.id),
 			editUrl: canPlan ? `/konzerte/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined,

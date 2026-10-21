@@ -138,10 +138,11 @@
 		flex-wrap: wrap;
 		align-items: end;
 		gap: var(--space-3);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		padding: var(--space-5);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
+		box-shadow: var(--shadow);
 	}
 
 	.picker .wide {
@@ -152,7 +153,8 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-2);
-		padding: var(--space-2) var(--space-4);
+		min-height: var(--tap);
+		padding: 0 var(--space-4);
 		border-radius: 999px;
 		background: var(--accent-soft);
 		color: var(--accent);
@@ -197,6 +199,14 @@
 	.concerts {
 		display: grid;
 		gap: var(--space-7);
+	}
+
+	@media (max-width: 560px) {
+		.concert-picker,
+		.concert-picker select {
+			width: 100%;
+			max-width: none;
+		}
 	}
 
 	.more {

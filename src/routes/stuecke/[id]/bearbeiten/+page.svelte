@@ -4,6 +4,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import { config } from '#lib/config/index.ts';
 	import { eventDay } from '#lib/repertoire/dates.ts';
+	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PieceSuggestions from '#lib/components/PieceSuggestions.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -36,7 +37,12 @@
 
 <Title title={t.pieceEditor.title(data.piece.title)} />
 
-<a class="back" href="/stuecke/{encodeURIComponent(data.piece.id)}"><Icon name="back" size={18} />{data.piece.title}</a>
+<Crumbs
+	items={[
+		{ href: '/stuecke', label: t.pieces.title },
+		{ href: `/stuecke/${encodeURIComponent(data.piece.id)}`, label: data.piece.title }
+	]}
+/>
 <h1>{t.pieceEditor.title(data.piece.title)}</h1>
 
 {#if data.state === 'not-in-sheet' || !values}
@@ -107,14 +113,6 @@
 {/if}
 
 <style>
-	.back {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
-		color: var(--text-muted);
-		font-weight: 500;
-	}
 
 	h1 {
 		margin-bottom: var(--space-2);

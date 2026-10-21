@@ -6,8 +6,9 @@
 	let {
 		event,
 		concertTitle,
-		showRelative = true
-	}: { event: ShownEvent; concertTitle?: string; showRelative?: boolean } = $props();
+		showRelative = true,
+		badge
+	}: { event: ShownEvent; concertTitle?: string; showRelative?: boolean; badge?: string } = $props();
 </script>
 
 <a class="row {event.type}" class:past={event.past && showRelative} href="/konzerte/{encodeURIComponent(event.id)}">
@@ -21,12 +22,14 @@
 			<span class="type">{t.concerts.types[event.type]}</span>
 			{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
 			{#if showRelative && !event.past}<span class="relative">{t.concerts.relative(event.daysUntil)}</span>{/if}
+			{#if badge}<span class="badge">{badge}</span>{/if}
 		</span>
 		<span class="title">{event.displayTitle}</span>
 		<span class="meta">
 			<span class="sr">{event.date.long}</span>
 			{event.date.time || t.concerts.allDay}
-			{#if event.location}· {event.location}{/if}
+			<!-- The venue's name; the full address is on the event's page. -->
+			{#if event.location}· {event.location.split(',')[0].trim()}{/if}
 			{#if concertTitle && event.type !== 'konzert'}· {t.concerts.forConcert(concertTitle)}{/if}
 		</span>
 	</span>
@@ -39,8 +42,9 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-4);
+		min-height: 72px;
 		padding: var(--space-3) var(--space-4);
-		transition: background 0.12s;
+		transition: background var(--fast) var(--ease);
 	}
 
 	.row:hover {
@@ -122,6 +126,16 @@
 	.relative {
 		color: var(--text-muted);
 		font-weight: 500;
+	}
+
+	.badge {
+		padding: 0 7px;
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font-size: 0.6875rem;
+		font-weight: 700;
+		letter-spacing: 0.03em;
 	}
 
 	.title {

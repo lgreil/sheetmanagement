@@ -154,7 +154,7 @@
 		{#each groups as group (group.letter)}
 			<section class="group">
 				<h2 class="letter">{group.letter}</h2>
-				<ul class="list">
+				<ul class="ui-list">
 					{#each group.pieces as piece (piece.id)}
 						<li>
 							<a class="row" href="/stuecke/{piece.id}">
@@ -212,9 +212,9 @@
 		gap: var(--space-3);
 		margin: 0 calc(-1 * var(--space-4));
 		padding: var(--space-3) var(--space-4);
-		background: color-mix(in oklab, var(--bg) 96%, transparent);
-		backdrop-filter: blur(12px);
-		-webkit-backdrop-filter: blur(12px);
+		background: color-mix(in oklab, var(--bg) 85%, transparent);
+		backdrop-filter: saturate(1.6) blur(20px);
+		-webkit-backdrop-filter: saturate(1.6) blur(20px);
 		border-bottom: 1px solid transparent;
 	}
 
@@ -222,19 +222,21 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		height: 48px;
-		padding: 0 var(--space-3) 0 var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		background: var(--surface);
+		height: 46px;
+		padding: 0 var(--space-2) 0 var(--space-4);
+		border: 1px solid transparent;
+		border-radius: 14px;
+		background: var(--surface-2);
 		color: var(--text-muted);
 		transition:
-			border-color 0.15s,
-			box-shadow 0.15s;
+			border-color var(--fast) var(--ease),
+			background var(--fast) var(--ease),
+			box-shadow var(--fast) var(--ease);
 	}
 
 	.search:focus-within {
 		border-color: var(--accent);
+		background: var(--surface);
 		box-shadow: 0 0 0 4px var(--accent-soft);
 	}
 
@@ -281,19 +283,19 @@
 
 	.chip {
 		flex: none;
-		padding: 6px 14px;
-		border: 1px solid var(--border);
+		min-height: 34px;
+		padding: 0 14px;
+		border: 0;
 		border-radius: 999px;
-		background: var(--surface);
+		background: var(--surface-2);
 		color: var(--text-muted);
 		font: inherit;
 		font-size: 0.875rem;
-		font-weight: 500;
+		font-weight: 600;
 		cursor: pointer;
 		transition:
-			background 0.15s,
-			color 0.15s,
-			border-color 0.15s;
+			background var(--fast) var(--ease),
+			color var(--fast) var(--ease);
 	}
 
 	.chip:hover {
@@ -301,7 +303,6 @@
 	}
 
 	.chip.active {
-		border-color: var(--accent);
 		background: var(--accent);
 		color: var(--accent-contrast);
 	}
@@ -330,8 +331,8 @@
 		gap: var(--space-2) var(--space-3);
 		margin-top: var(--space-3);
 		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
 		background: var(--surface);
 		font-size: 0.9375rem;
 	}
@@ -359,28 +360,14 @@
 	}
 
 	.group {
-		margin-top: var(--space-4);
+		margin-top: var(--space-5);
 	}
 
 	.letter {
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--accent);
 		font-family: var(--font-serif);
-		font-size: 1.25rem;
-	}
-
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		overflow: hidden;
-	}
-
-	.list li + li {
-		border-top: 1px solid var(--border);
+		font-size: 1.125rem;
 	}
 
 	.row {
@@ -389,7 +376,7 @@
 		gap: var(--space-3);
 		min-height: 60px;
 		padding: var(--space-3) var(--space-4);
-		transition: background 0.12s;
+		transition: background var(--fast) var(--ease);
 	}
 
 	.row:hover {

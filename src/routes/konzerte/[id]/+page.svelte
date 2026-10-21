@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
+	import Crumbs from '#lib/components/Crumbs.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
@@ -9,97 +10,145 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
+	const id = $derived(encodeURIComponent(page.params.id ?? ''));
 	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
 	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
 	const isConcert = $derived(data.kind === 'archive' || data.event.type === 'konzert');
+
+	/** A rehearsal sits below its concert: "Konzerte › Herbstkonzert › Probe". */
+	const crumbs = $derived([
+		{ href: '/konzerte', label: t.concerts.title },
+		...(data.kind === 'event' && !isConcert && data.concert
+			? [{ href: `/konzerte/${encodeURIComponent(data.concert.id)}`, label: data.concert.displayTitle }]
+			: [])
+	]);
+
+	/** The page's one main action: the member's parts for this concert or rehearsal. */
+	const partsUrl = $derived(
+		data.kind !== 'event' || data.event.past
+			? undefined
+			: isConcert
+				? data.program.items.length
+					? `/meine-noten?konzert=${id}`
+					: undefined
+				: data.rehearsalPlan.partsUrl
+	);
+	const showPlan = $derived(
+		data.kind === 'event' &&
+			!isConcert &&
+			data.event.type !== 'sonstiges' &&
+			(data.rehearsalPlan.items.length || data.rehearsalPlan.editUrl || data.rehearsalPlan.partsUrl)
+	);
 </script>
 
 <Title {title} />
 
-<a class="back" href="/konzerte"><Icon name="back" size={18} />{t.concert.back}</a>
+<Crumbs items={crumbs} />
 
-{#if data.kind === 'event'}
-	{@const event = data.event}
-	<header class="head {event.type}">
-		<p class="eyebrow">
-			{t.concerts.types[event.type]}
-			{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
-		</p>
-		<h1>{event.displayTitle}</h1>
-		{#if !event.past}<p class="relative">{t.concerts.relative(event.daysUntil)}</p>{/if}
-	</header>
-{:else}
-	<header class="head konzert">
-		<p class="eyebrow">{t.concert.archive}</p>
-		<h1>{data.archive.title}</h1>
-	</header>
-{/if}
-
-<div class="facts">
-	<div class="fact">
-		<span class="icon"><Icon name="calendar" size={18} /></span>
-		<div>
-			<p class="label">{t.concert.when}</p>
-			{#if data.kind === 'event'}
-				<p>{data.event.date.long}</p>
-				<p class="muted">{data.event.date.time || t.concerts.allDay}</p>
-			{:else}
-				<p>{data.archive.label?.long ?? (data.archive.dateText || t.concert.dateUnknown)}</p>
-			{/if}
-		</div>
-	</div>
-	{#if location}
-		<div class="fact">
-			<span class="icon"><Icon name="home" size={18} /></span>
-			<div>
-				<p class="label">{t.concert.where}</p>
-				<p>{location}</p>
-				{#if data.mapUrl}
-					<a class="link" href={data.mapUrl} target="_blank" rel="noopener noreferrer">{t.concert.map}</a>
-				{/if}
-			</div>
-		</div>
+<header class="head {data.kind === 'event' ? data.event.type : 'konzert'}">
+	<p class="eyebrow">
+		{data.kind === 'event' ? t.concerts.types[data.event.type] : t.concert.archive}
+		{#if data.kind === 'event' && data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
+		{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
+	</p>
+	<h1>{title}</h1>
+	{#if partsUrl}
+		<a class="btn main-action" href={partsUrl}><Icon name="user" size={18} />{t.nav.myParts}</a>
 	{/if}
-</div>
+</header>
+
+<!-- The facts as one calm list: when, where, what it belongs to. -->
+<ul class="ui-list facts">
+	<li>
+		<div class="fact">
+			<span class="icon"><Icon name="calendar" size={18} /></span>
+			<span class="fact-body">
+				{#if data.kind === 'event'}
+					<strong>{data.event.date.long}</strong>
+					<span>{data.event.date.time || t.concerts.allDay}</span>
+				{:else}
+					<strong>{data.archive.label?.long ?? (data.archive.dateText || t.concert.dateUnknown)}</strong>
+				{/if}
+			</span>
+		</div>
+	</li>
+	{#if location}
+		<li>
+			<svelte:element
+				this={data.mapUrl ? 'a' : 'div'}
+				class="fact"
+				href={data.mapUrl}
+				target={data.mapUrl ? '_blank' : undefined}
+				rel={data.mapUrl ? 'noopener noreferrer' : undefined}
+			>
+				<span class="icon"><Icon name="pin" size={18} /></span>
+				<span class="fact-body">
+					<strong>{location.split(',')[0].trim()}</strong>
+					{#if location.includes(',')}<span>{location.split(',').slice(1).join(',').trim()}</span>{/if}
+				</span>
+				{#if data.mapUrl}<span class="trail">{t.concert.map}<Icon name="external" size={14} /></span>{/if}
+			</svelte:element>
+		</li>
+	{/if}
+	{#if data.kind === 'event' && !isConcert && data.concert}
+		<li>
+			<a class="fact" href="/konzerte/{encodeURIComponent(data.concert.id)}">
+				<span class="icon concert"><Icon name="sparkle" size={18} /></span>
+				<span class="fact-body">
+					<span class="over">{t.concert.preparesFor}</span>
+					<strong>{data.concert.displayTitle}</strong>
+					<span>{data.concert.date.long} · {t.concerts.relative(data.concert.daysUntil)}</span>
+				</span>
+				<span class="trail"><Icon name="chevron" size={18} /></span>
+			</a>
+		</li>
+	{/if}
+	{#if data.kind === 'event' && data.event.url}
+		<li>
+			<a class="fact quiet" href={data.event.url} target="_blank" rel="noopener noreferrer">
+				<span class="icon"><Icon name="external" size={16} /></span>
+				<span class="fact-body"><span>{t.concert.openInCalendar}</span></span>
+			</a>
+		</li>
+	{/if}
+</ul>
+
+{#if data.kind === 'event' && data.event.description}
+	<section class="block">
+		<h2 class="ui-label">{t.concert.description}</h2>
+		<p class="ui-card description">{data.event.description}</p>
+	</section>
+{/if}
 
 {#if data.kind === 'event' && data.signups}
 	{#if data.signups.state === 'ready'}
 		<Signups signups={data.signups} result={form} />
 	{:else}
-		<p class="placeholder signup-note">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
+		<p class="placeholder block">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
 	{/if}
-{/if}
-
-{#if data.kind === 'event' && data.event.description}
-	<section class="block">
-		<h2>{t.concert.description}</h2>
-		<p class="description">{data.event.description}</p>
-	</section>
 {/if}
 
 {#if isConcert}
 	<section class="block">
 		<div class="block-head">
-			<h2>{t.concert.program}</h2>
-			{#if data.program.items.length}
-				<a class="edit print" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/drucken">
-					<Icon name="file" size={16} />{t.print.link}
-				</a>
-			{/if}
-			{#if data.program.canEdit}
-				<a class="edit" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
-					<Icon name="file" size={16} />{t.editor.edit}
-				</a>
-			{/if}
+			<h2 class="ui-label">{t.concert.program}</h2>
+			<div class="ui-actions">
+				{#if data.program.items.length}
+					<a href="/konzerte/{id}/drucken"><Icon name="print" size={16} />{t.print.link}</a>
+				{/if}
+				{#if data.program.canEdit}
+					<a href="/konzerte/{id}/programm"><Icon name="edit" size={16} />{t.editor.edit}</a>
+				{/if}
+			</div>
 		</div>
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
 		{#if data.program.sharedFrom}
-			<p class="shared">
+			<p class="note">
 				<Icon name="link" size={16} />
 				<span>{t.concert.sharedFrom} <a href="/konzerte/{encodeURIComponent(data.program.sharedFrom.id)}">{data.program.sharedFrom.title}</a></span>
 			</p>
 		{:else if data.program.sharedWith.length}
-			<p class="shared">
+			<p class="note">
 				<Icon name="link" size={16} />
 				<span>
 					{t.concert.sharedWith}
@@ -108,16 +157,12 @@
 			</p>
 		{/if}
 		{#if data.program.canEdit && data.program.suggestions}
-			<a class="suggestions-link" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
-				<Icon name="bulb" size={16} />{t.editor.openSuggestions(data.program.suggestions)}
-			</a>
+			<p class="note">
+				<Icon name="bulb" size={16} />
+				<a href="/konzerte/{id}/programm">{t.editor.openSuggestions(data.program.suggestions)}</a>
+			</p>
 		{/if}
 		{#if data.program.items.length}
-			{#if data.kind === 'event' && !data.event.past}
-				<a class="btn my-parts" href="/meine-noten?konzert={encodeURIComponent(page.params.id ?? '')}">
-					<Icon name="user" size={16} />{t.myParts.forConcert(title)}
-				</a>
-			{/if}
 			<ProgramList items={data.program.items} />
 			<p class="hint">{t.concert.programHint}</p>
 		{:else}
@@ -126,64 +171,59 @@
 	</section>
 {/if}
 
-{#if data.kind === 'event'}
-	{#if isConcert}
-		<section class="block">
-			<div class="block-head">
-				<h2>{t.concert.rehearsals}</h2>
-				{#if data.rehearsalPlan.editUrl}
-					<a class="edit" href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={16} />{t.rehearsalPlan.edit}</a>
-				{/if}
-			</div>
-			{#if page.url.searchParams.has('probenplan')}<p class="saved" role="status"><Icon name="check" size={16} />{t.rehearsalPlan.saved}</p>{/if}
-			{#if data.rehearsals.length}
-				<ul class="list">
-					{#each data.rehearsals as rehearsal (rehearsal.id)}
-						<li>
-							<EventRow event={rehearsal} />
-							{#if rehearsal.planned.length}
-								<p class="planned"><span>{t.rehearsalPlan.planned}</span> {rehearsal.planned.join(' · ')}</p>
-							{/if}
-						</li>
-					{/each}
-				</ul>
-			{:else}
-				<p class="placeholder">{t.concert.noRehearsals}</p>
+{#if data.kind === 'event' && isConcert}
+	<section class="block">
+		<div class="block-head">
+			<h2 class="ui-label">{t.concert.rehearsals}</h2>
+			{#if data.rehearsalPlan.editUrl}
+				<div class="ui-actions">
+					<a href={data.rehearsalPlan.editUrl}><Icon name="edit" size={16} />{t.rehearsalPlan.edit}</a>
+				</div>
 			{/if}
-		</section>
-	{:else if data.event.type !== 'sonstiges' && (data.rehearsalPlan.items.length || data.rehearsalPlan.editUrl || data.rehearsalPlan.partsUrl)}
-		<section class="block">
-			<div class="block-head">
-				<h2>{t.rehearsalPlan.title}</h2>
-				{#if data.rehearsalPlan.editUrl}
-					<a class="edit" href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={16} />{t.rehearsalPlan.edit}</a>
-				{/if}
-			</div>
-			{#if data.rehearsalPlan.partsUrl}
-				<a class="btn my-parts" href={data.rehearsalPlan.partsUrl}><Icon name="user" size={16} />{t.myParts.forRehearsal}</a>
-			{/if}
-			{#if data.rehearsalPlan.items.length}
-				<ProgramList items={data.rehearsalPlan.items} />
-			{:else}
-				<p class="placeholder">{t.rehearsalPlan.empty}</p>
-			{/if}
-		</section>
-	{/if}
-	{#if !isConcert && data.concert}
-		<section class="block">
-			<h2>{t.concert.preparesFor}</h2>
-			<ul class="list">
-				<li><EventRow event={data.concert} /></li>
+		</div>
+		{#if page.url.searchParams.has('probenplan')}<p class="saved" role="status"><Icon name="check" size={16} />{t.rehearsalPlan.saved}</p>{/if}
+		{#if data.rehearsals.length}
+			<ul class="ui-list">
+				{#each data.rehearsals as rehearsal (rehearsal.id)}
+					<li>
+						<EventRow event={rehearsal} />
+						{#if rehearsal.planned.length}
+							<!-- What's on, each piece one tap away. -->
+							<ul class="planned" aria-label={t.rehearsalPlan.title}>
+								{#each rehearsal.planned as item, i (i)}
+									<li>
+										{#if item.pieceId}
+											<a class="chip" href="/stuecke/{encodeURIComponent(item.pieceId)}">{item.title}</a>
+										{:else}
+											<span class="chip">{item.title}</span>
+										{/if}
+									</li>
+								{/each}
+							</ul>
+						{/if}
+					</li>
+				{/each}
 			</ul>
-		</section>
-	{/if}
-
-	{#if data.event.url}
-		<a class="calendar" href={data.event.url} target="_blank" rel="noopener noreferrer">
-			<Icon name="external" size={16} />
-			{t.concert.openInCalendar}
-		</a>
-	{/if}
+		{:else}
+			<p class="placeholder">{t.concert.noRehearsals}</p>
+		{/if}
+	</section>
+{:else if data.kind === 'event' && showPlan}
+	<section class="block">
+		<div class="block-head">
+			<h2 class="ui-label">{t.rehearsalPlan.title}</h2>
+			{#if data.rehearsalPlan.editUrl}
+				<div class="ui-actions">
+					<a href={data.rehearsalPlan.editUrl}><Icon name="edit" size={16} />{t.rehearsalPlan.edit}</a>
+				</div>
+			{/if}
+		</div>
+		{#if data.rehearsalPlan.items.length}
+			<ProgramList items={data.rehearsalPlan.items} />
+		{:else}
+			<p class="placeholder">{t.rehearsalPlan.empty}</p>
+		{/if}
+	</section>
 {/if}
 
 {#if isConcert && data.program.instrumentation}
@@ -191,33 +231,22 @@
 {/if}
 
 <style>
-	.back {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin-bottom: var(--space-4);
-		color: var(--text-muted);
-		font-weight: 500;
-	}
-
-	.back:hover {
-		color: var(--accent);
-	}
-
 	.head {
 		display: grid;
+		justify-items: start;
 		gap: var(--space-2);
 		margin-bottom: var(--space-5);
 	}
 
 	.eyebrow {
 		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
 		font-size: 0.8125rem;
-		font-weight: 700;
-		letter-spacing: 0.06em;
+		font-weight: 650;
+		letter-spacing: 0.07em;
 		text-transform: uppercase;
 	}
 
@@ -240,109 +269,116 @@
 
 	.relative {
 		color: var(--text-muted);
-		font-size: 1.0625rem;
+		font-weight: 500;
+		letter-spacing: 0;
+		text-transform: none;
+	}
+
+	.main-action {
+		margin-top: var(--space-3);
 	}
 
 	.facts {
-		display: grid;
-		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-		gap: var(--space-3);
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-6);
 	}
 
 	.fact {
 		display: flex;
+		align-items: center;
 		gap: var(--space-3);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
+		min-height: 60px;
+		padding: var(--space-3) var(--space-4);
+		transition: background var(--fast) var(--ease);
+	}
+
+	a.fact:hover {
+		background: var(--surface-2);
 	}
 
 	.icon {
 		display: grid;
 		place-items: center;
 		flex: none;
-		width: 36px;
-		height: 36px;
+		width: 34px;
+		height: 34px;
 		border-radius: 10px;
+		background: var(--surface-2);
+		color: var(--text-muted);
+	}
+
+	.icon.concert {
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
 
-	.label {
-		color: var(--text-muted);
-		font-size: 0.75rem;
+	.fact-body {
+		display: grid;
+		flex: 1;
+		min-width: 0;
+		line-height: 1.35;
+	}
+
+	.fact-body strong {
 		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.fact-body span {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.fact-body .over {
+		font-size: 0.75rem;
+		font-weight: 650;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
 	}
 
-	.muted {
-		color: var(--text-muted);
-	}
-
-	.link {
+	.fact.quiet .fact-body span {
 		color: var(--accent);
 		font-weight: 600;
+	}
+
+	.trail {
+		display: inline-flex;
+		flex: none;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--text-muted);
 		font-size: 0.875rem;
+	}
+
+	a.fact:hover .trail {
+		color: var(--accent);
 	}
 
 	.block {
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-6);
 	}
 
-	.suggestions-link {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		margin: 0 0 var(--space-3) var(--space-1);
-		color: var(--accent);
-		font-size: 0.875rem;
-		font-weight: 600;
+	.block-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0 var(--space-3);
 	}
 
-	.signup-note {
-		margin-bottom: var(--space-5);
-	}
-
-	.block h2 {
-		margin: 0 0 var(--space-2) var(--space-1);
-		color: var(--text-muted);
-		font-size: 0.8125rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
+	.block-head .ui-actions {
+		margin-bottom: var(--space-2);
 	}
 
 	.description {
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
 		white-space: pre-line;
 		overflow-wrap: anywhere;
 	}
 
 	.placeholder {
-		padding: var(--space-4);
+		padding: var(--space-4) var(--space-5);
 		border: 1px dashed var(--border);
-		border-radius: var(--radius-m);
+		border-radius: var(--radius-l);
 		color: var(--text-muted);
-	}
-
-	.list {
-		margin: 0;
-		padding: 0;
-		list-style: none;
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		overflow: hidden;
-	}
-
-	.list li + li {
-		border-top: 1px solid var(--border);
 	}
 
 	.hint {
@@ -351,81 +387,69 @@
 		font-size: 0.8125rem;
 	}
 
-	.block-head {
-		display: flex;
-		align-items: baseline;
-		justify-content: space-between;
-		gap: var(--space-3);
-	}
-
-	.my-parts {
-		justify-self: start;
-		margin-bottom: var(--space-3);
-	}
-
-	.print {
-		margin-left: auto;
-	}
-
-	.print + .edit {
-		margin-left: var(--space-3);
-	}
-
-	.edit {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-1);
-		color: var(--accent);
-		font-size: 0.875rem;
-		font-weight: 600;
-	}
-
 	.saved {
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		margin-bottom: var(--space-2);
+		margin-bottom: var(--space-3);
 		padding: var(--space-2) var(--space-3);
 		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--ok) 12%, transparent);
 	}
 
-	.planned {
-		margin: calc(-1 * var(--space-1)) 0 var(--space-2) var(--space-3);
-		color: var(--text-muted);
-		font-size: 0.875rem;
-	}
-
-	.planned span {
-		color: var(--accent);
-		font-weight: 600;
-	}
-
-	.shared {
+	.note {
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		margin-bottom: var(--space-3);
+		margin: 0 0 var(--space-3) var(--space-1);
 		color: var(--text-muted);
 		font-size: 0.9375rem;
 	}
 
-	.shared :global(svg) {
+	.note :global(svg) {
 		flex: none;
 		color: var(--accent);
 	}
 
-	.shared a {
+	.note a {
 		color: var(--accent);
 		font-weight: 600;
 	}
 
-	.calendar {
-		display: inline-flex;
-		align-items: center;
-		gap: var(--space-2);
+	/* Indented to line up with the rehearsal's title, past its date tile. */
+	.planned {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px;
+		margin: calc(-1 * var(--space-2)) 0 0;
+		padding: 0 var(--space-4) var(--space-3) calc(52px + 2 * var(--space-4));
+		list-style: none;
+	}
+
+	.chip {
+		display: inline-block;
+		max-width: 100%;
+		padding: 3px 10px;
+		overflow: hidden;
+		border-radius: 999px;
+		background: var(--surface-2);
+		color: var(--text);
+		font-size: 0.8125rem;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		transition:
+			background var(--fast) var(--ease),
+			color var(--fast) var(--ease);
+	}
+
+	a.chip:hover {
+		background: var(--accent-soft);
 		color: var(--accent);
-		font-weight: 600;
-		font-size: 0.875rem;
+	}
+
+	@media (max-width: 480px) {
+		.planned {
+			padding-left: var(--space-4);
+		}
 	}
 </style>

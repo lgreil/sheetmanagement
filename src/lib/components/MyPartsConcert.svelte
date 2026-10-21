@@ -115,13 +115,14 @@
 <section class="concert" id="konzert-{concert.id}">
 	<div class="concert-head">
 		<div>
-			<a class="concert-title" href="/konzerte/{encodeURIComponent(concert.id)}">{concert.title}</a>
+			<!-- The concert's page (programme, rehearsals, sign-up) is one tap away. -->
+			<a class="concert-title" href="/konzerte/{encodeURIComponent(concert.id)}">{concert.title}<Icon name="chevron" size={18} /></a>
 			{#if concert.label}<p class="muted">{concert.label}</p>{/if}
 		</div>
 		{#if label && concert.pieces.length}
 			<div class="merge">
 				{#if canMerge}
-					<button class="btn" onclick={merge} disabled={!!progress || !files.length} title={t.myParts.mergeHint}>
+					<button class="btn secondary" onclick={merge} disabled={!!progress || !files.length} title={t.myParts.mergeHint}>
 						<Icon name="file" size={16} />{progress ?? t.myParts.merge}
 					</button>
 				{:else}
@@ -218,9 +219,27 @@
 	}
 
 	.concert-title {
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
 		font-family: var(--font-serif);
 		font-size: 1.375rem;
 		font-weight: 600;
+		transition: color var(--fast) var(--ease);
+	}
+
+	.concert-title :global(svg) {
+		color: var(--text-muted);
+		transition: transform var(--fast) var(--ease);
+	}
+
+	.concert-title:hover {
+		color: var(--accent);
+	}
+
+	.concert-title:hover :global(svg) {
+		transform: translateX(2px);
+		color: var(--accent);
 	}
 
 	.merge {
@@ -244,26 +263,34 @@
 		font-size: 0.875rem;
 	}
 
+	/* The programme as one card, a hairline between pieces. */
 	.pieces {
-		display: grid;
-		gap: var(--space-2);
 		margin: 0;
 		padding: 0;
 		list-style: none;
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		overflow: hidden;
 	}
 
 	.piece {
 		display: flex;
 		gap: var(--space-3);
-		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
+		padding: var(--space-4);
+	}
+
+	.piece + .piece {
+		border-top: 1px solid var(--hairline);
 	}
 
 	.piece.none {
-		border-style: dashed;
-		background: transparent;
+		background: color-mix(in oklab, var(--surface-2) 50%, transparent);
+	}
+
+	.piece.none .title {
+		color: var(--text-muted);
 	}
 
 	.position {
@@ -333,13 +360,21 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
+		min-height: 38px;
 		padding: 6px var(--space-3);
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		background: var(--bg);
+		border: 1px solid transparent;
+		border-radius: 12px;
+		background: var(--accent-soft);
 		color: var(--accent);
 		font-size: 0.9375rem;
 		font-weight: 600;
+		transition:
+			background var(--fast) var(--ease),
+			transform var(--fast) var(--ease);
+	}
+
+	a.part:active {
+		transform: scale(0.97);
 	}
 
 	.part.missing {
@@ -348,11 +383,12 @@
 	}
 
 	a.part:hover {
-		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+		background: color-mix(in oklab, var(--accent) 24%, transparent);
 	}
 
 	.part.problem {
-		border-style: dashed;
+		border: 1px dashed var(--border);
+		background: none;
 		color: var(--text-muted);
 	}
 

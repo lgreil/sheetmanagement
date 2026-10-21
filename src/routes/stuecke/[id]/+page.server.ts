@@ -4,16 +4,16 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
-import { getFeedback } from '#lib/server/repertoire.ts';
+import { getFeedback, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import { workKey } from '#lib/music/piece-name.ts';
-import { concertSummary, getLibrary, type LibraryPiece } from '#lib/server/library.ts';
+import { concertSummary, getLibrary, namedItem, type Library, type LibraryPiece } from '#lib/server/library.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-	const [library, feedback] = await Promise.all([getLibrary(), getFeedback()]);
+	const [library, feedback, plan] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan()]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
 		if (!library.catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
@@ -87,9 +87,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 					planned: againWish?.status === 'planned'
 				}
 			: null,
+		// Coming up: concerts with this piece on the programme and rehearsals that plan it.
+		upcoming: upcoming(library, piece, plan?.byEvent),
 		playedAt: piece.playedAt
 			.map((id) => library.concertsById.get(id))
 			.filter((concert) => concert !== undefined)
+			.filter((concert) => !concert.event || concert.event.past)
 			.map(concertSummary),
 		// Other folders of the same work ("Sinfonie Nr4 Satz 2 - Streicherbesetzung"), then
 		// "Weitere Werke von Bach": the same composer, as read from the folder or corrected in the sheet.
@@ -98,6 +101,19 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		sheet: library.sheet
 	};
 };
+
+/** Upcoming calendar events this piece is part of, soonest first. */
+function upcoming(library: Library, piece: LibraryPiece, planned: Map<string, { pieceName: string }[]> | undefined) {
+	if (!library.schedule.ok) return [];
+	const concerts = new Set(piece.playedAt);
+	return library.schedule.events.filter(
+		(event) =>
+			!event.past &&
+			(event.type === 'konzert'
+				? concerts.has(event.id)
+				: (planned?.get(event.id) ?? []).some((entry) => namedItem(library, entry.pieceName).pieceId === piece.id))
+	);
+}
 
 const sameComposer = (a: string | undefined, b: string | undefined) => !!a && !!b && searchText(a) === searchText(b);
 

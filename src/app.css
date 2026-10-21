@@ -9,12 +9,13 @@
 	--accent-contrast: #fff;
 
 	/* Light: a bright, nearly neutral page with white cards on it; gold stays the accent. */
-	--bg: #f3f3f1;
+	--bg: #f4f4f1;
 	--surface: #ffffff;
-	--surface-2: #e9e8e3;
-	--border: #d9d7d0;
+	--surface-2: #eeede8;
+	--border: #e0ded7;
+	--hairline: color-mix(in oklab, var(--border) 75%, transparent);
 	--text: #161512;
-	--text-muted: #5c584f;
+	--text-muted: #625e55;
 
 	--ok: #2a7548;
 	--warn: #8f5c0a;
@@ -23,7 +24,14 @@
 	--radius-s: 8px;
 	--radius-m: 14px;
 	--radius-l: 20px;
-	--shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 4px 16px rgb(0 0 0 / 0.06);
+	--shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px rgb(0 0 0 / 0.05);
+	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.06), 0 18px 48px rgb(0 0 0 / 0.12);
+
+	/* Motion: short and soft, the same curve everywhere. */
+	--ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+	--fast: 0.15s;
+	/* Smallest comfortable touch target. */
+	--tap: 44px;
 
 	--space-1: 4px;
 	--space-2: 8px;
@@ -49,11 +57,12 @@
 		--bg: #0b0b0a;
 		--surface: #161513;
 		--surface-2: #201e1b;
-		--border: #2f2c26;
+		--border: #2c2924;
 		--text: #f2eee4;
 		--text-muted: #a9a293;
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+		--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 		--ok: #2e7d4f;
 		--warn: #b7791f;
 		--danger: #c0392b;
@@ -67,11 +76,12 @@
 	--bg: #0b0b0a;
 	--surface: #161513;
 	--surface-2: #201e1b;
-	--border: #2f2c26;
+	--border: #2c2924;
 	--text: #f2eee4;
 	--text-muted: #a9a293;
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
+	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 	--ok: #2e7d4f;
 	--warn: #b7791f;
 	--danger: #c0392b;
@@ -96,6 +106,8 @@ body {
 	font-size: 16px;
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
+	-webkit-tap-highlight-color: transparent;
+	text-rendering: optimizeLegibility;
 }
 
 h1,
@@ -109,7 +121,8 @@ h3 {
 h1 {
 	font-family: var(--font-serif);
 	font-weight: 600;
-	font-size: clamp(1.75rem, 1.4rem + 1.6vw, 2.5rem);
+	font-size: clamp(1.875rem, 1.5rem + 1.4vw, 2.5rem);
+	letter-spacing: -0.015em;
 }
 
 h2 {
@@ -158,12 +171,47 @@ a {
 	font-weight: 600;
 	cursor: pointer;
 	white-space: nowrap;
+	transition:
+		transform var(--fast) var(--ease),
+		filter var(--fast) var(--ease),
+		background var(--fast) var(--ease);
+}
+
+.btn:hover {
+	filter: brightness(1.06);
+}
+
+.btn:active {
+	transform: scale(0.97);
 }
 
 .btn.ghost {
 	border: 1px solid var(--border);
 	background: none;
 	color: var(--text);
+}
+
+/* A quieter second action next to the primary one. */
+.btn.secondary {
+	background: var(--accent-soft);
+	color: var(--accent);
+}
+
+.btn.ghost:hover {
+	background: var(--surface-2);
+	filter: none;
+}
+
+/* Fingers need more room than a mouse. */
+@media (pointer: coarse) {
+	.btn {
+		height: var(--tap);
+		padding: 0 var(--space-5);
+	}
+
+	.btn.small {
+		height: 36px;
+	}
 }
 
 .btn.small {
@@ -230,6 +278,99 @@ a {
 .msg.info {
 	border: 1px dashed var(--border);
 	color: var(--text-muted);
+}
+
+/* Shared page pieces: a calm card, a small section label and an inset list with hairlines. */
+.ui-card {
+	padding: var(--space-5);
+	border: 1px solid var(--hairline);
+	border-radius: var(--radius-l);
+	background: var(--surface);
+	box-shadow: var(--shadow);
+}
+
+.ui-label {
+	margin: 0 0 var(--space-2) var(--space-1);
+	color: var(--text-muted);
+	font-size: 0.75rem;
+	font-weight: 650;
+	letter-spacing: 0.07em;
+	text-transform: uppercase;
+}
+
+.ui-list {
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	border: 1px solid var(--hairline);
+	border-radius: var(--radius-l);
+	background: var(--surface);
+	box-shadow: var(--shadow);
+	overflow: hidden;
+}
+
+.ui-list > li + li {
+	border-top: 1px solid var(--hairline);
+}
+
+/* A row of quiet text actions under a heading ("Drucken · Bearbeiten"). */
+.ui-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--space-1) var(--space-4);
+}
+
+.ui-actions a,
+.ui-actions button {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--space-1);
+	min-height: 32px;
+	padding: 0;
+	border: 0;
+	background: none;
+	color: var(--accent);
+	font: inherit;
+	font-size: 0.875rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+
+.ui-actions a:hover,
+.ui-actions button:hover {
+	text-decoration: underline;
+	text-underline-offset: 3px;
+}
+
+/* Progressive disclosure: a <details> that looks like a section, with a turning chevron. */
+.ui-disclosure > summary {
+	display: flex;
+	align-items: center;
+	gap: var(--space-2);
+	min-height: var(--tap);
+	list-style: none;
+	cursor: pointer;
+	font-weight: 600;
+}
+
+.ui-disclosure > summary::-webkit-details-marker {
+	display: none;
+}
+
+.ui-disclosure > summary::after {
+	content: '';
+	width: 8px;
+	height: 8px;
+	margin-left: auto;
+	border-right: 2px solid var(--text-muted);
+	border-bottom: 2px solid var(--text-muted);
+	transform: rotate(-45deg);
+	transition: transform var(--fast) var(--ease);
+}
+
+.ui-disclosure[open] > summary::after {
+	transform: rotate(45deg);
 }
 
 /* Printing (e.g. a concert programme): only the page's content, black on white. */
