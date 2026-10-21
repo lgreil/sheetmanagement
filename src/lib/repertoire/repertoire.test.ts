@@ -128,6 +128,35 @@ describe('buildRepertoire', () => {
 		expect(result.pieces.map((p) => p.recording)).toEqual(['https://youtu.be/x', undefined]);
 	});
 
+	it('lets a concert play the programme of another one', () => {
+		const result = buildRepertoire({
+			pieces: [PIECES_HEADER, piece('Sleigh Ride'), piece('Stille Nacht')],
+			concerts: [
+				[...CONCERTS_HEADER, 'Programm wie'],
+				['2026-12-20', 'Weihnachtskonzert 2026', '', 'EO', 'event-1', ''],
+				['2026-12-21', 'Weihnachtskonzert 2026 (21.12.)', '', 'EO', 'event-2', 'weihnachtskonzert 2026'],
+				['2026-12-22', 'Weihnachtskonzert 2026 (22.12.)', '', 'EO', 'event-3', 'Weihnachtskonzert 2026 (21.12.)'],
+				['2026-12-23', 'Eigenes', '', 'EO', 'event-4', 'Weihnachtskonzert 2026'],
+				['2026-12-24', 'Kaputt', '', 'EO', 'event-5', 'Gibt es nicht']
+			],
+			program: [
+				PROGRAM_HEADER,
+				['Weihnachtskonzert 2026', '1', 'Sleigh Ride', ''],
+				['Eigenes', '1', 'Stille Nacht', '']
+			]
+		});
+		const program = (event: string) => result.concertsByEvent.get(event)!.program.map((entry) => entry.pieceName);
+		expect(program('event-2')).toEqual(['Sleigh Ride']);
+		// Followed through the 2nd concert to the one with the rows.
+		expect(program('event-3')).toEqual(['Sleigh Ride']);
+		expect(result.concertsByEvent.get('event-3')!.programFrom).toBe('event-1');
+		// Own rows win over the shared programme.
+		expect(program('event-4')).toEqual(['Stille Nacht']);
+		expect(result.concertsByEvent.get('event-4')!.programFrom).toBeUndefined();
+		expect(result.playedAt.get('s-sleigh-ride')).toEqual(['event-1', 'event-2', 'event-3']);
+		expect(result.problems.map((p) => [p.kind, p.row, p.value])).toEqual([['unknown-concert', 6, 'Gibt es nicht']]);
+	});
+
 	it('reports missing columns', () => {
 		const result = buildRepertoire({ pieces: [['Titel']], concerts: [CONCERTS_HEADER], program: [PROGRAM_HEADER] });
 		expect(result.problems.filter((p) => p.kind === 'missing-column').map((p) => p.value)).toContain('Drive-Ordner-ID');

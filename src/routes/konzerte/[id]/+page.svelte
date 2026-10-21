@@ -93,6 +93,20 @@
 			{/if}
 		</div>
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
+		{#if data.program.sharedFrom}
+			<p class="shared">
+				<Icon name="link" size={16} />
+				<span>{t.concert.sharedFrom} <a href="/konzerte/{encodeURIComponent(data.program.sharedFrom.id)}">{data.program.sharedFrom.title}</a></span>
+			</p>
+		{:else if data.program.sharedWith.length}
+			<p class="shared">
+				<Icon name="link" size={16} />
+				<span>
+					{t.concert.sharedWith}
+					{#each data.program.sharedWith as other, i (other.id)}{i ? ', ' : ' '}<a href="/konzerte/{encodeURIComponent(other.id)}">{other.title}</a>{/each}
+				</span>
+			</p>
+		{/if}
 		{#if data.program.canEdit && data.program.suggestions}
 			<a class="suggestions-link" href="/konzerte/{encodeURIComponent(page.params.id ?? '')}/programm">
 				<Icon name="bulb" size={16} />{t.editor.openSuggestions(data.program.suggestions)}
@@ -115,18 +129,47 @@
 {#if data.kind === 'event'}
 	{#if isConcert}
 		<section class="block">
-			<h2>{t.concert.rehearsals}</h2>
+			<div class="block-head">
+				<h2>{t.concert.rehearsals}</h2>
+				{#if data.rehearsalPlan.editUrl}
+					<a class="edit" href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={16} />{t.rehearsalPlan.edit}</a>
+				{/if}
+			</div>
+			{#if page.url.searchParams.has('probenplan')}<p class="saved" role="status"><Icon name="check" size={16} />{t.rehearsalPlan.saved}</p>{/if}
 			{#if data.rehearsals.length}
 				<ul class="list">
 					{#each data.rehearsals as rehearsal (rehearsal.id)}
-						<li><EventRow event={rehearsal} /></li>
+						<li>
+							<EventRow event={rehearsal} />
+							{#if rehearsal.planned.length}
+								<p class="planned"><span>{t.rehearsalPlan.planned}</span> {rehearsal.planned.join(' · ')}</p>
+							{/if}
+						</li>
 					{/each}
 				</ul>
 			{:else}
 				<p class="placeholder">{t.concert.noRehearsals}</p>
 			{/if}
 		</section>
-	{:else if data.concert}
+	{:else if data.event.type !== 'sonstiges' && (data.rehearsalPlan.items.length || data.rehearsalPlan.editUrl || data.rehearsalPlan.partsUrl)}
+		<section class="block">
+			<div class="block-head">
+				<h2>{t.rehearsalPlan.title}</h2>
+				{#if data.rehearsalPlan.editUrl}
+					<a class="edit" href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={16} />{t.rehearsalPlan.edit}</a>
+				{/if}
+			</div>
+			{#if data.rehearsalPlan.partsUrl}
+				<a class="btn my-parts" href={data.rehearsalPlan.partsUrl}><Icon name="user" size={16} />{t.myParts.forRehearsal}</a>
+			{/if}
+			{#if data.rehearsalPlan.items.length}
+				<ProgramList items={data.rehearsalPlan.items} />
+			{:else}
+				<p class="placeholder">{t.rehearsalPlan.empty}</p>
+			{/if}
+		</section>
+	{/if}
+	{#if !isConcert && data.concert}
 		<section class="block">
 			<h2>{t.concert.preparesFor}</h2>
 			<ul class="list">
@@ -345,6 +388,36 @@
 		padding: var(--space-2) var(--space-3);
 		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--ok) 12%, transparent);
+	}
+
+	.planned {
+		margin: calc(-1 * var(--space-1)) 0 var(--space-2) var(--space-3);
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.planned span {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.shared {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin-bottom: var(--space-3);
+		color: var(--text-muted);
+		font-size: 0.9375rem;
+	}
+
+	.shared :global(svg) {
+		flex: none;
+		color: var(--accent);
+	}
+
+	.shared a {
+		color: var(--accent);
+		font-weight: 600;
 	}
 
 	.calendar {

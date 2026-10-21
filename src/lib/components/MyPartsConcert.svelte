@@ -131,6 +131,7 @@
 			</div>
 		{/if}
 	</div>
+	{#if concert.note}<p class="msg info">{concert.note}</p>{/if}
 	{#if mergeError}<p class="msg error" role="alert">{mergeError}</p>{/if}
 	{#if skipped.length}
 		<div class="msg error skipped" role="alert">

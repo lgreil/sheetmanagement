@@ -5,7 +5,8 @@ import { getLibrary, type Library } from '#lib/server/library.ts';
 import { getFeedback, getRepertoire } from '#lib/server/repertoire.ts';
 import { planWishes } from '#lib/server/feedback.ts';
 import { programSuggestions } from '#lib/repertoire/suggestions.ts';
-import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError } from '#lib/server/sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
+import { normalize } from '#lib/repertoire/sheet.ts';
 import { t } from '#lib/i18n/index.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -30,6 +31,9 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			subtitle: concert.program[i]?.subtitle
 		})),
 		suggestions: suggestions(library, concert.id, sheet.title, feedback?.wishes ?? []),
+		sharedFrom: concert.sharedFrom,
+		sharedWith: concert.sharedWith,
+		shareOptions: shareOptions(library, concert.id),
 		// Only pieces with a row in "Stücke" can be picked; that's what the sheet's dropdown allows too.
 		pieces: library.pieces
 			.filter((piece) => piece.sheet?.title)
@@ -41,6 +45,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			}))
 	};
 };
+
+/**
+ * Concerts whose programme this one could take over (#70): those in the sheet with a
+ * programme of their own, the ones closest in time first.
+ */
+function shareOptions(library: Library, concertId: string) {
+	const concert = library.concertsById.get(concertId);
+	// "1957" and "1957-12" count as the middle of the year or month.
+	const day = (key: string) => Date.parse(key.length === 4 ? `${key}-07-01` : key.length === 7 ? `${key}-15` : key) / 86_400_000;
+	const distance = (key: string) => (concert?.dateKey && key ? Math.abs(day(concert.dateKey) - day(key)) : Infinity);
+	return library.concerts
+		.filter((other) => other.id !== concertId && other.sheet?.title && other.program.length && !other.sharedFrom)
+		.sort((a, b) => distance(a.dateKey) - distance(b.dateKey))
+		.slice(0, 30)
+		.map((other) => ({ name: other.sheet!.title, title: other.title, label: other.label?.long ?? other.dateText ?? '', count: other.program.length }));
+}
 
 /** Wishes for this concert or any time, and pieces not played for long, ready to add (#91, #108). */
 function suggestions(library: Library, concertId: string, concertTitle: string, wishes: NonNullable<Awaited<ReturnType<typeof getFeedback>>>['wishes']) {
@@ -79,8 +99,16 @@ function suggestions(library: Library, concertId: string, concertTitle: string, 
 	return { wished: result.wished.map(shown), longAgo: result.longAgo.map(shown), genres: result.genres };
 }
 
+/** Clears "Programm wie" on the concert's row, so its own rows count. */
+async function clearShare(title: string) {
+	const concerts = await readTab('concerts');
+	if (concerts.indexes.sameProgramAs === undefined) return;
+	const rows = concerts.rows.filter((row) => normalize(row.values.title) === normalize(title) && row.values.sameProgramAs);
+	for (const row of rows) await updateRecord('concerts', concerts, row.row, { sameProgramAs: '' });
+}
+
 export const actions: Actions = {
-	default: async ({ params, request, locals }) => {
+	save: async ({ params, request, locals }) => {
 		requireRight(locals, 'programme.bearbeiten');
 		const data = await request.formData();
 		const entries = parseEntries(String(data.get('entries') ?? ''));
@@ -99,6 +127,8 @@ export const actions: Actions = {
 			// New rows first: if deleting the old ones fails, nothing is lost, only doubled.
 			await appendRecords('program', table, plan.append);
 			await deleteRows('program', plan.remove);
+			// A concert that played another one's programme now has its own.
+			if (sheet.sameProgramAs) await clearShare(sheet.title);
 			// Wishes taken into the programme become "geplant"; the programme counts even if this fails.
 			const wishIds = String(data.get('wishes') ?? '').split(',').map((id) => id.trim()).filter(Boolean).slice(0, 50);
 			await planWishes(wishIds).catch((cause) => console.error('Marking wishes as planned failed:', cause));
@@ -106,6 +136,37 @@ export const actions: Actions = {
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: cause.message });
 			console.error('Saving a programme failed:', cause);
+			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
+		}
+		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);
+	},
+
+	/** Plays another concert's programme from now on; this concert's own rows go. */
+	share: async ({ params, request, locals }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const data = await request.formData();
+		const library = await getLibrary();
+		const sheet = library.concertsById.get(params.id)?.sheet;
+		if (!sheet) return fail(409, { message: t.editor.notInSheet });
+		const source = library.concerts.find((other) => other.sheet && normalize(other.sheet.title) === normalize(String(data.get('source') ?? '')));
+		if (!source?.sheet || source.sheet.key === sheet.key || !source.program.length) {
+			return fail(400, { message: t.editor.shareUnknown });
+		}
+
+		try {
+			const [table, concerts] = await Promise.all([readTab('program'), readTab('concerts')]);
+			if (programVersion(table, sheet.title) !== String(data.get('version'))) {
+				return fail(409, { message: t.editor.conflict });
+			}
+			const row = concerts.rows.find((r) => normalize(r.values.title) === normalize(sheet.title));
+			if (!row) return fail(409, { message: t.editor.notInSheet });
+			// The column first: if that fails, the old programme is still there.
+			await updateRecord('concerts', concerts, row.row, { sameProgramAs: source.sheet.title });
+			await deleteRows('program', planProgramSave(table, sheet.title, []).remove);
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { message: t.editor.shareNeedsSetup });
+			console.error('Sharing a programme failed:', cause);
 			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
 		}
 		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);

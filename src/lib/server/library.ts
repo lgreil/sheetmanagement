@@ -4,7 +4,7 @@ import type { Catalog } from '#lib/music/catalog.ts';
 import { searchText } from '#lib/music/text.ts';
 import type { PieceDetail, PieceStatus, PieceSummary } from '#lib/music/types.ts';
 import { eventDay, formatFuzzyDate, fuzzyDateKey, parseFuzzyDate, type FuzzyDate, type FuzzyDateLabel } from '#lib/repertoire/dates.ts';
-import type { SheetConcert, SheetPiece } from '#lib/repertoire/sheet.ts';
+import { normalize, type SheetConcert, type SheetPiece } from '#lib/repertoire/sheet.ts';
 import { getCatalog } from './catalog.ts';
 import { getRepertoire, type RepertoireResult } from './repertoire.ts';
 import { getSchedule, type ScheduleResult } from './schedule.ts';
@@ -42,6 +42,10 @@ export interface LibraryConcert {
 	event?: ShownEvent;
 	sheet?: SheetConcert;
 	program: ProgramItem[];
+	/** The concert whose programme this one plays ("Programm wie" in the sheet). */
+	sharedFrom?: { id: string; title: string };
+	/** Concerts that play this one's programme. */
+	sharedWith: { id: string; title: string }[];
 }
 
 export type SheetState = 'ok' | Extract<RepertoireResult, { ok: false }>['reason'];
@@ -52,6 +56,8 @@ export interface Library {
 	sheet: SheetState;
 	pieces: LibraryPiece[];
 	piecesById: Map<string, LibraryPiece>;
+	/** Pieces by their normalised title in "Stücke", for names entered in other tabs. */
+	piecesByName: Map<string, LibraryPiece>;
 	/** Newest first. */
 	concerts: LibraryConcert[];
 	concertsById: Map<string, LibraryConcert>;
@@ -106,6 +112,7 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 	}
 	pieces.sort((a, b) => collator.compare(a.title, b.title));
 	const piecesById = new Map(pieces.map((piece) => [piece.id, piece]));
+	const piecesByName = new Map(pieces.flatMap((piece) => (piece.sheet?.title ? [[normalize(piece.sheet.title), piece] as const] : [])));
 
 	// Concerts: every row in the sheet, plus calendar concerts not in it (yet).
 	const events = schedule.ok ? schedule.byId : new Map<string, ShownEvent>();
@@ -149,6 +156,15 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 	concerts.sort((a, b) => b.dateKey.localeCompare(a.dateKey) || collator.compare(a.title, b.title));
 	const concertsById = new Map(concerts.map((c) => [c.id, c]));
 
+	// Shared programmes, both ways, oldest sharing concert first.
+	const bySheetKey = new Map(concerts.flatMap((c) => (c.sheet ? [[c.sheet.key, c] as const] : [])));
+	for (const c of [...concerts].reverse()) {
+		const source = c.sheet?.programFrom ? bySheetKey.get(c.sheet.programFrom) : undefined;
+		if (!source) continue;
+		c.sharedFrom = { id: source.id, title: source.title };
+		source.sharedWith.push({ id: c.id, title: c.title });
+	}
+
 	// "Gespielt bei", oldest first.
 	for (const c of [...concerts].reverse()) {
 		for (const item of c.program) {
@@ -163,6 +179,7 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 		sheet: repertoire.ok ? 'ok' : repertoire.reason,
 		pieces,
 		piecesById,
+		piecesByName,
 		concerts,
 		concertsById,
 		today
@@ -177,9 +194,10 @@ function eventDate(event: ShownEvent): FuzzyDate {
 	return parseFuzzyDate(eventDay(event, config.timeZone))!;
 }
 
-function concert(input: Omit<LibraryConcert, 'dateKey' | 'label'>): LibraryConcert {
+function concert(input: Omit<LibraryConcert, 'dateKey' | 'label' | 'sharedWith'>): LibraryConcert {
 	return {
 		...input,
+		sharedWith: [],
 		dateKey: input.date ? fuzzyDateKey(input.date) : '',
 		label: input.date ? formatFuzzyDate(input.date, config.locale) : null
 	};
@@ -190,6 +208,18 @@ export function isPastConcert(concert: LibraryConcert, today: string): boolean {
 	if (concert.event) return concert.event.past;
 	if (!concert.date) return true;
 	return concert.dateKey < today.slice(0, concert.dateKey.length);
+}
+
+/** A piece named in another tab (e.g. "Proben") as the pages show it. */
+export function namedItem(library: Library, name: string, notes?: string): ProgramItem {
+	const piece = library.piecesByName.get(normalize(name));
+	return {
+		title: piece?.title ?? name,
+		subtitle: piece ? [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined : undefined,
+		pieceId: piece?.id,
+		status: piece?.status,
+		notes
+	};
 }
 
 /** Only what a concert list shows. */

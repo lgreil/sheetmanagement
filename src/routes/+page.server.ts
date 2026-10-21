@@ -1,5 +1,5 @@
-import { getLibrary } from '#lib/server/library.ts';
-import { getAccessList, getFeedback } from '#lib/server/repertoire.ts';
+import { getLibrary, namedItem } from '#lib/server/library.ts';
+import { getAccessList, getFeedback, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import type { PageServerLoad } from './$types';
 
 /** What's waiting for the people who look after things; only counted for those who may act on it. */
@@ -17,9 +17,9 @@ async function todo(locals: App.Locals) {
 }
 
 export const load: PageServerLoad = async ({ locals }) => {
-	const [library, open] = await Promise.all([getLibrary(), todo(locals)]);
+	const [library, open, plan] = await Promise.all([getLibrary(), todo(locals), getRehearsalPlan()]);
 	const result = library.schedule;
-	if (!result.ok) return { calendar: result.reason, nextConcert: null, nextRehearsal: null, program: [], todo: open };
+	if (!result.ok) return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsing: [], program: [], todo: open };
 
 	const upcoming = result.events.filter((event) => !event.past);
 	const nextConcert = upcoming.find((event) => event.type === 'konzert') ?? null;
@@ -27,5 +27,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const program = nextConcert
 		? (library.concertsById.get(nextConcert.id)?.program ?? []).map(({ title, pieceId }) => ({ title, pieceId }))
 		: [];
-	return { calendar: 'ok' as const, nextConcert, nextRehearsal, program, todo: open };
+	// What's on at the next rehearsal, from the rehearsal plan.
+	const rehearsing = nextRehearsal
+		? (plan?.byEvent.get(nextRehearsal.id) ?? []).map((entry) => namedItem(library, entry.pieceName).title)
+		: [];
+	return { calendar: 'ok' as const, nextConcert, nextRehearsal, rehearsing, program, todo: open };
 };

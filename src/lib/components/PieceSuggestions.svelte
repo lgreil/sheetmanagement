@@ -4,6 +4,7 @@
 	import { composerAsUsual, searchWorks, suggestGenre, WikidataBusyError, workDetails, type WorkCandidate } from '#lib/music/wikidata.ts';
 	import type { NamingRules } from '#lib/config/index.ts';
 	import Icon from './Icon.svelte';
+	import ScoreViewer from './ScoreViewer.svelte';
 
 	/**
 	 * Suggestions for a piece's details, each from a source someone asks for: the text on the
@@ -47,6 +48,8 @@
 	let wikidataUrl = $state<string | null>(null);
 	// svelte-ignore state_referenced_locally
 	let file = $state(files[0]?.id ?? '');
+	// The pages themselves, to type from when reading the text gives nothing.
+	let viewing = $state(false);
 
 	/** Adds suggestions, without repeating one already listed. */
 	function add(list: Suggestion[]) {
@@ -70,6 +73,7 @@
 			const lines = await readScoreLines(file);
 			if (!lines.length) {
 				message = t.suggest.scanOnly;
+				viewing = true;
 				return;
 			}
 			const found = readScoreText(lines, naming);
@@ -80,7 +84,10 @@
 			}
 			if (found.arranger) list.push({ field: 'arranger', value: found.arranger, source: 'score' });
 			if (found.catalogue) list.push({ field: 'catalogue', value: found.catalogue, source: 'score' });
-			if (!list.length) message = t.suggest.nothingInScore;
+			if (!list.length) {
+				message = t.suggest.nothingInScore;
+				viewing = true;
+			}
 			add(list);
 		} catch (error) {
 			message = (error as { reason?: string }).reason === 'download' ? t.suggest.downloadFailed : t.suggest.unreadable;
@@ -133,9 +140,12 @@
 		}
 	}
 
-	const youtube = $derived(
-		`https://www.youtube.com/results?search_query=${encodeURIComponent([values.title, values.composer].filter(Boolean).join(' '))}`
-	);
+	// With an arranger, the search looks for that arrangement rather than the original work.
+	const youtube = $derived.by(() => {
+		const arranger = values.arranger?.trim();
+		const query = [values.title, values.composer, arranger && `arr. ${arranger}`].map((part) => part?.trim()).filter(Boolean).join(' ');
+		return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
+	});
 	const filled = (s: Suggestion) => (values[s.field] ?? '').trim() === s.value;
 	const columns = t.sheet.pieces.columns;
 </script>
@@ -155,6 +165,9 @@
 				<button class="btn ghost small" type="button" onclick={fromScore} disabled={!!busy}>
 					<Icon name="file" size={16} />{busy === 'score' ? t.suggest.reading : t.suggest.fromScore}
 				</button>
+				<button class="btn ghost small" type="button" onclick={() => (viewing = !viewing)} aria-pressed={viewing}>
+					<Icon name="music" size={16} />{viewing ? t.viewer.hide : t.viewer.show}
+				</button>
 			</div>
 		{/if}
 		<button class="btn ghost small" type="button" onclick={lookUp} disabled={!!busy || !values.title?.trim()}>
@@ -167,6 +180,8 @@
 	<p class="hint">{t.suggest.youtubeHint}</p>
 
 	{#if message}<p class="msg info" role="status">{message}</p>{/if}
+
+	{#if viewing && file && canRead}<ScoreViewer fileId={file} />{/if}
 
 	{#if candidates.length > 1}
 		<fieldset class="candidates">

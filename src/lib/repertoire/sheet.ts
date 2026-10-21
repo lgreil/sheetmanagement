@@ -10,6 +10,8 @@ export type TabKey = keyof typeof LAYOUT;
 export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
 export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
 export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
+/** Columns added later that an older sheet works without, so they aren't reported missing. */
+const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { concerts: ['sameProgramAs'] };
 
 /** The raw cell values of the repertoire tabs, header row included. */
 export type SheetValues = Record<RepertoireTab, string[][]>;
@@ -97,6 +99,10 @@ export interface SheetConcert {
 	location?: string;
 	orchestra?: string;
 	eventId?: string;
+	/** "Programm wie" as entered: the concert whose programme this one plays too. */
+	sameProgramAs?: string;
+	/** Key of the concert the programme comes from, when it's shared and not its own. */
+	programFrom?: string;
 	/** In programme order; entries without a number keep their row order at the end. */
 	program: ProgramEntry[];
 }
@@ -158,6 +164,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 	};
 	for (const key of REPERTOIRE_TABS) {
 		for (const column of tables[key].missing) {
+			if (OPTIONAL_COLUMNS[key]?.includes(column)) continue;
 			const name = (LAYOUT[key].columns as Record<string, string>)[column];
 			problems.push({ kind: 'missing-column', tab: LAYOUT[key].tab, value: name });
 		}
@@ -224,6 +231,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			location: optional(v.location),
 			orchestra: optional(v.orchestra),
 			eventId: optional(event),
+			sameProgramAs: optional(v.sameProgramAs),
 			program: []
 		};
 		concerts.push(concert);
@@ -250,6 +258,26 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			pieceName: v.piece,
 			notes: optional(v.notes)
 		});
+	}
+
+	// Shared programmes: a concert without rows of its own plays the one it names under
+	// "Programm wie", e.g. the 2nd Weihnachtskonzert the 1st one's. Own rows win.
+	const owners = new Set(concerts.filter((concert) => concert.program.length).map((concert) => concert.key));
+	for (const concert of concerts) {
+		if (!concert.sameProgramAs || owners.has(concert.key)) continue;
+		let source = concertsByTitle.get(normalize(concert.sameProgramAs));
+		// A chain ("3. → 2. → 1.") is followed to the concert with the rows.
+		for (const seen = new Set([concert.key]); source && !owners.has(source.key) && !seen.has(source.key); ) {
+			seen.add(source.key);
+			source = source.sameProgramAs ? concertsByTitle.get(normalize(source.sameProgramAs)) : undefined;
+		}
+		if (!source || source.key === concert.key) {
+			problems.push({ kind: 'unknown-concert', tab: LAYOUT.concerts.tab, row: concert.row, value: concert.sameProgramAs });
+			continue;
+		}
+		if (!owners.has(source.key)) continue;
+		concert.programFrom = source.key;
+		concert.program = source.program;
 	}
 
 	const playedAt = new Map<string, string[]>();

@@ -37,7 +37,8 @@ export function groupLines(items: { str: string; transform: number[] }[]): strin
 	);
 }
 
-export async function readScoreLines(fileId: string, pages = 2): Promise<string[]> {
+/** A part's PDF opened with pdf.js; destroy() frees it again. */
+export async function openScore(fileId: string) {
 	let data: ArrayBuffer;
 	try {
 		const response = await fetch(`/api/noten/${encodeURIComponent(fileId)}`);
@@ -50,16 +51,44 @@ export async function readScoreLines(fileId: string, pages = 2): Promise<string[
 		const pdfjs = await import('pdfjs-dist');
 		pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 		// Copy-protected publisher PDFs open with the empty password, like for merging (#80).
-		const task = pdfjs.getDocument({ data, password: '' });
+		// Scans are often JBIG2 images, which need pdf.js's WebAssembly decoders (vite.config.ts).
+		const task = pdfjs.getDocument({ data, password: '', wasmUrl: '/pdfjs-wasm/' });
 		const doc = await task.promise;
+		return { doc, destroy: () => task.destroy() };
+	} catch {
+		throw new ScoreReadError('unreadable');
+	}
+}
+
+export type OpenScore = Awaited<ReturnType<typeof openScore>>;
+
+export async function readScoreLines(fileId: string, pages = 2): Promise<string[]> {
+	const { doc, destroy } = await openScore(fileId);
+	try {
 		const lines: string[] = [];
 		for (let number = 1; number <= Math.min(pages, doc.numPages); number++) {
 			const content = await (await doc.getPage(number)).getTextContent();
 			lines.push(...groupLines(content.items as { str: string; transform: number[] }[]));
 		}
-		await task.destroy();
 		return lines;
 	} catch {
 		throw new ScoreReadError('unreadable');
+	} finally {
+		await destroy();
 	}
+}
+
+/**
+ * Draws one page into a canvas, scaled to the given CSS width and sharp on high-density
+ * screens. For looking at scans the reader can't read (#manual entry).
+ */
+export async function renderPage({ doc }: OpenScore, number: number, canvas: HTMLCanvasElement, width: number): Promise<void> {
+	const page = await doc.getPage(number);
+	const base = page.getViewport({ scale: 1 });
+	const ratio = window.devicePixelRatio || 1;
+	const viewport = page.getViewport({ scale: (width / base.width) * ratio });
+	canvas.width = Math.floor(viewport.width);
+	canvas.height = Math.floor(viewport.height);
+	canvas.style.width = `${width}px`;
+	await page.render({ canvas, viewport }).promise;
 }
