@@ -3,10 +3,13 @@
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 
 	let { data } = $props();
 	const concertUrl = $derived(`/konzerte/${encodeURIComponent(data.concert.id)}`);
 	const when = $derived([data.concert.date, data.concert.time].filter(Boolean).join(', '));
+	const length = $derived(programLength(data.items.map((item) => item.duration)));
+	const hints = $derived({ handout: t.print.handoutHint, setlist: t.print.setlistHint, musikfolge: t.musicReport.hint });
 </script>
 
 <Title title={t.print.title(data.concert.title)} />
@@ -20,10 +23,43 @@
 		<a role="tab" class="tab" class:active={data.kind === 'setlist'} aria-selected={data.kind === 'setlist'} href="?art=setlist" data-sveltekit-replacestate>
 			{t.print.setlist}
 		</a>
+		{#if data.canReport}
+			<a role="tab" class="tab" class:active={data.kind === 'musikfolge'} aria-selected={data.kind === 'musikfolge'} href="?art=musikfolge" data-sveltekit-replacestate>
+				{t.musicReport.tab}
+			</a>
+		{/if}
 	</div>
-	<p class="hint">{data.kind === 'setlist' ? t.print.setlistHint : t.print.handoutHint}</p>
-	<button class="btn" onclick={() => window.print()} disabled={!data.items.length}><Icon name="file" size={16} />{t.print.print}</button>
+	<p class="hint">{hints[data.kind]}</p>
+	<div class="buttons">
+		{#if data.kind === 'musikfolge' && data.items.length}
+			<a class="btn ghost" href="{concertUrl}/musikfolge.csv" download><Icon name="download" size={16} />{t.musicReport.csv}</a>
+		{/if}
+		<button class="btn" onclick={() => window.print()} disabled={!data.items.length}><Icon name="print" size={16} />{t.print.print}</button>
+	</div>
 </div>
+
+{#if data.report && data.items.length}
+	<!-- What's still missing, with a way to fill it in; not printed. -->
+	<div class="no-print gaps" class:complete={!data.report.gaps.length}>
+		{#if data.report.gaps.length}
+			<p><Icon name="alert" size={16} />{t.musicReport.gaps(data.report.gaps.length)}</p>
+			<ul>
+				{#each data.report.gaps as gap, i (i)}
+					<li>
+						<strong>{gap.title}</strong>
+						<span class="muted">{gap.missing.map((field) => t.musicReport.missing[field]).join(', ')}</span>
+						{#if gap.pieceId && data.report.canFill}
+							<a href="/stuecke/{encodeURIComponent(gap.pieceId)}/bearbeiten">{t.musicReport.fill}</a>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+		{:else}
+			<p><Icon name="check" size={16} />{t.musicReport.complete}</p>
+		{/if}
+		<p class="muted">{t.musicReport.fullNames}</p>
+	</div>
+{/if}
 
 {#if !data.items.length}
 	<p class="msg info no-print">{t.print.empty}</p>
@@ -46,6 +82,32 @@
 				</li>
 			{/each}
 		</ol>
+		<!-- For the audience only when every piece has a duration; a guess would mislead. -->
+		{#if length.known && !length.missing}<p class="total">{t.print.totalLength(roundMinutes(length.seconds))}</p>{/if}
+	</article>
+{:else if data.kind === 'musikfolge' && data.report}
+	<article class="sheet report">
+		<header>
+			<h1>{t.musicReport.title}</h1>
+			<dl>
+				<div><dt>{t.musicReport.organizer}</dt><dd>{page.data.orchestraName}</dd></div>
+				<div><dt>{t.musicReport.date}</dt><dd>{when || '–'}</dd></div>
+				<div><dt>{t.musicReport.venue}</dt><dd>{data.concert.location ?? '–'}</dd></div>
+			</dl>
+			<p class="concert">{data.concert.title}</p>
+		</header>
+		<div class="table">
+			<table>
+				<thead>
+					<tr>{#each data.report.rows[0] as cell, i (i)}<th>{cell}</th>{/each}</tr>
+				</thead>
+				<tbody>
+					{#each data.report.rows.slice(1) as row, r (r)}
+						<tr>{#each row as cell, i (i)}<td class:empty={!cell && i !== 3}>{cell}</td>{/each}</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	</article>
 {:else}
 	<article class="sheet setlist">
@@ -55,10 +117,12 @@
 				<li>
 					<span class="number">{i + 1}</span>
 					<span class="piece">{item.title}</span>
+					{#if item.duration}<span class="time">{formatDuration(item.duration)}</span>{/if}
 					{#if item.notes}<span class="note">{item.notes}</span>{/if}
 				</li>
 			{/each}
 		</ol>
+		{#if length.known}<p class="total">{t.duration.total(roundMinutes(length.seconds), length.missing)}</p>{/if}
 	</article>
 {/if}
 
@@ -100,11 +164,143 @@
 		color: var(--accent-contrast);
 	}
 
+	.tabs {
+		flex-wrap: wrap;
+	}
+
 	.hint {
 		flex: 1;
 		min-width: 200px;
 		color: var(--text-muted);
 		font-size: 0.875rem;
+	}
+
+	.buttons {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+
+	.gaps {
+		display: grid;
+		gap: var(--space-2);
+		max-width: 720px;
+		margin: 0 auto var(--space-5);
+		padding: var(--space-3) var(--space-4);
+		border-radius: var(--radius-m);
+		background: color-mix(in oklab, var(--warn) 10%, var(--surface));
+	}
+
+	.gaps.complete {
+		background: color-mix(in oklab, var(--ok) 10%, var(--surface));
+	}
+
+	.gaps p {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	.gaps ul {
+		display: grid;
+		gap: var(--space-1);
+		margin: 0;
+		padding-left: var(--space-5);
+	}
+
+	.gaps li {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 var(--space-2);
+	}
+
+	.gaps a {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	.muted {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.total {
+		margin-top: var(--space-4);
+		color: var(--text-muted);
+		text-align: center;
+	}
+
+	.setlist .total {
+		text-align: left;
+	}
+
+	.setlist .time {
+		color: var(--text-muted);
+		font-size: 1.25rem;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.report header {
+		margin-bottom: var(--space-4);
+	}
+
+	.report h1 {
+		margin-bottom: var(--space-3);
+	}
+
+	.report dl {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-5);
+		margin: 0 0 var(--space-2);
+	}
+
+	.report dt {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 650;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+	}
+
+	.report dd {
+		margin: 0;
+	}
+
+	.concert {
+		font-weight: 600;
+	}
+
+	.table {
+		overflow-x: auto;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.9375rem;
+	}
+
+	th,
+	td {
+		padding: var(--space-2);
+		border-bottom: 1px solid var(--border);
+		text-align: left;
+		vertical-align: top;
+	}
+
+	th {
+		font-size: 0.8125rem;
+	}
+
+	td.empty {
+		background: color-mix(in oklab, var(--warn) 10%, transparent);
+	}
+
+	td:first-child,
+	td:last-child {
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
 	}
 
 	/* The page as it will print, so what you see is what you get. */
@@ -227,6 +423,10 @@
 		.setlist .piece,
 		.number {
 			font-size: 22pt;
+		}
+
+		td.empty {
+			background: none;
 		}
 	}
 </style>

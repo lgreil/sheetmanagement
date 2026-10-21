@@ -17,20 +17,23 @@ const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	wishes: 'id',
 	missingParts: 'fileId',
 	signups: 'eventId',
-	rehearsals: 'eventId'
+	rehearsals: 'eventId',
+	attendance: 'eventId'
 };
 /** Filled by the app; edits there are overwritten, so they get a warning. */
 const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
 	missingParts: ['piece', 'part', 'status']
 };
 const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
-	pieces: ['reviewedAt'],
+	// "7:30" would otherwise become a time of day.
+	pieces: ['reviewedAt', 'duration'],
 	concerts: ['date'],
 	members: ['pausedUntil'],
 	requests: ['requestedAt'],
 	reports: ['reportedAt'],
 	wishes: ['submittedAt', 'votes'],
-	signups: ['answeredAt']
+	signups: ['answeredAt'],
+	loans: ['borrowedAt', 'dueAt']
 };
 const WIDTHS: Record<string, number> = {
 	title: 280,
@@ -44,7 +47,10 @@ const WIDTHS: Record<string, number> = {
 	description: 320,
 	answer: 240,
 	rehearsal: 280,
-	sameProgramAs: 240
+	sameProgramAs: 240,
+	from: 200,
+	event: 240,
+	duration: 80
 };
 
 const HEADER_BACKGROUND = { red: 0.93, green: 0.94, blue: 0.96 };
@@ -210,7 +216,10 @@ export async function setUpSheet(
 		['wishes', 'status', list(t.feedbackValues.wishStatus)],
 		['missingParts', 'done', { type: 'BOOLEAN' }],
 		['instrumentGroups', 'mutual', { type: 'BOOLEAN' }],
-		['signups', 'answer', list(t.signups.answerValues)]
+		['signups', 'answer', list(t.signups.answerValues)],
+		['loans', 'piece', fromColumn('pieces', 'title')],
+		['loans', 'returned', { type: 'BOOLEAN' }],
+		['attendance', 'present', { type: 'BOOLEAN' }]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

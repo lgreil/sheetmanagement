@@ -64,6 +64,13 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Anwesenheit bei Proben',
+				paragraphs: [
+					'Nach einer Probe können Personen mit dem Recht „Anwesenheit erfassen“ (z. B. Dirigat und Organisation) eintragen, wer da war. Gespeichert werden nur Termin, Name, E-Mail-Adresse und ob du anwesend warst, im Blatt „Anwesenheit“ der Google-Tabelle des Orchesters. Daraus zeigt die App, bei wie vielen Proben vor einem Konzert du dabei warst.',
+					'Das sehen nur du selbst und die Personen mit diesem Recht, nicht die anderen Mitglieder. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Probenbetrieb des Vereins). Die Einträge werden gelöscht, wenn du austrittst oder es verlangst.'
+				]
+			},
+			{
 				heading: 'Angaben zu Stücken nachschlagen',
 				paragraphs: [
 					'Wer Angaben zu Stücken pflegt, kann auf Knopfdruck bei Wikidata (Wikimedia Foundation, USA) nach dem Werk suchen. Dabei schickt dein Browser den Titel des Stücks und den eingetragenen Komponisten an Wikidata; wie bei jedem Seitenaufruf erfährt Wikimedia dabei deine IP-Adresse. Daten über dich oder andere Mitglieder werden nicht übertragen. Es gilt die Datenschutzerklärung der Wikimedia Foundation (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',

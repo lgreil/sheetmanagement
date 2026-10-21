@@ -6,6 +6,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
+	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -33,6 +34,23 @@
 					: undefined
 				: data.rehearsalPlan.partsUrl
 	);
+	/** For the group chat: when, where and, for a concert, what's played. */
+	const shareText = $derived(
+		[
+			title,
+			data.kind === 'event'
+				? [data.event.date.long, data.event.date.time].filter(Boolean).join(', ')
+				: (data.archive.label?.long ?? data.archive.dateText),
+			location,
+			...(isConcert && data.program.items.length
+				? ['', `${t.concert.program}:`, ...data.program.items.map((item, i) => `${i + 1}. ${item.title}`)]
+				: [])
+		]
+			.filter((line) => line !== undefined)
+			.join('\n')
+	);
+	const check = $derived(data.program.check);
+	const checkOpen = $derived(check?.filter((item) => !item.ok).length ?? 0);
 	const showPlan = $derived(
 		data.kind === 'event' &&
 			!isConcert &&
@@ -52,9 +70,12 @@
 		{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
 	</p>
 	<h1>{title}</h1>
-	{#if partsUrl}
-		<a class="btn main-action" href={partsUrl}><Icon name="user" size={18} />{t.nav.myParts}</a>
-	{/if}
+	<div class="head-actions">
+		{#if partsUrl}
+			<a class="btn" href={partsUrl}><Icon name="user" size={18} />{t.nav.myParts}</a>
+		{/if}
+		<div class="ui-actions"><ShareButton {title} text={shareText} url={page.url.pathname} /></div>
+	</div>
 </header>
 
 <!-- The facts as one calm list: when, where, what it belongs to. -->
@@ -120,6 +141,50 @@
 	</section>
 {/if}
 
+{#if check}
+	<!-- For planners: what's done and what's still open, worked out from the data. -->
+	<details class="block check" open={checkOpen > 0}>
+		<summary>
+			<span class="check-icon" class:done={!checkOpen}><Icon name={checkOpen ? 'list' : 'check'} size={18} /></span>
+			<span class="check-title">
+				<strong>{t.check.title}</strong>
+				<span>{checkOpen ? t.check.open(checkOpen) : t.check.allDone}</span>
+			</span>
+		</summary>
+		<ul>
+			{#each check as item (item.key)}
+				<li class:ok={item.ok}>
+					<Icon name={item.ok ? 'check' : 'alert'} size={16} />
+					{#if item.href && !item.ok}
+						<a href={item.href}>{item.text}</a>
+					{:else}
+						<span>{item.text}</span>
+					{/if}
+				</li>
+			{/each}
+		</ul>
+	</details>
+{/if}
+
+{#if data.kind === 'event' && data.attendance?.kind === 'rehearsal'}
+	<section class="block">
+		<h2 class="ui-label">{t.attendance.title}</h2>
+		{#if data.attendanceSaved}<p class="saved" role="status"><Icon name="check" size={16} />{t.attendance.saved}</p>{/if}
+		{#if data.attendance.state === 'not-set-up'}
+			<p class="placeholder">{t.attendance.notSetUp}</p>
+		{:else}
+			<a class="ui-card attendance-link" href={data.attendance.url}>
+				<span class="icon"><Icon name="users" size={18} /></span>
+				<span class="fact-body">
+					<strong>{data.attendance.of ? t.attendance.present(data.attendance.present, data.attendance.of) : t.attendance.notTaken}</strong>
+					<span>{data.attendance.of ? t.attendance.edit : t.attendance.take}</span>
+				</span>
+				<span class="trail"><Icon name="chevron" size={18} /></span>
+			</a>
+		{/if}
+	</section>
+{/if}
+
 {#if data.kind === 'event' && data.signups}
 	{#if data.signups.state === 'ready'}
 		<Signups signups={data.signups} result={form} />
@@ -163,7 +228,7 @@
 			</p>
 		{/if}
 		{#if data.program.items.length}
-			<ProgramList items={data.program.items} />
+			<ProgramList items={data.program.items} total />
 			<p class="hint">{t.concert.programHint}</p>
 		{:else}
 			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
@@ -231,9 +296,44 @@
 			{/if}
 		</div>
 		{#if data.rehearsalPlan.items.length}
-			<ProgramList items={data.rehearsalPlan.items} />
+			<ProgramList items={data.rehearsalPlan.items} total />
 		{:else}
 			<p class="placeholder">{t.rehearsalPlan.empty}</p>
+		{/if}
+	</section>
+{/if}
+
+{#if data.kind === 'event' && data.attendance?.kind === 'concert'}
+	{@const summary = data.attendance}
+	<section class="block">
+		<h2 class="ui-label">{t.attendance.overview}</h2>
+		{#if summary.mine}<p class="note"><Icon name="users" size={16} /><span>{t.attendance.mine(summary.mine.present, summary.mine.of)}</span></p>{/if}
+		{#if summary.table}
+			<div class="ui-card attendance">
+				<p class="hint">{t.attendance.overviewLead(summary.taken)} {t.attendance.overviewHint}</p>
+				<div class="scroll">
+					<table>
+						<thead>
+							<tr>
+								<th>{t.attendance.person}</th>
+								<th>{t.attendance.total}</th>
+								{#each summary.table.columns as column, i (i)}<th title={column}><span>{column}</span></th>{/each}
+							</tr>
+						</thead>
+						<tbody>
+							{#each summary.table.rows as row, r (r)}
+								<tr>
+									<td>{row.name}</td>
+									<td class="count" class:low={row.of && row.present / row.of < 0.5}>{t.attendance.count(row.present, row.of)}</td>
+									{#each row.pieces as cell, i (i)}
+										<td class="count" class:low={cell && cell.of && cell.present === 0}>{cell ? t.attendance.count(cell.present, cell.of) : '–'}</td>
+									{/each}
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</div>
 		{/if}
 	</section>
 {/if}
@@ -286,8 +386,157 @@
 		text-transform: none;
 	}
 
-	.main-action {
+	.head-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-3) var(--space-5);
 		margin-top: var(--space-3);
+	}
+
+	.check {
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+	}
+
+	.check summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		padding: var(--space-3) var(--space-4);
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.check summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.check-icon {
+		display: grid;
+		place-items: center;
+		width: 34px;
+		height: 34px;
+		border-radius: 10px;
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+		color: var(--warn);
+	}
+
+	.check-icon.done {
+		background: color-mix(in oklab, var(--ok) 14%, transparent);
+		color: var(--ok);
+	}
+
+	.check-title {
+		display: grid;
+		line-height: 1.35;
+	}
+
+	.check-title span {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.check ul {
+		display: grid;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0 var(--space-4) var(--space-4) calc(34px + var(--space-3) + var(--space-4));
+		list-style: none;
+	}
+
+	.check li {
+		display: flex;
+		align-items: flex-start;
+		gap: var(--space-2);
+		font-size: 0.9375rem;
+	}
+
+	.check li :global(svg) {
+		flex: none;
+		margin-top: 3px;
+		color: var(--warn);
+	}
+
+	.check li.ok {
+		color: var(--text-muted);
+	}
+
+	.check li.ok :global(svg) {
+		color: var(--ok);
+	}
+
+	.check a {
+		color: var(--accent);
+		font-weight: 600;
+	}
+
+	@media (max-width: 480px) {
+		.check ul {
+			padding-left: var(--space-4);
+		}
+	}
+
+	.attendance-link {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		padding: var(--space-3) var(--space-4);
+	}
+
+	.attendance-link:hover {
+		background: var(--surface-2);
+	}
+
+	.attendance {
+		padding: var(--space-4);
+	}
+
+	.attendance .hint {
+		margin: 0 0 var(--space-3);
+	}
+
+	.scroll {
+		overflow-x: auto;
+	}
+
+	table {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: 0.875rem;
+	}
+
+	th,
+	td {
+		padding: var(--space-2);
+		border-bottom: 1px solid var(--hairline);
+		text-align: left;
+		white-space: nowrap;
+	}
+
+	th {
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 650;
+	}
+
+	th span {
+		display: inline-block;
+		max-width: 9rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		vertical-align: bottom;
+	}
+
+	td.count {
+		font-variant-numeric: tabular-nums;
+	}
+
+	td.low {
+		color: var(--danger);
+		font-weight: 600;
 	}
 
 	.facts {

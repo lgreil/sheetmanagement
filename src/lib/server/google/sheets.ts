@@ -80,7 +80,7 @@ export async function appendRows(
 	client: GoogleClient,
 	spreadsheetId: string,
 	range: string,
-	rows: (string | number)[][]
+	rows: (string | number | boolean)[][]
 ): Promise<void> {
 	await client.request(
 		`${BASE}/${encodeURIComponent(spreadsheetId)}/values/${encodeURIComponent(range)}:append`,

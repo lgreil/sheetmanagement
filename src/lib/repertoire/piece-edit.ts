@@ -1,4 +1,5 @@
 import { safeLink } from '#lib/links.ts';
+import { formatDuration, parseDuration } from './duration.ts';
 import { normalize, type ColumnKey, type Table, type TableRow } from './sheet.ts';
 
 /**
@@ -11,7 +12,19 @@ type PieceColumn = ColumnKey<'pieces'> & string;
 type ProgramColumn = ColumnKey<'program'> & string;
 
 /** What the app lets people change; the Drive folder id stays the app's. */
-export const EDITABLE = ['title', 'composer', 'catalogue', 'arranger', 'genre', 'difficulty', 'notes', 'reviewedAt', 'recording'] as const;
+export const EDITABLE = [
+	'title',
+	'composer',
+	'catalogue',
+	'arranger',
+	'genre',
+	'difficulty',
+	'notes',
+	'reviewedAt',
+	'recording',
+	'duration',
+	'publisher'
+] as const;
 export type EditableColumn = (typeof EDITABLE)[number];
 export type PieceValues = Record<EditableColumn, string>;
 
@@ -34,7 +47,7 @@ export function findPieceRow(
 	return table.rows.find((row) => !row.values.driveFolderId && normalize(row.values.title) === title);
 }
 
-export type EditProblem = 'title-missing' | 'title-taken' | 'bad-link';
+export type EditProblem = 'title-missing' | 'title-taken' | 'bad-link' | 'bad-duration';
 
 /** Cleans the form's values; a problem instead when they can't be saved. */
 export function checkPieceValues(
@@ -52,7 +65,24 @@ export function checkPieceValues(
 		if (!link) return { problem: 'bad-link' };
 		cleaned.recording = link;
 	}
+	// Written the same way every time ("7:30"), whatever was typed ("7 Min.", "7'30").
+	if (cleaned.duration) {
+		const seconds = parseDuration(cleaned.duration);
+		if (!seconds) return { problem: 'bad-duration' };
+		cleaned.duration = formatDuration(seconds);
+	}
 	return { values: cleaned };
+}
+
+/**
+ * The values to write: columns an older sheet doesn't have yet ("Dauer", "Verlag") are left
+ * out while empty, so the rest still saves. Filled in, they're kept and the save says which
+ * columns are missing.
+ */
+export function writableValues(values: PieceValues, table: Table<PieceColumn>): Partial<PieceValues> {
+	return Object.fromEntries(
+		Object.entries(values).filter(([column, value]) => value || !table.missing.includes(column as PieceColumn))
+	) as Partial<PieceValues>;
 }
 
 /** Programme rows that name the piece by its old title, to follow a rename. */

@@ -48,7 +48,7 @@ On Windows, stop a running `pnpm preview` (or `pnpm dev`) before building again:
 pnpm dev:demo
 ```
 
-The demo needs no Google account and no settings. It uses invented sample data: a small archive with generated PDFs, rehearsals and concerts around today, and a filled-in Repertoire sheet with members, a rehearsal plan, sign-ups, reports and wishes. You're signed in automatically. The banner at the top switches between the admin's and a member's view, and resets the data.
+The demo needs no Google account and no settings. It uses invented sample data: a small archive with generated PDFs, rehearsals and concerts around today, and a filled-in Repertoire sheet with members, a rehearsal plan, sign-ups, attendance, rented music, piece durations, reports and wishes. You're signed in automatically. The banner at the top switches between the admin's and a member's view, and resets the data.
 
 Everything works, including the editors, but changes stay in memory: they're gone after a restart. Nothing is sent to Google.
 

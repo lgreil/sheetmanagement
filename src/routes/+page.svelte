@@ -51,7 +51,9 @@
 			? [
 					{ href: '/meldungen', count: data.todo.reports, text: t.home.todo.reports },
 					{ href: '/wuensche', count: data.todo.wishes, text: t.home.todo.wishes },
-					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests }
+					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests },
+					{ href: '/leihmaterial', count: data.todo.loans, text: t.home.todo.loans },
+					{ href: data.todo.attendanceUrl ?? '/konzerte', count: data.todo.attendance, text: t.home.todo.attendance }
 				].filter((item) => item.count > 0)
 			: []
 	);

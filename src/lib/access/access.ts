@@ -7,6 +7,7 @@ export const RIGHTS = [
 	'stuecke.bearbeiten',
 	'archiv.bearbeiten',
 	'anmeldungen.sehen',
+	'anwesenheit.erfassen',
 	'mitglieder.verwalten'
 ] as const;
 export type Right = (typeof RIGHTS)[number];

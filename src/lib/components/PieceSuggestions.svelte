@@ -3,6 +3,7 @@
 	import { readScoreText } from '#lib/music/score-text.ts';
 	import { composerAsUsual, searchWorks, suggestGenre, WikidataBusyError, workDetails, type WorkCandidate } from '#lib/music/wikidata.ts';
 	import type { NamingRules } from '#lib/config/index.ts';
+	import { formatDuration } from '#lib/repertoire/duration.ts';
 	import Icon from './Icon.svelte';
 	import ScoreViewer from './ScoreViewer.svelte';
 
@@ -10,7 +11,7 @@
 	 * Suggestions for a piece's details, each from a source someone asks for: the text on the
 	 * score (read in the browser) or Wikidata. Nothing is saved until the form is.
 	 */
-	type Field = 'composer' | 'arranger' | 'catalogue' | 'genre' | 'recording';
+	type Field = 'composer' | 'arranger' | 'catalogue' | 'genre' | 'recording' | 'duration';
 	let {
 		values,
 		apply,
@@ -131,6 +132,8 @@
 			const genre = suggestGenre({ kinds: work.kinds, year: work.year }, genres);
 			if (genre) list.push({ field: 'genre', value: genre, source: 'wikidata' });
 			if (work.youtube) list.push({ field: 'recording', value: `https://www.youtube.com/watch?v=${work.youtube}`, source: 'wikidata' });
+			// The original work's length; an arrangement may be shorter, so it's only a suggestion.
+			if (work.duration) list.push({ field: 'duration', value: formatDuration(work.duration), source: 'wikidata' });
 			add(list);
 			if (!list.length) message = t.suggest.nothingInWork;
 		} catch (error) {

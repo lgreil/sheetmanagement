@@ -28,7 +28,8 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			piece: entry.pieceName,
 			notes: entry.notes ?? '',
 			title: concert.program[i]?.title ?? entry.pieceName,
-			subtitle: concert.program[i]?.subtitle
+			subtitle: concert.program[i]?.subtitle,
+			duration: concert.program[i]?.duration
 		})),
 		suggestions: suggestions(library, concert.id, sheet.title, feedback?.wishes ?? []),
 		sharedFrom: concert.sharedFrom,
@@ -41,6 +42,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 				name: piece.sheet!.title,
 				title: piece.title,
 				subtitle: [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined,
+				duration: piece.sheet?.duration,
 				search: piece.search
 			}))
 	};
@@ -93,7 +95,8 @@ function suggestions(library: Library, concertId: string, concertTitle: string, 
 			...suggestion,
 			name: piece?.sheet?.title,
 			subtitle: piece ? [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined : undefined,
-			status: piece?.status
+			status: piece?.status,
+			duration: piece?.sheet?.duration
 		};
 	};
 	return { wished: result.wished.map(shown), longAgo: result.longAgo.map(shown), genres: result.genres };

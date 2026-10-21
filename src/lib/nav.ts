@@ -53,7 +53,8 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 				...(has(rights, 'stuecke.bearbeiten')
 					? [
 							{ href: '/stuecke/angaben', label: t.nav.details, icon: 'sparkle' as const },
-							{ href: '/namen', label: t.nav.naming, icon: 'file' as const }
+							{ href: '/namen', label: t.nav.naming, icon: 'file' as const },
+							{ href: '/leihmaterial', label: t.nav.loans, icon: 'clock' as const }
 						]
 					: [])
 			]
