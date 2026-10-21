@@ -18,6 +18,7 @@ export const de = {
 		status: 'Status',
 		more: 'Mehr',
 		profile: 'Profil',
+		details: 'Angaben ergänzen',
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
 		groups: { proben: 'Proben', archiv: 'Archiv', mitmachen: 'Mitmachen', verwaltung: 'Verwaltung' }
@@ -341,6 +342,50 @@ export const de = {
 		kinds: { yes: 'kommen', maybe: 'vielleicht', no: 'können nicht', open: 'offen' } as Record<string, string>,
 		comments: 'Kommentare',
 		noOne: 'Noch keine Antworten und keine Mitglieder mit Instrument.'
+	},
+	details: {
+		title: 'Angaben ergänzen',
+		lead: 'Stücke, bei denen Komponist, Genre, Hörbeispiel oder Werkverzeichnis fehlen. Beim Bearbeiten helfen Vorschläge aus den Noten und von Wikidata.',
+		filterLabel: 'Was fehlt',
+		filters: {
+			alle: 'Etwas fehlt',
+			komponist: 'Ohne Komponist',
+			genre: 'Ohne Genre',
+			hoerbeispiel: 'Ohne Hörbeispiel',
+			werkverzeichnis: 'Ohne Werkverzeichnis'
+		} as Record<string, string>,
+		missing: { composer: 'Komponist', genre: 'Genre', recording: 'Hörbeispiel', catalogue: 'Werkverzeichnis' } as Record<string, string>,
+		progress: (percent: number) => `${percent} % der Stücke vollständig`,
+		start: (n: number) => (n === 1 ? 'Das eine Stück bearbeiten' : `Der Reihe nach bearbeiten (${n})`),
+		working: (filter: string, open: number) => `Angaben ergänzen · ${filter}: noch ${open} ${open === 1 ? 'Stück' : 'Stücke'}.`,
+		saveNext: 'Speichern & weiter',
+		backToList: 'Zur Liste',
+		allDone: 'Geschafft: In dieser Liste ist nichts mehr offen.',
+		none: 'Hier fehlt nichts.'
+	},
+	suggest: {
+		title: 'Vorschläge',
+		lead: 'Angaben aus den Noten oder von Wikidata. „Übernehmen“ trägt sie ins Formular ein; gespeichert wird erst mit „Speichern“.',
+		fromScore: 'Aus den Noten lesen',
+		fileLabel: 'Aus welcher Datei lesen',
+		reading: 'Lese die Noten …',
+		online: 'Online nachschlagen',
+		searching: 'Suche bei Wikidata …',
+		youtube: 'Hörbeispiel auf YouTube suchen',
+		youtubeHint: 'Öffnet die YouTube-Suche. Passende Aufnahme öffnen, Link kopieren und bei „Hörbeispiel“ einfügen.',
+		whichWork: 'Welches Werk ist es?',
+		apply: 'Übernehmen',
+		applied: 'eingetragen',
+		openWikidata: 'Bei Wikidata ansehen',
+		sources: { score: 'aus den Noten', wikidata: 'Wikidata', archive: 'aus dem Archiv' } as Record<string, string>,
+		scanOnly: 'Diese PDF ist ein Scan ohne Text, daraus lässt sich nichts lesen. Vielleicht hat eine andere Stimme Text, sonst hilft „Online nachschlagen“.',
+		nothingInScore: 'In den Noten steht kein Komponist, Arrangeur oder Werkverzeichnis, das sich sicher lesen lässt.',
+		downloadFailed: 'Die Datei konnte nicht geladen werden.',
+		unreadable: 'Die Datei ist keine lesbare PDF.',
+		nothingOnline: 'Wikidata kennt kein Werk mit diesem Titel. Vielleicht hilft der Originaltitel oder der Komponist im Formular.',
+		nothingInWork: 'Zu diesem Werk hat Wikidata keine weiteren Angaben.',
+		onlineFailed: 'Wikidata ist gerade nicht erreichbar.',
+		busy: 'Wikidata bittet um eine kurze Pause. In einer Minute geht es wieder.'
 	},
 	accessLink: {
 		title: 'Zugang per Link',

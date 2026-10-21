@@ -1,21 +1,29 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { t } from '#lib/i18n/index.ts';
+	import { config } from '#lib/config/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import PieceSuggestions from '#lib/components/PieceSuggestions.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
 	let busy = $state(false);
 	// After a refused save, the form keeps what was typed.
 	const values = $derived(form?.values ?? (data.state === 'ready' ? data.values : undefined));
+	// The form's own copy, so a suggestion can be taken over before saving.
+	let current = $state<Record<string, string>>({});
+	$effect.pre(() => {
+		current = { ...(values ?? {}) };
+	});
+	const apply = (field: string, value: string) => (current[field] = value);
 
 	const columns = t.sheet.pieces.columns;
 	const FIELDS = [
 		{ name: 'title', wide: true, required: true },
-		{ name: 'composer' },
+		{ name: 'composer', list: 'composer-list' },
 		{ name: 'catalogue' },
 		{ name: 'arranger' },
-		{ name: 'genre' },
+		{ name: 'genre', list: 'genre-list' },
 		{ name: 'difficulty' },
 		{ name: 'reviewedAt', placeholder: t.pieceEditor.reviewedHint },
 		{ name: 'recording', wide: true, type: 'url', placeholder: t.pieceEditor.recordingHint }
@@ -34,6 +42,11 @@
 	{#if data.piece.folderName}<p class="folder"><Icon name="folder" size={14} />{data.piece.folderName}</p>{/if}
 	{#if form?.message}<p class="msg error" role="alert">{form.message}</p>{/if}
 
+	{#if data.list}
+		<p class="msg info">{t.details.working(t.details.filters[data.list.filter], data.list.open)}</p>
+	{/if}
+
+	<div class="layout">
 	<form
 		method="POST"
 		use:enhance={() => {
@@ -51,7 +64,8 @@
 				<input
 					name={field.name}
 					type={'type' in field ? field.type : 'text'}
-					value={values[field.name]}
+					bind:value={current[field.name]}
+					list={'list' in field ? field.list : undefined}
 					required={'required' in field}
 					placeholder={'placeholder' in field ? field.placeholder : undefined}
 					maxlength="1000"
@@ -61,13 +75,32 @@
 		{/each}
 		<label class="field wide">
 			{columns.notes}
-			<textarea name="notes" maxlength="1000">{values.notes}</textarea>
+			<textarea name="notes" maxlength="1000" bind:value={current.notes}></textarea>
 		</label>
 		<div class="actions">
-			<button class="btn" disabled={busy}><Icon name="check" size={16} />{t.pieceEditor.save}</button>
-			<a class="btn ghost" href="/stuecke/{encodeURIComponent(data.piece.id)}">{t.pieceEditor.cancel}</a>
+			{#if data.list}
+				<button class="btn" name="liste" value={data.list.filter} disabled={busy}><Icon name="check" size={16} />{t.details.saveNext}</button>
+				<a class="btn ghost" href="/stuecke/angaben?filter={data.list.filter}">{t.details.backToList}</a>
+			{:else}
+				<button class="btn" disabled={busy}><Icon name="check" size={16} />{t.pieceEditor.save}</button>
+				<a class="btn ghost" href="/stuecke/{encodeURIComponent(data.piece.id)}">{t.pieceEditor.cancel}</a>
+			{/if}
 		</div>
+		<datalist id="genre-list">{#each data.genres as genre (genre)}<option value={genre}></option>{/each}</datalist>
+		<datalist id="composer-list">{#each data.composers as composer (composer)}<option value={composer}></option>{/each}</datalist>
 	</form>
+
+	<PieceSuggestions
+		values={current}
+		{apply}
+		files={data.files}
+		canRead={data.canRead}
+		genres={data.genres}
+		knownComposers={data.composers}
+		naming={config.naming}
+		category={data.piece.category}
+	/>
+	</div>
 {/if}
 
 <style>
@@ -115,6 +148,22 @@
 	.wide,
 	.actions {
 		grid-column: 1 / -1;
+	}
+
+	.layout {
+		display: grid;
+		gap: var(--space-4);
+		align-items: start;
+	}
+
+	@media (min-width: 1000px) {
+		.layout {
+			grid-template-columns: minmax(0, 1.4fr) minmax(320px, 1fr);
+		}
+
+		form {
+			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		}
 	}
 
 	.actions {

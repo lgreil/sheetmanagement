@@ -1,4 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
+import { config } from '#lib/config/index.ts';
+import { gapsOf, nextWithGaps, parseGapFilter } from '#lib/repertoire/details.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { checkPieceValues, EDITABLE, findPieceRow, pieceValues, pieceVersion, renameInProgram, type PieceValues } from '#lib/repertoire/piece-edit.ts';
@@ -10,7 +12,7 @@ import type { Actions, PageServerLoad } from './$types';
 
 const RIGHT = 'stuecke.bearbeiten';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	requireRight(locals, RIGHT);
 	const [library, repertoire] = await Promise.all([getLibrary(), getRepertoire()]);
 	const piece = library.piecesById.get(params.id);
@@ -21,11 +23,28 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const values = pieceValues(row);
 	// A Drive piece without its own title in the sheet shows what the folder name says; start from that.
 	if (!values.title) values.title = piece.title;
+	// Genres and composers already in use, so suggestions and typing follow the archive's words.
+	const used = (pick: (p: (typeof library.pieces)[number]) => string | undefined) =>
+		[...new Set(library.pieces.map(pick).filter((v): v is string => !!v?.trim()))].sort((a, b) => a.localeCompare(b, config.locale));
+	const genres = [...new Set([...(config.genres ?? []), ...used((p) => p.sheet?.genre)])];
+	const pdfs = (piece.detail?.parts ?? []).filter((part) => part.mimeType === 'application/pdf' && part.status === 'ok');
+	// The score first: its title page names composer and arranger most often.
+	const files = [...pdfs.filter((part) => part.kind === 'partitur'), ...pdfs.filter((part) => part.kind !== 'partitur')]
+		.slice(0, 12)
+		.map((part) => ({ id: part.id, label: part.label }));
+	// Working through "Angaben ergänzen": where "Speichern & weiter" goes next.
+	const list = parseGapFilter(url.searchParams.get('liste'));
 	return {
 		state: 'ready' as const,
-		piece: { id: piece.id, title: piece.title, folderName: piece.detail?.folderName },
+		piece: { id: piece.id, title: piece.title, folderName: piece.detail?.folderName, category: piece.category },
 		values,
-		version: pieceVersion(row)
+		version: pieceVersion(row),
+		genres,
+		composers: [...new Set([...config.naming.knownComposers, ...used((p) => p.sheet?.composer)])],
+		files,
+		// The PDFs come through the app, which is for signed-in members.
+		canRead: locals.auth === 'on' && locals.access.member,
+		list: list ? { filter: list, open: library.pieces.filter((p) => gapsOf(p, list).length).length } : null
 	};
 };
 
@@ -64,6 +83,12 @@ export const actions: Actions = {
 			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.', values: submitted });
 		}
 
+		// "Speichern & weiter": the next piece in the list being worked through.
+		const list = parseGapFilter(String(data.get('liste') ?? ''));
+		if (list) {
+			const next = nextWithGaps((await getLibrary()).pieces, list, params.id);
+			redirect(303, next ? `/stuecke/${encodeURIComponent(next)}/bearbeiten?liste=${list}` : `/stuecke/angaben?filter=${list}&fertig`);
+		}
 		// Pieces without sheet music are keyed by title, so a rename gives them a new address.
 		const id = sheetPiece.driveFolderId
 			? params.id
