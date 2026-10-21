@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import MemberFields from '#lib/components/MemberFields.svelte';
@@ -7,7 +8,7 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
+	const saving = new FormState();
 </script>
 
 <Title title={t.profile.title} />
@@ -19,13 +20,7 @@
 	<form
 		class="card"
 		method="POST"
-		use:enhance={() => {
-			busy = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				busy = false;
-			};
-		}}
+		use:enhance={saving.submit()}
 	>
 		<p class="email"><span class="muted">{t.profile.email}</span> {data.email}</p>
 		<!-- Rebuilt after saving, so the form shows what's in the sheet now. -->
@@ -43,7 +38,7 @@
 
 		{#if form?.message}<p class="msg error" role="alert">{form.message}</p>{/if}
 		<div class="actions">
-			<button class="btn" disabled={busy}><Icon name="check" size={16} />{t.profile.save}</button>
+			<button class="btn" disabled={saving.busy}><Icon name="check" size={16} />{t.profile.save}</button>
 			{#if form?.saved}<span class="muted" role="status">{t.profile.saved}</span>{/if}
 		</div>
 	</form>

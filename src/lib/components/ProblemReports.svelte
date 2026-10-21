@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
@@ -41,7 +42,7 @@
 		fileId?: string;
 	} = $props();
 
-	let busy = $state(false);
+	const saving = new FormState();
 	let kind = $state<ReportKind>('missing');
 	// A part that's missing has no file to pick: name the instrument instead.
 	const missing = $derived(kind === 'missing' && !fileId);
@@ -84,17 +85,13 @@
 					class="form"
 					method="POST"
 					action="?/report"
-					use:enhance={() => {
-						busy = true;
-						return async ({ update, result: outcome }) => {
-							await update({ reset: true });
-							busy = false;
-							if (outcome.type === 'success') {
-								open = false;
-								fileId = '';
-							}
-						};
-					}}
+					use:enhance={saving.submit({
+						reset: true,
+						onSuccess: () => {
+							open = false;
+							fileId = '';
+						}
+					})}
 				>
 					<h3>{t.reports.report}</h3>
 					<p class="muted">{t.reports.lead}</p>
@@ -139,7 +136,7 @@
 						<input name="comment" maxlength="1000" placeholder={t.reports.commentHint} autocomplete="off" />
 					</label>
 					<div class="actions">
-						<button class="btn" disabled={busy}><Icon name="flag" size={16} />{t.reports.send}</button>
+						<button class="btn" disabled={saving.busy}><Icon name="flag" size={16} />{t.reports.send}</button>
 						<button class="btn ghost" type="button" onclick={() => (open = false)}>{t.reports.cancel}</button>
 					</div>
 				</form>

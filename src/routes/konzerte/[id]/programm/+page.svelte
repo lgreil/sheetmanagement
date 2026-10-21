@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { flip } from 'svelte/animate';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
@@ -21,7 +22,7 @@
 	// svelte-ignore state_referenced_locally
 	let entries = $state<Entry[]>(data.state === 'ready' ? data.entries.map((entry) => ({ ...entry, key: nextKey++ })) : []);
 	let query = $state('');
-	let saving = $state(false);
+	const saving = new FormState();
 	let dragged = $state<number | null>(null);
 
 	const matches = $derived.by(() => {
@@ -219,18 +220,12 @@
 
 	<form
 		method="POST"
-		use:enhance={() => {
-			saving = true;
-			return async ({ update }) => {
-				await update({ reset: false });
-				saving = false;
-			};
-		}}
+		use:enhance={saving.submit()}
 	>
 		<input type="hidden" name="entries" value={payload} />
 		<input type="hidden" name="version" value={data.version} />
 		<input type="hidden" name="wishes" value={takenWishes.join(',')} />
-		<button class="button" disabled={saving}><Icon name="check" size={16} />{t.editor.save}</button>
+		<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.editor.save}</button>
 		<a class="cancel" href="/konzerte/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
 	</form>
 {/if}

@@ -1,12 +1,13 @@
 <script lang="ts">
 	import '../app.css';
 	import { afterNavigate } from '$app/navigation';
-	import { page } from '$app/state';
+	import { navigating, page } from '$app/state';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
+	import Toast from '#lib/components/Toast.svelte';
 	import { isActive, navGroups, primaryNav } from '#lib/nav.ts';
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
 
@@ -23,6 +24,18 @@
 	const sourceUrl = safeLink(config.sourceUrl ?? '');
 
 	afterNavigate(() => (menuOpen = false));
+
+	// A thin bar while the next page loads. Shown only after a moment, so quick
+	// navigations don't flicker; a slow Google answer no longer looks like a dead click.
+	let loading = $state(false);
+	$effect(() => {
+		if (!navigating.to) {
+			loading = false;
+			return;
+		}
+		const timer = setTimeout(() => (loading = true), 150);
+		return () => clearTimeout(timer);
+	});
 </script>
 
 <svelte:head>
@@ -32,6 +45,9 @@
 </svelte:head>
 
 <div class="app">
+	{#if loading}
+		<div class="progress" role="progressbar" aria-label={t.common.loading}></div>
+	{/if}
 	<header class="topbar">
 		<div class="topbar-inner">
 			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>
@@ -115,9 +131,36 @@
 	</nav>
 
 	<NavMenu {groups} {path} bind:open={menuOpen} />
+	<Toast />
 </div>
 
 <style>
+	.progress {
+		position: fixed;
+		top: 0;
+		left: 0;
+		z-index: 70;
+		width: 100%;
+		height: 3px;
+		background: var(--accent);
+		transform-origin: left;
+		animation: progress 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+	}
+	@keyframes progress {
+		from {
+			transform: scaleX(0.05);
+		}
+		to {
+			transform: scaleX(0.92);
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.progress {
+			animation: none;
+			transform: scaleX(0.6);
+		}
+	}
+
 	.app {
 		min-height: 100dvh;
 		display: flex;

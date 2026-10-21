@@ -58,7 +58,8 @@ export async function signIn(
 			client_secret: client.clientSecret,
 			redirect_uri: client.redirectUri,
 			grant_type: 'authorization_code'
-		})
+		}),
+		signal: AbortSignal.timeout(10_000)
 	});
 	const body = (await response.json().catch(() => ({}))) as { id_token?: string; error?: string; error_description?: string };
 	if (!response.ok || !body.id_token) {

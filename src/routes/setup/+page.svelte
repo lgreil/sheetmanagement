@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let busy = $state(false);
+	const saving = new FormState();
 
 	const complete = $derived(data.state === 'ready' && data.tabs.every((tab) => tab.present));
 </script>
@@ -71,15 +72,9 @@
 
 	<form
 		method="POST"
-		use:enhance={() => {
-			busy = true;
-			return async ({ update }) => {
-				await update();
-				busy = false;
-			};
-		}}
+		use:enhance={saving.submit({ reset: true })}
 	>
-		<button class="button" disabled={busy}>
+		<button class="button" disabled={saving.busy}>
 			<Icon name={complete ? 'refresh' : 'sparkle'} size={16} />
 			{complete ? t.setup.rerun : t.setup.run}
 		</button>

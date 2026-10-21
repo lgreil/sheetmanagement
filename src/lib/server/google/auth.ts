@@ -23,6 +23,8 @@ export const WRITE_SCOPES = SCOPES.map((scope) =>
 const DEFAULT_TOKEN_URI = 'https://oauth2.googleapis.com/token';
 /** Renew a little before Google's expiry so in-flight requests don't fail. */
 const EXPIRY_MARGIN_S = 120;
+/** A token request taking longer than this has failed; nobody waits for it any more. */
+const TOKEN_TIMEOUT_MS = 10_000;
 
 /**
  * Accepts the key file's JSON as is, or base64-encoded (which avoids quoting
@@ -108,7 +110,7 @@ export function createTokenProvider(
 	fetchImpl: typeof fetch = fetch
 ): TokenProvider {
 	let cached: { token: string; expiresAtS: number } | null = null;
-	let pending: Promise<string> | null = null;
+	let pending: { promise: Promise<string>; startedAt: number } | null = null;
 
 	async function fetchToken(): Promise<string> {
 		const nowS = Math.floor(Date.now() / 1000);
@@ -119,7 +121,8 @@ export function createTokenProvider(
 			body: new URLSearchParams({
 				grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
 				assertion
-			})
+			}),
+			signal: AbortSignal.timeout(TOKEN_TIMEOUT_MS)
 		});
 		const body = (await response.json().catch(() => ({}))) as {
 			access_token?: string;
@@ -142,9 +145,20 @@ export function createTokenProvider(
 			if (!forceRefresh && cached && cached.expiresAtS - EXPIRY_MARGIN_S > nowS) {
 				return cached.token;
 			}
-			// Share one token request between concurrent callers.
-			pending ??= fetchToken().finally(() => (pending = null));
-			return pending;
+			// Share one token request between concurrent callers. In Workers a request started
+			// for another visitor can be cancelled with that visit and then never settles, so
+			// an old one is replaced and nobody waits longer than TOKEN_TIMEOUT_MS.
+			if (!pending || Date.now() - pending.startedAt > TOKEN_TIMEOUT_MS) {
+				const promise: Promise<string> = fetchToken().finally(() => {
+					if (pending?.promise === promise) pending = null;
+				});
+				pending = { promise, startedAt: Date.now() };
+			}
+			let timer: ReturnType<typeof setTimeout> | undefined;
+			const timeout = new Promise<never>((_, reject) => {
+				timer = setTimeout(() => reject(new Error('Google login timed out')), TOKEN_TIMEOUT_MS);
+			});
+			return Promise.race([pending.promise, timeout]).finally(() => clearTimeout(timer));
 		}
 	};
 }

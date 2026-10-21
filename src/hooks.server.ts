@@ -1,4 +1,6 @@
 import type { Handle } from '@sveltejs/kit/hooks';
+import { resolveAccess } from '#lib/access/access.ts';
+import { t } from '#lib/i18n/index.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
 
 /** Sent with every response: no framing (clickjacking on the admin forms), no MIME sniffing. */
@@ -12,14 +14,17 @@ const SECURITY_HEADERS = {
 export const handle: Handle = async ({ event, resolve }) => {
 	const auth = authConfig();
 	event.locals.auth = auth.mode;
-	event.locals.access = await accessFromCookies(event.cookies, auth);
+	// The health check must answer even while Google doesn't.
+	event.locals.access =
+		event.url.pathname === '/api/health' ? resolveAccess(null, null, []) : await accessFromCookies(event.cookies, auth);
 
 	// Pages redirect to sign-in in the root layout's load. That doesn't cover form
 	// actions and endpoints, so anything that isn't a plain read is checked here.
 	const write = event.request.method !== 'GET' && event.request.method !== 'HEAD';
 	if (auth.mode === 'on' && write && !isPublicPath(event.url.pathname) && !event.locals.access.member) {
-		return new Response('Bitte zuerst anmelden.', {
-			status: 403,
+		const unavailable = event.locals.access.unavailable;
+		return new Response(unavailable ? t.error.unavailable : 'Bitte zuerst anmelden.', {
+			status: unavailable ? 503 : 403,
 			headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS }
 		});
 	}

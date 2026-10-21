@@ -914,10 +914,16 @@ export const de = {
 	legal,
 	common: {
 		comingSoon: 'Bald verfügbar',
-		backHome: 'Zur Übersicht'
+		backHome: 'Zur Übersicht',
+		loading: 'Seite lädt',
+		saveFailed: 'Speichern hat nicht geklappt. Deine Eingaben sind noch da – bitte versuch es noch einmal.',
+		saveUnavailable: 'Google antwortet gerade nicht, deshalb wurde nichts gespeichert. Deine Eingaben sind noch da – versuch es gleich noch einmal.'
 	},
 	error: {
 		title: 'Da ist etwas schiefgelaufen',
-		notFound: 'Diese Seite gibt es nicht.'
+		notFound: 'Diese Seite gibt es nicht.',
+		unavailableTitle: 'Gerade nicht erreichbar',
+		unavailable: 'Google antwortet gerade nicht, deshalb kann die Seite nicht laden. Deine Daten sind sicher – versuch es in einem Moment noch einmal.',
+		retry: 'Noch einmal versuchen'
 	}
 } as const;

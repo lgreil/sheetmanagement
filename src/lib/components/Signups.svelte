@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { ANSWERS } from '#lib/signups/signups.ts';
 	import type { PageData } from '../../routes/konzerte/[id]/$types';
@@ -15,14 +16,8 @@
 		result?: { signupError?: string; signupSaved?: boolean } | null;
 	} = $props();
 
-	let busy = $state(false);
-	const submit = () => {
-		busy = true;
-		return async ({ update }: { update: (options?: { reset?: boolean }) => Promise<void> }) => {
-			await update({ reset: false });
-			busy = false;
-		};
-	};
+	const saving = new FormState();
+	const submit = saving.submit();
 
 	const ICONS = { yes: 'check', maybe: 'minus', no: 'x' } as const;
 	const KINDS = ['yes', 'maybe', 'no', 'open'] as const;
@@ -41,7 +36,7 @@
 					aria-pressed={mine?.answer === answer}
 					name="answer"
 					value={answer}
-					disabled={busy}
+					disabled={saving.busy}
 				>
 					<Icon name={ICONS[answer]} size={16} />{t.signups.answers[answer]}
 				</button>
@@ -70,10 +65,10 @@
 						{t.signups.comment}
 						<input name="comment" value={mine.comment} maxlength="500" placeholder={t.signups.commentHint} autocomplete="off" />
 					</label>
-					<button class="btn small" disabled={busy}>{t.signups.save}</button>
+					<button class="btn small" disabled={saving.busy}>{t.signups.save}</button>
 				</form>
 				<form method="POST" action="?/withdraw" use:enhance={submit}>
-					<button class="link" disabled={busy}>{t.signups.withdraw}</button>
+					<button class="link" disabled={saving.busy}>{t.signups.withdraw}</button>
 				</form>
 			</details>
 		{/if}
