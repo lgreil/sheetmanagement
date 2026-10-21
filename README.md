@@ -55,6 +55,12 @@ Everything works, including the editors, but changes stay in memory: they're gon
 - The settings come from `[env.demo]` in `wrangler.toml`. If you also have a `.dev.vars` with real settings, create an empty `.dev.vars.demo`, otherwise Wrangler loads `.dev.vars` for the demo too.
 - A public demo is a separate Worker that needs no secrets: `pnpm build && pnpm wrangler deploy --env demo`. On Cloudflare each Worker instance keeps its own copy of the data, so visitors may see each other's changes for a while, or not.
 
+### On the phone
+
+- **Install it:** the app has a web manifest, so "Zum Home-Bildschirm" (Safari) or "App installieren" (Chrome) puts it on the home screen.
+- **Offline:** a service worker (`src/service-worker/`) keeps the pages a member opened, and "Offline speichern" on "Meine Noten" keeps their parts, for rehearsal halls without reception. Signing out deletes both.
+- **Own calendar:** each member can create a personal calendar link on `/profil` (`/kalender/<token>.ics`) with their orchestra's dates, their own answer and what's rehearsed. It's signed with `SESSION_SECRET` and can be renewed or revoked; the version sits in the "Kalender-Version" column of "Mitglieder".
+
 ## Deploying (free)
 
 1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).

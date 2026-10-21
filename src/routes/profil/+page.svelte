@@ -11,6 +11,36 @@
 	let { data, form } = $props();
 	const saving = new FormState();
 	const name = $derived(data.member?.name || data.user?.name || '');
+	const feeds = new FormState();
+
+	// Chrome and Android offer installing through an event; Safari only through its share menu.
+	type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
+	let installPrompt = $state<InstallPrompt | null>(null);
+	let installed = $state(false);
+	$effect(() => {
+		installed = matchMedia('(display-mode: standalone)').matches;
+		const offer = (event: Event) => {
+			event.preventDefault();
+			installPrompt = event as InstallPrompt;
+		};
+		addEventListener('beforeinstallprompt', offer);
+		return () => removeEventListener('beforeinstallprompt', offer);
+	});
+	async function install() {
+		await installPrompt?.prompt();
+		if ((await installPrompt?.userChoice)?.outcome === 'accepted') installed = true;
+		installPrompt = null;
+	}
+	let copied = $state(false);
+	async function copy(text: string) {
+		try {
+			await navigator.clipboard.writeText(text);
+			copied = true;
+			setTimeout(() => (copied = false), 2500);
+		} catch {
+			// The field below is selectable as a fallback.
+		}
+	}
 </script>
 
 <Title title={t.profile.title} />
@@ -30,7 +60,7 @@
 	{#if !data.member}
 		<p class="msg info">{t.profile.notMember}</p>
 	{:else}
-		<form class="ui-card card" method="POST" use:enhance={saving.submit()}>
+		<form class="ui-card card" method="POST" action="?/save" use:enhance={saving.submit()}>
 			<!-- Rebuilt after saving, so the form shows what's in the sheet now. -->
 			{#key JSON.stringify(data.member)}
 				<MemberFields member={data.member} instruments={data.instruments} common={data.common} orchestras={data.orchestras} />
@@ -52,6 +82,39 @@
 		</form>
 	{/if}
 
+	{#if data.member && data.feed}
+		<!-- The member's dates in their own calendar app (#122). -->
+		<section class="ui-card feed" id="kalender">
+			<h2><Icon name="calendar" size={18} />{t.feed.title}</h2>
+			<p class="muted">{t.feed.lead}</p>
+			{#if form && 'feedMessage' in form && form.feedMessage}<p class="msg error" role="alert">{form.feedMessage}</p>{/if}
+			{#if data.feed.state === 'not-set-up'}
+				<p class="msg info">{t.feed.notSetUp}</p>
+			{:else if data.feed.state === 'none'}
+				<form method="POST" action="?/feed" use:enhance={feeds.submit()}>
+					<button class="btn" disabled={feeds.busy}><Icon name="link" size={16} />{t.feed.create}</button>
+				</form>
+			{:else}
+				<div class="feed-actions">
+					<a class="btn" href={data.feed.webcal}><Icon name="calendar" size={16} />{t.feed.subscribe}</a>
+					<button class="btn ghost" type="button" onclick={() => copy(data.feed?.state === 'active' ? data.feed.url : '')}>
+						<Icon name={copied ? 'check' : 'link'} size={16} />{copied ? t.feed.copied : t.feed.copy}
+					</button>
+				</div>
+				<input class="feed-url" readonly value={data.feed.url} aria-label={t.feed.title} onfocus={(event) => event.currentTarget.select()} />
+				<p class="muted small">{t.feed.hint}</p>
+				<div class="ui-actions">
+					<form method="POST" action="?/feed" use:enhance={feeds.submit()} onsubmit={(event) => confirm(t.feed.confirmRenew) || event.preventDefault()}>
+						<button disabled={feeds.busy}>{t.feed.renew}</button>
+					</form>
+					<form method="POST" action="?/feedRevoke" use:enhance={feeds.submit()} onsubmit={(event) => confirm(t.feed.confirmRevoke) || event.preventDefault()}>
+						<button disabled={feeds.busy}>{t.feed.revoke}</button>
+					</form>
+				</div>
+			{/if}
+		</section>
+	{/if}
+
 	<section>
 		<h2 class="ui-label">{t.profile.settings}</h2>
 		<div class="ui-list settings">
@@ -59,6 +122,13 @@
 				<span>{t.theme.label}</span>
 				<ThemeToggle />
 			</div>
+			<!-- On the home screen it opens like an app and works offline in the rehearsal hall (#62). -->
+			{#if !installed}
+				<div class="setting">
+					<span>{t.pwa.install}<small class="muted">{installPrompt ? t.pwa.installHint : t.pwa.installManual}</small></span>
+					{#if installPrompt}<button class="btn small secondary" onclick={install}><Icon name="download" size={14} />{t.pwa.installButton}</button>{/if}
+				</div>
+			{/if}
 			<form class="setting" method="POST" action="/auth/logout">
 				<span>{t.auth.signedInAs(data.email)}</span>
 				<button class="logout"><Icon name="logout" size={16} />{t.auth.logout}</button>
@@ -68,6 +138,36 @@
 </div>
 
 <style>
+	.feed {
+		display: grid;
+		gap: var(--space-3);
+	}
+
+	.feed h2 {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin: 0;
+		font-size: 1.0625rem;
+	}
+
+	.feed-actions {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+	}
+
+	.feed-url {
+		width: 100%;
+		padding: 8px var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 0.8125rem;
+	}
+
 	.stack {
 		display: grid;
 		gap: var(--space-5);
@@ -167,6 +267,17 @@
 		gap: var(--space-2) var(--space-3);
 		min-height: 60px;
 		padding: var(--space-3) var(--space-4);
+	}
+
+	.setting > span {
+		display: grid;
+		flex: 1;
+		gap: 2px;
+		min-width: min(100%, 220px);
+	}
+
+	.setting small {
+		font-size: 0.8125rem;
 	}
 
 	.setting + .setting {

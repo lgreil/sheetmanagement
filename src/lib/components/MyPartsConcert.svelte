@@ -68,6 +68,63 @@
 		}
 	}
 
+	// Offline in the rehearsal hall (#62): the parts saved in the service worker's cache, opened
+	// from there while there's no connection. The cache name matches src/service-worker.ts.
+	const NOTEN = 'noten-v1';
+	const pdfPath = (id: string) => `/api/noten/${encodeURIComponent(id)}`;
+	let supported = $state(false);
+	let online = $state(true);
+	let saved = $state<Set<string>>(new Set());
+	let saving = $state<string | null>(null);
+	let saveFailed = $state(0);
+	const savedHere = $derived(files.filter((file) => saved.has(file.id)).length);
+
+	async function readSaved() {
+		const cache = await caches.open(NOTEN);
+		const found = new Set<string>();
+		for (const file of files) if (await cache.match(pdfPath(file.id))) found.add(file.id);
+		saved = found;
+	}
+
+	$effect(() => {
+		supported = 'caches' in window && 'serviceWorker' in navigator;
+		const update = () => (online = navigator.onLine);
+		update();
+		addEventListener('online', update);
+		addEventListener('offline', update);
+		if (supported && canMerge) readSaved().catch(() => {});
+		return () => {
+			removeEventListener('online', update);
+			removeEventListener('offline', update);
+		};
+	});
+
+	async function saveOffline() {
+		saveFailed = 0;
+		const cache = await caches.open(NOTEN);
+		for (const [i, file] of files.entries()) {
+			saving = t.pwa.saving(i + 1, files.length);
+			try {
+				const response = await fetch(pdfPath(file.id));
+				if (response.ok) await cache.put(pdfPath(file.id), response);
+				else saveFailed++;
+			} catch {
+				saveFailed++;
+			}
+		}
+		saving = null;
+		await readSaved();
+	}
+
+	async function removeOffline() {
+		const cache = await caches.open(NOTEN);
+		for (const file of files) await cache.delete(pdfPath(file.id));
+		await readSaved();
+	}
+
+	/** Online the usual place (Drive); offline the saved copy, if there is one. */
+	const partHref = (part: { id: string; url: string }) => (!online && saved.has(part.id) ? pdfPath(part.id) : part.url);
+
 	/** Merges the parts in the browser: Workers on the free plan have too little CPU time for it. */
 	async function merge() {
 		if (!label) return;
@@ -128,10 +185,22 @@
 				{:else}
 					<span class="muted small">{t.myParts.mergeOff}</span>
 				{/if}
+				{#if canMerge && supported && files.length}
+					<button class="btn ghost" onclick={saveOffline} disabled={!!saving || !online} title={t.pwa.hint}>
+						<Icon name="download" size={16} />{saving ?? (savedHere ? t.pwa.update : t.pwa.save)}
+					</button>
+				{/if}
 				<span class="muted small">{t.myParts.summary(found, concert.pieces.length)}</span>
 			</div>
 		{/if}
 	</div>
+	{#if savedHere}
+		<p class="offline-note">
+			<Icon name="check" size={14} />{t.pwa.saved(savedHere)}
+			{#if online}<button class="link" onclick={removeOffline}>{t.pwa.remove}</button>{/if}
+		</p>
+	{/if}
+	{#if saveFailed}<p class="msg error" role="alert">{t.pwa.failed(saveFailed)}</p>{/if}
 	{#if concert.note}<p class="msg info">{concert.note}</p>{/if}
 	{#if mergeError}<p class="msg error" role="alert">{mergeError}</p>{/if}
 	{#if skipped.length}
@@ -178,7 +247,7 @@
 														class="part"
 														class:problem={part.status !== 'ok'}
 														class:missing={part.status === 'missing'}
-														href={part.status === 'missing' ? undefined : part.url}
+														href={part.status === 'missing' ? undefined : partHref(part)}
 														target={part.status === 'missing' ? undefined : '_blank'}
 														rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
 													>
@@ -187,6 +256,7 @@
 														{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
 														{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
 														{#each part.notes as note (note)}<span class="tag">{note}</span>{/each}
+														{#if saved.has(part.id)}<span class="tag ok">{t.pwa.offlineBadge}</span>{/if}
 													</svelte:element>
 												</li>
 											{/each}
@@ -205,6 +275,31 @@
 </section>
 
 <style>
+	.offline-note {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2);
+		margin: calc(-1 * var(--space-2)) 0 var(--space-3);
+		color: var(--ok);
+		font-size: 0.875rem;
+	}
+
+	.offline-note .link {
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	.tag.ok {
+		background: color-mix(in oklab, var(--ok) 14%, transparent);
+		color: var(--ok);
+	}
+
 	.concert {
 		scroll-margin-top: calc(var(--header-height) + var(--space-4));
 	}

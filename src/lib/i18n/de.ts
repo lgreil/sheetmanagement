@@ -170,7 +170,8 @@ export const de = {
 		failed: 'Der Kalender konnte gerade nicht geladen werden. Versuch es gleich noch einmal.',
 		past: 'Vergangene Konzerte',
 		noUpcoming: 'Gerade stehen keine Termine im Kalender.',
-		subscribe: 'Kalender abonnieren',
+		subscribe: 'Google Kalender abonnieren',
+		ownCalendar: 'Termine in meinen Kalender',
 		filters: { all: 'Alle', concerts: 'Konzerte', rehearsals: 'Proben' },
 		view: 'Ansicht',
 		list: 'Liste',
@@ -241,6 +242,46 @@ export const de = {
 		person: 'Name',
 		total: 'Proben',
 		count: (present: number, of: number) => `${present}/${of}`
+	},
+	/** Offline use and the installable app (#62). */
+	pwa: {
+		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
+		offline: 'Offline: Du siehst die zuletzt geladene Fassung. Offline gespeicherte Noten lassen sich öffnen.',
+		save: 'Offline speichern',
+		saving: (done: number, total: number) => `Speichere ${done} von ${total} …`,
+		saved: (n: number) => (n === 1 ? '1 Stimme offline gespeichert' : `${n} Stimmen offline gespeichert`),
+		update: 'Offline-Kopie erneuern',
+		remove: 'Offline-Kopie löschen',
+		failed: (n: number) => (n === 1 ? '1 Stimme ließ sich nicht speichern.' : `${n} Stimmen ließen sich nicht speichern.`),
+		hint: 'Speichert deine Stimmen auf diesem Gerät, damit sie im Probenraum auch ohne Netz aufgehen. Abmelden löscht sie wieder.',
+		unsupported: 'Dieser Browser kann Noten nicht offline speichern.',
+		offlineBadge: 'offline da',
+		install: 'Als App auf dem Startbildschirm',
+		installHint: 'Öffnet sich wie eine App und zeigt geladene Seiten auch ohne Netz.',
+		installManual: 'iPhone: in Safari „Teilen“ → „Zum Home-Bildschirm“. Android: im Browsermenü „App installieren“.',
+		installButton: 'Installieren'
+	},
+	/** The personal calendar feed (#122), on /profil and in the feed itself. */
+	feed: {
+		title: 'Termine im eigenen Kalender',
+		lead: 'Ein persönlicher Link für die Kalender-App auf Handy oder Computer: alle Termine deiner Orchester, mit deiner Antwort im Titel (✓ ? ✗) und was geprobt wird.',
+		create: 'Kalender-Link erzeugen',
+		subscribe: 'Im Kalender abonnieren',
+		copy: 'Link kopieren',
+		copied: 'Kopiert',
+		renew: 'Neuen Link erzeugen',
+		revoke: 'Link sperren',
+		confirmRenew: 'Neuen Link erzeugen? Kalender, die den alten abonniert haben, bekommen dann keine Termine mehr.',
+		confirmRevoke: 'Link sperren? Kalender, die ihn abonniert haben, bekommen dann keine Termine mehr.',
+		hint: 'Der Link ist persönlich: Wer ihn hat, sieht deine Antworten. Bei Google Kalender am Computer unter „Weitere Kalender“ → „Per URL“ einfügen. Kalender-Apps holen neue Termine meist alle paar Stunden.',
+		notSetUp: 'In der Tabelle fehlt die Spalte „Kalender-Version“ im Blatt „Mitglieder“. Bitte die Verwaltung, einmal „Tabelle einrichten“ auszuführen.',
+		failed: 'Der Link konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		program: 'Programm:',
+		rehearsed: 'Geprobt:',
+		answer: (answer: string) => `Deine Antwort: ${answer}`,
+		details: 'Details:',
+		parts: 'Deine Noten:',
+		calendarName: (orchestra: string) => `${orchestra} · Termine`
 	},
 	/** The planners' checklist on a concert page, worked out from the data. */
 	check: {
@@ -878,7 +919,9 @@ export const de = {
 				orchestras: 'Orchester',
 				status: 'Status',
 				pausedUntil: 'Pausiert bis',
-				linkVersion: 'Link-Version'
+				linkVersion: 'Link-Version',
+				/** The personal calendar feed (#122): like "Link-Version", a new link ends the old one. */
+				feedVersion: 'Kalender-Version'
 			}
 		},
 		groups: {
