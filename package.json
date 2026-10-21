@@ -7,6 +7,7 @@
 	"description": "Sheet music and concert overview for orchestras, built on Google Drive, Google Calendar and Google Sheets.",
 	"scripts": {
 		"dev": "vite dev",
+		"dev:demo": "vite dev --mode demo",
 		"build": "vite build",
 		"preview": "vite build && wrangler dev",
 		"deploy": "vite build && wrangler deploy",

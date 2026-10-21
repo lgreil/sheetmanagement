@@ -1,6 +1,7 @@
 import { error, type Cookies } from '@sveltejs/kit';
 import { parseEmailList, resolveAccess, type Access, type Right, type User } from '#lib/access/access.ts';
-import { appEnv } from '../env.ts';
+import { DEMO_ADMIN, DEMO_MEMBER } from '../demo/data.ts';
+import { appEnv, isDemo } from '../env.ts';
 import { readAccessList } from '../repertoire.ts';
 import { linkValid } from './links.ts';
 import { verifySession } from './session.ts';
@@ -38,6 +39,10 @@ export function signInForced(value: string | undefined): boolean {
  */
 export function authConfig(): AuthConfig {
 	const env = appEnv();
+	// The demo is "signed in" without Google: as the admin, or as a member to see their view.
+	if (isDemo()) {
+		return { mode: 'on', clientId: 'demo', clientSecret: 'demo', sessionSecret: 'demo'.repeat(8), bootstrapAdmins: [DEMO_ADMIN.email], problems: [] };
+	}
 	const clientId = env.GOOGLE_OAUTH_CLIENT_ID?.trim();
 	if (!clientId) return { mode: 'off', reason: 'not-configured' };
 	if (!signInForced(env.FORCE_AUTH)) return { mode: 'off', reason: 'disabled' };
@@ -55,8 +60,16 @@ export function authConfig(): AuthConfig {
 /** Without sign-in everyone may view, and nobody may change anything. */
 const OPEN: Access = { user: null, member: true, bootstrapAdmin: false, rights: new Set<Right>(['ansehen']) };
 
+/** Which demo user is "signed in": the admin by default, or the member (cookie set from the demo banner). */
+export const DEMO_ROLE_COOKIE = 'demo_rolle';
+export const demoUser = (cookies: Cookies) => (cookies.get(DEMO_ROLE_COOKIE) === 'mitglied' ? DEMO_MEMBER : DEMO_ADMIN);
+
 export async function accessFromCookies(cookies: Cookies, auth: AuthConfig): Promise<Access> {
 	if (auth.mode === 'off') return OPEN;
+	if (isDemo()) {
+		const user = demoUser(cookies);
+		return resolveAccess(user, (await readAccessList()).list, auth.bootstrapAdmins);
+	}
 	const session = auth.sessionSecret ? await verifySession(cookies.get(SESSION_COOKIE), auth.sessionSecret) : null;
 	const user: User | null = session ? { email: session.email, name: session.name } : null;
 	if (!user) return resolveAccess(null, null, []);

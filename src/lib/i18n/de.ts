@@ -187,6 +187,7 @@ export const de = {
 		openInCalendar: 'Im Google Kalender',
 		rehearsals: 'Proben',
 		noRehearsals: 'Für dieses Konzert stehen keine Proben im Kalender.',
+		pastRehearsals: (n: number) => (n === 1 ? '1 vergangene Probe' : `${n} vergangene Proben`),
 		program: 'Programm',
 		programEmpty: 'Für dieses Konzert ist noch kein Programm eingetragen.',
 		programNoSheet: 'Sobald die Repertoire-Tabelle eingerichtet ist, steht hier das Programm mit Links zu den Noten.',
@@ -416,6 +417,14 @@ export const de = {
 		nothingInWork: 'Zu diesem Werk hat Wikidata keine weiteren Angaben.',
 		onlineFailed: 'Wikidata ist gerade nicht erreichbar.',
 		busy: 'Wikidata bittet um eine kurze Pause. In einer Minute geht es wieder.'
+	},
+	demo: {
+		label: 'Demo',
+		note: 'Erfundene Beispieldaten. Änderungen bleiben nur bis zum Neustart.',
+		viewAs: 'Ansehen als',
+		admin: 'Verwaltung',
+		member: 'Mitglied',
+		reset: 'Zurücksetzen'
 	},
 	viewer: {
 		show: 'Noten ansehen',

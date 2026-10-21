@@ -5,6 +5,7 @@
 	import { navigating, page } from '$app/state';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import DemoBanner from '#lib/components/DemoBanner.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
@@ -48,6 +49,7 @@
 	{#if loading}
 		<div class="progress" role="progressbar" aria-label={t.common.loading}></div>
 	{/if}
+	{#if data.demo}<DemoBanner role={data.demo.role} />{/if}
 	<header class="topbar">
 		<div class="topbar-inner">
 			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>

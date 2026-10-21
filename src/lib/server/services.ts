@@ -1,7 +1,9 @@
 import { config } from '#lib/config/index.ts';
 import { cached, type CachedResult } from './cache.ts';
 import { buildDriveIndex, INDEX_VERSION, type DriveIndex } from './drive-index.ts';
-import { appEnv, runInBackground } from './env.ts';
+import { demoClient } from './demo/backend.ts';
+import { DEMO_IDS } from './demo/data.ts';
+import { appEnv, isDemo, runInBackground } from './env.ts';
 import { createTokenProvider, parseServiceAccountKey, SCOPES, WRITE_SCOPES } from './google/auth.ts';
 import { GoogleClient } from './google/client.ts';
 
@@ -18,11 +20,13 @@ let google: { json: string; write: boolean; client: GoogleClient; email: string 
 
 /** Whether the app may change files in Drive (DRIVE_WRITE=true). Off by default: reading needs no more. */
 export function driveWriteEnabled(): boolean {
+	if (isDemo()) return false;
 	return ['true', '1', 'yes', 'on'].includes((appEnv().DRIVE_WRITE ?? '').trim().toLowerCase());
 }
 
 /** The Google client for this deployment. Token caching lives as long as the Worker instance. */
 export function getGoogle(): { client: GoogleClient; serviceAccountEmail: string } {
+	if (isDemo()) return { client: demoClient(), serviceAccountEmail: 'demo@example.org' };
 	const json = appEnv().GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
 	if (!json) throw new NotConfiguredError('GOOGLE_SERVICE_ACCOUNT_JSON');
 	const write = driveWriteEnabled();
@@ -37,6 +41,7 @@ export function getGoogle(): { client: GoogleClient; serviceAccountEmail: string
 export function requireSetting(
 	name: 'CALENDAR_ID' | 'DRIVE_ARCHIVE_FOLDER_ID' | 'DRIVE_CURRENT_PROGRAM_FOLDER_ID' | 'REPERTOIRE_SHEET_ID'
 ): string {
+	if (isDemo()) return { CALENDAR_ID: DEMO_IDS.calendar, DRIVE_ARCHIVE_FOLDER_ID: DEMO_IDS.archive, DRIVE_CURRENT_PROGRAM_FOLDER_ID: DEMO_IDS.program, REPERTOIRE_SHEET_ID: DEMO_IDS.sheet }[name];
 	const value = appEnv()[name]?.trim();
 	if (!value) throw new NotConfiguredError(name);
 	return value;
@@ -47,6 +52,7 @@ export function requireSetting(
  * by commas (or full folder links). Optional.
  */
 export function programFolderIds(): string[] {
+	if (isDemo()) return [DEMO_IDS.program];
 	return (appEnv().DRIVE_CURRENT_PROGRAM_FOLDER_ID ?? '')
 		.split(/[,;\s]+/)
 		.map((value) => value.match(/folders\/([\w-]+)/)?.[1] ?? value)

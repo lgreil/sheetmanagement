@@ -168,49 +168,79 @@
 		font-size: 0.875rem;
 	}
 
+	/* One segmented control: three equal parts that never wrap, the chosen one raised. */
 	.answers {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		gap: 2px;
+		padding: 3px;
+		border-radius: 14px;
+		background: var(--surface-2);
 	}
 
 	.answer {
 		display: inline-flex;
 		align-items: center;
-		gap: var(--space-1);
-		height: var(--tap);
-		padding: 0 var(--space-4);
-		border: 1px solid transparent;
-		border-radius: 999px;
-		background: var(--surface-2);
-		color: var(--text);
+		justify-content: center;
+		gap: 6px;
+		min-width: 0;
+		height: calc(var(--tap) - 4px);
+		padding: 0 var(--space-2);
+		border: 0;
+		border-radius: 11px;
+		background: transparent;
+		color: var(--text-muted);
 		transition:
 			background var(--fast) var(--ease),
-			border-color var(--fast) var(--ease),
+			color var(--fast) var(--ease),
+			box-shadow var(--fast) var(--ease),
 			transform var(--fast) var(--ease);
 		font: inherit;
 		font-size: 0.9375rem;
 		font-weight: 600;
+		white-space: nowrap;
 		cursor: pointer;
+	}
+
+	.answer:hover:not(.chosen) {
+		color: var(--text);
 	}
 
 	.answer:active {
 		transform: scale(0.97);
 	}
 
+	/* Raised and tinted in the answer's colour, so it reads as chosen in light and dark. */
+	.answer.chosen {
+		--tone: var(--accent);
+		background: color-mix(in oklab, var(--tone) 18%, var(--surface));
+		color: var(--tone);
+		box-shadow:
+			0 1px 2px rgb(0 0 0 / 0.12),
+			inset 0 0 0 1px color-mix(in oklab, var(--tone) 35%, transparent);
+	}
+
 	.answer.yes.chosen {
-		border-color: var(--ok);
-		background: color-mix(in oklab, var(--ok) 16%, transparent);
+		--tone: var(--ok);
 	}
 
 	.answer.maybe.chosen {
-		border-color: var(--warn);
-		background: color-mix(in oklab, var(--warn) 16%, transparent);
+		--tone: var(--warn);
 	}
 
 	.answer.no.chosen {
-		border-color: var(--danger);
-		background: color-mix(in oklab, var(--danger) 12%, transparent);
+		--tone: var(--danger);
+	}
+
+	/* On narrow phones the words carry it; the icons would push "Ich kann nicht" off its part. */
+	@media (max-width: 400px) {
+		.answer {
+			font-size: 0.875rem;
+		}
+
+		.answer :global(svg) {
+			display: none;
+		}
 	}
 
 	.answer:disabled {

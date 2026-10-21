@@ -183,27 +183,39 @@
 		</div>
 		{#if page.url.searchParams.has('probenplan')}<p class="saved" role="status"><Icon name="check" size={16} />{t.rehearsalPlan.saved}</p>{/if}
 		{#if data.rehearsals.length}
-			<ul class="ui-list">
-				{#each data.rehearsals as rehearsal (rehearsal.id)}
-					<li>
-						<EventRow event={rehearsal} />
-						{#if rehearsal.planned.length}
-							<!-- What's on, each piece one tap away. -->
-							<ul class="planned" aria-label={t.rehearsalPlan.title}>
-								{#each rehearsal.planned as item, i (i)}
-									<li>
-										{#if item.pieceId}
-											<a class="chip" href="/stuecke/{encodeURIComponent(item.pieceId)}">{item.title}</a>
-										{:else}
-											<span class="chip">{item.title}</span>
-										{/if}
-									</li>
-								{/each}
-							</ul>
-						{/if}
-					</li>
-				{/each}
-			</ul>
+			{@const upcoming = data.rehearsals.filter((r) => !r.past)}
+			<!-- Before the concert, past rehearsals fold away so the next ones come first. -->
+			{@const folded = upcoming.length ? data.rehearsals.filter((r) => r.past) : []}
+			{#snippet rehearsalList(list: typeof data.rehearsals)}
+				<ul class="ui-list">
+					{#each list as rehearsal (rehearsal.id)}
+						<li>
+							<EventRow event={rehearsal} />
+							{#if rehearsal.planned.length}
+								<!-- What's on, each piece one tap away. -->
+								<ul class="planned" aria-label={t.rehearsalPlan.title}>
+									{#each rehearsal.planned as item, i (i)}
+										<li>
+											{#if item.pieceId}
+												<a class="chip" href="/stuecke/{encodeURIComponent(item.pieceId)}">{item.title}</a>
+											{:else}
+												<span class="chip">{item.title}</span>
+											{/if}
+										</li>
+									{/each}
+								</ul>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/snippet}
+			{#if folded.length}
+				<details class="past-rehearsals">
+					<summary><Icon name="chevron" size={16} />{t.concert.pastRehearsals(folded.length)}</summary>
+					{@render rehearsalList(folded)}
+				</details>
+			{/if}
+			{@render rehearsalList(folded.length ? upcoming : data.rehearsals)}
 		{:else}
 			<p class="placeholder">{t.concert.noRehearsals}</p>
 		{/if}
@@ -417,6 +429,39 @@
 	}
 
 	/* Indented to line up with the rehearsal's title, past its date tile. */
+	.past-rehearsals {
+		margin-bottom: var(--space-3);
+	}
+
+	.past-rehearsals summary {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-height: 32px;
+		color: var(--text-muted);
+		font-size: 0.875rem;
+		font-weight: 600;
+		list-style: none;
+		cursor: pointer;
+	}
+
+	.past-rehearsals summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.past-rehearsals summary :global(svg) {
+		transition: transform var(--fast) var(--ease);
+	}
+
+	.past-rehearsals[open] summary :global(svg) {
+		transform: rotate(90deg);
+	}
+
+	.past-rehearsals[open] {
+		margin-bottom: var(--space-4);
+		opacity: 0.85;
+	}
+
 	.planned {
 		display: flex;
 		flex-wrap: wrap;
