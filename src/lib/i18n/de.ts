@@ -397,7 +397,7 @@ export const de = {
 		online: 'Online nachschlagen',
 		searching: 'Suche bei Wikidata …',
 		youtube: 'Hörbeispiel auf YouTube suchen',
-		youtubeHint: 'Öffnet die YouTube-Suche. Passende Aufnahme öffnen, Link kopieren und bei „Hörbeispiel“ einfügen.',
+		youtubeHint: 'Öffnet die YouTube-Suche, mit dem Arrangeur, wenn einer eingetragen ist. Passende Aufnahme öffnen, Link kopieren und bei „Hörbeispiel“ einfügen.',
 		whichWork: 'Welches Werk ist es?',
 		apply: 'Übernehmen',
 		applied: 'eingetragen',
@@ -411,6 +411,18 @@ export const de = {
 		nothingInWork: 'Zu diesem Werk hat Wikidata keine weiteren Angaben.',
 		onlineFailed: 'Wikidata ist gerade nicht erreichbar.',
 		busy: 'Wikidata bittet um eine kurze Pause. In einer Minute geht es wieder.'
+	},
+	viewer: {
+		show: 'Noten ansehen',
+		hide: 'Noten ausblenden',
+		page: (page: number, pages: number) => `Seite ${page} von ${pages}`,
+		previous: 'Vorige Seite',
+		next: 'Nächste Seite',
+		larger: 'Größer',
+		smaller: 'Kleiner',
+		open: 'In neuem Tab öffnen',
+		loading: 'Lade die Noten …',
+		hint: 'Komponist, Arrangeur und Werkverzeichnis von der Seite abtippen. Im neuen Tab lässt sich Text, wenn die PDF welchen hat, auch markieren und kopieren.'
 	},
 	accessLink: {
 		title: 'Zugang per Link',
@@ -597,6 +609,7 @@ export const de = {
 		lead: 'Die Angaben stehen im Blatt „Stücke“ der Repertoire-Tabelle. Was hier steht, gilt statt dem, was die App aus dem Ordnernamen liest.',
 		recordingHint: 'Link zu einer Aufnahme, z. B. YouTube',
 		reviewedHint: 'z. B. 2026-10-18',
+		today: 'Heute',
 		save: 'Speichern',
 		cancel: 'Abbrechen',
 		conflict: 'Jemand hat das Stück inzwischen geändert. Lade die Seite neu und mach deine Änderung noch einmal.',

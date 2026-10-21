@@ -3,6 +3,7 @@
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { config } from '#lib/config/index.ts';
+	import { eventDay } from '#lib/repertoire/dates.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PieceSuggestions from '#lib/components/PieceSuggestions.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -17,6 +18,8 @@
 		current = { ...(values ?? {}) };
 	});
 	const apply = (field: string, value: string) => (current[field] = value);
+	/** Today in the orchestra's time zone, as the sheet writes dates: "2026-10-21". */
+	const today = () => eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
 
 	const columns = t.sheet.pieces.columns;
 	const FIELDS = [
@@ -56,16 +59,21 @@
 		{#each FIELDS as field (field.name)}
 			<label class="field" class:wide={'wide' in field}>
 				{columns[field.name]}
-				<input
-					name={field.name}
-					type={'type' in field ? field.type : 'text'}
-					bind:value={current[field.name]}
-					list={'list' in field ? field.list : undefined}
-					required={'required' in field}
-					placeholder={'placeholder' in field ? field.placeholder : undefined}
-					maxlength="1000"
-					autocomplete="off"
-				/>
+				<span class="input">
+					<input
+						name={field.name}
+						type={'type' in field ? field.type : 'text'}
+						bind:value={current[field.name]}
+						list={'list' in field ? field.list : undefined}
+						required={'required' in field}
+						placeholder={'placeholder' in field ? field.placeholder : undefined}
+						maxlength="1000"
+						autocomplete="off"
+					/>
+					{#if field.name === 'reviewedAt'}
+						<button class="btn ghost small" type="button" onclick={() => (current.reviewedAt = today())}>{t.pieceEditor.today}</button>
+					{/if}
+				</span>
 			</label>
 		{/each}
 		<label class="field wide">
@@ -159,6 +167,21 @@
 		form {
 			grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
 		}
+	}
+
+	.input {
+		display: flex;
+		gap: var(--space-2);
+	}
+
+	.input input {
+		flex: 1;
+		min-width: 0;
+	}
+
+	.input .btn {
+		flex: none;
+		align-self: center;
 	}
 
 	.actions {
