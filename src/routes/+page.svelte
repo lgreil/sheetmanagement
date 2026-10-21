@@ -201,6 +201,50 @@
 		color: var(--warn);
 	}
 
+	/* On phones the pills would stack one per line; one grouped card with rows reads calmer. */
+	@media (max-width: 640px) {
+		.todo ul {
+			display: grid;
+			gap: 0;
+			overflow: hidden;
+			border-radius: var(--radius-m);
+			background: var(--surface);
+			box-shadow: 0 0 0 1px var(--border);
+		}
+
+		.todo li + li {
+			border-top: 1px solid var(--border);
+		}
+
+		.todo a {
+			display: flex;
+			min-height: var(--tap);
+			padding: 0 var(--space-4);
+			border-radius: 0;
+			background: none;
+		}
+
+		.todo a:hover {
+			background: var(--surface-2);
+		}
+
+		.todo strong {
+			display: grid;
+			place-items: center;
+			min-width: 24px;
+			height: 24px;
+			padding: 0 6px;
+			border-radius: 999px;
+			background: color-mix(in oklab, var(--warn) 16%, transparent);
+			font-size: 0.8125rem;
+		}
+
+		.todo a :global(svg) {
+			margin-left: auto;
+			color: var(--text-muted);
+		}
+	}
+
 	.up-next {
 		display: grid;
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));

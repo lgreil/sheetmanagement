@@ -187,6 +187,7 @@ export const de = {
 		openInCalendar: 'Im Google Kalender',
 		rehearsals: 'Proben',
 		noRehearsals: 'Für dieses Konzert stehen keine Proben im Kalender.',
+		pastRehearsals: (n: number) => (n === 1 ? '1 vergangene Probe' : `${n} vergangene Proben`),
 		program: 'Programm',
 		programEmpty: 'Für dieses Konzert ist noch kein Programm eingetragen.',
 		programNoSheet: 'Sobald die Repertoire-Tabelle eingerichtet ist, steht hier das Programm mit Links zu den Noten.',

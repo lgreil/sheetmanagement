@@ -9,7 +9,7 @@
 
 <form class="demo" method="POST" action="/demo">
 	<input type="hidden" name="weiter" value={back} />
-	<span class="label"><strong>{t.demo.label}</strong><span class="note">{t.demo.note}</span></span>
+	<span class="label" title={t.demo.note}><strong>{t.demo.label}</strong><span class="note">{t.demo.note}</span></span>
 	<span class="roles" role="group" aria-label={t.demo.viewAs}>
 		<button name="rolle" value="verwaltung" aria-pressed={role === 'verwaltung'}>{t.demo.admin}</button>
 		<button name="rolle" value="mitglied" aria-pressed={role === 'mitglied'}>{t.demo.member}</button>
@@ -72,5 +72,24 @@
 
 	.reset {
 		color: var(--accent);
+	}
+
+	/* One slim row on phones: the explanation is in the tooltip and the README. */
+	@media (max-width: 640px) {
+		.demo {
+			flex-wrap: nowrap;
+			justify-content: space-between;
+			gap: var(--space-2);
+			padding: 6px var(--space-4);
+		}
+
+		.note {
+			display: none;
+		}
+
+		.roles button,
+		.reset {
+			padding: 0 var(--space-2);
+		}
 	}
 </style>
