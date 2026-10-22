@@ -99,6 +99,8 @@
 
 	/* Something waits here: the warm "Wartet auf dich" colour, in a small pill. */
 	.count {
+		/* Keeps the hidden screen-reader text inside the scrolling row. */
+		position: relative;
 		display: grid;
 		place-items: center;
 		min-width: 20px;

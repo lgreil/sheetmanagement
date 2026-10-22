@@ -36,7 +36,17 @@
 	}
 </script>
 
-<div class="segmented" role="radiogroup" aria-label={label} tabindex="-1" {onkeydown}>
+<div
+	class="segmented"
+	role="radiogroup"
+	aria-label={label}
+	tabindex="-1"
+	{onkeydown}
+	style:--count={options.length}
+	style:--index={Math.max(0, options.findIndex((option) => option.value === value))}
+>
+	<!-- One raised thumb that slides to the choice, instead of each button lighting up. -->
+	<span class="thumb" aria-hidden="true"></span>
 	{#each options as option (option.value)}
 		<button
 			type="button"
@@ -57,6 +67,8 @@
 
 <style>
 	.segmented {
+		position: relative;
+		isolation: isolate;
 		display: inline-grid;
 		grid-auto-flow: column;
 		grid-auto-columns: 1fr;
@@ -103,11 +115,24 @@
 	}
 
 	button.active {
-		background: var(--surface);
 		color: var(--text);
+	}
+
+	.thumb {
+		position: absolute;
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		z-index: -1;
+		width: calc((100% - 6px) / var(--count));
+		border-radius: 9px;
+		/* In dark mode the surface is barely lighter than the track: a lifted tone instead. */
+		background: light-dark(var(--surface), #3a362f);
 		box-shadow:
 			0 1px 3px rgb(0 0 0 / 0.12),
 			0 0 0 0.5px rgb(0 0 0 / 0.04);
+		transform: translateX(calc(var(--index) * 100%));
+		transition: transform 0.28s var(--ease);
 	}
 
 	@media (pointer: coarse) {

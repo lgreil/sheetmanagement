@@ -96,7 +96,7 @@
 				</a>
 			{/if}
 			<div class="settings">
-				<ThemeToggle />
+				<ThemeToggle wide />
 				{#if user}
 					<form method="POST" action="/auth/logout">
 						<button class="logout"><Icon name="logout" size={16} />{t.auth.logout}</button>
@@ -228,12 +228,11 @@
 		white-space: nowrap;
 	}
 
+	/* The colour scheme across the whole menu, signing out below it. */
 	.settings {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-3);
+		display: grid;
+		justify-items: start;
+		gap: var(--space-2);
 	}
 
 	.logout {
