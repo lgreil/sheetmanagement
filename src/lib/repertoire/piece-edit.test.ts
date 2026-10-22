@@ -51,6 +51,11 @@ describe('checkPieceValues', () => {
 		expect(checkPieceValues(edit(change), pieces, 2)).toEqual({ problem });
 	});
 
+	it('saves lists of names one way: "Mozart, Haydn"', () => {
+		const result = checkPieceValues(edit({ composer: 'Mozart ,Haydn;', genre: 'Filmmusik,  Pop, filmmusik', arranger: ' ', publisher: 'Schott;Bärenreiter' }), pieces, 2);
+		expect(result).toMatchObject({ values: { composer: 'Mozart, Haydn', genre: 'Filmmusik, Pop', arranger: '', publisher: 'Schott, Bärenreiter' } });
+	});
+
 	it('lets a piece keep its own title', () => {
 		expect('values' in checkPieceValues(edit({ title: 'BOLERO' }), pieces, 2)).toBe(true);
 	});

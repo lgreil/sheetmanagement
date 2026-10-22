@@ -524,6 +524,8 @@ export const de = {
 		videoFailed: 'YouTube ist gerade nicht erreichbar.',
 		whichWork: 'Welches Werk ist es?',
 		apply: 'Übernehmen',
+		/** Adds a name to a list field ("Mozart" → "Mozart, Haydn") instead of replacing it. */
+		add: 'Ergänzen',
 		applied: 'eingetragen',
 		openWikidata: 'Bei Wikidata ansehen',
 		sources: { score: 'aus den Noten', wikidata: 'Wikidata', archive: 'aus dem Archiv', youtube: 'Video' } as Record<string, string>,
@@ -780,7 +782,9 @@ export const de = {
 			'bad-duration': 'Die Dauer ist nicht lesbar. Möglich sind z. B. 7:30, 7 Min. oder 1:02:00.'
 		},
 		durationHint: 'z. B. 7:30',
-		publisherHint: 'z. B. Bärenreiter, für die GEMA-Meldung',
+		composerHint: 'mehrere mit Komma: Mozart, Haydn',
+		listHint: 'mehrere mit Komma trennen',
+		publisherHint: 'z. B. Bärenreiter – für die GEMA-Meldung',
 		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
 	},
 	editor: {

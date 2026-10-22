@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { listHas } from '#lib/repertoire/lists.ts';
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
@@ -42,9 +43,9 @@
 
 	const visible = $derived.by(() => {
 		const words = searchText(query).split(/\s+/).filter(Boolean);
-		const byComposer = composer ? searchText(composer) : null;
 		return data.pieces.filter((piece) => {
-			if (byComposer && searchText(piece.composer) !== byComposer) return false;
+			// Also the works this composer wrote with others ("Mozart, Haydn").
+			if (composer && !listHas(piece.composer, composer)) return false;
 			if (filter === NEEDS_WORK && (piece.status === 'ok' || piece.status === 'none')) return false;
 			if (filter === NO_MUSIC && piece.status !== 'none') return false;
 			if (filter === RECORDING && !piece.recording) return false;

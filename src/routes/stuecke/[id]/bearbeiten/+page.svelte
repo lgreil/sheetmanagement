@@ -6,6 +6,7 @@
 	import { config } from '#lib/config/index.ts';
 	import { eventDay } from '#lib/repertoire/dates.ts';
 	import { cleanLink } from '#lib/links.ts';
+	import { listCompletions } from '#lib/repertoire/lists.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PieceSuggestions from '#lib/components/PieceSuggestions.svelte';
@@ -28,13 +29,13 @@
 	const columns = t.sheet.pieces.columns;
 	const FIELDS = [
 		{ name: 'title', wide: true, required: true },
-		{ name: 'composer', list: 'composer-list' },
+		{ name: 'composer', list: 'composers', placeholder: t.pieceEditor.composerHint },
 		{ name: 'catalogue' },
-		{ name: 'arranger' },
-		{ name: 'genre', list: 'genre-list' },
+		{ name: 'arranger', list: 'arrangers', placeholder: t.pieceEditor.listHint },
+		{ name: 'genre', list: 'genres', placeholder: t.pieceEditor.listHint },
 		{ name: 'difficulty' },
 		{ name: 'duration', placeholder: t.pieceEditor.durationHint },
-		{ name: 'publisher', placeholder: t.pieceEditor.publisherHint },
+		{ name: 'publisher', list: 'publishers', placeholder: t.pieceEditor.publisherHint },
 		{ name: 'reviewedAt', placeholder: t.pieceEditor.reviewedHint },
 		{ name: 'recording', wide: true, type: 'url', placeholder: t.pieceEditor.recordingHint }
 	] as const;
@@ -78,7 +79,7 @@
 						name={field.name}
 						type={'type' in field ? field.type : 'text'}
 						bind:value={current[field.name]}
-						list={'list' in field ? field.list : undefined}
+						list={'list' in field ? `${field.list}-list` : undefined}
 						required={'required' in field}
 						placeholder={'placeholder' in field ? field.placeholder : undefined}
 						maxlength="1000"
@@ -105,8 +106,14 @@
 				<a class="btn ghost" href="/stuecke/{encodeURIComponent(data.piece.id)}">{t.pieceEditor.cancel}</a>
 			{/if}
 		</div>
-		<datalist id="genre-list">{#each data.genres as genre (genre)}<option value={genre}></option>{/each}</datalist>
-		<datalist id="composer-list">{#each data.composers as composer (composer)}<option value={composer}></option>{/each}</datalist>
+		<!-- Several names, separated by commas: picking one adds it after those already typed. -->
+		{#each fields as field (field.name)}
+			{#if 'list' in field && data.state === 'ready'}
+				<datalist id="{field.list}-list">
+					{#each listCompletions(current[field.name] ?? '', data[field.list]) as option (option)}<option value={option}></option>{/each}
+				</datalist>
+			{/if}
+		{/each}
 	</form>
 
 	<PieceSuggestions

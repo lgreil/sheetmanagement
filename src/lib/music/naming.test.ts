@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bachkreis } from '#lib/config/presets/bachkreis.ts';
-import { checkSection, guessShortTitle, placeholderName, shortenTitle, type NamingFile } from './naming.ts';
+import { checkSection, classicalShortTitle, guessShortTitle, placeholderName, shortenTitle, type NamingFile } from './naming.ts';
 import { createInstrumentMatcher } from './part-name.ts';
 
 const matcher = createInstrumentMatcher(bachkreis.instruments);
@@ -147,5 +147,12 @@ describe('placeholderName', () => {
 		const files = ['Fame - Geige I.pdf', 'Fame - Viola.pdf'].map((x) => pdf(x));
 		expect(placeholderName(files, 'Fame', 'Trompete II', naming)).toBe('Fame - Trompete II - FEHLT');
 		expect(placeholderName([], 'Sinfonie Nr. 9 Aus der neuen Welt', 'Horn III', naming, { composer: 'Dvorak' })).toBe('Dvorak 9 - Horn III - FEHLT');
+	});
+});
+
+describe('classicalShortTitle with several composers', () => {
+	it('takes the first composer of a list', () => {
+		expect(classicalShortTitle('Sinfonie Nr. 9', { composer: 'Antonín Dvořák, Smetana' })).toBe('Dvořák 9');
+		expect(classicalShortTitle('Sinfonie Nr. 9', { composer: 'Dvořák' })).toBe('Dvořák 9');
 	});
 });

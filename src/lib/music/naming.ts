@@ -112,10 +112,15 @@ export function shortenTitle(title: string, naming: NamingRules, piece: { compos
 
 	const catalogue = piece.catalogue ?? naming.cataloguePatterns.map((pattern) => pattern.exec(clean)?.[0]).find(Boolean);
 	const firstWord = clean.split(' ')[0].toLowerCase();
-	const composer = piece.composer?.split(/\s+/).pop() ?? naming.knownComposers.find((name) => name.toLowerCase() === firstWord);
+	const composer = lastName(piece.composer) ?? naming.knownComposers.find((name) => name.toLowerCase() === firstWord);
 	const classical = catalogue && composer ? `${composer} ${catalogue.replace(/\s+/g, ' ')}` : '';
 	if (classical && classical.length <= max) return classical;
 	return end ? words[0] : capitalized.slice(0, max).trim();
+}
+
+/** The first composer's last name: "Haydn" for "Joseph Haydn, Mozart". */
+function lastName(composer: string | undefined): string | undefined {
+	return composer?.split(/[,;]/)[0].trim().split(/\s+/).pop() || undefined;
 }
 
 /**
@@ -125,7 +130,8 @@ export function shortenTitle(title: string, naming: NamingRules, piece: { compos
 export function classicalShortTitle(title: string, piece: { composer?: string; catalogue?: string }): string | undefined {
 	if (piece.catalogue && /^BWV\b/i.test(piece.catalogue)) return piece.catalogue.replace(/\s+/g, ' ');
 	const number = /\bNr\.?\s*(\d+)/i.exec(title)?.[1];
-	if (piece.composer && number) return `${piece.composer.split(/\s+/).pop()} ${number}`;
+	const composer = lastName(piece.composer);
+	if (composer && number) return `${composer} ${number}`;
 	return undefined;
 }
 

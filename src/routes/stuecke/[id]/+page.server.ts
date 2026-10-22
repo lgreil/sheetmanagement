@@ -9,7 +9,7 @@ import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
-import { searchText } from '#lib/music/text.ts';
+import { listsOverlap } from '#lib/repertoire/lists.ts';
 import { workKey } from '#lib/music/piece-name.ts';
 import { formatDuration } from '#lib/repertoire/duration.ts';
 import { concertSummary, getLibrary, namedItem, type Library, type LibraryPiece } from '#lib/server/library.ts';
@@ -128,7 +128,8 @@ function upcoming(library: Library, piece: LibraryPiece, planned: Map<string, { 
 	);
 }
 
-const sameComposer = (a: string | undefined, b: string | undefined) => !!a && !!b && searchText(a) === searchText(b);
+/** Shares a composer: "Mozart, Haydn" and "Haydn" do. */
+const sameComposer = listsOverlap;
 
 const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({ id, title, catalogue, status, programs });
 

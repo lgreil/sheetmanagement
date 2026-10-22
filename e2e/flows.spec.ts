@@ -48,3 +48,17 @@ test('a YouTube link is saved clean (#133)', async ({ page }) => {
 	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
 	await expect(page.getByRole('link', { name: /Hörbeispiel/ })).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 });
+
+test('several composers, separated by commas', async ({ page }) => {
+	await open(page, '/stuecke/demo-egmont/bearbeiten');
+	await page.getByLabel('Komponist').fill('Beethoven ,Mozart;');
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
+	// Each composer links to their works; the Mozart list now has Egmont too.
+	const eyebrow = page.locator('.head .eyebrow');
+	await expect(eyebrow.getByRole('link', { name: 'Beethoven' })).toBeVisible();
+	await eyebrow.getByRole('link', { name: 'Mozart' }).click();
+	await expect(page).toHaveURL(/komponist=Mozart/);
+	await expect(page.getByRole('link', { name: /Egmont Ouvertüre/ })).toBeVisible();
+	await expect(page.getByRole('link', { name: /Eine kleine Nachtmusik/ })).toBeVisible();
+});
