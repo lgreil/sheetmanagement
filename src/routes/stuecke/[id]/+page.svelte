@@ -6,6 +6,8 @@
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon, { type IconName } from '#lib/components/Icon.svelte';
+	import InstrumentGlyph from '#lib/components/InstrumentGlyph.svelte';
+	import { partGlyph } from '#lib/music/instrument-glyph.ts';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
 	import PieceArt from '#lib/components/PieceArt.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -267,7 +269,7 @@
 						title={part.fileName}
 					>
 						<span class="icon">
-							<Icon name={part.kind === 'audio' ? 'headphones' : 'file'} size={16} />
+							{#if part.kind === 'audio'}<Icon name="headphones" size={16} />{:else}<InstrumentGlyph glyph={partGlyph(part)} size={20} />{/if}
 						</span>
 						<span class="label">
 							<span class="name">{part.label}</span>

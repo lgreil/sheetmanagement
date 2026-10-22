@@ -1,3 +1,4 @@
+import { config } from '#lib/config/index.ts';
 import type { InstrumentFamily } from '#lib/config/types.ts';
 
 /**
@@ -57,3 +58,13 @@ export function instrumentGlyph(name: string, family: InstrumentFamily | undefin
 	const word = name.toLowerCase();
 	return BY_NAME.find(([pattern]) => pattern.test(word))?.[1] ?? (family ? BY_FAMILY[family] : 'score');
 }
+
+/** For an instrument of the orchestra's list, by its name in the file names ("Viola") or its label ("Bratsche"). */
+export function glyphOf(name: string): Glyph {
+	const known = config.instruments.find((instrument) => instrument.name === name || instrument.label === name);
+	return instrumentGlyph(known?.name ?? name, known?.family);
+}
+
+/** For a file: the drawing of its first instrument, a score sheet when it names none. */
+export const partGlyph = (part: { instruments: string[]; family?: InstrumentFamily }): Glyph =>
+	part.instruments.length ? instrumentGlyph(part.instruments[0], part.family) : 'score';

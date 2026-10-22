@@ -3,7 +3,9 @@
 	import { tick } from 'svelte';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import InstrumentGlyph from '#lib/components/InstrumentGlyph.svelte';
 	import InstrumentPicker from '#lib/components/InstrumentPicker.svelte';
+	import { glyphOf } from '#lib/music/instrument-glyph.ts';
 	import MyPartsConcert from '#lib/components/MyPartsConcert.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -84,7 +86,7 @@
 		</form>
 	{:else}
 		<div class="chip">
-			<Icon name="user" size={16} />
+			{#if data.choices[0]}<InstrumentGlyph glyph={glyphOf(data.choices[0].instrument)} size={20} />{:else}<Icon name="user" size={16} />{/if}
 			<strong>{data.label}</strong>
 			<button class="link" onclick={() => (picking = true)}>{t.myParts.change}</button>
 			{#if form?.saved}<span class="muted">· {t.myParts.saved}</span>{/if}

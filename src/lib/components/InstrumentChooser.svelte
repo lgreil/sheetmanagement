@@ -3,7 +3,7 @@
 	import { config } from '#lib/config/index.ts';
 	import type { InstrumentFamily } from '#lib/config/types.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import { instrumentGlyph } from '#lib/music/instrument-glyph.ts';
+	import { glyphOf } from '#lib/music/instrument-glyph.ts';
 	import { instrumentLabel } from '#lib/music/instrument-label.ts';
 	import Icon from './Icon.svelte';
 	import InstrumentGlyph from './InstrumentGlyph.svelte';
@@ -11,7 +11,7 @@
 
 	/**
 	 * One instrument, picked from a grid of little drawings with a search field: the usual ones
-	 * first, the rest by family. Sends the name as `name`, like a select. Until the page runs
+	 * first, then every instrument by family. Sends the name as `name`, like a select. Until the page runs
 	 * JavaScript it's the plain dropdown, so the form also works without.
 	 */
 	let {
@@ -66,8 +66,8 @@
 		}
 		const usual = instruments.filter((n) => common.includes(n));
 		const families: { label: string; names: string[] }[] = [];
+		// Each family lists all its instruments, the usual ones too: nobody has to know which those are.
 		for (const n of instruments) {
-			if (common.includes(n)) continue;
 			const heading = familyLabel(family(n));
 			const section = families.find((s) => s.label === heading);
 			if (section) section.names.push(n);
@@ -176,7 +176,7 @@
 			onclick={() => (open ? close() : show())}
 		>
 			{#if value}
-				<span class="glyph"><InstrumentGlyph glyph={instrumentGlyph(value, family(value))} size={22} /></span>
+				<span class="glyph"><InstrumentGlyph glyph={glyphOf(value)} size={22} /></span>
 				<span id="{labelledby}-value" class="value">{instrumentLabel(value)}</span>
 			{:else}
 				<span id="{labelledby}-value" class="value placeholder">{t.instruments.choose}</span>
@@ -198,7 +198,7 @@
 							<div class="grid" role="group" aria-label={section.label || undefined}>
 								{#each section.names as n (n)}
 									<button type="button" class="tile" data-name={n} aria-pressed={n === value} onclick={() => pick(n)}>
-										<span class="plate"><InstrumentGlyph glyph={instrumentGlyph(n, family(n))} size={26} /></span>
+										<span class="plate"><InstrumentGlyph glyph={glyphOf(n)} size={26} /></span>
 										<span>{instrumentLabel(n)}</span>
 									</button>
 								{/each}

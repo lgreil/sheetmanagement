@@ -533,6 +533,20 @@ export const de = {
 		numbers: 'Stimmen',
 		numbersHint: 'keine Auswahl: alle Stimmen'
 	},
+	quickSearch: {
+		label: 'Schnellsuche',
+		open: 'Suchen',
+		shortcut: 'Strg K',
+		placeholder: 'Stück, Konzert oder Seite …',
+		pages: 'Seiten',
+		pieces: 'Stücke',
+		concerts: 'Konzerte',
+		upcoming: 'Demnächst',
+		recent: 'Zuletzt geöffnet',
+		loading: 'Lädt …',
+		none: (query: string) => `Nichts gefunden für „${query}“.`,
+		keys: '↑↓ wählen · ↵ öffnen · Esc schließen'
+	},
 	auth: {
 		title: 'Anmelden',
 		lead: 'Melde dich mit deinem Google-Konto an, um Noten, Konzerte und Programme zu sehen.',

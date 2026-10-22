@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { instrumentGlyph } from './instrument-glyph.ts';
+import { glyphOf, instrumentGlyph, partGlyph } from './instrument-glyph.ts';
 
 describe('instrumentGlyph', () => {
 	it('goes by the name first', () => {
@@ -24,5 +24,17 @@ describe('instrumentGlyph', () => {
 		expect(instrumentGlyph('Akkordeon', 'tasten')).toBe('keys');
 		expect(instrumentGlyph('B-Stimmen', 'sonstige')).toBe('score');
 		expect(instrumentGlyph('Tröte', undefined)).toBe('score');
+	});
+
+	it('knows the orchestra’s instruments by name and by label', () => {
+		expect(glyphOf('Viola')).toBe('violin');
+		expect(glyphOf('Bratsche')).toBe('violin');
+		expect(glyphOf('Cello')).toBe('cello');
+		expect(glyphOf('Pauke')).toBe('timpani');
+	});
+
+	it('draws a file by its first instrument', () => {
+		expect(partGlyph({ instruments: ['Horn', 'Trompete'], family: 'blech' })).toBe('horn');
+		expect(partGlyph({ instruments: [] })).toBe('score');
 	});
 });

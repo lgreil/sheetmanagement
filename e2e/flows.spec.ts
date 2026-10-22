@@ -84,3 +84,30 @@ test('an instrument with the orchestra’s own name (#143)', async ({ page }) =>
 	await open(page, '/meine-noten?instrument=Viola');
 	await expect(page.getByText('Bratsche')).toHaveCount(0);
 });
+
+test('quick search jumps to a piece and to a page', async ({ page }) => {
+	await open(page, '/');
+	await page.getByRole('button', { name: 'Schnellsuche' }).click();
+	const search = page.getByRole('combobox', { name: 'Schnellsuche' });
+	await search.fill('egmont');
+	await expect(page.getByRole('option', { name: /Egmont/ })).toBeVisible();
+	await search.press('Enter');
+	await expect(page).toHaveURL(/\/stuecke\/demo-egmont/);
+
+	await page.keyboard.press('Control+k');
+	await search.fill('konzerte');
+	await search.press('Enter');
+	await expect(page).toHaveURL(/\/konzerte$/);
+});
+
+test('picking an instrument from the grid (#165)', async ({ page }) => {
+	await open(page, '/meine-noten');
+	const change = page.getByRole('button', { name: 'Ändern' });
+	if (await change.isVisible()) await change.click();
+	await page.getByRole('button', { name: /^Instrument/ }).first().click();
+	await page.getByRole('searchbox', { name: 'Instrument suchen …' }).fill('cello');
+	await page.getByRole('button', { name: 'Cello', exact: true }).click();
+	await page.locator('form.picker').getByRole('button', { name: 'Merken' }).click();
+	await expect(page.getByText('Gemerkt.')).toBeVisible();
+	await expect(page.locator('.chip')).toContainText('Cello');
+});

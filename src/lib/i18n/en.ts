@@ -535,6 +535,20 @@ export const en: Texts = {
 		numbers: 'Parts',
 		numbersHint: 'none chosen: all parts'
 	},
+	quickSearch: {
+		label: 'Quick search',
+		open: 'Search',
+		shortcut: 'Ctrl K',
+		placeholder: 'Piece, concert or page …',
+		pages: 'Pages',
+		pieces: 'Pieces',
+		concerts: 'Concerts',
+		upcoming: 'Coming up',
+		recent: 'Recently opened',
+		loading: 'Loading …',
+		none: (query: string) => `Nothing found for “${query}”.`,
+		keys: '↑↓ choose · ↵ open · Esc close'
+	},
 	auth: {
 		title: 'Sign in',
 		lead: 'Sign in with your Google account to see music, concerts and programmes.',

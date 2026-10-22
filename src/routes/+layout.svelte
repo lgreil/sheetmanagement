@@ -5,7 +5,9 @@
 	import { config, useInstrumentOverrides } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
+	import Avatar from '#lib/components/Avatar.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import QuickSearch, { loadIndex } from '#lib/components/QuickSearch.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
 	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
@@ -30,6 +32,12 @@
 	const inMore = $derived(!!current && !nav.some((item) => item.href === current));
 	const workspace = $derived(workspaceOf(groups, path));
 	let menuOpen = $state(false);
+	let searching = $state(false);
+	// The shortcut as the keyboard says it: ⌘K on a Mac, Strg K elsewhere.
+	let mac = $state(false);
+	$effect(() => {
+		mac = /Mac|iPhone|iPad/.test(navigator.platform);
+	});
 
 	const links = orchestraLinks(config.links);
 	const sourceUrl = safeLink(config.sourceUrl ?? '');
@@ -120,6 +128,12 @@
 				</button>
 			</nav>
 
+			{#if groups.length}
+				<button class="search" onclick={() => (searching = true)} onpointerenter={loadIndex} onfocus={loadIndex} aria-label={t.quickSearch.label}>
+					<Icon name="search" size={18} /><span class="search-label">{t.quickSearch.open}</span><kbd>{mac ? '⌘K' : t.quickSearch.shortcut}</kbd>
+				</button>
+			{/if}
+
 			<!-- Signing out and the colour scheme live in "Mehr" and on the profile. -->
 			{#if data.user}
 				<a
@@ -129,7 +143,7 @@
 					title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
 					aria-label={t.profile.title}
 				>
-					{data.user.name.charAt(0).toUpperCase()}
+					<Avatar name={data.user.name} instrument={data.user.instrument} size={34} />
 				</a>
 			{/if}
 		</div>
@@ -181,6 +195,7 @@
 	</nav>
 
 	<NavMenu {groups} {current} user={data.user ?? null} bind:open={menuOpen} />
+	{#if groups.length}<QuickSearch {groups} bind:open={searching} />{/if}
 	<Toast />
 	<UpdateNotice />
 </div>
@@ -347,6 +362,41 @@
 		background: var(--accent-soft);
 	}
 
+	/* Looks like a field on wide screens, so it's clear you can type; an icon on narrow ones. */
+	.search {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		flex: none;
+		height: 36px;
+		margin-left: var(--space-2);
+		padding: 0 6px 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition:
+			border-color var(--fast) var(--ease),
+			color var(--fast) var(--ease);
+	}
+
+	.search:hover {
+		border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+		color: var(--text);
+	}
+
+	.search kbd {
+		padding: 1px 6px;
+		border-radius: 999px;
+		background: var(--bg);
+		font: inherit;
+		font-size: 0.6875rem;
+		font-weight: 600;
+	}
+
 	main {
 		flex: 1;
 		width: 100%;
@@ -388,11 +438,26 @@
 		.nav-desktop .more {
 			padding: var(--space-2) 10px;
 		}
+
+		.search {
+			justify-content: center;
+			width: 36px;
+			padding: 0;
+		}
+
+		.search-label,
+		.search kbd {
+			display: none;
+		}
 	}
 
 	@media (max-width: 720px) {
 		.nav-desktop {
 			display: none;
+		}
+
+		.search {
+			margin-left: auto;
 		}
 
 		.topbar-inner {
@@ -547,16 +612,9 @@
 
 	.avatar {
 		display: grid;
-		place-items: center;
 		flex: none;
-		width: 34px;
-		height: 34px;
 		margin-left: var(--space-1);
 		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-size: 0.875rem;
-		font-weight: 700;
 		transition: box-shadow var(--fast) var(--ease);
 	}
 

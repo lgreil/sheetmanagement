@@ -2,6 +2,7 @@
 	import { fade, fly } from 'svelte/transition';
 	import { t } from '#lib/i18n/index.ts';
 	import type { NavGroup } from '#lib/nav.ts';
+	import Avatar from './Avatar.svelte';
 	import Icon from './Icon.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
@@ -18,7 +19,7 @@
 		groups: NavGroup[];
 		/** The current page's entry, the most specific one. */
 		current: string | undefined;
-		user: { name: string; email: string } | null;
+		user: { name: string; email: string; instrument?: string } | null;
 		open?: boolean;
 	} = $props();
 
@@ -88,7 +89,7 @@
 		<div class="account">
 			{#if user}
 				<a class="who" href="/profil" onclick={() => (open = false)}>
-					<span class="avatar" aria-hidden="true">{user.name.charAt(0).toUpperCase()}</span>
+					<Avatar name={user.name} instrument={user.instrument} />
 					<span class="who-text">
 						<strong>{user.name}</strong>
 						<span>{user.email}</span>
@@ -200,18 +201,6 @@
 	.who {
 		margin: 0;
 		padding: var(--space-2);
-	}
-
-	.avatar {
-		display: grid;
-		place-items: center;
-		flex: none;
-		width: 36px;
-		height: 36px;
-		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-weight: 700;
 	}
 
 	.who-text {

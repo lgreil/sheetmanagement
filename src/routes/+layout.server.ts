@@ -1,10 +1,13 @@
 import { error, redirect } from '@sveltejs/kit';
-import { instrumentOverrides } from '#lib/config/index.ts';
+import { normalizeEmail } from '#lib/access/access.ts';
+import { config, instrumentOverrides } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { DEMO_ROLE_COOKIE, isPublicPath } from '#lib/server/auth/index.ts';
 import { features, isDemo, orchestra } from '#lib/server/env.ts';
 import { countsByPage, openWork } from '#lib/server/todo.ts';
 import { navGroups, workspaceOf } from '#lib/nav.ts';
+import { parseInstruments } from '#lib/music/my-parts.ts';
+import { getAccessList } from '#lib/server/repertoire.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
@@ -20,6 +23,10 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const rights = [...access.rights];
 	const counts = workspaceOf(navGroups({ auth, rights, features: on }), url.pathname) ? countsByPage(await openWork(locals)) : {};
 
+	// The first instrument from "Mitglieder" is the avatar's picture (#136).
+	const member = access.user ? (await getAccessList().catch(() => null))?.membersByEmail.get(normalizeEmail(access.user.email)) : undefined;
+	const instrument = member?.instrument ? parseInstruments(member.instrument, config)[0]?.instrument : undefined;
+
 	const { name, shortName, logo, colours, style, look } = orchestra();
 	return {
 		orchestraName: name,
@@ -29,7 +36,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		features: on,
 		instruments: instrumentOverrides(),
 		auth,
-		user: access.user,
+		user: access.user ? { ...access.user, instrument } : null,
 		rights,
 		counts,
 		demo: isDemo() ? { role: cookies.get(DEMO_ROLE_COOKIE) === 'mitglied' ? ('mitglied' as const) : ('verwaltung' as const) } : null
