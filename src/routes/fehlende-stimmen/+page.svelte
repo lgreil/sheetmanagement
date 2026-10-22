@@ -73,7 +73,7 @@
 								{/if}
 								<span class="status {report.status}">{t.piece.partStatus[report.status]}</span>
 								<span class="status reported" title={t.gaps.reportedHint}><Icon name="flag" size={12} />{t.gaps.reported}: {t.feedbackValues.reportKind[report.kind]}</span>
-								{#if report.comment}<span class="muted">„{report.comment}“</span>{/if}
+								{#if report.comment}<span class="muted">{t.common.quote(report.comment)}</span>{/if}
 							</li>
 						{/each}
 					</ul>

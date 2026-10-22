@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	requireRight(locals, RIGHT);
 	const [library, repertoire] = await Promise.all([getLibrary(), getRepertoire()]);
 	const piece = library.piecesById.get(params.id);
-	if (!piece) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+	if (!piece) error(404, t.messages.noPiece);
 	const row = piece.sheet && repertoire.ok ? findPieceRow(repertoire.repertoire.tables.pieces, piece.sheet) : undefined;
 	if (!row) return { state: 'not-in-sheet' as const, piece: { id: piece.id, title: piece.title } };
 
@@ -88,7 +88,7 @@ export const actions: Actions = {
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: cause.message, values: submitted });
 			console.error('Saving a piece failed:', cause);
-			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.', values: submitted });
+			return fail(503, { message: t.messages.sheetFailed, values: submitted });
 		}
 
 		// "Speichern & weiter": the next piece in the list being worked through.

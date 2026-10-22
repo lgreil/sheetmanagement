@@ -23,8 +23,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const [library, feedback, plan, loans] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan(), on.loans ? getLoans() : null]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
-		if (!library.catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
-		error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+		if (!library.catalog.ok) error(503, t.messages.archiveUnavailable);
+		error(404, t.messages.noPiece);
 	}
 
 	const { detail, sheet } = piece;
@@ -154,7 +154,7 @@ export const actions: Actions = {
 		if (!isOn('wishes')) return fail(404, { againError: t.wishes.failed });
 		if (!user) return fail(403, { againError: t.wishes.signInNeeded });
 		const piece = (await getLibrary()).piecesById.get(params.id);
-		if (!piece) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+		if (!piece) error(404, t.messages.noPiece);
 		try {
 			return { againSaved: await playAgain(piece, user) };
 		} catch (cause) {
@@ -172,7 +172,7 @@ export const actions: Actions = {
 		if (!REPORT_KINDS.includes(kind)) return fail(400, { reportError: t.reports.failed });
 
 		const piece = (await getLibrary()).piecesById.get(params.id);
-		if (!piece?.detail) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');
+		if (!piece?.detail) error(404, t.messages.noPiece);
 		// The part's name comes from the archive, not from the form.
 		const fileId = formText(data, 'fileId');
 		const part = fileId ? piece.detail.parts.find((p) => p.id === fileId) : undefined;

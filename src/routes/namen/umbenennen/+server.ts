@@ -18,7 +18,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	requireRight(locals, 'stuecke.bearbeiten');
 	if (!driveWriteEnabled()) error(409, t.naming.noDriveWrite);
 	const body = (await request.json().catch(() => null)) as { key?: unknown; shortTitle?: unknown; ids?: unknown; refresh?: unknown } | null;
-	if (!body) error(400, 'Ungültige Anfrage.');
+	if (!body) error(400, t.messages.badRequest);
 
 	if (body.refresh === true) {
 		await getArchiveIndex({ force: true }).catch((cause) => console.error('Refreshing the archive failed:', cause));
@@ -26,7 +26,7 @@ export const POST: RequestHandler = async ({ request, locals }) => {
 	}
 
 	const ids = Array.isArray(body.ids) ? body.ids.filter((id): id is string => typeof id === 'string') : [];
-	if (typeof body.key !== 'string' || !ids.length || ids.length > RENAME_BATCH) error(400, 'Ungültige Anfrage.');
+	if (typeof body.key !== 'string' || !ids.length || ids.length > RENAME_BATCH) error(400, t.messages.badRequest);
 	const shortTitle = typeof body.shortTitle === 'string' ? body.shortTitle.slice(0, 120) : '';
 	const section = namingSections(await getLibrary()).find((s) => s.key === body.key);
 	if (!section) error(404, t.naming.gone);

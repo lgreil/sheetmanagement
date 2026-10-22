@@ -4,10 +4,11 @@ import { signIn, SignInError } from '#lib/server/auth/google.ts';
 import { safeReturnPath } from '#lib/server/auth/redirect.ts';
 import { SESSION_DAYS, signSession } from '#lib/server/auth/session.ts';
 import type { RequestHandler } from './$types';
+import { t } from '#lib/i18n/index.ts';
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	const auth = authConfig();
-	if (auth.mode === 'off') error(404, 'Die Anmeldung ist nicht eingerichtet.');
+	if (auth.mode === 'off') error(404, t.messages.signInOff);
 
 	let expected: { state?: string; returnTo?: string } = {};
 	try {

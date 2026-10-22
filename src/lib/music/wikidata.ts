@@ -1,3 +1,4 @@
+import { LANGUAGE } from '#lib/i18n/index.ts';
 import { tidyCatalogue } from './score-text.ts';
 import { searchText } from './text.ts';
 
@@ -25,7 +26,7 @@ export interface WorkDetails {
 	/** "BWV 565", "Op. 24" */
 	catalogue?: string;
 	year?: number;
-	/** What kind of work and its genres, in German where Wikidata has it ("Ballett", "Filmmusik"). */
+	/** What kind of work and its genres, in the app's language where Wikidata has it ("Ballett", "Filmmusik"). */
 	kinds: string[];
 	/** A video id, rare for works. */
 	youtube?: string;
@@ -52,8 +53,10 @@ async function call(params: Record<string, string>, fetchImpl: Fetch): Promise<J
 	return response.json();
 }
 
-const labelOf = (entity: Json | undefined) => entity?.labels?.de?.value ?? entity?.labels?.en?.value ?? '';
-const descriptionOf = (entity: Json | undefined) => entity?.descriptions?.de?.value ?? entity?.descriptions?.en?.value;
+/** The app's language first (#124), the other one when Wikidata has nothing in it. */
+const [FIRST, SECOND] = LANGUAGE === 'en' ? (['en', 'de'] as const) : (['de', 'en'] as const);
+const labelOf = (entity: Json | undefined) => entity?.labels?.[FIRST]?.value ?? entity?.labels?.[SECOND]?.value ?? '';
+const descriptionOf = (entity: Json | undefined) => entity?.descriptions?.[FIRST]?.value ?? entity?.descriptions?.[SECOND]?.value;
 
 /** Words that name a form, not a work: left out when the whole title finds nothing. */
 const GENERIC_WORDS = new Set(

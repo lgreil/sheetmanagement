@@ -1,4 +1,4 @@
-import { t } from '#lib/i18n/index.ts';
+import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { orchestra } from '#lib/server/env.ts';
 import type { RequestHandler } from './$types';
 
@@ -12,7 +12,7 @@ export const GET: RequestHandler = () => {
 		name: `${name} · ${t.nav.appName}`,
 		short_name: shortName,
 		description: t.pwa.description,
-		lang: 'de',
+		lang: LANGUAGE,
 		start_url: '/',
 		scope: '/',
 		display: 'standalone',

@@ -3,6 +3,7 @@ import { reportGaps, reportRows } from '#lib/repertoire/music-report.ts';
 import { isOn } from '#lib/server/env.ts';
 import { getLibrary, reportPieces } from '#lib/server/library.ts';
 import type { PageServerLoad } from './$types';
+import { t } from '#lib/i18n/index.ts';
 
 /**
  * A concert's programme to print: a handout for the audience, the conductor's setlist, or
@@ -11,7 +12,7 @@ import type { PageServerLoad } from './$types';
 export const load: PageServerLoad = async ({ params, url, locals }) => {
 	const library = await getLibrary();
 	const concert = library.concertsById.get(params.id);
-	if (!concert) error(404, 'Dieses Konzert gibt es nicht.');
+	if (!concert) error(404, t.messages.noConcert);
 	const canReport = isOn('musicReport') && locals.access.rights.has('programme.bearbeiten');
 	const art = url.searchParams.get('art');
 	const kind = art === 'setlist' ? ('setlist' as const) : art === 'musikfolge' && canReport ? ('musikfolge' as const) : ('handout' as const);

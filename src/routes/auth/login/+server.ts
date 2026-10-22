@@ -4,10 +4,11 @@ import { authorizationUrl, GOOGLE_SIGN_IN_ORIGIN } from '#lib/server/auth/google
 import { safeReturnPath } from '#lib/server/auth/redirect.ts';
 import { randomToken } from '#lib/server/auth/session.ts';
 import type { RequestHandler } from './$types';
+import { t } from '#lib/i18n/index.ts';
 
 export const GET: RequestHandler = ({ url, cookies }) => {
 	const auth = authConfig();
-	if (auth.mode === 'off') error(404, 'Die Anmeldung ist nicht eingerichtet.');
+	if (auth.mode === 'off') error(404, t.messages.signInOff);
 	if (auth.problems.length) error(503, auth.problems.join(' '));
 
 	// The state ties Google's answer to this browser (CSRF protection for the callback).

@@ -88,7 +88,7 @@
 				{#each data.problems as problem, i (i)}
 					<li>
 						<span class="kind">{t.setup.problem[problem.kind]}</span>
-						<span>„{problem.value}“</span>
+						<span>{t.common.quote(problem.value)}</span>
 						<span class="muted">{problem.tab}{problem.row ? `, ${t.setup.row(problem.row)}` : ''}</span>
 					</li>
 				{/each}
