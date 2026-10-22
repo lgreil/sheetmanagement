@@ -12,7 +12,8 @@
 		"preview": "vite build && wrangler dev",
 		"deploy": "vite build && wrangler deploy",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"test": "vitest run"
+		"test": "vitest run",
+		"test:e2e": "playwright test"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.ts",

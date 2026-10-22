@@ -1,0 +1,50 @@
+import { expect, test } from '@playwright/test';
+import { open, resetDemo } from './demo.ts';
+
+/** What members and the orga team do every week; a change that breaks one fails its pull request (#142). */
+test.beforeEach(async ({ page }) => resetDemo(page));
+
+test('signing up for a concert', async ({ page }) => {
+	await open(page, '/konzerte/demo-herbstkonzert');
+	const yes = page.getByRole('button', { name: 'Ich komme' });
+	await yes.click();
+	await expect(yes).toHaveAttribute('aria-pressed', 'true');
+	await page.reload();
+	await expect(page.getByRole('button', { name: 'Ich komme' })).toHaveAttribute('aria-pressed', 'true');
+	await expect(page.getByText(/1 Zusage/)).toBeVisible();
+});
+
+test('the programme editor saves', async ({ page }) => {
+	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	const remove = page.getByRole('button', { name: 'Entfernen' });
+	const before = await remove.count();
+	expect(before).toBeGreaterThan(1);
+	await remove.last().click();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Programm gespeichert.')).toBeVisible();
+	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(before - 1);
+});
+
+test('taking attendance', async ({ page }) => {
+	await open(page, '/konzerte/demo-probe-2/anwesenheit');
+	const boxes = page.getByRole('checkbox');
+	await boxes.first().check({ force: true });
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Anwesenheit gespeichert.')).toBeVisible();
+	await expect(page.getByText(/\d+ von \d+ da/)).toBeVisible();
+});
+
+test('a YouTube link is saved clean (#133)', async ({ page }) => {
+	await open(page, '/stuecke/demo-egmont/bearbeiten');
+	const field = page.getByLabel('Hörbeispiel');
+	await field.fill('https://youtu.be/dQw4w9WgXcQ?si=Teilen123');
+	await field.blur();
+	await expect(field).toHaveValue('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+	await page.getByRole('button', { name: 'Dauer aus dem Video' }).click();
+	// The video's length as a suggestion ("8:30"), ready to take over.
+	await expect(page.locator('.list').getByText(/^\d+:\d\d$/)).toBeVisible();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
+	await expect(page.getByRole('link', { name: /Hörbeispiel/ })).toHaveAttribute('href', 'https://www.youtube.com/watch?v=dQw4w9WgXcQ');
+});

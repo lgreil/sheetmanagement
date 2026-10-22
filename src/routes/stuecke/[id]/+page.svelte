@@ -235,7 +235,7 @@
 						{#if part.status !== 'ok'}
 							<span class="status {part.status}">{t.piece.partStatus[part.status]}</span>
 						{/if}
-						{#if part.status !== 'missing'}<span class="open"><Icon name="external" size={14} /></span>{/if}
+						{#if part.status !== 'missing'}<span class="opens-elsewhere"><Icon name="external" size={14} /></span>{/if}
 					</svelte:element>
 					{#if canReport && part.status !== 'missing'}
 						<button
@@ -702,7 +702,7 @@
 		background: color-mix(in oklab, var(--danger) 12%, transparent);
 	}
 
-	.open {
+	.opens-elsewhere {
 		display: grid;
 		flex: none;
 		color: var(--text-muted);
@@ -710,15 +710,15 @@
 		transition: opacity var(--fast) var(--ease);
 	}
 
-	.part:hover .open,
-	.part:focus-visible .open {
+	.part:hover .opens-elsewhere,
+	.part:focus-visible .opens-elsewhere {
 		opacity: 1;
 		color: var(--accent);
 	}
 
 	/* No hover on touch screens: the hint that a part opens elsewhere stays visible. */
 	@media (hover: none) {
-		.open {
+		.opens-elsewhere {
 			opacity: 0.75;
 		}
 	}

@@ -31,6 +31,11 @@
 
 	afterNavigate(() => (menuOpen = false));
 
+	// Buttons and forms work from here on; the end-to-end tests wait for it (#142).
+	$effect(() => {
+		document.documentElement.dataset.app = 'ready';
+	});
+
 	// Pages cross-fade like in an app (#129): the browser animates between the old and the new
 	// page once its data is there, header and tab bar stay put. Without View Transitions the
 	// new page fades in (see .page). Filters and forms on the same page don't animate.
@@ -72,6 +77,7 @@
 
 <svelte:head>
 	<meta name="theme-color" content={config.accent} />
+	{#if data.logo !== '/logo.png'}<link rel="icon" href={data.logo} />{/if}
 	<!-- On :root, so the theme tokens in app.css derive from it. -->
 	{@html `<style>:root{--brand:${config.accent}}</style>`}
 </svelte:head>
@@ -85,8 +91,9 @@
 	{#if !online}<p class="offline no-print" role="status"><Icon name="alert" size={16} />{t.pwa.offline}</p>{/if}
 	<header class="topbar">
 		<div class="topbar-inner">
-			<a href="/" class="brand" aria-label={data.orchestraName} title={data.orchestraName}>
-				<img class="logo" src="/logo.png" alt="" width="40" height="40" />
+			<!-- Named by what it shows (the full name, or the short one on phones), so voice control finds it. -->
+			<a href="/" class="brand" title={data.orchestraName}>
+				<img class="logo" src={data.logo} alt="" width="40" height="40" />
 				<span class="brand-full">{data.orchestraName}</span>
 				<span class="brand-short">{data.orchestraShortName} <span class="app-name">{t.nav.appName}</span></span>
 			</a>

@@ -83,7 +83,7 @@
 						placeholder={'placeholder' in field ? field.placeholder : undefined}
 						maxlength="1000"
 						autocomplete="off"
-						onchange={field.name === 'recording' ? () => (current.recording = cleanLink(current.recording ?? '') ?? current.recording) : undefined}
+						onblur={field.name === 'recording' ? () => (current.recording = cleanLink(current.recording ?? '') ?? current.recording) : undefined}
 					/>
 					{#if field.name === 'reviewedAt'}
 						<button class="btn ghost small" type="button" onclick={() => (current.reviewedAt = today())}>{t.pieceEditor.today}</button>
