@@ -183,6 +183,19 @@ Until this step, the app is open to anyone with the link and nobody can change a
   - On a concert page, people who may edit programmes see **Aktuelles Programm im Drive**: how many of the programme's pieces are in the orchestra's programme folder, and **Abgleichen** to make it match. Saving the programme of an orchestra's next concert does the same on its own.
   - The orchestra's folder is the "Programm …" folder whose name matches the concert's **Orchester** (`EO` → "Programm Ehemaligenorchester", `A` → "Programm A-Orchester"). If there is none yet, the app makes "Programm <Orchester>" next to the others; with no programme folders at all, the current-programme folder itself is the programme.
   - Only shortcuts are made and taken out: one per piece, named like the piece's folder. Shortcuts to pieces that left the programme go to the bin (not deleted); files and folders in there are never touched.
+- **Date polls (optional, #95):** the orga team agrees on dates on **Terminumfragen** (`/termine`) before they go into the calendar. Polls and answers are kept in a small Cloudflare D1 database, not in the sheet:
+  1. Create it once: `pnpm wrangler d1 create noten --jurisdiction eu`.
+  2. Add the binding it prints to `wrangler.toml`, named `DB`:
+     ```toml
+     [[d1_databases]]
+     binding = "DB"
+     database_name = "noten"
+     database_id = "<the id from step 1>"
+     ```
+  3. Deploy. The app makes its tables on first use; there's nothing to migrate. Until then the page says it isn't set up.
+  - Who may start and close polls: the right `termine.planen` in **Rechte** (the preset gives it to Orga and Vorstand). A poll is for the groups chosen when it's started: only their members see and answer it, and the menu shows **Terminumfragen** to them.
+  - Closing a poll with a date gives a link that opens Google Calendar with the event filled in; the app itself doesn't write to the calendar.
+  - Backups: D1 keeps 30 days of history (Time Travel), see `pnpm wrangler d1 time-travel info noten`.
 - **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
 ## Troubleshooting

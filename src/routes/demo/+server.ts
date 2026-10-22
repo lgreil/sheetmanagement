@@ -3,6 +3,7 @@ import { DEMO_ROLE_COOKIE } from '#lib/server/auth/index.ts';
 import { safeReturnPath } from '#lib/server/auth/redirect.ts';
 import { resetDemo } from '#lib/server/demo/backend.ts';
 import { isDemo } from '#lib/server/env.ts';
+import { resetDemoPolls } from '#lib/server/polls.ts';
 import { getArchiveIndex } from '#lib/server/services.ts';
 import { refreshAfterWrite } from '#lib/server/sheet-writes.ts';
 import type { RequestHandler } from './$types';
@@ -17,6 +18,7 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 	}
 	if (data.has('zuruecksetzen')) {
 		resetDemo();
+		resetDemoPolls();
 		await refreshAfterWrite();
 		// The Drive changes too (renamed files, programme shortcuts): read it again from the sample data.
 		await getArchiveIndex({ force: true });

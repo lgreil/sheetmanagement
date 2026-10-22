@@ -124,3 +124,25 @@ test('the current programme in Drive follows the programme (#60)', async ({ page
 	await drive.getByRole('button', { name: 'Abgleichen' }).click();
 	await expect(drive).toContainText('Abgeglichen: 0 ergänzt, 0 herausgenommen.');
 });
+
+test('a date poll from start to calendar (#95)', async ({ page }) => {
+	await open(page, '/termine');
+	await page.getByText('Neue Umfrage').click();
+	await page.getByLabel('Worum geht es?').fill('Sommerfest');
+	const dates = page.locator('input[name="date"]');
+	await dates.nth(0).fill('2027-07-03');
+	await dates.nth(1).fill('2027-07-10');
+	await page.locator('input[name="start"]').nth(1).fill('18:00');
+	await page.getByRole('checkbox', { name: 'Orga' }).check();
+	await page.getByRole('button', { name: 'Umfrage starten' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: 'Sommerfest' })).toBeVisible();
+
+	await page.getByRole('group', { name: /10\. Juli 2027/ }).getByRole('radio', { name: 'Ja' }).check();
+	await page.getByRole('group', { name: /3\. Juli 2027/ }).getByRole('radio', { name: 'Vielleicht' }).check();
+	await page.getByRole('button', { name: 'Antwort speichern' }).click();
+	await expect(page.getByText('Antwort gespeichert.')).toBeVisible();
+	await expect(page.getByText('Bester Termin')).toBeVisible();
+
+	await page.getByRole('button', { name: /Diesen nehmen \(Samstag, 10\. Juli 2027/ }).click();
+	await expect(page.getByRole('link', { name: 'In Google Kalender eintragen' })).toHaveAttribute('href', /dates=20270710T180000/);
+});

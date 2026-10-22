@@ -324,7 +324,7 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			{ email: 'lea@example.org', name: 'Lea Lang', instrument: 'Geige I', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'paul@example.org', name: 'Paul Probe', instrument: 'Violoncello', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'ida@example.org', name: 'Ida Ibach', instrument: 'Flöte', orchestras: 'EO', status: 'aktiv' },
-			{ email: 'tim@example.org', name: 'Tim Trompeter', instrument: 'Trompete', orchestras: 'EO, A', status: 'aktiv' },
+			{ email: 'tim@example.org', name: 'Tim Trompeter', instrument: 'Trompete', groups: 'Orga', orchestras: 'EO, A', status: 'aktiv' },
 			{ email: 'karl@example.org', name: 'Karl Klarinette', instrument: 'Klarinette', orchestras: 'EO', status: 'pausiert', pausedUntil: at(90) },
 			{ email: 'bea@example.org', name: 'Bea Bass', instrument: 'Kontrabass', orchestras: 'EO', status: 'aktiv' }
 		]),

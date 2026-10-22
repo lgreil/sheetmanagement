@@ -61,3 +61,19 @@ test('settings page', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Funktionen' })).toBeVisible();
 	await expectAccessible(page);
 });
+
+test('date polls: only for their groups (#95)', async ({ page }) => {
+	await open(page, '/termine');
+	await expect(page.getByRole('heading', { level: 1, name: 'Terminumfragen' })).toBeVisible();
+	await page.getByRole('link', { name: /Probenwochenende/ }).click();
+	await expect(page.getByText('Bester Termin')).toBeVisible();
+	await expectAccessible(page);
+
+	// A member outside Orga, Dirigat and Vorstand sees neither the entry nor the poll.
+	const url = page.url();
+	await resetDemo(page, 'mitglied');
+	await open(page, '/termine');
+	await expect(page.getByText('Gerade läuft keine Umfrage für dich.')).toBeVisible();
+	const response = await page.goto(url);
+	expect(response?.status()).toBe(404);
+});

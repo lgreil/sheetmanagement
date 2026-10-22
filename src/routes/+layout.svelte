@@ -22,7 +22,7 @@
 	useInstrumentOverrides(data.instruments);
 	$effect.pre(() => useInstrumentOverrides(data.instruments));
 
-	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features }));
+	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features, polls: data.polls }));
 	const nav = $derived(primaryNav(groups));
 	const path = $derived(page.url.pathname);
 	// The most specific entry counts: "Angaben ergänzen" lights up "Mehr", not "Archiv".
@@ -502,7 +502,7 @@
 			grid-auto-columns: 1fr;
 			height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
 			padding-bottom: env(safe-area-inset-bottom);
-			background: color-mix(in oklab, var(--bg) 80%, transparent);
+			background: color-mix(in oklab, var(--bg) 94%, transparent);
 			backdrop-filter: saturate(1.6) blur(20px);
 			-webkit-backdrop-filter: saturate(1.6) blur(20px);
 			border-top: 1px solid var(--hairline);
