@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page } from '$app/state';
 	import { config } from '#lib/config/index.ts';
 	import { addMonths, eventDayKey, monthGrid } from '#lib/events/calendar.ts';
 	import { dateFormat } from '#lib/events/format.ts';
@@ -140,7 +141,7 @@
 						{#if main && main !== 'sonstiges'}
 							<span class="sticker {main}" style={stickerStyle(day.key)} aria-hidden="true">
 								<span class="paper"></span>
-								<img src="/logo.png" alt="" width="40" height="40" loading="lazy" />
+								<img src={page.data.logo ?? '/logo.png'} alt="" width="40" height="40" loading="lazy" />
 							</span>
 						{/if}
 						{#if dayEvents.length}
@@ -164,11 +165,11 @@
 	<div class="legend" aria-hidden="true">
 		<span><span class="swatch stage-swatch"><span class="curtain left"></span><span class="curtain right"></span></span>{t.concerts.types.konzert}</span>
 		<span>
-			<span class="sticker generalprobe mini" style={stickerStyle('legend-gp')}><span class="paper"></span><img src="/logo.png" alt="" width="20" height="20" /></span>
+			<span class="sticker generalprobe mini" style={stickerStyle('legend-gp')}><span class="paper"></span><img src={page.data.logo ?? '/logo.png'} alt="" width="20" height="20" /></span>
 			{t.concerts.types.generalprobe}
 		</span>
 		<span>
-			<span class="sticker probe mini" style={stickerStyle('legend-probe')}><span class="paper"></span><img src="/logo.png" alt="" width="20" height="20" /></span>
+			<span class="sticker probe mini" style={stickerStyle('legend-probe')}><span class="paper"></span><img src={page.data.logo ?? '/logo.png'} alt="" width="20" height="20" /></span>
 			{t.concerts.types.probe}
 		</span>
 	</div>

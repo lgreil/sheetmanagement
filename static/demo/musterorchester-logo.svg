@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 660 200" width="660" height="200" role="img" aria-labelledby="t">
+  <title id="t">Musterorchester</title>
+  <defs>
+    <clipPath id="disc"><circle cx="100" cy="100" r="86"/></clipPath>
+  </defs>
+
+  <!-- Mark -->
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#12304A" stroke-width="6"/>
+  <g clip-path="url(#disc)" stroke="#12304A" stroke-width="1.6" opacity="0.28">
+    <line x1="0" y1="62" x2="200" y2="62"/>
+    <line x1="0" y1="81" x2="200" y2="81"/>
+    <line x1="0" y1="100" x2="200" y2="100"/>
+    <line x1="0" y1="119" x2="200" y2="119"/>
+    <line x1="0" y1="138" x2="200" y2="138"/>
+  </g>
+  <!-- M built from two rising arches, reads as sound swell -->
+  <path d="M58 142 V76 Q58 58 74 70 L100 104 L126 70 Q142 58 142 76 V142"
+        fill="none" stroke="#12304A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Note head -->
+  <ellipse cx="100" cy="132" rx="11" ry="8" transform="rotate(-20 100 132)" fill="#C08A2E"/>
+
+  <!-- Wordmark -->
+  <text x="216" y="104" font-family="Georgia, 'Times New Roman', serif" font-size="46" letter-spacing="3" fill="#12304A">MUSTER</text>
+  <text x="216" y="148" font-family="Georgia, 'Times New Roman', serif" font-size="46" letter-spacing="3" fill="#C08A2E">ORCHESTER</text>
+</svg>

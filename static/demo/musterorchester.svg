@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="2 2 196 196" width="196" height="196" role="img" aria-labelledby="t">
+  <title id="t">Musterorchester</title>
+  <defs>
+    <clipPath id="disc"><circle cx="100" cy="100" r="86"/></clipPath>
+  </defs>
+  <!-- The mark from musterorchester-logo.svg, on a light disc so it reads on dark backgrounds too. -->
+  <circle cx="100" cy="100" r="95" fill="#FBF8F1"/>
+  <circle cx="100" cy="100" r="92" fill="none" stroke="#12304A" stroke-width="6"/>
+  <g clip-path="url(#disc)" stroke="#12304A" stroke-width="1.6" opacity="0.28">
+    <line x1="0" y1="62" x2="200" y2="62"/>
+    <line x1="0" y1="81" x2="200" y2="81"/>
+    <line x1="0" y1="100" x2="200" y2="100"/>
+    <line x1="0" y1="119" x2="200" y2="119"/>
+    <line x1="0" y1="138" x2="200" y2="138"/>
+  </g>
+  <path d="M58 142 V76 Q58 58 74 70 L100 104 L126 70 Q142 58 142 76 V142"
+        fill="none" stroke="#12304A" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <ellipse cx="100" cy="132" rx="11" ry="8" transform="rotate(-20 100 132)" fill="#C08A2E"/>
+</svg>

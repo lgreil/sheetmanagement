@@ -6,6 +6,8 @@
 ORCHESTRA_NAME="Mein Orchester"
 # Shorter name for the header on phones. Optional; defaults to ORCHESTRA_NAME.
 # ORCHESTRA_SHORT_NAME="Orchester"
+# Square logo for header, calendar and app icon: a file in static/ or an https link. Optional; default /logo.png.
+# ORCHESTRA_LOGO="/mein-logo.svg"
 
 # --- Google connection -----------------------------------------------------------
 # Service-account key: the key file base64-encoded on one line (or its JSON as is).

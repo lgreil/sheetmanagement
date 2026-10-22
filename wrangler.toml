@@ -24,4 +24,4 @@ directory = ".svelte-kit/cloudflare"
 # demo runs without the KV cache, which it doesn't need.
 [env.demo]
 name = "noten-demo"
-vars = { DEMO = "true", ORCHESTRA_NAME = "Musterorchester", ORCHESTRA_SHORT_NAME = "Muster" }
+vars = { DEMO = "true", ORCHESTRA_NAME = "Musterorchester", ORCHESTRA_SHORT_NAME = "Muster", ORCHESTRA_LOGO = "/demo/musterorchester.svg" }

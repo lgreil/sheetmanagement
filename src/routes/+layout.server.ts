@@ -2,7 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { DEMO_ROLE_COOKIE, isPublicPath } from '#lib/server/auth/index.ts';
-import { appEnv, isDemo } from '#lib/server/env.ts';
+import { appEnv, isDemo, orchestraLogo } from '#lib/server/env.ts';
 import { countsByPage, openWork } from '#lib/server/todo.ts';
 import { navGroups, workspaceOf } from '#lib/nav.ts';
 import type { LayoutServerLoad } from './$types';
@@ -25,6 +25,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		orchestraName: name || config.name,
 		// A custom name without a custom short name shouldn't fall back to the preset's short name.
 		orchestraShortName: env.ORCHESTRA_SHORT_NAME?.trim() || name || config.shortName,
+		logo: orchestraLogo(),
 		auth,
 		user: access.user,
 		rights,
