@@ -93,8 +93,8 @@ export interface SectionCoverage {
 
 /**
  * Coverage per section for one event: who comes, maybe comes, can't, and hasn't answered,
- * in the configured instrument order. Members are expected when active and in the event's
- * orchestra; answers from anyone else count too.
+ * in the configured instrument order. Members are expected when active, in the event's
+ * orchestra and with an instrument; answers from anyone else count too.
  */
 export function coverage(
 	signups: Signup[],
@@ -116,8 +116,9 @@ export function coverage(
 		const member = byEmail.get(signup.email);
 		add(sectionOf(signup.instrument, member, config), member?.name ?? signup.name, signup.answer);
 	}
+	// The conductor or the board without an instrument only show up once they answer.
 	for (const member of countingMembers(members, orchestra, today)) {
-		if (!answered.has(member.email)) add(sectionOf('', member, config), member.name, 'open');
+		if (!answered.has(member.email) && member.instrument) add(sectionOf('', member, config), member.name, 'open');
 	}
 	const order = new Map(config.instruments.map((instrument, i) => [instrument.name, i]));
 	const rank = (section: SectionCoverage) => order.get(section.instrument) ?? Infinity;

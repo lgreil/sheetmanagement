@@ -35,10 +35,10 @@
 		)
 	);
 
-	type Job = { key: string; shortTitle: string; ids: string[] };
+	type Job = { key: string; folder: string; shortTitle: string; ids: string[] };
 	/** While renaming: how far it got. Afterwards: what happened, and for which folders. */
 	let progress = $state<{ key: string; done: number; total: number } | null>(null);
-	let result = $state<{ renamed: number; failed: string[]; keys: string[] } | null>(null);
+	let result = $state<{ renamed: number; failed: string[]; folder: string } | null>(null);
 
 	async function post(body: object) {
 		const response = await fetch('/namen/umbenennen', {
@@ -76,13 +76,14 @@
 			await post({ refresh: true }).catch(() => {});
 			await invalidateAll();
 		} finally {
-			result = { renamed, failed, keys: jobs.map((job) => job.key) };
+			result = { renamed, failed, folder: jobs.map((job) => job.folder).join(', ') };
 			progress = null;
 		}
 	}
 
 	const jobOf = (section: (typeof sections)[number]): Job => ({
 		key: section.key,
+		folder: section.section ? `${section.folderName} · ${section.section}` : section.folderName,
 		shortTitle: section.shortTitle,
 		ids: section.chosen.map((check) => check.id)
 	});
@@ -90,6 +91,14 @@
 
 <Title title={t.naming.title} />
 <PageHeader title={t.naming.title} lead={t.naming.lead} />
+
+<!-- Up here: once its files are renamed, a folder can drop out of the list below. -->
+{#if result}
+	<p class="msg {result.failed.length ? 'error' : 'ok'}" role="status">
+		<Icon name={result.failed.length ? 'alert' : 'check'} size={16} />
+		{t.naming.renamedIn(result.renamed, result.folder)}{result.failed.length ? ` ${t.naming.failed(result.failed)}` : ''}
+	</p>
+{/if}
 
 {#if !data.ok}
 	<p class="msg error">{t.naming.failedLoad}</p>
@@ -118,12 +127,8 @@
 					</a>
 				</div>
 
-				<form
-					onsubmit={(event) => {
-						event.preventDefault();
-						rename([jobOf(section)]);
-					}}
-				>
+				<!-- Not a form: renaming runs in batches from the page, there's nothing to submit. -->
+				<div class="rename">
 					<label class="short">
 						<span>{t.naming.shortTitle}</span>
 						<input
@@ -181,18 +186,13 @@
 							</div>
 							<p aria-live="polite">{t.naming.progress(progress.done, progress.total)}</p>
 						</div>
-					{:else if result && result.keys[0] === section.key}
-						<p class="msg {result.failed.length ? 'error' : 'ok'}" role="status">
-							<Icon name={result.failed.length ? 'alert' : 'check'} size={16} />
-							{t.naming.renamed(result.renamed)}{result.failed.length ? ` ${t.naming.failed(result.failed)}` : ''}
-						</p>
 					{/if}
 					{#if section.chosen.length && progress?.key !== section.key}
-						<button class="btn" disabled={!data.driveWrite || !!progress}>
+						<button class="btn" type="button" disabled={!data.driveWrite || !!progress} onclick={() => rename([jobOf(section)])}>
 							<Icon name="check" size={16} />{t.naming.rename(section.chosen.length)}
 						</button>
 					{/if}
-				</form>
+				</div>
 			</li>
 		{/each}
 	</ul>
@@ -308,7 +308,7 @@
 		font-weight: 600;
 	}
 
-	form {
+	.rename {
 		display: grid;
 		gap: var(--space-3);
 	}

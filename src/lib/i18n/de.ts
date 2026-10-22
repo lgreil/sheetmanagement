@@ -341,7 +341,7 @@ export const de = {
 		title: 'Dateinamen',
 		lead: 'Dateien, die nicht „<Kurztitel> - <Stimme>.pdf“ heißen, mit Vorschlag. Umbenannt wird nur, was angehakt ist.',
 		counts: (rename: number, unclear: number, folders: number) =>
-			`${rename} Vorschläge · ${unclear} unklar · in ${folders} Ordnern`,
+			`${rename} ${rename === 1 ? 'Vorschlag' : 'Vorschläge'} · ${unclear} unklar · in ${folders} ${folders === 1 ? 'Ordner' : 'Ordnern'}`,
 		shortTitle: 'Kurztitel',
 		openFolder: 'Ordner in Drive',
 		shortTitleHint: 'Steht vor jeder Stimme. Kurz halten, damit die Stimme auf dem Handy lesbar bleibt.',
@@ -349,7 +349,7 @@ export const de = {
 		unclear: 'unklar',
 		unclearHint: (words: string) => `Nicht erkannt: ${words}. Bitte von Hand umbenennen.`,
 		rename: (n: number) => (n === 1 ? '1 Datei umbenennen' : `${n} Dateien umbenennen`),
-		renamed: (n: number) => (n === 1 ? '1 Datei umbenannt.' : `${n} Dateien umbenannt.`),
+		renamedIn: (n: number, folder: string) => `${n === 1 ? '1 Datei' : `${n} Dateien`} in „${folder}“ umbenannt.`,
 		all: 'Alle auswählen',
 		none: 'Alle Dateinamen folgen der Konvention.',
 		onlyUnclear: 'Nur noch Unklares',
