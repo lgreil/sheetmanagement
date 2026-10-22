@@ -118,6 +118,14 @@
 		color: var(--text);
 	}
 
+	button :global(svg) {
+		transition: transform 0.3s cubic-bezier(0.34, 1.36, 0.64, 1);
+	}
+
+	button.active :global(svg) {
+		transform: scale(1.1);
+	}
+
 	.thumb {
 		position: absolute;
 		top: 3px;
@@ -132,7 +140,16 @@
 			0 1px 3px rgb(0 0 0 / 0.12),
 			0 0 0 0.5px rgb(0 0 0 / 0.04);
 		transform: translateX(calc(var(--index) * 100%));
-		transition: transform 0.28s var(--ease);
+		/* A little spring: it overshoots a touch and settles, like a physical switch. */
+		transition:
+			transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1),
+			scale var(--fast) var(--ease),
+			background 0.35s var(--ease);
+	}
+
+	/* Pressing gives way slightly before the thumb moves. */
+	.segmented:active .thumb {
+		scale: 0.97;
 	}
 
 	@media (pointer: coarse) {
