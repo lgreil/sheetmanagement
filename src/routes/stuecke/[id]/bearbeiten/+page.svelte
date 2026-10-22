@@ -30,6 +30,7 @@
 	const FIELDS = [
 		{ name: 'title', wide: true, required: true },
 		{ name: 'composer', list: 'composers', placeholder: t.pieceEditor.composerHint },
+		{ name: 'composerFull', placeholder: t.pieceEditor.composerFullHint },
 		{ name: 'catalogue' },
 		{ name: 'arranger', list: 'arrangers', placeholder: t.pieceEditor.listHint },
 		{ name: 'genre', list: 'genres', placeholder: t.pieceEditor.listHint },

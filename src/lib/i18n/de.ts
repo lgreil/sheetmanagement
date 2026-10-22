@@ -21,6 +21,7 @@ export const de = {
 		more: 'Mehr',
 		profile: 'Profil',
 		details: 'Angaben ergänzen',
+		chronicle: 'Chronik',
 		menu: 'Alle Seiten',
 		close: 'Menü schließen',
 		crumbs: 'Seitenpfad',
@@ -68,6 +69,7 @@ export const de = {
 		describe: {
 			'/meine-noten': 'Deine Stimmen fürs nächste Konzert.',
 			'/konzerte': 'Proben und Konzerte.',
+			'/chronik': 'Alle Konzerte seit den Anfängen, in Zahlen.',
 			'/profil': 'Instrument, Orchester, eigener Kalender.',
 			'/stuecke': 'Alle Stücke mit allen Stimmen.',
 			'/stuecke/angaben': 'Fehlende Angaben zu Stücken ergänzen.',
@@ -223,6 +225,141 @@ export const de = {
 		views: { label: 'Ansicht', overview: 'Übersicht', planning: 'Planung' },
 		tools: 'Werkzeuge',
 		lastAttendance: 'Anwesenheit der letzten Probe'
+	},
+	/** Notes after a rehearsal (#145). */
+	rehearsalNotes: {
+		title: 'Aus der Probe',
+		previous: (date: string) => `Aus der letzten Probe, ${date}`,
+		done: 'Geprobt',
+		practise: 'Zum Üben',
+		next: 'Nächstes Mal',
+		doneHint: 'z. B. „Egmont bis Takt 120“',
+		practiseHint: 'z. B. „ab Buchstabe B langsam“',
+		nextHint: 'z. B. „Morgenstimmung, ab B“',
+		write: 'Notiz schreiben',
+		edit: 'Notiz bearbeiten',
+		lead: 'Für alle, die nicht da waren. Alle Felder leeren entfernt die Notiz.',
+		empty: 'Noch keine Notiz zu dieser Probe.',
+		save: 'Speichern',
+		cancel: 'Abbrechen',
+		by: (by: string, at: string) => [by, at].filter(Boolean).join(', '),
+		saved: 'Notiz gespeichert.',
+		tooLong: 'Höchstens 1000 Zeichen pro Feld, bitte.',
+		failed: 'Die Notiz konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		notSetUp: 'Dem Blatt „Probennotizen“ fehlen Spalten. Auf der Seite „Tabelle einrichten“ werden sie ergänzt.',
+		gone: 'Notizen gibt es nur für Proben, die schon begonnen haben.',
+		home: (date: string) => `Aus der Probe am ${date}`
+	},
+	/** Notes on a piece from rehearsals (#125). */
+	pieceNotes: {
+		title: 'Hinweise aus den Proben',
+		earlier: 'Hinweise zu früheren Konzerten',
+		none: 'Noch keine Hinweise, z. B. Sprünge, Wiederholungen oder Striche.',
+		add: 'Hinweis hinzufügen',
+		text: 'Hinweis',
+		textHint: 'z. B. „Sprung von Takt 40 nach 88“ oder „ohne Wiederholung“',
+		section: 'Für',
+		everyone: 'Alle',
+		sections: 'Register',
+		instruments: 'Instrumente',
+		concert: 'Gilt für',
+		always: 'Jede Aufführung',
+		save: 'Speichern',
+		delete: 'Löschen',
+		deleteNamed: (text: string) => `Hinweis „${text}“ löschen`,
+		forSection: (section: string) => `Für ${section}`,
+		forConcert: (concert: string) => `Nur ${concert}`,
+		meta: (by: string, at: string) => [by, at].filter(Boolean).join(', '),
+		saved: 'Hinweis gespeichert.',
+		deleted: 'Hinweis gelöscht.',
+		failed: 'Der Hinweis konnte gerade nicht gespeichert werden. Bitte versuch es noch einmal.',
+		notSetUp: 'Dem Blatt „Hinweise“ fehlen Spalten. Auf der Seite „Tabelle einrichten“ werden sie ergänzt.',
+		gone: 'Den Hinweis gibt es nicht mehr; vielleicht hat ihn jemand schon gelöscht.',
+		problems: {
+			empty: 'Bitte einen Hinweis eintragen.',
+			'too-long': 'Höchstens 500 Zeichen, bitte.',
+			section: 'Bitte ein Register oder Instrument aus der Liste wählen.',
+			concert: 'Bitte ein Konzert aus der Liste wählen.'
+		},
+		inMyParts: 'Hinweise'
+	},
+	/** The season report for the annual meeting (#147). */
+	season: {
+		title: 'Saisonbericht',
+		lead: 'Was in einem Zeitraum los war, zum Ausdrucken für die Jahreshauptversammlung. Anwesenheit nur als Summe, ohne Namen.',
+		back: 'Chronik',
+		from: 'Von',
+		to: 'Bis',
+		show: 'Anzeigen',
+		print: 'Drucken',
+		presets: {
+			twelve: 'Letzte 12 Monate',
+			season: (label: string) => `Saison ${label}`,
+			lastYear: (year: number) => `${year}`,
+			thisYear: (year: number) => `${year}`
+		},
+		presetsLabel: 'Zeitraum',
+		heading: (orchestra: string) => `Saisonbericht ${orchestra}`,
+		figures: 'Auf einen Blick',
+		concerts: (n: number) => (n === 1 ? 'Konzert' : 'Konzerte'),
+		pieces: (n: number) => (n === 1 ? 'Stück gespielt' : 'Stücke gespielt'),
+		debuts: 'davon zum ersten Mal',
+		rehearsals: (n: number) => (n === 1 ? 'Probe' : 'Proben'),
+		concertsTitle: 'Konzerte und Programme',
+		noConcerts: 'In diesem Zeitraum gab es kein Konzert.',
+		noProgram: 'Programm nicht eingetragen',
+		firstTime: 'zum ersten Mal',
+		debutsTitle: 'Zum ersten Mal gespielt',
+		noDebuts: 'Kein Stück war neu im Repertoire.',
+		debutAt: (concert: string) => `bei ${concert}`,
+		rehearsalsTitle: 'Proben',
+		rehearsalCount: (n: number) => (n === 1 ? '1 Probe fand statt.' : `${n} Proben fanden statt.`),
+		noCalendar: 'Der Kalender ist nicht verbunden, Proben fehlen deshalb.',
+		attendance: (rehearsals: number, average: string, rate: number) =>
+			`Bei ${rehearsals === 1 ? '1 Probe' : `${rehearsals} Proben`} wurde die Anwesenheit erfasst: im Schnitt ${average} Personen da, ${rate} % der Erfassten.`,
+		noAttendance: 'In diesem Zeitraum wurde keine Anwesenheit erfasst.',
+		archiveTitle: 'Archiv und Mitmachen',
+		reports: (made: number, done: number) =>
+			`${made === 1 ? '1 Problem mit Noten wurde' : `${made} Probleme mit Noten wurden`} gemeldet, ${done} davon ${done === 1 ? 'ist' : 'sind'} erledigt.`,
+		wishes: (n: number) => (n === 1 ? '1 Wunsch wurde eingereicht.' : `${n} Wünsche wurden eingereicht.`),
+		created: (day: string) => `Erstellt am ${day}. Proben stammen aus dem Kalender, der drei Jahre zurückreicht.`
+	},
+	/** The orchestra's history (#61). */
+	chronicle: {
+		title: 'Chronik',
+		lead: 'Alle Konzerte seit den Anfängen, und was das Orchester am liebsten spielt.',
+		views: { label: 'Ansicht', timeline: 'Zeitleiste', numbers: 'In Zahlen' },
+		concerts: (n: number) => (n === 1 ? 'Konzert' : 'Konzerte'),
+		pieces: (n: number) => (n === 1 ? 'Stück' : 'Stücke'),
+		performances: (n: number) => (n === 1 ? 'Aufführung' : 'Aufführungen'),
+		since: 'seit',
+		decade: (decade: number) => `${decade}er`,
+		undated: 'Ohne Datum',
+		yearUnknown: 'Jahr unbekannt',
+		debut: 'neu',
+		debutHint: 'Zum ersten Mal gespielt',
+		noProgram: 'Programm nicht eingetragen',
+		mostPlayed: 'Am häufigsten gespielt',
+		mostPlayedNone: 'Noch kein Stück stand auf mehr als einem Programm.',
+		times: (n: number) => `${n}×`,
+		lastPlayed: (year: number) => `zuletzt ${year}`,
+		playedIn: (first: number, last: number) => (first === last ? `${first}` : `${first}–${last}`),
+		composers: 'Meistgespielte Komponisten',
+		composerLine: (count: number, pieces: number) => `${count}× gespielt, ${pieces === 1 ? '1 Stück' : `${pieces} Stücke`}`,
+		byDecade: 'Nach Jahrzehnten',
+		decadeLine: (concerts: number, pieces: number) =>
+			`${concerts === 1 ? '1 Konzert' : `${concerts} Konzerte`}, ${pieces === 1 ? '1 Stück' : `${pieces} Stücke`}`,
+		longAgo: 'Lange nicht gespielt',
+		longAgoLead: (years: number) => `Seit ${years} Jahren oder länger nicht mehr auf dem Programm, vielleicht wieder einmal?`,
+		plannedAgain: 'wieder geplant',
+		longAgoNone: (years: number) => `Kein Stück liegt länger als ${years} Jahre zurück.`,
+		neverPlayed: 'Noch nie gespielt',
+		neverPlayedLead: (n: number) =>
+			n === 1 ? '1 Stück mit Noten im Archiv stand noch auf keinem Programm.' : `${n} Stücke mit Noten im Archiv standen noch auf keinem Programm.`,
+		andMore: (n: number) => `und ${n} weitere`,
+		empty: 'Noch keine vergangenen Konzerte. Alte Konzerte kommen ins Blatt „Konzerte“, ihre Programme ins Blatt „Programm“; ein Jahr als Datum reicht.',
+		noSheet: 'Die Chronik entsteht aus der Repertoire-Tabelle, die noch nicht verbunden ist.',
+		seasonReport: 'Saisonbericht'
 	},
 	attendance: {
 		title: 'Anwesenheit',
@@ -795,6 +932,18 @@ export const de = {
 		unknownStatus: 'Diesen Status gibt es nicht.',
 		badDate: 'Das Datum ist nicht lesbar.'
 	},
+	/** Everything the sheet keeps about a member, as one file (#158). */
+	myData: {
+		title: 'Meine Daten',
+		lead: 'Alles, was die App in der Repertoire-Tabelle über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen.',
+		download: 'Meine Daten herunterladen',
+		hint: 'Eine JSON-Datei, die sich mit jedem Texteditor öffnen lässt. Zum Ändern oder Löschen wende dich an die Verwaltung.',
+		fileName: 'meine-daten',
+		explain: 'Deine Zeilen aus der Repertoire-Tabelle des Orchesters, nach Blatt, mit den Spaltennamen der Tabelle.',
+		myVote: 'Mein +1',
+		yes: 'ja',
+		no: 'nein'
+	},
 	print: {
 		link: 'Drucken',
 		title: (concert: string) => 'Drucken: ' + concert,
@@ -823,9 +972,9 @@ export const de = {
 			duration: 'Dauer'
 		},
 		gaps: (n: number) => (n === 1 ? 'Bei 1 Stück fehlen noch Angaben:' : `Bei ${n} Stücken fehlen noch Angaben:`),
-		missing: { composer: 'Komponist', publisher: 'Verlag', duration: 'Dauer' } as Record<string, string>,
+		missing: { composer: 'Komponist', composerFull: 'Komponist (voll)', publisher: 'Verlag', duration: 'Dauer' } as Record<string, string>,
 		complete: 'Alle Angaben sind da.',
-		fullNames: 'Die GEMA möchte Komponisten mit vollem Namen, z. B. „Ludwig van Beethoven“ statt „Beethoven“.',
+		fullNames: 'Die GEMA möchte Komponisten mit vollem Namen, z. B. „Ludwig van Beethoven“ statt „Beethoven“. Die Liste nimmt dafür die Spalte „Komponist (voll)“; „Online nachschlagen“ beim Bearbeiten füllt sie.',
 		fill: 'Ergänzen',
 		organizer: 'Veranstalter',
 		date: 'Datum',
@@ -872,6 +1021,7 @@ export const de = {
 		},
 		durationHint: 'z. B. 7:30',
 		composerHint: 'mehrere mit Komma: Mozart, Haydn',
+		composerFullHint: 'z. B. Ludwig van Beethoven – für die GEMA-Meldung',
 		listHint: 'mehrere mit Komma trennen',
 		publisherHint: 'z. B. Bärenreiter – für die GEMA-Meldung',
 		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
@@ -1016,6 +1166,8 @@ export const de = {
 			columns: {
 				title: 'Titel',
 				composer: 'Komponist',
+				/** "Ludwig van Beethoven" where "Komponist" says "Beethoven": for the GEMA list (#146). */
+				composerFull: 'Komponist (voll)',
 				catalogue: 'Werkverzeichnis',
 				arranger: 'Arrangeur',
 				genre: 'Genre',
@@ -1188,6 +1340,34 @@ export const de = {
 				who: 'Wer',
 				name: 'Name',
 				present: 'Anwesend',
+				eventId: 'Termin-ID'
+			}
+		},
+		/** Notes on a piece from rehearsals (#125): cuts, repeats, bowings; one row per note. */
+		pieceNotes: {
+			tab: 'Hinweise',
+			columns: {
+				piece: 'Stück',
+				/** Empty for everyone, else a section ("Streicher") or an instrument ("Geige"). */
+				section: 'Für',
+				/** Empty for every performance, else a concert's "Anlass". */
+				concert: 'Konzert',
+				note: 'Hinweis',
+				by: 'Von',
+				at: 'Datum',
+				id: 'Hinweis-ID'
+			}
+		},
+		/** What a rehearsal did and what comes next (#145); one row per rehearsal. */
+		rehearsalNotes: {
+			tab: 'Probennotizen',
+			columns: {
+				rehearsal: 'Probe',
+				done: 'Geprobt',
+				practise: 'Zum Üben',
+				next: 'Nächstes Mal',
+				by: 'Von',
+				at: 'Datum',
 				eventId: 'Termin-ID'
 			}
 		},

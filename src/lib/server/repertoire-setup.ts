@@ -19,7 +19,9 @@ const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	missingParts: 'fileId',
 	signups: 'eventId',
 	rehearsals: 'eventId',
-	attendance: 'eventId'
+	attendance: 'eventId',
+	pieceNotes: 'id',
+	rehearsalNotes: 'eventId'
 };
 /** Filled by the app; edits there are overwritten, so they get a warning. */
 const GENERATED_COLUMNS: Partial<Record<TabKey, string[]>> = {
@@ -34,7 +36,9 @@ const TEXT_COLUMNS: Partial<Record<TabKey, string[]>> = {
 	reports: ['reportedAt'],
 	wishes: ['submittedAt', 'votes'],
 	signups: ['answeredAt'],
-	loans: ['borrowedAt', 'dueAt']
+	loans: ['borrowedAt', 'dueAt'],
+	pieceNotes: ['at'],
+	rehearsalNotes: ['at']
 };
 const WIDTHS: Record<string, number> = {
 	title: 280,
@@ -51,7 +55,11 @@ const WIDTHS: Record<string, number> = {
 	sameProgramAs: 240,
 	from: 200,
 	event: 240,
-	duration: 80
+	duration: 80,
+	note: 320,
+	done: 280,
+	practise: 280,
+	next: 280
 };
 
 const HEADER_BACKGROUND = { red: 0.93, green: 0.94, blue: 0.96 };
@@ -226,7 +234,9 @@ export async function setUpSheet(
 		['signups', 'answer', list(t.signups.answerValues)],
 		['loans', 'piece', fromColumn('pieces', 'title')],
 		['loans', 'returned', { type: 'BOOLEAN' }],
-		['attendance', 'present', { type: 'BOOLEAN' }]
+		['attendance', 'present', { type: 'BOOLEAN' }],
+		['pieceNotes', 'piece', fromColumn('pieces', 'title')],
+		['pieceNotes', 'concert', fromColumn('concerts', 'title')]
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));

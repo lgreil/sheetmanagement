@@ -9,7 +9,7 @@ const hrefs = (auth: 'on' | 'off', rights: Right[]) =>
 describe('navGroups', () => {
 	it('shows members their music, the archive, wishes and their profile', () => {
 		expect(hrefs('on', ['ansehen'])).toEqual({
-			musik: ['/meine-noten', '/konzerte', '/stuecke'],
+			musik: ['/meine-noten', '/konzerte', '/stuecke', '/chronik'],
 			mitmachen: ['/wuensche', '/profil']
 		});
 	});

@@ -77,6 +77,12 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Hinweise und Probennotizen',
+				paragraphs: [
+					'Wer Programme plant, kann zu Stücken Hinweise aus den Proben (z. B. Sprünge oder Striche) und nach einer Probe eine Notiz eintragen, was geprobt wurde. Gespeichert werden der Text, der Name der Person, die ihn geschrieben hat, und das Datum, in den Blättern „Hinweise“ und „Probennotizen“ der Google-Tabelle des Orchesters. Alle Mitglieder sehen sie. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Probenbetrieb des Vereins).'
+				]
+			},
+			{
 				heading: 'Angaben zu Stücken nachschlagen',
 				paragraphs: [
 					'Wer Angaben zu Stücken pflegt, kann auf Knopfdruck bei Wikidata (Wikimedia Foundation, USA) nach dem Werk suchen. Dabei schickt dein Browser den Titel des Stücks und den eingetragenen Komponisten an Wikidata; wie bei jedem Seitenaufruf erfährt Wikimedia dabei deine IP-Adresse. Daten über dich oder andere Mitglieder werden nicht übertragen. Es gilt die Datenschutzerklärung der Wikimedia Foundation (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
@@ -113,6 +119,7 @@ export const legal = {
 				heading: 'Deine Rechte',
 				paragraphs: [
 					'Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit sowie das Recht, der Verarbeitung zu widersprechen (Art. 15 bis 21 DSGVO). Wende dich dafür an die oben genannte Kontaktadresse.',
+					'Was die App in der Google-Tabelle über dich speichert, kannst du jederzeit selbst im Profil unter „Meine Daten herunterladen“ als Datei laden.',
 					'Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO), zum Beispiel bei der deines Bundeslandes.'
 				]
 			}

@@ -49,7 +49,8 @@ export function navGroups({ auth, rights, features = ALL_ON }: NavContext): NavG
 			items: [
 				{ href: '/meine-noten', label: t.nav.myParts, icon: 'parts', primary: true },
 				{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar', primary: true },
-				{ href: '/stuecke', label: t.nav.pieces, icon: 'music', primary: true }
+				{ href: '/stuecke', label: t.nav.pieces, icon: 'music', primary: true },
+				{ href: '/chronik', label: t.nav.chronicle, icon: 'history' }
 			]
 		},
 		{

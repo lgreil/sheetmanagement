@@ -12,7 +12,7 @@ export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
 export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
 export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
 /** Columns added later that an older sheet works without, so they aren't reported missing. */
-const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { pieces: ['duration', 'publisher'], concerts: ['sameProgramAs'] };
+const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { pieces: ['duration', 'publisher', 'composerFull'], concerts: ['sameProgramAs'] };
 
 /** The raw cell values of the repertoire tabs, header row included. */
 export type SheetValues = Record<RepertoireTab, string[][]>;
@@ -68,6 +68,8 @@ export interface SheetPiece {
 	key: string;
 	title: string;
 	composer?: string;
+	/** "Ludwig van Beethoven", for the GEMA list (#146); "Komponist" may say only "Beethoven". */
+	composerFull?: string;
 	catalogue?: string;
 	arranger?: string;
 	genre?: string;
@@ -191,6 +193,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			key: folder || uniqueKey(`s-${slug(v.title)}`, piecesByKey),
 			title: v.title,
 			composer: optional(v.composer),
+			composerFull: optional(v.composerFull),
 			catalogue: optional(v.catalogue),
 			arranger: optional(v.arranger),
 			genre: optional(v.genre),

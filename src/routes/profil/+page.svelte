@@ -115,6 +115,16 @@
 		</section>
 	{/if}
 
+	<!-- What the app keeps about the member, as one file (#158, Art. 15 GDPR). -->
+	<section class="ui-card feed" id="daten">
+		<h2><Icon name="download" size={18} />{t.myData.title}</h2>
+		<p class="muted">{t.myData.lead}</p>
+		<div class="feed-actions">
+			<a class="btn secondary" href="/profil/daten.json" download data-sveltekit-reload><Icon name="download" size={16} />{t.myData.download}</a>
+		</div>
+		<p class="muted small">{t.myData.hint}</p>
+	</section>
+
 	<section>
 		<h2 class="ui-label">{t.profile.settings}</h2>
 		<div class="ui-list settings">

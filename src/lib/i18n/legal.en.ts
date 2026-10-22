@@ -65,6 +65,12 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Notes on pieces and rehearsals',
+				paragraphs: [
+					"People who plan programmes can add notes from rehearsals to pieces (e.g. cuts or bowings) and, after a rehearsal, a note on what was rehearsed. The text, the name of the person who wrote it and the date are saved in the “Piece notes” and “Rehearsal notes” tabs of the orchestra's Google sheet. Every member sees them. The legal basis is Art. 6(1)(b) GDPR (the club’s rehearsals)."
+				]
+			},
+			{
 				heading: 'Looking up details of pieces',
 				paragraphs: [
 					'Whoever keeps details of pieces can search for the work on Wikidata (Wikimedia Foundation, USA) at the press of a button. Your browser then sends the title of the piece and the composer entered to Wikidata; as with every page visit, Wikimedia learns your IP address. No data about you or other members is sent. The Wikimedia Foundation’s privacy policy applies (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
@@ -101,6 +107,7 @@ export const legal = {
 				heading: 'Your rights',
 				paragraphs: [
 					'You have the right of access, rectification, erasure, restriction of processing and data portability, and the right to object to processing (Art. 15 to 21 GDPR). Please write to the contact address above.',
+					'What the app keeps about you in the Google sheet you can download yourself at any time, under “Download my data” in your profile.',
 					'You can also complain to a data protection supervisory authority (Art. 77 GDPR).'
 				]
 			}

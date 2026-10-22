@@ -16,6 +16,7 @@ type ProgramColumn = ColumnKey<'program'> & string;
 export const EDITABLE = [
 	'title',
 	'composer',
+	'composerFull',
 	'catalogue',
 	'arranger',
 	'genre',
