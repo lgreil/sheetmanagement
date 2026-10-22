@@ -53,7 +53,7 @@
 		{#if mine}
 			<details class="details">
 				<summary>
-					{t.signups.details}{mine.instrument ? ` · ${mine.instrument}` : ''}{mine.comment ? ` · „${mine.comment}“` : ''}
+					{t.signups.details}{mine.instrument ? ` · ${mine.instrument}` : ''}{mine.comment ? ` · ${t.common.quote(mine.comment)}` : ''}
 				</summary>
 				<form class="details-form" method="POST" action="?/answer" use:enhance={submit}>
 					<input type="hidden" name="answer" value={mine.answer} />

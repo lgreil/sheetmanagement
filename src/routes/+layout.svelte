@@ -103,7 +103,7 @@
 				<span class="brand-short">{data.orchestraShortName} <span class="app-name">{t.nav.appName}</span></span>
 			</a>
 
-			<nav class="nav-desktop" aria-label="Hauptnavigation">
+			<nav class="nav-desktop" aria-label={t.nav.main}>
 				{#each nav as item (item.href)}
 					<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
 						{item.label}
@@ -167,7 +167,7 @@
 		</footer>
 	</main>
 
-	<nav class="tabbar" aria-label="Hauptnavigation">
+	<nav class="tabbar" aria-label={t.nav.main}>
 		{#each nav as item (item.href)}
 			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
 				<span class="pill"><Icon name={item.icon} size={22} /></span>

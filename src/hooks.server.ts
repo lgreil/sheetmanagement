@@ -1,6 +1,6 @@
 import type { Handle } from '@sveltejs/kit/hooks';
 import { resolveAccess } from '#lib/access/access.ts';
-import { t } from '#lib/i18n/index.ts';
+import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
@@ -28,7 +28,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 	const write = event.request.method !== 'GET' && event.request.method !== 'HEAD';
 	if (auth.mode === 'on' && write && !isPublicPath(event.url.pathname) && !event.locals.access.member) {
 		const unavailable = event.locals.access.unavailable;
-		return new Response(unavailable ? t.error.unavailable : 'Bitte zuerst anmelden.', {
+		return new Response(unavailable ? t.error.unavailable : t.messages.signInFirst, {
 			status: unavailable ? 503 : 403,
 			headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS }
 		});
@@ -39,7 +39,8 @@ export const handle: Handle = async ({ event, resolve }) => {
 	if (feature && !isOn(feature) && (write || /\.(ics|csv)$/.test(event.url.pathname))) {
 		return new Response(t.error.notFound, { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS } });
 	}
-	const response = await resolve(event);
+	// The page's language for screen readers, hyphenation and translation tools (#124).
+	const response = await resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', LANGUAGE) });
 	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
 		// Redirects and some responses have immutable headers; those carry no page anyway.
 		try {

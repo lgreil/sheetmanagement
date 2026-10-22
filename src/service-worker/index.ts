@@ -42,13 +42,34 @@ async function trim(cache: Cache) {
 	for (const key of keys.slice(0, Math.max(0, keys.length - MAX_PAGES))) await cache.delete(key);
 }
 
+/**
+ * The page for a page never opened on this device, in the app's language (#124). Its own few
+ * words, so the worker doesn't load every text of the app.
+ */
+const OFFLINE = {
+	de: {
+		title: 'Keine Verbindung',
+		text: 'Diese Seite war noch nicht auf diesem Gerät geöffnet, deshalb gibt es sie offline nicht.',
+		hint: 'Seiten, die du schon einmal geöffnet hast, und offline gespeicherte Noten gehen auch ohne Netz.',
+		myParts: 'Zu „Meine Noten“',
+		home: 'Zur Übersicht'
+	},
+	en: {
+		title: 'No connection',
+		text: "This page hasn't been opened on this device yet, so it isn't available offline.",
+		hint: 'Pages you have opened before and parts saved for offline use work without a connection too.',
+		myParts: 'To “My parts”',
+		home: 'To the overview'
+	}
+}[__LANGUAGE__];
+
 const offlinePage = () =>
 	new Response(
-		`<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+		`<!doctype html><html lang="${__LANGUAGE__}"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Offline</title><body style="font-family:system-ui,sans-serif;max-width:32rem;margin:15vh auto;padding:0 1rem;line-height:1.5">
-<h1>Keine Verbindung</h1><p>Diese Seite war noch nicht auf diesem Gerät geöffnet, deshalb gibt es sie offline nicht.</p>
-<p>Seiten, die du schon einmal geöffnet hast, und offline gespeicherte Noten gehen auch ohne Netz.</p>
-<p><a href="/meine-noten">Zu „Meine Noten“</a> · <a href="/">Zur Übersicht</a></p></body></html>`,
+<h1>${OFFLINE.title}</h1><p>${OFFLINE.text}</p>
+<p>${OFFLINE.hint}</p>
+<p><a href="/meine-noten">${OFFLINE.myParts}</a> · <a href="/">${OFFLINE.home}</a></p></body></html>`,
 		{ status: 503, headers: { 'content-type': 'text/html; charset=utf-8' } }
 	);
 

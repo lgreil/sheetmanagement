@@ -1,4 +1,5 @@
 import { splitList } from '#lib/repertoire/lists.ts';
+import { LANGUAGE } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { cached } from './cache.ts';
 import { appEnv, runInBackground } from './env.ts';
@@ -51,7 +52,8 @@ export function portraitOf(entity: Json | undefined): Portrait | null {
 	const file = claims.P18?.[0]?.mainsnak?.datavalue?.value;
 	const died = deathYear(claims);
 	if (typeof file !== 'string' || died === undefined || died >= DIED_BEFORE) return null;
-	return { name: entity?.labels?.de?.value ?? entity?.labels?.en?.value ?? '', file };
+	const [first, second] = LANGUAGE === 'en' ? ['en', 'de'] : ['de', 'en'];
+	return { name: entity?.labels?.[first]?.value ?? entity?.labels?.[second]?.value ?? '', file };
 }
 
 /**

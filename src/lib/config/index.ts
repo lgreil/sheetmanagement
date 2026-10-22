@@ -3,8 +3,11 @@ import type { Instrument, OrchestraConfig } from './types.ts';
 
 export type * from './types.ts';
 
-/** The active preset. To adapt the app for another orchestra, add a preset and select it here. */
-export const config: OrchestraConfig = bachkreis;
+/**
+ * The active preset. To adapt the app for another orchestra, add a preset and select it here.
+ * Dates follow the app's language (#124): an English build shows them the British way.
+ */
+export const config: OrchestraConfig = __LANGUAGE__ === 'en' && bachkreis.locale.startsWith('de') ? { ...bachkreis, locale: 'en-GB' } : bachkreis;
 
 /** The preset's instruments, before a deployment's own labels and spellings. */
 export const PRESET_INSTRUMENTS: Instrument[] = config.instruments;

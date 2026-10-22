@@ -5,6 +5,7 @@ import { config } from '#lib/config/index.ts';
 import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
 import type { KvStore } from './cache.ts';
+import { t } from '#lib/i18n/index.ts';
 
 /**
  * Deployment settings. Set them with `wrangler secret put <NAME>` in production
@@ -119,7 +120,7 @@ export const isOn = (feature: Feature) => features()[feature];
 
 /** For the pages of a feature: they don't exist while it's off. */
 export function requireFeature(feature: Feature) {
-	if (!isOn(feature)) error(404, 'Diese Seite gibt es nicht.');
+	if (!isOn(feature)) error(404, t.error.notFound);
 }
 
 /** Demo mode: invented sample data in memory instead of Google, no real accounts. */

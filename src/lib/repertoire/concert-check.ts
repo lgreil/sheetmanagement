@@ -32,7 +32,7 @@ export function concertCheck(input: CheckInput): CheckItem[] {
 	const items: CheckItem[] = [];
 	const { program, urls } = input;
 	const count = program.length;
-	const pieces = (n: number) => (n === 1 ? '1 Stück' : `${n} Stücken`);
+	const pieces = t.check.pieces;
 	const reportGaps = program.filter((item) => !item.inReport).length;
 	const open = input.loans.filter((loan) => input.past || loan.dueBeforeConcert);
 

@@ -110,10 +110,10 @@ async function change(locals: App.Locals, work: () => Promise<string | void>) {
 		return { saved: true };
 	} catch (error) {
 		if (error instanceof SheetLayoutError) {
-			return fail(409, { message: `${error.message} Bitte „${t.status.setupSheet}“ ausführen.` });
+			return fail(409, { message: `${error.message} ${t.messages.runSetup(t.status.setupSheet)}` });
 		}
 		console.error('Changing members or rights failed:', error);
-		return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
+		return fail(503, { message: t.messages.sheetFailed });
 	}
 }
 
@@ -196,7 +196,7 @@ export const actions: Actions = {
 			const data = await request.formData();
 			const who = field(data, 'who');
 			const right = field(data, 'right') as Right;
-			if (!who || !RIGHTS.includes(right)) return 'Bitte „Wer“ und ein Recht angeben.';
+			if (!who || !RIGHTS.includes(right)) return t.messages.grantMissing;
 			if (who.includes('@') && !EMAIL.test(who)) return t.admin.invalidEmail;
 			const rights = await readTab('rights');
 			if (rights.rows.some((row) => whoKey(row.values.who) === whoKey(who) && row.values.right.trim().toLowerCase() === right)) {

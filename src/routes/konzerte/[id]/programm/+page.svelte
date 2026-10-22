@@ -100,7 +100,7 @@
 	{:else if data.sharedWith.length}
 		<p class="shared">
 			<Icon name="link" size={16} />
-			<span>{t.editor.sharedWith(data.sharedWith.map((other) => `„${other.title}“`).join(', '))}</span>
+			<span>{t.editor.sharedWith(data.sharedWith.map((other) => t.common.quote(other.title)).join(', '))}</span>
 		</p>
 	{/if}
 

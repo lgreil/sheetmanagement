@@ -80,7 +80,8 @@ export const legal = {
 				heading: 'Angaben zu Stücken nachschlagen',
 				paragraphs: [
 					'Wer Angaben zu Stücken pflegt, kann auf Knopfdruck bei Wikidata (Wikimedia Foundation, USA) nach dem Werk suchen. Dabei schickt dein Browser den Titel des Stücks und den eingetragenen Komponisten an Wikidata; wie bei jedem Seitenaufruf erfährt Wikimedia dabei deine IP-Adresse. Daten über dich oder andere Mitglieder werden nicht übertragen. Es gilt die Datenschutzerklärung der Wikimedia Foundation (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
-					'„Aus den Noten lesen“ liest den Text der ersten Seiten einer PDF nur in deinem Browser und übernimmt daraus ausschließlich Komponist, Arrangeur und Werkverzeichnis. „Hörbeispiel auf YouTube suchen“ öffnet die YouTube-Suche in einem neuen Fenster; dort gilt die Datenschutzerklärung von Google. „Dauer aus dem Video“ fragt vom Server der App aus bei YouTube nach der Länge des verlinkten Videos; übermittelt wird nur die Video-ID.'
+					'„Aus den Noten lesen“ liest den Text der ersten Seiten einer PDF nur in deinem Browser und übernimmt daraus ausschließlich Komponist, Arrangeur und Werkverzeichnis. „Hörbeispiel auf YouTube suchen“ öffnet die YouTube-Suche in einem neuen Fenster; dort gilt die Datenschutzerklärung von Google. „Dauer aus dem Video“ fragt vom Server der App aus bei YouTube nach der Länge des verlinkten Videos; übermittelt wird nur die Video-ID.',
+					'Auf der Seite eines Stücks zeigt die App ein Porträt des Komponisten von Wikimedia Commons, wenn es eines gibt. Das Bild lädt der Server der App bei Wikidata und Wikimedia Commons; dein Gerät nimmt dabei keinen Kontakt zu Wikimedia auf, und übermittelt wird nur der Name des Komponisten.'
 				]
 			},
 			{

@@ -5,6 +5,7 @@ import { appEnv, isDemo } from '../env.ts';
 import { readAccessList } from '../repertoire.ts';
 import { linkValid } from './links.ts';
 import { verifySession } from './session.ts';
+import { t } from '#lib/i18n/index.ts';
 
 export const SESSION_COOKIE = 'session';
 export const STATE_COOKIE = 'oauth_state';
@@ -50,9 +51,9 @@ export function authConfig(): AuthConfig {
 	const sessionSecret = env.SESSION_SECRET?.trim() ?? '';
 	const bootstrapAdmins = parseEmailList(env.BOOTSTRAP_ADMINS);
 	const problems = [
-		...(clientSecret ? [] : ['GOOGLE_OAUTH_CLIENT_SECRET ist nicht gesetzt.']),
-		...(sessionSecret.length >= MIN_SECRET_LENGTH ? [] : [`SESSION_SECRET fehlt oder ist kürzer als ${MIN_SECRET_LENGTH} Zeichen.`]),
-		...(bootstrapAdmins.length ? [] : ['BOOTSTRAP_ADMINS ist nicht gesetzt: niemand kann Mitglieder freischalten.'])
+		...(clientSecret ? [] : [t.messages.notSet('GOOGLE_OAUTH_CLIENT_SECRET')]),
+		...(sessionSecret.length >= MIN_SECRET_LENGTH ? [] : [t.messages.shortSecret(MIN_SECRET_LENGTH)]),
+		...(bootstrapAdmins.length ? [] : [t.messages.noAdmins])
 	];
 	return { mode: 'on', clientId, clientSecret, sessionSecret, bootstrapAdmins, problems };
 }
@@ -105,7 +106,7 @@ export function isPublicPath(path: string): boolean {
 /** For actions and pages that change things: a 403 unless the right is held. */
 export function requireRight(locals: App.Locals, right: Right) {
 	if (!locals.access.rights.has(right)) {
-		error(locals.access.user || locals.auth === 'off' ? 403 : 401, 'Dafür fehlt dir die Berechtigung.');
+		error(locals.access.user || locals.auth === 'off' ? 403 : 401, t.messages.noRight);
 	}
 }
 

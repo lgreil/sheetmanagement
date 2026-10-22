@@ -107,7 +107,7 @@
 				spellcheck="false"
 			/>
 			{#if query}
-				<button class="clear" onclick={() => (query = '')} aria-label="Suche leeren">
+				<button class="clear" onclick={() => (query = '')} aria-label={t.pieces.clearSearch}>
 					<Icon name="x" size={16} />
 				</button>
 			{/if}
@@ -120,7 +120,7 @@
 			</a>
 		{/if}
 
-		<div class="chips" role="radiogroup" aria-label="Filter">
+		<div class="chips" role="radiogroup" aria-label={t.pieces.filter}>
 			{#each filters as option (option.value)}
 				<button
 					class="chip"

@@ -243,8 +243,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const concert = library.concertsById.get(params.id);
 
 	if (!event && !concert) {
-		if (!schedule.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
-		error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
+		if (!schedule.ok) error(503, t.messages.calendarUnavailable);
+		error(404, t.messages.noEvent);
 	}
 
 	const items = concert?.program ?? [];

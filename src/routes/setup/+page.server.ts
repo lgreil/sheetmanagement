@@ -10,13 +10,14 @@ import { getAccessList, getRepertoire } from '#lib/server/repertoire.ts';
 import { setUpSheet } from '#lib/server/repertoire-setup.ts';
 import { getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
 import type { Actions, PageServerLoad } from './$types';
+import { t } from '#lib/i18n/index.ts';
 
 // While sign-in is off (no GOOGLE_OAUTH_CLIENT_ID), anyone who can open the app can run
 // this, which is how a new deployment gets set up. It only adds missing tabs, columns,
 // formatting and dropdowns. Once sign-in is on, it's for admins only.
 
 function describe(error: unknown): string {
-	if (error instanceof NotConfiguredError) return `${error.variable} ist nicht gesetzt.`;
+	if (error instanceof NotConfiguredError) return t.messages.notSet(error.variable);
 	if (error instanceof GoogleApiError) return `${error.message} (${error.status})`;
 	return error instanceof Error ? error.message : String(error);
 }
