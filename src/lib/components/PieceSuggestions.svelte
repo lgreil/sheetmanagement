@@ -171,10 +171,10 @@
 		}
 	}
 
-	// With an arranger, the search looks for that arrangement rather than the original work.
+	// With an arranger, the search looks for that arrangement only: the composer would bring up the original work.
 	const youtube = $derived.by(() => {
 		const arranger = values.arranger?.trim();
-		const query = [values.title, values.composer, arranger && `arr. ${arranger}`].map((part) => part?.trim()).filter(Boolean).join(' ');
+		const query = [values.title, arranger ? `arr. ${arranger}` : values.composer].map((part) => part?.trim()).filter(Boolean).join(' ');
 		return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 	});
 	const isList = (field: Field) => (LIST_COLUMNS as readonly string[]).includes(field);
