@@ -74,7 +74,7 @@ describe('the fake Drive and Calendar', () => {
 		const pieces = await listChildren(client, [DEMO_IDS.archive]);
 		expect(pieces.map((f) => f.name)).toContain('Mozart KV 525 - Eine kleine Nachtmusik');
 		const parts = await listChildren(client, ['demo-nachtmusik']);
-		expect(parts.map((f) => f.name)).toContain('Kleine Nachtmusik - Geige II.pdf');
+		expect(parts.map((f) => f.name)).toContain('Eine kleine Nachtmusik - Geige II.pdf');
 		expect((await getFile(client, parts[0].id)).name).toBe(parts[0].name);
 
 		const pdf = await (await downloadFile(client, 'demo-nachtmusik-2')).text();
