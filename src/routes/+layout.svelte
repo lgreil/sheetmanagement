@@ -1,7 +1,6 @@
 <script lang="ts">
 	import '../app.css';
-	import { fade } from 'svelte/transition';
-	import { afterNavigate } from '$app/navigation';
+	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
@@ -31,6 +30,19 @@
 	const sourceUrl = safeLink(config.sourceUrl ?? '');
 
 	afterNavigate(() => (menuOpen = false));
+
+	// Pages cross-fade like in an app (#129): the browser animates between the old and the new
+	// page once its data is there, header and tab bar stay put. Without View Transitions the
+	// new page fades in (see .page). Filters and forms on the same page don't animate.
+	onNavigate((navigation) => {
+		if (!document.startViewTransition || navigation.from?.url.pathname === navigation.to?.url.pathname) return;
+		return new Promise((resolve) => {
+			document.startViewTransition(async () => {
+				resolve();
+				await navigation.complete;
+			});
+		});
+	});
 
 	// Offline in the rehearsal hall (#62): pages come from the service worker's cache, so say so.
 	let online = $state(true);
@@ -112,11 +124,10 @@
 	</header>
 
 	<main id="inhalt" tabindex="-1">
-		<!-- A soft fade between pages; staying on a page (filters, forms) doesn't replay it. -->
-		<!-- Outside the fade: the tabs stay put while switching between the workspace's pages. -->
+		<!-- Outside the page's animation: the tabs stay put while switching between the workspace's pages. -->
 		{#if workspace}<WorkspaceTabs group={workspace} {current} counts={data.counts} />{/if}
 		{#key path}
-			<div class="page" in:fade={{ duration: 160 }}>
+			<div class="page">
 				{@render children()}
 			</div>
 		{/key}
@@ -147,13 +158,13 @@
 	<nav class="tabbar" aria-label="Hauptnavigation">
 		{#each nav as item (item.href)}
 			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-				<Icon name={item.icon} size={22} />
-				<span>{item.label}</span>
+				<span class="pill"><Icon name={item.icon} size={22} /></span>
+				<span class="label">{item.label}</span>
 			</a>
 		{/each}
 		<button class:active={inMore || menuOpen} aria-expanded={menuOpen} aria-controls="nav-menu" onclick={() => (menuOpen = !menuOpen)}>
-			<Icon name="menu" size={22} />
-			<span>{t.nav.more}</span>
+			<span class="pill"><Icon name="menu" size={22} /></span>
+			<span class="label">{t.nav.more}</span>
 		</button>
 	</nav>
 
@@ -233,6 +244,7 @@
 		position: sticky;
 		top: 0;
 		z-index: 10;
+		view-transition-name: topbar;
 		height: var(--header-height);
 		background: color-mix(in oklab, var(--bg) 78%, transparent);
 		backdrop-filter: saturate(1.6) blur(20px);
@@ -335,6 +347,20 @@
 		display: flow-root;
 	}
 
+	/* Browsers without View Transitions: the new page fades in. */
+	@supports not (view-transition-name: none) {
+		.page {
+			animation: page-in 0.2s var(--ease);
+		}
+	}
+
+	@keyframes page-in {
+		from {
+			opacity: 0;
+			transform: translateY(6px);
+		}
+	}
+
 	.tabbar {
 		display: none;
 	}
@@ -378,6 +404,8 @@
 			position: fixed;
 			inset: auto 0 0 0;
 			z-index: 10;
+			isolation: isolate;
+			view-transition-name: tabbar;
 			display: grid;
 			/* Home, the primary pages and "Mehr": five columns for everyone. */
 			grid-auto-flow: column;
@@ -414,8 +442,7 @@
 			transform: scale(0.94);
 		}
 
-		.tabbar a span,
-		.tabbar button span {
+		.tabbar .label {
 			max-width: 100%;
 			padding: 0 2px;
 			overflow: hidden;
@@ -423,9 +450,42 @@
 			white-space: nowrap;
 		}
 
+		/* The current tab's icon sits on a soft pill that grows in, like a native tab bar. */
+		.tabbar .pill {
+			position: relative;
+			display: grid;
+			place-items: center;
+			width: 56px;
+			height: 30px;
+		}
+
+		.tabbar .pill::before {
+			content: '';
+			position: absolute;
+			inset: 0;
+			z-index: -1;
+			border-radius: 999px;
+			background: var(--accent-soft);
+			opacity: 0;
+			transform: scaleX(0.5);
+			transition:
+				opacity var(--fast) var(--ease),
+				transform 0.25s var(--ease);
+		}
+
 		.tabbar a.active,
 		.tabbar button.active {
 			color: var(--accent);
+		}
+
+		.tabbar a.active .label,
+		.tabbar button.active .label {
+			font-weight: 650;
+		}
+
+		.tabbar .active .pill::before {
+			opacity: 1;
+			transform: none;
 		}
 	}
 	.footer {
