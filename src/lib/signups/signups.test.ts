@@ -79,4 +79,17 @@ describe('coverage', () => {
 		const labels = coverage([], members, config, { orchestra: 'A', today: '2026-10-20' }).map((s) => s.label);
 		expect(labels).toEqual(['Oboe', 'Bratsche']);
 	});
+
+	it('expects only members with an instrument, but counts anyone who answers', () => {
+		const board = buildAccessList({
+			members: [
+				['E-Mail', 'Name', 'Instrument', 'Gruppen', 'Orchester', 'Status'],
+				['vera@example.org', 'Vera V', '', 'Vorstand', 'EO', ''],
+				['david@example.org', 'David D', '', 'Dirigat', 'EO', '']
+			]
+		}).members;
+		const answers = buildSignups([HEADER, ['', 'david@example.org', '', 'Zusage', '', '', '', 'e1']]).byEvent.get('e1')!;
+		const sections = coverage(answers, board, config, { orchestra: 'EO', today: '2026-10-20' });
+		expect(sections.map((s) => [s.label, s.yes, s.open])).toEqual([['Ohne Instrument', ['David D'], []]]);
+	});
 });

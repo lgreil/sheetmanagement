@@ -76,18 +76,20 @@ const PIECES: SamplePiece[] = [
 		duration: '2:30',
 		parts: [],
 		rawNames: [
-			'CanCan_Score.pdf',
-			'CanCan_Flute1.pdf',
-			'CanCan_Clarinet_Bb_1.pdf',
+			'Can-Can_Score.pdf',
+			'Can-Can_Flute1.pdf',
+			'Can Can - Clarinet in Bb 1.pdf',
 			'Can Can - Trumpet in Bb 2.pdf',
-			'cancan violin1.pdf',
-			'cancan violin2.pdf',
-			'CanCan-Viola.pdf',
-			'CanCan-Cello.pdf',
-			'CanCan-Bass.pdf',
-			'CanCan Timpani.pdf',
+			'can-can violin1.pdf',
+			'can-can violin2.pdf',
+			'Can-Can-Viola.pdf',
+			'Can-Can-Cello.pdf',
+			'Can-Can-Bass.pdf',
+			'Can Can Timpani.pdf',
 			'Can-Can - Percussion.pdf',
-			'Can-Can - Horn in F.pdf'
+			'Can-Can - Horn in F.pdf',
+			// One the check can't read, to show what "unklar" looks like.
+			'CanCan_Kopie_alt.pdf'
 		]
 	},
 	{
