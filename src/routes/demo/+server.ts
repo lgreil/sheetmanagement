@@ -20,6 +20,6 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 	}
 	const back = safeReturnPath(String(data.get('weiter') ?? '/'));
 	// A member may not open editors and admin pages; after switching, they'd only see an error.
-	const forAdmins = /\/(programm|probenplan|bearbeiten)$|^\/(admin|setup|status|meldungen|namen|stuecke\/angaben)/;
+	const forAdmins = /\/(programm|probenplan|bearbeiten)$|^\/(admin|einstellungen|setup|status|meldungen|namen|stuecke\/angaben)/;
 	redirect(303, role === 'mitglied' && forAdmins.test(back.split('?')[0]) ? '/' : back);
 };

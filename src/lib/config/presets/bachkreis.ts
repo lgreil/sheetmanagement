@@ -9,6 +9,8 @@ export const bachkreis: OrchestraConfig = {
 	name: 'Bachkreis Ehemaligenorchester',
 	shortName: 'Bachkreis',
 	accent: '#e6b422',
+	// A deeper, warmer gold than the derived shade, like the posters.
+	accentLight: 'color-mix(in oklab, #e6b422 44%, #3a1f00)',
 	timeZone: 'Europe/Berlin',
 	locale: 'de-DE',
 

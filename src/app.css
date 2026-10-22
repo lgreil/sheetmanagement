@@ -1,12 +1,17 @@
 /* Design tokens. Components use only these variables, so a theme is one block here. */
 :root {
-	/* Black and gold, like the posters. --brand is the preset's accent (set in +layout.svelte);
-	   on light backgrounds a deeper gold keeps accent text and buttons readable. */
+	/* Black and gold, like the posters. --brand is the orchestra's accent; +layout.svelte sets it
+	   with the shades derived from it (src/lib/branding.ts): --accent-light, darkened just enough
+	   for text and buttons on the light page, and --accent-dark for the dark one (#75). */
 	--brand: #e6b422;
 	--brand-ink: #0b0b0a;
-	--accent: color-mix(in oklab, var(--brand) 44%, #3a1f00);
-	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
+	--accent: var(--accent-light, color-mix(in oklab, var(--brand) 44%, #3a1f00));
+	--accent-soft: color-mix(in oklab, var(--brand) var(--soft-light, 22%), transparent);
 	--accent-contrast: #fff;
+	/* Banners like a piece's header: the accent with white text in light, a tinted dark surface in dark. */
+	--hero-from: var(--accent);
+	--hero-to: color-mix(in oklab, var(--accent) 72%, #000);
+	--hero-ink: var(--accent-contrast);
 
 	/* Light: a bright, nearly neutral page with white cards on it; gold stays the accent. */
 	--bg: #f4f4f1;
@@ -53,7 +58,7 @@
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
-		--accent: var(--brand);
+		--accent: var(--accent-dark, var(--brand));
 		--accent-contrast: var(--brand-ink);
 		--bg: #0b0b0a;
 		--surface: #161513;
@@ -62,6 +67,9 @@
 		--text: #f2eee4;
 		--text-muted: #a9a293;
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
+		--hero-from: color-mix(in oklab, var(--accent) 30%, var(--surface));
+		--hero-to: color-mix(in oklab, var(--accent) 12%, var(--bg));
+		--hero-ink: var(--text);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 		--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 		--ok: #4fae78;
@@ -72,7 +80,7 @@
 }
 
 :root[data-theme='dark'] {
-	--accent: var(--brand);
+	--accent: var(--accent-dark, var(--brand));
 	--accent-contrast: var(--brand-ink);
 	--bg: #0b0b0a;
 	--surface: #161513;
@@ -81,6 +89,9 @@
 	--text: #f2eee4;
 	--text-muted: #a9a293;
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
+	--hero-from: color-mix(in oklab, var(--accent) 30%, var(--surface));
+	--hero-to: color-mix(in oklab, var(--accent) 12%, var(--bg));
+	--hero-ink: var(--text);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 	--ok: #4fae78;

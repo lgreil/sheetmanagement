@@ -4,9 +4,12 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
+import { features, isOn } from '#lib/server/env.ts';
 import { getFeedback, getLoans, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
 import { formatDay } from '#lib/events/format.ts';
+import { pieceArt } from '#lib/music/piece-art.ts';
+import { portraitFor, portraitPageUrl } from '#lib/server/portraits.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { listsOverlap } from '#lib/repertoire/lists.ts';
@@ -16,7 +19,8 @@ import { concertSummary, getLibrary, namedItem, type Library, type LibraryPiece 
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
-	const [library, feedback, plan, loans] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan(), getLoans()]);
+	const on = features();
+	const [library, feedback, plan, loans] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan(), on.loans ? getLoans() : null]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
 		if (!library.catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
@@ -32,7 +36,17 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	// "Wieder spielen": the +1s on the piece's open or planned wish.
 	const user = feedbackUser(locals);
 	const againWish = (feedback?.wishes ?? []).find((wish) => wish.pieceId === piece.id && (wish.status === 'open' || wish.status === 'planned'));
+	// The banner's picture: the composer's portrait, else a drawing for the genre or the title.
+	const portrait = await portraitFor(piece.composer);
 	return {
+		banner: {
+			art: pieceArt({ genre: sheet?.genre, title: piece.title }),
+			portrait: portrait && {
+				src: `/api/portraet?komponist=${encodeURIComponent(portrait.query)}`,
+				name: portrait.name,
+				source: portraitPageUrl(portrait.file)
+			}
+		},
 		canEdit: locals.access.rights.has('stuecke.bearbeiten') && !!sheet,
 		saved: url.searchParams.has('gespeichert'),
 		// How many programmes followed a rename.
@@ -81,11 +95,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				arranger: sheet?.arranger,
 				genre: sheet?.genre,
 				difficulty: sheet?.difficulty,
-				reviewedAt: sheet?.reviewedAt,
+				// "2026-10-22" reads "22. Oktober 2026"; anything else as entered.
+				reviewedAt: sheet?.reviewedAt && /^\d{4}-\d{2}-\d{2}$/.test(sheet.reviewedAt) ? formatDay(sheet.reviewedAt, config.locale) : sheet?.reviewedAt,
 				notes: sheet?.notes
 			}
 		},
-		again: user && feedback?.tables.wishes
+		again: user && on.wishes && feedback?.tables.wishes
 			? {
 					votes: againWish?.votes.length ?? 0,
 					mine: !!againWish?.votes.includes(user.email.toLowerCase()),
@@ -136,6 +151,7 @@ const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({
 export const actions: Actions = {
 	again: async ({ params, locals }) => {
 		const user = feedbackUser(locals);
+		if (!isOn('wishes')) return fail(404, { againError: t.wishes.failed });
 		if (!user) return fail(403, { againError: t.wishes.signInNeeded });
 		const piece = (await getLibrary()).piecesById.get(params.id);
 		if (!piece) error(404, 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.');

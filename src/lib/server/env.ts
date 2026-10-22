@@ -1,4 +1,9 @@
+import { error } from '@sveltejs/kit';
 import { env, waitUntil } from 'cloudflare:workers';
+import { brandColours, brandStyle, parseColour } from '#lib/branding.ts';
+import { config } from '#lib/config/index.ts';
+import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
+import { validLogo, type StoredSettings } from '#lib/settings.ts';
 import type { KvStore } from './cache.ts';
 
 /**
@@ -10,6 +15,10 @@ export interface AppEnv {
 	ORCHESTRA_SHORT_NAME?: string;
 	/** The orchestra's square logo: a path in the app ("/demo/musterorchester.svg") or an https link. Default: /logo.png. */
 	ORCHESTRA_LOGO?: string;
+	/** Accent colour as #rrggbb, e.g. "#1d4ed8"; the shades for light and dark are derived from it (#75). Default: the preset's. */
+	ORCHESTRA_ACCENT?: string;
+	/** Parts of the app this orchestra doesn't use, comma-separated: "leihmaterial, gema, anwesenheit" (#134); see src/lib/features.ts. */
+	FEATURES_OFF?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
 	CALENDAR_ID?: string;
 	DRIVE_ARCHIVE_FOLDER_ID?: string;
@@ -45,9 +54,72 @@ export function appEnv(): AppEnv {
 }
 
 /** The logo for header, calendar and app icon; ORCHESTRA_LOGO if it is a path or a web link. */
-export function orchestraLogo(): string {
-	const logo = appEnv().ORCHESTRA_LOGO?.trim();
-	return logo && (/^\/(?!\/)[\w./-]+$/.test(logo) || /^https:\/\/\S+$/.test(logo)) ? logo : '/logo.png';
+function orchestraLogo(logo: string | undefined): string {
+	return validLogo(logo) ?? '/logo.png';
+}
+
+/**
+ * What /einstellungen saved in the sheet, as last read. The same for every request of this
+ * deployment, so one copy per Worker instance does; the hook refreshes it from the cache.
+ */
+let stored: StoredSettings = {};
+
+export function useStoredSettings(settings: StoredSettings) {
+	stored = settings;
+}
+
+/** Each setting's value without the page: the variable, else the preset. /einstellungen shows these. */
+export function defaultSettings() {
+	const env = appEnv();
+	const name = env.ORCHESTRA_NAME?.trim();
+	return {
+		name: name || config.name,
+		shortName: env.ORCHESTRA_SHORT_NAME?.trim() || name || config.shortName,
+		logo: orchestraLogo(env.ORCHESTRA_LOGO),
+		accent: parseColour(env.ORCHESTRA_ACCENT) ?? parseColour(config.accent) ?? '#e6b422',
+		/** The preset's own light shade, used with the default colour. */
+		accentLight: parseColour(env.ORCHESTRA_ACCENT) ? undefined : config.accentLight,
+		features: resolveFeatures(config.features, env.FEATURES_OFF).features
+	};
+}
+
+/** Name, short name, logo and colours of this deployment: /einstellungen, else the variables, else the preset. */
+export function orchestra() {
+	const env = appEnv();
+	const name = stored.name ?? env.ORCHESTRA_NAME?.trim();
+	const accent = stored.accent ?? parseColour(env.ORCHESTRA_ACCENT);
+	const colours = brandColours(accent ?? parseColour(config.accent) ?? '#e6b422');
+	return {
+		name: name || config.name,
+		// A custom name without a custom short name shouldn't fall back to the preset's short name.
+		shortName: stored.shortName ?? (env.ORCHESTRA_SHORT_NAME?.trim() || name || config.shortName),
+		logo: stored.logo ?? orchestraLogo(env.ORCHESTRA_LOGO),
+		colours,
+		/** The theme's custom properties for a <style> on :root; the preset's light shade unless the variable sets a colour. */
+		style: brandStyle(colours, accent ? undefined : config.accentLight),
+		/** The light shade is the preset's own (`accentLight`), not the derived one. */
+		presetLight: !accent && !!config.accentLight,
+		/** ORCHESTRA_ACCENT was set but isn't a colour; /status says so. */
+		badAccent: !!env.ORCHESTRA_ACCENT?.trim() && !parseColour(env.ORCHESTRA_ACCENT)
+	};
+}
+
+/** Which parts of the app are on for this deployment (#134): as saved on /einstellungen, else FEATURES_OFF and the preset. */
+export function features(): Features {
+	if (stored.featuresOff) return { ...ALL_ON, ...Object.fromEntries(stored.featuresOff.map((feature) => [feature, false])) };
+	return resolveFeatures(config.features, appEnv().FEATURES_OFF).features;
+}
+
+/** Words in FEATURES_OFF that name no feature, for /status. */
+export function unknownFeatures(): string[] {
+	return resolveFeatures(config.features, appEnv().FEATURES_OFF).unknown;
+}
+
+export const isOn = (feature: Feature) => features()[feature];
+
+/** For the pages of a feature: they don't exist while it's off. */
+export function requireFeature(feature: Feature) {
+	if (!isOn(feature)) error(404, 'Diese Seite gibt es nicht.');
 }
 
 /** Demo mode: invented sample data in memory instead of Google, no real accounts. */

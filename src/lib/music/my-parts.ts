@@ -1,4 +1,4 @@
-import type { OrchestraConfig } from '#lib/config/index.ts';
+import type { Instrument, OrchestraConfig } from '#lib/config/index.ts';
 import { createInstrumentMatcher, parsePartName, type InstrumentMatcher } from './part-name.ts';
 import { instrumentLabel } from './instrument-label.ts';
 import { formatNumbers } from './text.ts';
@@ -17,10 +17,10 @@ export interface InstrumentChoice {
 	numbers: number[];
 }
 
-const matchers = new WeakMap<OrchestraConfig, InstrumentMatcher>();
+const matchers = new WeakMap<readonly Instrument[], InstrumentMatcher>();
 const matcherFor = (config: OrchestraConfig) => {
-	let matcher = matchers.get(config);
-	if (!matcher) matchers.set(config, (matcher = createInstrumentMatcher(config.instruments)));
+	let matcher = matchers.get(config.instruments);
+	if (!matcher) matchers.set(config.instruments, (matcher = createInstrumentMatcher(config.instruments)));
 	return matcher;
 };
 

@@ -1,6 +1,7 @@
 import { MEMBER_STATUSES, RIGHTS } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { defaultRows, type SharedParts } from '#lib/music/instrument-groups.ts';
+import { ALL_ON, FEATURE_TABS, type Features } from '#lib/features.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
 import type { GoogleClient } from './google/client.ts';
 import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
@@ -9,7 +10,7 @@ import { batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues }
 const ID_PROTECTION = 'sheetmanagement: id column';
 /** Same for the columns the app rewrites on every sync. */
 const GENERATED_PROTECTION = 'sheetmanagement: generated column';
-const TAB_KEYS = Object.keys(LAYOUT) as TabKey[];
+const ALL_TABS = Object.keys(LAYOUT) as TabKey[];
 const ID_COLUMNS: Partial<Record<TabKey, string>> = {
 	pieces: 'driveFolderId',
 	concerts: 'eventId',
@@ -71,10 +72,16 @@ export interface SetupResult {
 export async function setUpSheet(
 	client: GoogleClient,
 	spreadsheetId: string,
-	{ orchestras, sharedParts }: { orchestras: string[]; sharedParts?: SharedParts }
+	{ orchestras, sharedParts, features = ALL_ON }: { orchestras: string[]; sharedParts?: SharedParts; features?: Features }
 ): Promise<SetupResult> {
 	const before = await getTabs(client, spreadsheetId);
-	const missingTabs = TAB_KEYS.filter((key) => !before.some((tab) => tab.title === LAYOUT[key].tab));
+	const exists = (key: TabKey) => before.some((tab) => tab.title === LAYOUT[key].tab);
+	// A tab that's already there is kept and formatted even when its feature is off.
+	const TAB_KEYS = ALL_TABS.filter((key) => {
+		const feature = FEATURE_TABS[key];
+		return !feature || features[feature] || exists(key);
+	});
+	const missingTabs = TAB_KEYS.filter((key) => !exists(key));
 	await batchUpdate(
 		client,
 		spreadsheetId,
@@ -226,6 +233,7 @@ export async function setUpSheet(
 		dropdowns.push(['concerts', 'orchestra', { type: 'ONE_OF_LIST', values }]);
 	}
 	for (const [key, name, condition] of dropdowns) {
+		if (!TAB_KEYS.includes(key)) continue;
 		requests.push({
 			setDataValidation: { range: column(key, name), rule: { condition, strict: false, showCustomUi: true } }
 		});

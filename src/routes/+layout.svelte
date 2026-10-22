@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
-	import { config } from '#lib/config/index.ts';
+	import { config, useInstrumentOverrides } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -15,7 +15,12 @@
 
 	let { data, children } = $props();
 
-	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
+	// The orchestra's own instrument labels (#143), before any page reads the instruments.
+	// svelte-ignore state_referenced_locally
+	useInstrumentOverrides(data.instruments);
+	$effect.pre(() => useInstrumentOverrides(data.instruments));
+
+	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features }));
 	const nav = $derived(primaryNav(groups));
 	const path = $derived(page.url.pathname);
 	// The most specific entry counts: "Angaben ergänzen" lights up "Mehr", not "Archiv".
@@ -76,10 +81,10 @@
 </script>
 
 <svelte:head>
-	<meta name="theme-color" content={config.accent} />
+	<meta name="theme-color" content={data.brand.colour} />
 	{#if data.logo !== '/logo.png'}<link rel="icon" href={data.logo} />{/if}
 	<!-- On :root, so the theme tokens in app.css derive from it. -->
-	{@html `<style>:root{--brand:${config.accent}}</style>`}
+	{@html `<style>${data.brand.style}</style>`}
 </svelte:head>
 
 <div class="app">

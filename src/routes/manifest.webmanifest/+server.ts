@@ -1,6 +1,5 @@
-import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { appEnv, orchestraLogo } from '#lib/server/env.ts';
+import { orchestra } from '#lib/server/env.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -8,10 +7,7 @@ import type { RequestHandler } from './$types';
  * without the browser's bars. Built per deployment, for the orchestra's own name.
  */
 export const GET: RequestHandler = () => {
-	const env = appEnv();
-	const name = env.ORCHESTRA_NAME?.trim() || config.name;
-	const logo = orchestraLogo();
-	const shortName = env.ORCHESTRA_SHORT_NAME?.trim() || env.ORCHESTRA_NAME?.trim() || config.shortName;
+	const { name, shortName, logo, colours } = orchestra();
 	const manifest = {
 		name: `${name} · ${t.nav.appName}`,
 		short_name: shortName,
@@ -21,7 +17,7 @@ export const GET: RequestHandler = () => {
 		scope: '/',
 		display: 'standalone',
 		background_color: '#f4f4f1',
-		theme_color: config.accent,
+		theme_color: colours.brand,
 		icons: [
 			logo.endsWith('.svg')
 				? { src: logo, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }

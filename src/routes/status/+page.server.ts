@@ -1,4 +1,8 @@
 import type { PageServerLoad } from './$types';
+import { contrast } from '#lib/branding.ts';
+import { FEATURES } from '#lib/features.ts';
+import { t } from '#lib/i18n/index.ts';
+import { appEnv, features, orchestra, unknownFeatures } from '#lib/server/env.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
@@ -38,6 +42,30 @@ function describeError(error: unknown, what: string, serviceAccountEmail?: strin
 		};
 	}
 	return { state: 'error', details: [], problem: error instanceof Error ? error.message : String(error) };
+}
+
+/** The deployment's colours with their contrast (#75) and the parts of the app that are off (#134). */
+function lookCheck(): Check {
+	const { colours, badAccent, presetLight } = orchestra();
+	const ratio = (value: number) => value.toFixed(1).replace('.', ',');
+	const off = FEATURES.filter((feature) => !features()[feature]).map((feature) => t.features[feature]);
+	const unknown = unknownFeatures();
+	const problems = [
+		...(badAccent ? [t.status.badAccent(appEnv().ORCHESTRA_ACCENT?.trim() ?? '')] : []),
+		...(unknown.length ? [t.status.unknownFeatures(unknown.join(', '))] : [])
+	];
+	return {
+		state: problems.length ? 'error' : 'ok',
+		details: [
+			presetLight
+				? t.status.accentPreset(colours.dark, ratio(contrast(colours.dark, '#0b0b0a')))
+				: t.status.accent(colours.light, ratio(contrast(colours.light, '#f4f4f1')), colours.dark, ratio(contrast(colours.dark, '#0b0b0a'))),
+			...((colours.adjusted.light && !presetLight) || colours.adjusted.dark ? [t.status.accentAdjusted] : []),
+			off.length ? t.status.featuresOff(off.join(', ')) : t.status.allFeatures
+		],
+		problem: problems.join(' ') || undefined,
+		hint: unknown.length ? t.status.featuresHint : undefined
+	};
 }
 
 const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
@@ -194,5 +222,5 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn } };
+	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck() } };
 };

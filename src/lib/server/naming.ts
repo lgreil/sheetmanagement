@@ -1,6 +1,6 @@
 import { config } from '#lib/config/index.ts';
 import { checkSection, guessShortTitle, type NameCheck, type NamingFile } from '#lib/music/naming.ts';
-import { createInstrumentMatcher } from '#lib/music/part-name.ts';
+import { createInstrumentMatcher, type InstrumentMatcher } from '#lib/music/part-name.ts';
 import { folderUrl } from './catalog.ts';
 import type { Library } from './library.ts';
 
@@ -21,7 +21,12 @@ export interface NamingSection {
 	titles: string[];
 }
 
-export const matcher = createInstrumentMatcher(config.instruments);
+let built: { instruments: typeof config.instruments; matcher: InstrumentMatcher } | undefined;
+/** Built again when a deployment's own spellings change (#143). */
+function matcher(): InstrumentMatcher {
+	if (built?.instruments !== config.instruments) built = { instruments: config.instruments, matcher: createInstrumentMatcher(config.instruments) };
+	return built.matcher;
+}
 
 /** Every section of the archive with its files, in archive order. */
 export function namingSections(library: Library): NamingSection[] {
@@ -48,5 +53,5 @@ export function namingSections(library: Library): NamingSection[] {
 }
 
 export function checkNamingSection(section: NamingSection, shortTitle = section.shortTitle): NameCheck[] {
-	return checkSection(section.files, shortTitle, config.naming, matcher, { movement: section.movement, titles: section.titles });
+	return checkSection(section.files, shortTitle, config.naming, matcher(), { movement: section.movement, titles: section.titles });
 }

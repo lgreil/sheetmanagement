@@ -2,12 +2,20 @@
 # In production, set each value with `wrangler secret put <NAME>`. Never commit real values.
 # Step-by-step instructions for the Google values: docs/setup-google.md
 
+# Name, short name, logo, accent colour and features can also be set by an admin on
+# /einstellungen; what's saved there wins over the values here.
 # Display name of the orchestra. Optional; defaults to the name in the active config preset.
 ORCHESTRA_NAME="Mein Orchester"
 # Shorter name for the header on phones. Optional; defaults to ORCHESTRA_NAME.
 # ORCHESTRA_SHORT_NAME="Orchester"
 # Square logo for header, calendar and app icon: a file in static/ or an https link. Optional; default /logo.png.
 # ORCHESTRA_LOGO="/mein-logo.svg"
+# Accent colour as #rrggbb. The shades for the light and the dark scheme are derived from it,
+# darkened or lightened just enough to stay readable; /status shows them. Optional.
+# ORCHESTRA_ACCENT="#1d4ed8"
+# Parts of the app this orchestra doesn't use, comma-separated. Their pages, menu entries and
+# sheet tabs go away. Any of: leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline
+# FEATURES_OFF="leihmaterial, gema"
 
 # --- Google connection -----------------------------------------------------------
 # Service-account key: the key file base64-encoded on one line (or its JSON as is).

@@ -5,8 +5,9 @@
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
-	import Icon from '#lib/components/Icon.svelte';
+	import Icon, { type IconName } from '#lib/components/Icon.svelte';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
+	import PieceArt from '#lib/components/PieceArt.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
@@ -47,9 +48,19 @@
 		)
 	);
 
+	// The piece's facts in one card under the title, each with its icon; the note reads as a line of its own.
+	const FACT_ICONS: Record<Exclude<keyof typeof t.piece.info, 'notes'>, IconName> = {
+		duration: 'clock',
+		publisher: 'book',
+		arranger: 'user',
+		genre: 'tag',
+		difficulty: 'gauge',
+		reviewedAt: 'check'
+	};
 	const info = $derived(
 		(Object.keys(t.piece.info) as (keyof typeof t.piece.info)[])
-			.map((key) => ({ key, label: t.piece.info[key], value: piece.info[key] }))
+			.filter((key) => key !== 'notes')
+			.map((key) => ({ key, label: t.piece.info[key], value: piece.info[key], icon: FACT_ICONS[key as keyof typeof FACT_ICONS] }))
 			.filter((item) => item.value)
 	);
 
@@ -74,6 +85,10 @@
 		].filter((tile) => !!tile)
 	);
 
+	// A portrait that doesn't load (Wikimedia unreachable) gives way to the drawing.
+	let portraitFailed = $state<string | null>(null);
+	const portrait = $derived(portraitFailed === piece.id ? null : data.banner.portrait);
+
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
 	);
@@ -83,23 +98,51 @@
 
 <Crumbs items={[{ href: '/stuecke', label: t.pieces.title }]} />
 
-<header class="head">
-	{#if piece.composer || piece.catalogue}
-		<p class="eyebrow">
-			<!-- Each composer of a list links to all of their works. -->
-			{#each splitList(piece.composer) as name, i (name)}{#if i}, {/if}<a href="/stuecke?komponist={encodeURIComponent(name)}" title={t.piece.allBy(name)}>{name}</a>{/each}
-			{#if piece.composer && piece.catalogue}·{/if}
-			{piece.catalogue ?? ''}
-		</p>
+<!-- One card: the banner in the orchestra's colour with the composer's portrait (or a drawing for
+     the genre), the facts underneath. -->
+<div class="piece-card">
+<header class="hero">
+	{#if portrait}
+		<img class="portrait" src={portrait.src} alt={t.piece.portrait(portrait.name)} onerror={() => (portraitFailed = piece.id)} />
+		<a class="credit" href={portrait.source} target="_blank" rel="noopener noreferrer">{t.piece.portraitCredit}</a>
+	{:else}
+		<div class="art"><PieceArt art={data.banner.art} /></div>
 	{/if}
-	<h1>{piece.title}</h1>
-	<div class="facts">
-		<span>{piece.status === 'none' ? t.pieces.status.none : t.pieces.parts(piece.partCount)}</span>
-		{#each piece.programs as program (program)}<span class="tag program">{program}</span>{/each}
-		{#if piece.category}<span class="tag">{piece.category}</span>{/if}
+	<div class="hero-text">
+		{#if piece.composer || piece.catalogue}
+			<p class="eyebrow">
+				<!-- Each composer of a list links to all of their works. -->
+				{#each splitList(piece.composer) as name, i (name)}{#if i}, {/if}<a href="/stuecke?komponist={encodeURIComponent(name)}" title={t.piece.allBy(name)}>{name}</a>{/each}
+				{#if piece.composer && piece.catalogue}·{/if}
+				{piece.catalogue ?? ''}
+			</p>
+		{/if}
+		<h1>{piece.title}</h1>
+		<div class="facts">
+			<span>{piece.status === 'none' ? t.pieces.status.none : t.pieces.parts(piece.partCount)}</span>
+			{#each piece.programs as program (program)}<span class="pill"><Icon name="music" size={14} />{program}</span>{/each}
+			{#if piece.category}<span class="pill">{piece.category}</span>{/if}
+		</div>
 	</div>
-	{#if gaps > 0}
-		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
+</header>
+
+{#if info.length}
+	<dl class="details" aria-label={t.piece.details}>
+		{#each info as item (item.key)}
+			<!-- The icon belongs to the label, so the list keeps only labels and values (for screen readers). -->
+			<div class="detail">
+				<dt><span class="detail-icon" aria-hidden="true"><Icon name={item.icon} size={18} /></span>{item.label}</dt>
+				<dd>{item.value}</dd>
+			</div>
+		{/each}
+	</dl>
+{/if}
+</div>
+
+{#if piece.info.notes || data.saved || gaps > 0}
+<div class="notices">
+	{#if piece.info.notes}
+		<p class="piece-note"><span class="sr-only">{t.piece.info.notes}: </span>{piece.info.notes}</p>
 	{/if}
 	{#if data.saved}
 		<p class="msg ok" role="status">
@@ -107,7 +150,11 @@
 			{#if data.renamedIn}{t.pieceEditor.renamed(data.renamedIn)}{/if}
 		</p>
 	{/if}
-</header>
+	{#if gaps > 0}
+		<p class="gaps"><Icon name="alert" size={16} />{t.piece.missingSummary(gaps)}</p>
+	{/if}
+</div>
+{/if}
 
 {#if tiles.length || canReport}
 	<div class="tiles">
@@ -272,20 +319,7 @@
 
 {#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
 
-<!-- Below the parts: what the piece is, where it was played, related pieces. -->
-{#if info.length}
-	<section class="block">
-		<h2 class="ui-label">{t.piece.details}</h2>
-		<dl class="ui-card info">
-			{#each info as item (item.key)}
-				<div class:wide={item.key === 'notes'}>
-					<dt>{item.label}</dt>
-					<dd>{item.value}</dd>
-				</div>
-			{/each}
-		</dl>
-	</section>
-{/if}
+<!-- Below the parts: where the piece was played, related pieces. -->
 
 {#snippet pieceLinks(pieces: typeof data.moreByComposer)}
 	<ul class="more-list">
@@ -380,25 +414,100 @@
 		font-weight: 600;
 	}
 
-	.head {
+	/* The banner: the accent colour (a tinted surface in dark), deepening towards the picture on the right. */
+	.piece-card {
+		margin-bottom: var(--space-4);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-l);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		overflow: hidden;
+	}
+
+	.hero {
+		position: relative;
+		display: grid;
+		padding: var(--space-6) var(--space-5) var(--space-5);
+		background: linear-gradient(115deg, var(--hero-from) 35%, var(--hero-to));
+		color: var(--hero-ink);
+		overflow: hidden;
+	}
+
+	/* The picture on the right, fading into the banner towards the text. */
+	.portrait,
+	.art {
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		pointer-events: none;
+		mask-image: linear-gradient(to right, transparent, #000 50%);
+	}
+
+	/* The portrait takes the banner's colour (luminosity blend), so any portrait suits any orchestra. */
+	.portrait {
+		width: min(42%, 280px);
+		height: 100%;
+		object-fit: cover;
+		object-position: 50% 20%;
+		filter: grayscale(1) contrast(1.08);
+		mix-blend-mode: luminosity;
+		opacity: 0.9;
+	}
+
+	.art {
+		display: grid;
+		align-items: center;
+		width: min(40%, 220px);
+		padding: var(--space-4) var(--space-5) var(--space-4) 0;
+		color: var(--hero-ink);
+		opacity: 0.22;
+	}
+
+	.credit {
+		position: absolute;
+		right: var(--space-3);
+		bottom: var(--space-2);
+		padding: 1px 6px;
+		border-radius: 6px;
+		background: color-mix(in oklab, var(--hero-to) 80%, transparent);
+		color: var(--hero-ink);
+		font-size: 0.6875rem;
+	}
+
+	.credit:hover {
+		text-decoration: underline;
+	}
+
+	/* Room for the picture, so a long title doesn't run into the face. */
+	.hero-text {
+		position: relative;
 		display: grid;
 		gap: var(--space-2);
-		margin-bottom: var(--space-5);
+		max-width: 46rem;
+		padding-right: min(32%, 200px);
+	}
+
+	.hero h1 {
+		margin: 0;
+		color: inherit;
+		text-wrap: balance;
 	}
 
 	.eyebrow {
-		color: var(--accent);
+		margin: 0;
 		font-weight: 600;
+		opacity: 0.92;
 	}
 
 	.eyebrow a {
 		text-decoration: underline;
-		text-decoration-color: color-mix(in oklab, var(--accent) 35%, transparent);
+		text-decoration-color: color-mix(in oklab, currentColor 40%, transparent);
 		text-underline-offset: 3px;
 	}
 
 	.eyebrow a:hover {
-		text-decoration-color: var(--accent);
+		text-decoration-color: currentColor;
 	}
 
 	.facts {
@@ -406,7 +515,19 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2) var(--space-3);
-		color: var(--text-muted);
+		margin-top: var(--space-1);
+		font-size: 0.9375rem;
+	}
+
+	.pill {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		padding: 3px 12px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--hero-ink) 16%, transparent);
+		font-size: 0.8125rem;
+		font-weight: 650;
 	}
 
 	.tag {
@@ -421,6 +542,73 @@
 	.tag.program {
 		background: var(--accent);
 		color: var(--accent-contrast);
+	}
+
+	/* The facts under the banner, a cell each with hairlines between them, like the parts below. */
+	/* Cells grow to fill their row, so a last row with fewer facts spans the whole width too. */
+	.details {
+		display: flex;
+		flex-wrap: wrap;
+		margin: 0;
+	}
+
+	.detail {
+		position: relative;
+		display: grid;
+		flex: 1 1 210px;
+		align-content: center;
+		gap: 1px;
+		min-width: 0;
+		min-height: 64px;
+		padding: var(--space-3) var(--space-4) var(--space-3) calc(var(--space-4) + 36px + var(--space-3));
+		box-shadow:
+			0 1px 0 var(--hairline),
+			1px 0 0 var(--hairline);
+	}
+
+	.detail-icon {
+		position: absolute;
+		top: 50%;
+		left: var(--space-4);
+		transform: translateY(-50%);
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		background: var(--accent-soft);
+		color: var(--accent);
+	}
+
+	.detail dt {
+		color: var(--text-muted);
+		font-size: 0.6875rem;
+		font-weight: 650;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+	}
+
+	.detail dd {
+		margin: 0;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.notices {
+		display: grid;
+		gap: var(--space-3);
+		margin-bottom: var(--space-5);
+	}
+
+	.piece-note {
+		max-width: 62ch;
+		margin: 0;
+		padding-left: var(--space-3);
+		border-left: 3px solid var(--accent-soft);
+		color: var(--text-muted);
+		white-space: pre-line;
+		overflow-wrap: anywhere;
 	}
 
 	.gaps {
@@ -735,31 +923,6 @@
 		margin: calc(-1 * var(--space-4)) var(--space-1) var(--space-7);
 		color: var(--text-muted);
 		font-size: 0.8125rem;
-	}
-
-	.info {
-		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-		gap: var(--space-4);
-		margin: 0;
-	}
-
-	.info .wide {
-		grid-column: 1 / -1;
-	}
-
-	.info dt {
-		color: var(--text-muted);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-	}
-
-	.info dd {
-		margin: 0;
-		white-space: pre-line;
-		overflow-wrap: anywhere;
 	}
 
 	.played-head {

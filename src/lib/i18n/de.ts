@@ -16,6 +16,7 @@ export const de = {
 		naming: 'Dateinamen',
 		admin: 'Mitglieder & Rechte',
 		setup: 'Tabelle einrichten',
+		settings: 'Einstellungen',
 		status: 'Status',
 		more: 'Mehr',
 		profile: 'Profil',
@@ -76,6 +77,7 @@ export const de = {
 			'/leihmaterial': 'Geliehene Noten und wann sie zurückmüssen.',
 			'/admin': 'Mitglieder, Rollen und Anfragen.',
 			'/setup': 'Die Repertoire-Tabelle anlegen.',
+			'/einstellungen': 'Name, Logo, Farbe und Funktionen.',
 			'/status': 'Verbindung zu Google prüfen.'
 		} as Record<string, string>
 	},
@@ -164,7 +166,9 @@ export const de = {
 			reviewedAt: 'Geprüft am',
 			notes: 'Notiz'
 		},
-		driveHint: 'Öffnet sich in Google Drive (Zugriff auf den Noten-Ordner nötig).'
+		driveHint: 'Öffnet sich in Google Drive (Zugriff auf den Noten-Ordner nötig).',
+		portrait: (name: string) => `Porträt von ${name}`,
+		portraitCredit: 'Bild: Wikimedia Commons'
 	},
 	concerts: {
 		title: 'Konzerte',
@@ -247,6 +251,77 @@ export const de = {
 		count: (present: number, of: number) => `${present}/${of}`
 	},
 	/** Offline use and the installable app (#62). */
+	/** /einstellungen: name, logo, colour and features per orchestra (#75, #134). */
+	settings: {
+		title: 'Einstellungen',
+		lead: 'Wie die App für alle aussieht und was sie anbietet.',
+		identity: 'Name',
+		name: 'Name des Orchesters',
+		shortName: 'Kurzname',
+		shortNameHint: 'Für die Kopfzeile auf dem Handy, höchstens 24 Zeichen.',
+		logo: 'Logo',
+		logoField: 'Link zum Logo',
+		logoHint: 'Ein quadratisches Bild als https-Link, z. B. von der Website des Orchesters, oder eine Datei der App wie /logo.png.',
+		logoPreview: 'Vorschau',
+		colour: 'Farbe',
+		accent: 'Akzentfarbe',
+		accentDefault: (colour: string) => `Standardfarbe (${colour})`,
+		presets: 'Vorschläge',
+		presetNames: { gold: 'Gold', navy: 'Marineblau', petrol: 'Petrol', forest: 'Waldgrün', bordeaux: 'Bordeaux', violet: 'Violett' } as Record<string, string>,
+		colourHint: 'Für Hell und Dunkel wird die Farbe so weit angepasst, dass Text gut lesbar bleibt (mindestens 4,5:1).',
+		light: 'Hell',
+		dark: 'Dunkel',
+		sample: 'Knopf',
+		link: 'Link',
+		ratio: (value: string) => `Kontrast ${value}:1`,
+		features: 'Funktionen',
+		featuresLead: 'Was das Orchester nicht nutzt, verschwindet aus Menüs und Seiten. Einträge in der Tabelle bleiben erhalten.',
+		featuresFromDefault: 'Noch nicht hier gespeichert: gezeigt ist die Vorgabe der Installation (FEATURES_OFF).',
+		describe: {
+			loans: 'Geliehene Noten mit Rückgabedatum.',
+			musicReport: 'Die Musikfolge für die GEMA beim Drucken eines Konzerts.',
+			attendance: 'Wer bei den Proben war.',
+			signups: 'Zu- und Absagen für Proben und Konzerte.',
+			wishes: 'Stücke und Ideen vorschlagen, mit +1.',
+			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
+			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.'
+		} as Record<string, string>,
+		instruments: 'Instrumente',
+		instrumentsLead:
+			'Wie Instrumente in der App heißen und welche Schreibweisen in Dateinamen erkannt werden. Die Dateinamen selbst und die Namensprüfung bleiben beim Wort aus den Dateinamen.',
+		fileWord: 'In Dateinamen',
+		shownAs: 'In der App',
+		moreSpellings: 'Weitere Schreibweisen',
+		moreSpellingsHint: 'Weitere Schreibweisen durch Kommas trennen, z. B. „Violine, Vl.“.',
+		known: (words: string) => `Bekannt: ${words}`,
+		saveInstruments: 'Instrumente speichern',
+		instrumentsSaved: 'Gespeichert. Gilt sofort für alle.',
+		invalidInstrument: (name: string) => `Bei „${name}“: höchstens 30 Zeichen für den Namen, höchstens 12 Schreibweisen mit je 40 Zeichen, nur Buchstaben, Ziffern, Leerzeichen, Punkt und Bindestrich.`,
+		emptyIsDefault: 'Leere Felder nehmen die Vorgabe der Installation, sie steht grau im Feld.',
+		save: 'Speichern',
+		saved: 'Gespeichert. Die Änderungen gelten sofort für alle.',
+		failed: 'Speichern hat nicht geklappt. Gleich noch einmal versuchen.',
+		notConfigured: 'Es ist noch keine Repertoire-Tabelle verbunden; dort werden die Einstellungen gespeichert.',
+		readFailed: 'Die Einstellungen konnten gerade nicht gelesen werden.',
+		stored: 'Gespeichert im Blatt „Einstellungen“ der Repertoire-Tabelle.',
+		invalid: {
+			name: 'Der Name ist zu lang (höchstens 80 Zeichen).',
+			shortName: 'Der Kurzname ist zu lang (höchstens 24 Zeichen).',
+			logo: 'Das Logo muss ein https-Link sein oder mit / beginnen.',
+			accent: 'Die Farbe muss die Form #rrggbb haben.',
+			featuresOff: ''
+		}
+	},
+	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
+	features: {
+		loans: 'Leihmaterial',
+		musicReport: 'Musikfolge (GEMA)',
+		attendance: 'Anwesenheit',
+		signups: 'Anmeldungen',
+		wishes: 'Wünsche',
+		calendarFeed: 'Kalender-Abo',
+		offline: 'Noten offline speichern'
+	},
 	pwa: {
 		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
 		offline: 'Offline: Du siehst die zuletzt geladene Fassung. Offline gespeicherte Noten lassen sich öffnen.',
@@ -835,6 +910,16 @@ export const de = {
 		calendar: 'Probenkalender (Google Calendar)',
 		sheet: 'Repertoire-Tabelle (Google Sheets)',
 		signIn: 'Anmeldung (Google)',
+		look: 'Aussehen und Funktionen',
+		accent: (light: string, lightRatio: string, dark: string, darkRatio: string) =>
+			`Akzentfarbe: ${light} auf Hell (${lightRatio}:1), ${dark} auf Dunkel (${darkRatio}:1)`,
+		accentPreset: (dark: string, darkRatio: string) => `Akzentfarbe: auf Hell der Farbton der Vorgabe, ${dark} auf Dunkel (${darkRatio}:1)`,
+		accentAdjusted: 'Damit Text lesbar bleibt (mindestens 4,5:1), ist die Akzentfarbe für dieses Farbschema angepasst.',
+		badAccent: (value: string) => `ORCHESTRA_ACCENT „${value}" ist keine Farbe. Erwartet wird #rrggbb, z. B. #1d4ed8.`,
+		featuresOff: (names: string) => `Ausgeschaltet: ${names}`,
+		allFeatures: 'Alle Funktionen sind eingeschaltet.',
+		unknownFeatures: (words: string) => `FEATURES_OFF enthält unbekannte Wörter: ${words}.`,
+		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender und offline.',
 		ok: 'Verbunden',
 		error: 'Fehler',
 		missing: 'Nicht eingerichtet',
@@ -853,6 +938,7 @@ export const de = {
 		tabs: 'Blätter',
 		present: 'vorhanden',
 		absent: 'fehlt',
+		off: 'nicht nötig, ausgeschaltet',
 		ready: 'Alles eingerichtet. Neue Stücke aus Drive und Konzerte aus dem Kalender werden automatisch eingetragen.',
 		run: 'Jetzt einrichten',
 		rerun: 'Formatierung erneuern',
@@ -1060,6 +1146,23 @@ export const de = {
 				name: 'Name',
 				present: 'Anwesend',
 				eventId: 'Termin-ID'
+			}
+		},
+		/** A deployment's own instrument labels and spellings (#143); one row per instrument that differs from the preset. */
+		instruments: {
+			tab: 'Instrumente',
+			columns: {
+				name: 'Instrument',
+				label: 'Anzeige',
+				aliases: 'Weitere Schreibweisen'
+			}
+		},
+		/** Name, look and features set on /einstellungen; one row per setting. */
+		settings: {
+			tab: 'Einstellungen',
+			columns: {
+				key: 'Einstellung',
+				value: 'Wert'
 			}
 		}
 	},

@@ -9,7 +9,7 @@
 	let { data, form } = $props();
 	const saving = new FormState();
 
-	const complete = $derived(data.state === 'ready' && data.tabs.every((tab) => tab.present));
+	const complete = $derived(data.state === 'ready' && data.tabs.every((tab) => tab.present || tab.off));
 </script>
 
 <Title title={t.setup.title} />
@@ -46,7 +46,7 @@
 				<li class:present={tab.present}>
 					<Icon name={tab.present ? 'check' : 'minus'} size={16} />
 					{tab.name}
-					<span class="muted">{tab.present ? t.setup.present : t.setup.absent}</span>
+					<span class="muted">{tab.present ? t.setup.present : tab.off ? t.setup.off : t.setup.absent}</span>
 				</li>
 			{/each}
 		</ul>

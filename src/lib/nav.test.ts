@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Right } from '#lib/access/access.ts';
+import { ALL_ON } from '#lib/features.ts';
 import { currentItem, isActive, navGroups, primaryNav, workspaceOf } from './nav.ts';
 
 const hrefs = (auth: 'on' | 'off', rights: Right[]) =>
@@ -21,13 +22,22 @@ describe('navGroups', () => {
 	});
 
 	it('gives admins every page', () => {
-		expect(hrefs('on', ['ansehen', 'stuecke.bearbeiten', 'mitglieder.verwalten']).verwaltung).toEqual(['/admin', '/setup', '/status']);
+		expect(hrefs('on', ['ansehen', 'stuecke.bearbeiten', 'mitglieder.verwalten']).verwaltung).toEqual(['/admin', '/einstellungen', '/setup', '/status']);
 	});
 
 	it('keeps setup and status reachable while sign-in is off, without wishes or admin', () => {
 		const groups = hrefs('off', ['ansehen']);
 		expect(groups.mitmachen).toBeUndefined();
 		expect(groups.verwaltung).toEqual(['/setup', '/status']);
+	});
+
+	it('leaves out the pages of features that are off (#134)', () => {
+		const features = { ...ALL_ON, loans: false, wishes: false };
+		const groups = navGroups({ auth: 'on', rights: ['ansehen', 'stuecke.bearbeiten'], features });
+		const hrefs = groups.flatMap((group) => group.items.map((item) => item.href));
+		expect(hrefs).not.toContain('/leihmaterial');
+		expect(hrefs).not.toContain('/wuensche');
+		expect(hrefs).toContain('/profil');
 	});
 
 	it('accepts the rights as a set too', () => {

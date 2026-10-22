@@ -1,7 +1,10 @@
 import type { Handle } from '@sveltejs/kit/hooks';
 import { resolveAccess } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
+import { featureOfPath } from '#lib/features.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
+import { isOn } from '#lib/server/env.ts';
+import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 
 /** Sent with every response: no framing (clickjacking on the admin forms), no MIME sniffing. */
 const SECURITY_HEADERS = {
@@ -12,6 +15,8 @@ const SECURITY_HEADERS = {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Name, colours and features from /einstellungen, from the cached sheet (#75, #134).
+	if (event.url.pathname !== '/api/health') await refreshStoredSettings();
 	const auth = authConfig();
 	event.locals.auth = auth.mode;
 	// The health check must answer even while Google doesn't.
@@ -27,6 +32,12 @@ export const handle: Handle = async ({ event, resolve }) => {
 			status: unavailable ? 503 : 403,
 			headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS }
 		});
+	}
+	// A part of the app this orchestra turned off (#134): its pages answer 404 from their load,
+	// its form actions and files (calendar feed, music list) here.
+	const feature = featureOfPath(event.url.pathname);
+	if (feature && !isOn(feature) && (write || /\.(ics|csv)$/.test(event.url.pathname))) {
+		return new Response(t.error.notFound, { status: 404, headers: { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS } });
 	}
 	const response = await resolve(event);
 	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {

@@ -7,6 +7,7 @@ import { readMemberForm, today, writable } from '#lib/server/members.ts';
 import { getAccessList } from '#lib/server/repertoire.ts';
 import { authConfig } from '#lib/server/auth/index.ts';
 import { feedToken } from '#lib/server/auth/feed.ts';
+import { isOn } from '#lib/server/env.ts';
 import { nextLinkVersion, revokedLinkVersion } from '#lib/server/auth/links.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -39,7 +40,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 /** The personal calendar link (#122): its address while valid, else whether one can be made. */
 async function feed(email: string, version: number, missingColumn: boolean, origin: string) {
 	const auth = authConfig();
-	if (auth.mode !== 'on') return null;
+	if (auth.mode !== 'on' || !isOn('calendarFeed')) return null;
 	if (missingColumn) return { state: 'not-set-up' as const };
 	if (version < 1) return { state: 'none' as const };
 	const url = `${origin}/kalender/${await feedToken(email, version, auth.sessionSecret)}.ics`;
@@ -50,6 +51,7 @@ async function feed(email: string, version: number, missingColumn: boolean, orig
 async function changeFeed(locals: App.Locals, next: (current: number) => number) {
 	const user = locals.access.user;
 	if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+	if (!isOn('calendarFeed')) return fail(404, { feedMessage: t.error.notFound });
 	try {
 		const members = await readTab('members');
 		const email = normalizeEmail(user.email);

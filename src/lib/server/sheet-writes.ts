@@ -33,6 +33,15 @@ export async function readTab<K extends TabKey>(key: K): Promise<Table<Columns<K
 	return readTable(values, LAYOUT[key].columns as Record<Columns<K>, string>);
 }
 
+/** Adds a missing tab with its header row, for tabs a page fills on its first save. */
+export async function ensureTab(key: TabKey): Promise<void> {
+	const { client, spreadsheetId } = target();
+	const tab = LAYOUT[key].tab;
+	if ((await getTabs(client, spreadsheetId)).some((t) => t.title === tab)) return;
+	await batchUpdate(client, spreadsheetId, [{ addSheet: { properties: { title: tab, gridProperties: { frozenRowCount: 1 } } } }]);
+	await updateValues(client, spreadsheetId, [{ range: tabRange(tab, 'A1'), values: [Object.values(LAYOUT[key].columns as Record<string, string>)] }]);
+}
+
 /** Appends rows in the tab's own column order. Values for columns the tab lacks would be lost, so that throws. */
 export async function appendRecords<K extends TabKey>(
 	key: K,

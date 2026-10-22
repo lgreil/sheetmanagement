@@ -55,10 +55,32 @@ test('several composers, separated by commas', async ({ page }) => {
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
 	// Each composer links to their works; the Mozart list now has Egmont too.
-	const eyebrow = page.locator('.head .eyebrow');
+	const eyebrow = page.locator('.hero .eyebrow');
 	await expect(eyebrow.getByRole('link', { name: 'Beethoven' })).toBeVisible();
 	await eyebrow.getByRole('link', { name: 'Mozart' }).click();
 	await expect(page).toHaveURL(/komponist=Mozart/);
 	await expect(page.getByRole('link', { name: /Egmont Ouvertüre/ })).toBeVisible();
 	await expect(page.getByRole('link', { name: /Eine kleine Nachtmusik/ })).toBeVisible();
+});
+
+test('settings: colour and features for everyone (#75, #134)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByLabel(/Standardfarbe/).uncheck();
+	await page.getByRole('textbox', { name: 'Akzentfarbe' }).fill('#0f766e');
+	await page.getByRole('checkbox', { name: /Leihmaterial/ }).uncheck();
+	await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+	await expect(page.getByText('Gespeichert.')).toBeVisible();
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--brand'))).toBe('#0f766e');
+	const response = await page.goto('/leihmaterial');
+	expect(response?.status()).toBe(404);
+});
+
+test('an instrument with the orchestra’s own name (#143)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByText('Instrumente', { exact: true }).click();
+	await page.getByLabel('In der App: Viola').fill('Viola');
+	await page.getByRole('button', { name: 'Instrumente speichern' }).click();
+	await expect(page.getByText('Gespeichert. Gilt sofort für alle.')).toBeVisible();
+	await open(page, '/meine-noten?instrument=Viola');
+	await expect(page.getByText('Bratsche')).toHaveCount(0);
 });

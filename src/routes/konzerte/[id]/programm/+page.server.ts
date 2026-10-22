@@ -1,6 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { parseEntries, planProgramSave, programVersion } from '#lib/repertoire/program-edit.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
+import { isOn } from '#lib/server/env.ts';
 import { getLibrary, type Library } from '#lib/server/library.ts';
 import { getFeedback, getRepertoire } from '#lib/server/repertoire.ts';
 import { planWishes } from '#lib/server/feedback.ts';
@@ -31,7 +32,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 			subtitle: concert.program[i]?.subtitle,
 			duration: concert.program[i]?.duration
 		})),
-		suggestions: suggestions(library, concert.id, sheet.title, feedback?.wishes ?? []),
+		suggestions: suggestions(library, concert.id, sheet.title, isOn('wishes') ? (feedback?.wishes ?? []) : []),
 		sharedFrom: concert.sharedFrom,
 		sharedWith: concert.sharedWith,
 		shareOptions: shareOptions(library, concert.id),

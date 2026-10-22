@@ -3,6 +3,7 @@ import { mayDeleteWish, safeLink, sortWishes, WISH_STATUSES, type WishKind, type
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
+import { requireFeature } from '#lib/server/env.ts';
 import { addWish, deleteWish, feedbackUser, formText, setWishStatus, voteOnWish } from '#lib/server/feedback.ts';
 import { getLibrary, isPastConcert } from '#lib/server/library.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
@@ -13,6 +14,7 @@ import type { Actions, PageServerLoad } from './$types';
 const MANAGE = 'mitglieder.verwalten';
 
 export const load: PageServerLoad = async ({ locals }) => {
+	requireFeature('wishes');
 	const user = feedbackUser(locals);
 	if (!user) return { state: 'sign-in' as const, wishes: [], canManage: false, concerts: [], archive: [] };
 	const [feedback, library] = await Promise.all([getFeedback(), getLibrary()]);

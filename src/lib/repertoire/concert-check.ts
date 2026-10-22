@@ -37,7 +37,8 @@ export function concertCheck(input: CheckInput): CheckItem[] {
 	const open = input.loans.filter((loan) => input.past || loan.dueBeforeConcert);
 
 	if (input.past) {
-		if (count) {
+		// The music list only while it's on (#134).
+		if (count && urls.report) {
 			items.push(
 				reportGaps
 					? { key: 'report', ok: false, text: t.check.reportGaps(pieces(reportGaps)), href: urls.report }
