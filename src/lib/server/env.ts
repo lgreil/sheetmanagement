@@ -30,6 +30,8 @@ export interface AppEnv {
 	LEGAL_ADDRESS?: string;
 	/** Contact email for privacy questions. */
 	LEGAL_EMAIL?: string;
+	/** YouTube Data API key: suggests a piece's duration from its Hörbeispiel (#133). Optional. */
+	YOUTUBE_API_KEY?: string;
 	/** "true": sample data instead of Google, signed in as a demo user; for trying the app (#121). */
 	DEMO?: string;
 	/** KV namespace binding from wrangler.toml; optional, memory is used without it. */

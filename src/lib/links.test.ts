@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bachkreis } from '#lib/config/presets/bachkreis.ts';
-import { orchestraLinks } from './links.ts';
+import { cleanLink, orchestraLinks, youtubeId } from './links.ts';
 
 describe('orchestraLinks', () => {
 	it('keeps set web links with a label, defaulting the icon to a globe', () => {
@@ -24,5 +24,42 @@ describe('orchestraLinks', () => {
 
 	it('never links the source code for the Bachkreis', () => {
 		expect(bachkreis.sourceUrl).toBeUndefined();
+	});
+});
+
+describe('cleanLink', () => {
+	it('brings every YouTube link form to watch?v=<id>', () => {
+		const clean = 'https://www.youtube.com/watch?v=dQw4w9WgXcQ';
+		for (const link of [
+			'https://youtu.be/dQw4w9WgXcQ?si=AbCdEf123',
+			'https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=PL123&index=4&pp=ygU',
+			'https://m.youtube.com/watch?feature=share&v=dQw4w9WgXcQ',
+			'https://youtube.com/shorts/dQw4w9WgXcQ?feature=share',
+			'https://www.youtube.com/embed/dQw4w9WgXcQ',
+			'https://music.youtube.com/watch?v=dQw4w9WgXcQ&si=xyz',
+			'  https://www.youtube.com/live/dQw4w9WgXcQ  '
+		])
+			expect(cleanLink(link)).toBe(clean);
+	});
+
+	it('keeps a start time, in seconds', () => {
+		expect(cleanLink('https://youtu.be/dQw4w9WgXcQ?t=95')).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=95s');
+		expect(cleanLink('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=1m35s&si=x')).toBe('https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=95s');
+	});
+
+	it('drops tracking from other links and keeps the rest', () => {
+		expect(cleanLink('https://open.spotify.com/track/abc?si=123&utm_source=copy')).toBe('https://open.spotify.com/track/abc');
+		expect(cleanLink('https://example.org/aufnahme?id=7&fbclid=x')).toBe('https://example.org/aufnahme?id=7');
+	});
+
+	it('refuses what is not a web link, like safeLink', () => {
+		expect(cleanLink('javascript:alert(1)')).toBeUndefined();
+		expect(cleanLink('kein Link')).toBeUndefined();
+		expect(cleanLink('')).toBeUndefined();
+	});
+
+	it('leaves a YouTube page without a video as it is', () => {
+		expect(youtubeId('https://www.youtube.com/results?search_query=egmont')).toBeUndefined();
+		expect(cleanLink('https://www.youtube.com/@orchester')).toBe('https://www.youtube.com/@orchester');
 	});
 });
