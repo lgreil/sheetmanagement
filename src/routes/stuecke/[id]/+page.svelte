@@ -617,14 +617,15 @@
 		color: var(--text-muted);
 		cursor: pointer;
 		transform: translateY(-50%);
-		opacity: 0.45;
+		/* Quiet, but still 3:1 against the row (#141). */
+		opacity: 0.75;
 		transition:
 			opacity var(--fast) var(--ease),
 			background var(--fast) var(--ease);
 	}
 
 	li:hover .flag {
-		opacity: 0.8;
+		opacity: 1;
 	}
 
 	.flag:hover,
@@ -718,7 +719,7 @@
 	/* No hover on touch screens: the hint that a part opens elsewhere stays visible. */
 	@media (hover: none) {
 		.open {
-			opacity: 0.6;
+			opacity: 0.75;
 		}
 	}
 
