@@ -31,6 +31,11 @@ sw.addEventListener('activate', (event) => {
 	);
 });
 
+// A new version waits until the "Neu laden" button asks for it (#140): no tab changes under someone's hands.
+sw.addEventListener('message', (event) => {
+	if (event.data === 'skip-waiting') sw.skipWaiting();
+});
+
 /** Keeps the page cache small: the oldest entries go first. */
 async function trim(cache: Cache) {
 	const keys = await cache.keys();

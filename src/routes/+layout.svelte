@@ -9,6 +9,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
+	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
 	import WorkspaceTabs from '#lib/components/WorkspaceTabs.svelte';
 	import { currentItem, navGroups, primaryNav, workspaceOf } from '#lib/nav.ts';
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
@@ -157,6 +158,7 @@
 
 	<NavMenu {groups} {current} user={data.user ?? null} bind:open={menuOpen} />
 	<Toast />
+	<UpdateNotice />
 </div>
 
 <style>

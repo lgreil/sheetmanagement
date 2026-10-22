@@ -254,6 +254,8 @@ export const de = {
 		saving: (done: number, total: number) => `Speichere ${done} von ${total} …`,
 		saved: (n: number) => (n === 1 ? '1 Stimme offline gespeichert' : `${n} Stimmen offline gespeichert`),
 		update: 'Offline-Kopie erneuern',
+		newVersion: 'Neue Version verfügbar',
+		reload: 'Neu laden',
 		remove: 'Offline-Kopie löschen',
 		failed: (n: number) => (n === 1 ? '1 Stimme ließ sich nicht speichern.' : `${n} Stimmen ließen sich nicht speichern.`),
 		hint: 'Deine Stimmen auf diesem Gerät, für den Probenraum ohne Netz.',
