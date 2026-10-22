@@ -526,6 +526,10 @@ export const en: Texts = {
 	},
 	instruments: {
 		more: 'More instruments …',
+		choose: 'Choose an instrument',
+		search: 'Search instruments …',
+		common: 'Common',
+		none: (query: string) => `No instrument matches “${query}”.`,
 		add: 'Another instrument',
 		remove: 'Remove instrument',
 		numbers: 'Parts',

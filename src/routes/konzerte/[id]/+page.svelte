@@ -154,7 +154,7 @@
 					<strong>{data.concert.displayTitle}</strong>
 					<span>{data.concert.date.long} · {t.concerts.relative(data.concert.daysUntil)}</span>
 				</span>
-				<span class="trail"><Icon name="chevron" size={18} /></span>
+				<span class="trail"><Icon name="chevron" size={16} /></span>
 			</a>
 		</li>
 	{/if}
@@ -252,7 +252,7 @@
 					<strong>{data.attendance.of ? t.attendance.present(data.attendance.present, data.attendance.of) : t.attendance.notTaken}</strong>
 					<span>{data.attendance.of ? t.attendance.edit : t.attendance.take}</span>
 				</span>
-				<span class="trail"><Icon name="chevron" size={18} /></span>
+				<span class="trail"><Icon name="chevron" size={16} /></span>
 			</a>
 		{/if}
 	</section>

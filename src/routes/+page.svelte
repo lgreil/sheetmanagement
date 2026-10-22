@@ -113,7 +113,7 @@
 					<span>{card.event.date.time || t.concerts.allDay}{card.note ? ` · ${card.note}` : ''}</span>
 					{#if card.event.location}<span class="venue" title={card.event.location}>{venue(card.event.location)}</span>{/if}
 				</span>
-				<span class="chevron"><Icon name="chevron" size={18} /></span>
+				<span class="chevron"><Icon name="chevron" size={16} /></span>
 			</a>
 			{#if card.pieces.length}
 				<div class="pieces">
@@ -164,7 +164,7 @@
 								<strong>{item.label}</strong>
 								{#if item.description}<span>{item.description}</span>{/if}
 							</span>
-							<span class="chevron"><Icon name="chevron" size={18} /></span>
+							<span class="chevron"><Icon name="chevron" size={16} /></span>
 						</a>
 					</li>
 				{/each}

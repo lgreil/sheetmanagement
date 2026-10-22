@@ -170,12 +170,12 @@
 	<nav class="tabbar" aria-label={t.nav.main}>
 		{#each nav as item (item.href)}
 			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-				<span class="pill"><Icon name={item.icon} size={22} /></span>
+				<span class="pill"><Icon name={item.icon} size={22} fill={isCurrent(item.href)} /></span>
 				<span class="label">{item.label}</span>
 			</a>
 		{/each}
 		<button class:active={inMore || menuOpen} aria-expanded={menuOpen} aria-controls="nav-menu" onclick={() => (menuOpen = !menuOpen)}>
-			<span class="pill"><Icon name="menu" size={22} /></span>
+			<span class="pill"><Icon name="menu" size={22} fill={inMore || menuOpen} /></span>
 			<span class="label">{t.nav.more}</span>
 		</button>
 	</nav>

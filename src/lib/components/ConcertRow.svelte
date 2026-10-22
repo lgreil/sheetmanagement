@@ -30,7 +30,7 @@
 			{meta}
 		</span>
 	</span>
-	<span class="chevron"><Icon name="chevron" size={18} /></span>
+	<span class="chevron"><Icon name="chevron" size={16} /></span>
 </a>
 
 <style>

@@ -177,7 +177,7 @@
 										<span class="status {piece.status}">{t.pieces.status[piece.status]}</span>
 									{/if}
 									{#if piece.status !== 'none'}<span class="parts">{t.pieces.parts(piece.partCount)}</span>{/if}
-									<span class="chevron"><Icon name="chevron" size={18} /></span>
+									<span class="chevron"><Icon name="chevron" size={16} /></span>
 								</span>
 							</a>
 						</li>

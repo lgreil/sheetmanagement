@@ -524,6 +524,10 @@ export const de = {
 	},
 	instruments: {
 		more: 'Mehr Instrumente …',
+		choose: 'Instrument wählen',
+		search: 'Instrument suchen …',
+		common: 'Häufig',
+		none: (query: string) => `Kein Instrument passt zu „${query}“.`,
 		add: 'Weiteres Instrument',
 		remove: 'Instrument entfernen',
 		numbers: 'Stimmen',

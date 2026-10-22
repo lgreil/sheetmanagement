@@ -31,7 +31,7 @@
 					{/if}
 				</span>
 				{#if item.duration}<span class="duration">{formatDuration(item.duration)}</span>{/if}
-				{#if item.pieceId}<span class="chevron"><Icon name="chevron" size={18} /></span>{/if}
+				{#if item.pieceId}<span class="chevron"><Icon name="chevron" size={16} /></span>{/if}
 			</svelte:element>
 		</li>
 	{/each}
