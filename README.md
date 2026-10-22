@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** in use, version 0.9. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed and an offline mode are done. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
+> **Status:** in use, version 0.10. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
@@ -37,6 +37,7 @@ Other scripts:
 | `pnpm dev:demo` | Run the demo with sample data (see below) |
 | `pnpm check` | Type-check the project |
 | `pnpm test` | Run unit tests |
+| `pnpm test:e2e` | Run the end-to-end tests against the demo (Playwright; once: `pnpm exec playwright install chromium`) |
 | `pnpm preview` | Build and run the real Worker locally with Wrangler |
 | `pnpm run deploy` | Build and deploy to Cloudflare (`run` is needed: `pnpm deploy` is a built-in pnpm command) |
 
@@ -59,6 +60,7 @@ Everything works, including the editors, but changes stay in memory: they're gon
 
 - **Install it:** the app has a web manifest, so "Zum Home-Bildschirm" (Safari) or "App installieren" (Chrome) puts it on the home screen.
 - **Offline:** a service worker (`src/service-worker/`) keeps the pages a member opened, and "Offline speichern" on "Meine Noten" keeps their parts, for rehearsal halls without reception. Signing out deletes both.
+- **Updates:** after a deploy, an open app shows "Neue Version verfügbar · Neu laden" within a few minutes; nothing reloads by itself.
 - **Own calendar:** each member can create a personal calendar link on `/profil` (`/kalender/<token>.ics`) with their orchestra's dates, their own answer and what's rehearsed. It's signed with `SESSION_SECRET` and can be renewed or revoked; the version sits in the "Kalender-Version" column of "Mitglieder".
 
 ## Deploying (free)
@@ -87,7 +89,7 @@ The app's own settings (Google keys, ids, sign-in) stay Cloudflare secrets, set 
 
 ### Checks on pull requests
 
-`.github/workflows/ci.yml` runs `pnpm check`, `pnpm test` and `pnpm build` on every pull request. With branch protection on `main`, it and CodeQL have to pass before merging. Dependabot opens grouped update PRs every Monday (`.github/dependabot.yml`).
+`.github/workflows/ci.yml` runs `pnpm check`, `pnpm test` and `pnpm build` on every pull request, and in a second job the end-to-end tests: Playwright opens the demo on a desktop and a phone size, goes through the main pages and the weekly flows (signing up, saving a programme, attendance) and checks each page with axe for accessibility problems. Screenshots and traces of a failure are kept as an artifact. With branch protection on `main`, both jobs and CodeQL have to pass before merging. Dependabot opens grouped update PRs every Monday (`.github/dependabot.yml`).
 
 ## Adapting it for your orchestra
 
@@ -97,6 +99,7 @@ Everything orchestra-specific lives in [`src/lib/config/`](src/lib/config):
 - **Naming rules**: how part files are named (separator, status words like `FEHLT`, the `@` prefix for scores)
 - **Event keywords**: which calendar titles count as concert, rehearsal or dress rehearsal
 - **Name and accent colour**
+- **Logo**: `ORCHESTRA_LOGO` (a file in `static/` or an https link) replaces `static/logo.png`; the demo uses `static/demo/musterorchester.svg`
 
 Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`. All texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts).
 
