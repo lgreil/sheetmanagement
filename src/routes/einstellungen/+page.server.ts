@@ -21,7 +21,7 @@ import {
 import type { Actions, PageServerLoad } from './$types';
 
 /**
- * Name, logo, colour and the parts of the app in use, set by an admin (#75, #134). Saved in the
+ * Name, logo, colour, look and the parts of the app in use, set by an admin (#75, #134, #163). Saved in the
  * sheet's "Einstellungen" tab; an empty field falls back to the variable or the preset.
  */
 
@@ -54,9 +54,17 @@ export const load: PageServerLoad = async ({ locals }) => {
 			name: stored.name ?? '',
 			shortName: stored.shortName ?? '',
 			logo: stored.logo ?? '',
-			accent: stored.accent ?? ''
+			accent: stored.accent ?? '',
+			look: stored.look ?? ''
 		},
-		defaults: { name: defaults.name, shortName: defaults.shortName, logo: defaults.logo, accent: defaults.accent, accentLight: defaults.accentLight },
+		defaults: {
+			name: defaults.name,
+			shortName: defaults.shortName,
+			logo: defaults.logo,
+			accent: defaults.accent,
+			accentLight: defaults.accentLight,
+			look: defaults.look
+		},
 		features: FEATURES.map((feature) => ({ key: feature, on: on[feature], default: defaults.features[feature] })),
 		/** Whether the page decides the features, or FEATURES_OFF and the preset still do. */
 		featuresStored: !!stored.featuresOff,
@@ -83,6 +91,7 @@ export const actions: Actions = {
 			logo: text('logo'),
 			// The colour picker always sends a colour; "default" keeps the field empty.
 			accent: data.has('accentDefault') ? '' : text('accent'),
+			look: text('look'),
 			featuresOff: FEATURES.filter((feature: Feature) => !on.has(feature))
 		};
 		const check = checkSettings(form);
@@ -91,7 +100,7 @@ export const actions: Actions = {
 			return fail(400, {
 				field: check.field,
 				message: t.settings.invalid[check.field],
-				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent }
+				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent, look: form.look }
 			});
 		}
 		try {

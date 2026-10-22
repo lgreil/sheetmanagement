@@ -4,7 +4,7 @@ import { checkInstruments, checkSettings, planInstrumentSave, planSettingsSave, 
 
 const columns = { key: 'Einstellung', value: 'Wert' };
 const table = (rows: string[][]) => readTable([['Einstellung', 'Wert'], ...rows], columns);
-const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', featuresOff: [] };
+const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', look: '', featuresOff: [] };
 
 describe('readSettings', () => {
 	it('reads the rows by their German names, in any case', () => {
@@ -69,6 +69,7 @@ describe('planSettingsSave', () => {
 			{ key: 'Kurzname', value: '' },
 			{ key: 'Logo', value: '' },
 			{ key: 'Akzentfarbe', value: '' },
+			{ key: 'Stil', value: '' },
 			{ key: 'Ausgeschaltet', value: 'loans' }
 		]);
 	});
@@ -79,10 +80,25 @@ describe('planSettingsSave', () => {
 			['Kurzname', ''],
 			['Logo', ''],
 			['Akzentfarbe', '#e6b422'],
+			['Stil', ''],
 			['Ausgeschaltet', '']
 		]);
 		const plan = planSettingsSave(existing, { ...form, name: 'Muster', accent: '#1D4ED8' });
 		expect(plan).toEqual({ updates: [{ row: 5, values: { value: '#1d4ed8' } }], append: [] });
+	});
+});
+
+describe('look (#163)', () => {
+	it('reads the German word or the key, and ignores anything else', () => {
+		expect(readSettings(table([['Stil', 'Schlicht']]).rows)).toEqual({ look: 'plain' });
+		expect(readSettings(table([['stil', 'bold']]).rows)).toEqual({ look: 'bold' });
+		expect(readSettings(table([['Stil', 'verschnörkelt']]).rows)).toEqual({});
+	});
+
+	it('saves the German word and refuses unknown looks', () => {
+		expect(checkSettings({ ...form, look: 'plain' })).toEqual({ ok: true });
+		expect(checkSettings({ ...form, look: 'fancy' })).toEqual({ ok: false, field: 'look' });
+		expect(planSettingsSave(table([['Stil', '']]), { ...form, look: 'plain' }).updates).toEqual([{ row: 2, values: { value: 'schlicht' } }]);
 	});
 });
 

@@ -77,7 +77,9 @@
 
 <Title />
 
-<header class="hero">
+<!-- In the bold look, like the orchestra's stories: dark, the logo large and dim behind the greeting (#163). -->
+<header class="hero" class:story={data.brand.look === 'bold'}>
+	{#if data.brand.look === 'bold'}<img class="watermark" src={data.logo} alt="" />{/if}
 	<p class="eyebrow">{data.orchestraName}</p>
 	<h1>{firstName ? t.home.hello(firstName) : t.home.title(data.orchestraName)}</h1>
 </header>
@@ -176,6 +178,40 @@
 		display: grid;
 		gap: var(--space-1);
 		margin-bottom: var(--space-6);
+	}
+
+	/* Always dark, in both schemes; the accent's dark shade stays readable on it (#141). */
+	.story {
+		position: relative;
+		overflow: hidden;
+		padding: var(--space-6) var(--space-5);
+		border-radius: var(--radius-l);
+		background: #0b0b0a;
+		color: #f2eee4;
+	}
+
+	.story .eyebrow,
+	.story h1 {
+		position: relative;
+		color: var(--accent-dark, var(--brand));
+	}
+
+	.story h1 {
+		font-size: clamp(2.5rem, 2rem + 2.4vw, 3.75rem);
+		line-height: 1;
+	}
+
+	.watermark {
+		position: absolute;
+		top: 50%;
+		right: -12%;
+		width: min(80%, 440px);
+		height: auto;
+		aspect-ratio: 1;
+		object-fit: contain;
+		translate: 0 -50%;
+		opacity: 0.2;
+		pointer-events: none;
 	}
 
 	.eyebrow {

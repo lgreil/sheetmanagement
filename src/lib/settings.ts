@@ -1,10 +1,10 @@
-import { parseColour } from '#lib/branding.ts';
+import { LOOKS, parseColour, type Look } from '#lib/branding.ts';
 import { FEATURES, type Feature } from '#lib/features.ts';
 import type { InstrumentOverride } from '#lib/config/index.ts';
 import type { Table } from '#lib/repertoire/sheet.ts';
 
 /**
- * What an admin sets on /einstellungen: name, logo, colour and the parts of the app in use.
+ * What an admin sets on /einstellungen: name, logo, colour, look and the parts of the app in use.
  * Kept in the sheet's "Einstellungen" tab, one row per setting, so a deployment changes them
  * without a variable or a code change. They win over the variables, which win over the preset.
  */
@@ -15,8 +15,14 @@ export const SETTING_KEYS = {
 	shortName: 'Kurzname',
 	logo: 'Logo',
 	accent: 'Akzentfarbe',
+	look: 'Stil',
 	featuresOff: 'Ausgeschaltet'
 } as const;
+
+/** The look's word in the "Wert" column, German like the keys. */
+export const LOOK_WORDS: Record<Look, string> = { bold: 'kräftig', plain: 'schlicht' };
+
+const lookOf = (word: string) => LOOKS.find((look) => look === word.toLowerCase() || LOOK_WORDS[look] === word.toLowerCase());
 
 export type SettingKey = keyof typeof SETTING_KEYS;
 
@@ -26,6 +32,7 @@ export interface StoredSettings {
 	logo?: string;
 	/** #rrggbb */
 	accent?: string;
+	look?: Look;
 	/** Set once the page saved the features, even when nothing is off. */
 	featuresOff?: Feature[];
 }
@@ -52,6 +59,7 @@ export function readSettings(rows: { values: { key: string; value: string } }[])
 		else if (key === 'shortName' && value) settings.shortName = value.slice(0, MAX_SHORT_NAME);
 		else if (key === 'logo') settings.logo = validLogo(value);
 		else if (key === 'accent') settings.accent = parseColour(value);
+		else if (key === 'look') settings.look = lookOf(value);
 		else if (key === 'featuresOff') settings.featuresOff = FEATURES.filter((feature) => value.split(/[,;\s]+/).includes(feature));
 	}
 	return Object.fromEntries(Object.entries(settings).filter(([, value]) => value !== undefined)) as StoredSettings;
@@ -65,16 +73,19 @@ export function checkSettings(form: SettingsForm): { ok: true } | { ok: false; f
 	if (form.shortName.trim().length > MAX_SHORT_NAME) return { ok: false, field: 'shortName' };
 	if (form.logo.trim() && !validLogo(form.logo)) return { ok: false, field: 'logo' };
 	if (form.accent.trim() && !parseColour(form.accent)) return { ok: false, field: 'accent' };
+	if (form.look.trim() && !lookOf(form.look.trim())) return { ok: false, field: 'look' };
 	return { ok: true };
 }
 
 /** The rows to change and to add so the tab holds `form`: one row per setting, the first one found is kept. */
 export function planSettingsSave(table: Table<'key' | 'value'>, form: SettingsForm) {
+	const look = lookOf(form.look.trim());
 	const values: Record<SettingKey, string> = {
 		name: form.name.trim(),
 		shortName: form.shortName.trim(),
 		logo: form.logo.trim(),
 		accent: parseColour(form.accent) ?? '',
+		look: look ? LOOK_WORDS[look] : '',
 		featuresOff: form.featuresOff.join(', ')
 	};
 	const updates: { row: number; values: { value: string } }[] = [];

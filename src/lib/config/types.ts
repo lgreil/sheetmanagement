@@ -1,4 +1,5 @@
 import type { RolePreset } from '#lib/access/access.ts';
+import type { Look } from '#lib/branding.ts';
 import type { Features } from '#lib/features.ts';
 
 /**
@@ -148,6 +149,8 @@ export interface OrchestraConfig {
 	 * the look wanted. Only used while ORCHESTRA_ACCENT doesn't set another colour.
 	 */
 	accentLight?: string;
+	/** "bold" (default): condensed headings and the logo behind the greeting; "plain": a classic serif (#163). */
+	look?: Look;
 	/**
 	 * Parts of the app this orchestra doesn't use, e.g. { loans: false, musicReport: false }.
 	 * Everything is on by default; FEATURES_OFF turns more off per deployment (#134).
