@@ -68,8 +68,54 @@ export function guessShortTitle(
 		if (head) counts.set(head, (counts.get(head) ?? 0) + 1);
 	}
 	const [best] = [...counts].sort((a, b) => b[1] - a[1]);
-	if (best && (best[1] >= 2 || files.length === 1)) return cleanShortTitle(best[0], naming);
-	return classicalShortTitle(title, piece) ?? cleanShortTitle(title, naming);
+	// What the files use stays, unless it's too long for a phone.
+	if (best && (best[1] >= 2 || files.length === 1)) return shortenTitle(best[0], naming, piece);
+	return classicalShortTitle(title, piece) ?? shortenTitle(title, naming, piece);
+}
+
+/** The default longest short title: "Kleine Nachtmusik" fits, "Jesu bleibet meine Freude" doesn't. */
+export const MAX_SHORT_TITLE = 18;
+export const maxShortTitle = (naming: NamingRules) => naming.maxShortTitle ?? MAX_SHORT_TITLE;
+
+/** Fillers a short title does without: "Themes from 007" → "007", "Eine kleine Nachtmusik" → "Kleine Nachtmusik". */
+const LEADING_FILLER = /^(?:(?:the|a|an|der|die|das|ein|eine|le|la|les|il|lo)\s+|(?:themes?|music|selections?|highlights?|suite|songs?)\s+(?:from|aus)\s+|aus\s+)+/iu;
+const TRAILING_FILLER = /\s+(?:medley|potpourri|selection)$/iu;
+/** A short title never ends on these: "Phantom of the" → "Phantom", "Jesu bleibet meine" → "Jesu bleibet". */
+const JOINING = new Set(
+	'of the and und from aus von a an der die das des dem den ein eine einer mit for für in im on to zu am vom zum zur la le les di de du da del meine mein deine dein unser unsere sein seine ihr ihre'.split(' ')
+);
+
+/**
+ * A short title that fits the limit: as it is when short enough, else without fillers
+ * ("Eine kleine Nachtmusik" → "Kleine Nachtmusik"), else its leading words, never ending on
+ * a joining word. When only one word would be left, composer and catalogue number say more
+ * for classical works ("Schumann Klavierkonzert op. 54" → "Schumann op. 54").
+ */
+export function shortenTitle(title: string, naming: NamingRules, piece: { composer?: string; catalogue?: string } = {}): string {
+	const max = maxShortTitle(naming);
+	const clean = cleanShortTitle(title, naming);
+	if (clean.length <= max) return clean;
+
+	const stripped = clean.replace(LEADING_FILLER, '').replace(TRAILING_FILLER, '').trim() || clean;
+	const capitalized = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+	if (capitalized.length <= max) return capitalized;
+
+	const words = capitalized.split(' ');
+	let length = 0;
+	let end = 0;
+	for (const [i, word] of words.entries()) {
+		length += (i ? 1 : 0) + word.length;
+		if (length > max) break;
+		if (!JOINING.has(word.toLowerCase())) end = i + 1;
+	}
+	if (end >= 2) return words.slice(0, end).join(' ');
+
+	const catalogue = piece.catalogue ?? naming.cataloguePatterns.map((pattern) => pattern.exec(clean)?.[0]).find(Boolean);
+	const firstWord = clean.split(' ')[0].toLowerCase();
+	const composer = piece.composer?.split(/\s+/).pop() ?? naming.knownComposers.find((name) => name.toLowerCase() === firstWord);
+	const classical = catalogue && composer ? `${composer} ${catalogue.replace(/\s+/g, ' ')}` : '';
+	if (classical && classical.length <= max) return classical;
+	return end ? words[0] : capitalized.slice(0, max).trim();
 }
 
 /**

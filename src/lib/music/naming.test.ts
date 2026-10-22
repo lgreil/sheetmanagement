@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bachkreis } from '#lib/config/presets/bachkreis.ts';
-import { checkSection, guessShortTitle, placeholderName, type NamingFile } from './naming.ts';
+import { checkSection, guessShortTitle, placeholderName, shortenTitle, type NamingFile } from './naming.ts';
 import { createInstrumentMatcher } from './part-name.ts';
 
 const matcher = createInstrumentMatcher(bachkreis.instruments);
@@ -21,9 +21,10 @@ describe('guessShortTitle', () => {
 		expect(guessShortTitle(files, 'Symphonic Reflections', naming)).toBe('Symph Reflections');
 	});
 
-	it('falls back to the piece title without brackets or commas', () => {
+	it('falls back to the piece title, without brackets or commas and short enough for a phone', () => {
 		const files = ['Best_of_Bach-ViolinII.pdf', 'Best_of_Bach-Bass.pdf'].map((x) => pdf(x));
-		expect(guessShortTitle(files, 'Sternendreher, Herbergssuche (Medley)', naming)).toBe('Sternendreher Herbergssuche Medley');
+		expect(guessShortTitle(files, 'Sternendreher, Herbergssuche (Medley)', naming)).toBe('Sternendreher');
+		expect(guessShortTitle(files, 'Sleigh Ride', naming)).toBe('Sleigh Ride');
 	});
 });
 
@@ -108,7 +109,36 @@ describe('short titles', () => {
 
 	it('reads the head before the part, movement and status', () => {
 		const files = ['Schumann - Klavierkonzert op. 54 - Kontrabass.pdf', 'Schumann - Klavierkonzert op. 54 - Viola - LEER.pdf'].map((x) => pdf(x));
-		expect(guessShortTitle(files, 'Klavierkonzert', naming)).toBe('Schumann Klavierkonzert op. 54');
+		expect(guessShortTitle(files, 'Klavierkonzert', naming)).toBe('Schumann op. 54');
+	});
+});
+
+describe('shortenTitle', () => {
+	it.each([
+		['Kleine Nachtmusik', 'Kleine Nachtmusik'],
+		['Eine kleine Nachtmusik', 'Kleine Nachtmusik'],
+		['Themes from 007', 'Themes from 007'],
+		['Themes from Harry Potter', 'Harry Potter'],
+		['Jesu bleibet meine Freude', 'Jesu bleibet'],
+		['The Phantom of the Opera', 'Phantom'],
+		['Le nozze di Figaro - Overture', 'Nozze di Figaro'],
+		['Sternendreher, Herbergssuche (Medley)', 'Sternendreher'],
+		['Pirates of the Caribbean', 'Pirates'],
+		['Donaudampfschiffahrtsgesellschaftswalzer', 'Donaudampfschiffah']
+	])('%s → %s', (title, short) => {
+		expect(shortenTitle(title, naming)).toBe(short);
+	});
+
+	it('keeps a known name rather than a catalogue number', () => {
+		expect(shortenTitle('Eine kleine Nachtmusik', naming, { composer: 'Mozart', catalogue: 'KV 525' })).toBe('Kleine Nachtmusik');
+	});
+
+	it('uses composer and catalogue number when only one word would be left', () => {
+		expect(shortenTitle('Konzert für Klarinette und Orchester A-Dur', naming, { composer: 'Wolfgang Amadeus Mozart', catalogue: 'KV 622' })).toBe('Mozart KV 622');
+	});
+
+	it('follows the configured limit', () => {
+		expect(shortenTitle('Jesu bleibet meine Freude', { ...naming, maxShortTitle: 30 })).toBe('Jesu bleibet meine Freude');
 	});
 });
 

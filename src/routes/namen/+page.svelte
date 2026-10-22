@@ -2,7 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { config } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import { checkSection, RENAME_BATCH } from '#lib/music/naming.ts';
+	import { checkSection, maxShortTitle, RENAME_BATCH } from '#lib/music/naming.ts';
 	import { createInstrumentMatcher } from '#lib/music/part-name.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -139,7 +139,7 @@
 							title={t.naming.shortTitleHint}
 							oninput={(event) => (shortTitles[section.key] = event.currentTarget.value)}
 						/>
-						{#if section.shortTitle.length > 24}<span class="warn">{t.naming.long}</span>{/if}
+						{#if section.shortTitle.length > maxShortTitle(config.naming)}<span class="warn">{t.naming.long}</span>{/if}
 					</label>
 
 					<ul class="files">

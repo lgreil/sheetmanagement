@@ -95,7 +95,8 @@ const PIECES: SamplePiece[] = [
 	{
 		id: 'demo-nachtmusik',
 		folder: 'Mozart KV 525 - Eine kleine Nachtmusik',
-		short: 'Kleine Nachtmusik',
+		// Longer than a phone shows well: /namen suggests "Kleine Nachtmusik".
+		short: 'Eine kleine Nachtmusik',
 		title: 'Eine kleine Nachtmusik',
 		composer: 'Wolfgang Amadeus Mozart',
 		duration: '17:30',

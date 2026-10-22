@@ -81,6 +81,11 @@ export interface NamingRules {
 	partNotes: Record<string, string>;
 	/** Word for a movement number glued to the front of a file name ("4_Viola" → "Satz 4"). */
 	movementNote?: string;
+	/**
+	 * Longest short title before the part ("<Kurztitel> - <Stimme>"), so names stay readable on
+	 * a phone. Longer ones are shortened in the suggestions. Default 18.
+	 */
+	maxShortTitle?: number;
 }
 
 export interface EventKeywords {
