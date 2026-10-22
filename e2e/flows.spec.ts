@@ -87,7 +87,7 @@ test('an instrument with the orchestra’s own name (#143)', async ({ page }) =>
 
 test('quick search jumps to a piece and to a page', async ({ page }) => {
 	await open(page, '/');
-	await page.getByRole('button', { name: 'Schnellsuche' }).click();
+	await page.getByRole('button', { name: 'Suchen', exact: true }).click();
 	const search = page.getByRole('combobox', { name: 'Schnellsuche' });
 	await search.fill('egmont');
 	await expect(page.getByRole('option', { name: /Egmont/ })).toBeVisible();

@@ -9,11 +9,14 @@
 	// Numbers are shown only when the programme has them; old programmes often don't.
 	const numbered = $derived(items.some((item) => item.position !== undefined));
 	const length = $derived(programLength(items.map((item) => item.duration)));
+	// The timeline: one segment per piece with a duration, as wide as its share of the concert.
+	const timed = $derived(items.flatMap((item, i) => (item.duration ? [{ i, item, share: item.duration / length.seconds }] : [])));
+	let hovered = $state<number | null>(null);
 </script>
 
 <ol class="program">
 	{#each items as item, i (i)}
-		<li>
+		<li class:lit={hovered === i} onpointerenter={() => (hovered = i)} onpointerleave={() => (hovered = null)}>
 			<svelte:element
 				this={item.pieceId ? 'a' : 'div'}
 				class="item"
@@ -37,8 +40,24 @@
 	{/each}
 	{#if total && length.known}
 		<li class="total">
-			<Icon name="clock" size={16} />
-			<span>{t.duration.total(roundMinutes(length.seconds), length.missing)}</span>
+			{#if timed.length > 1}
+				<!-- How the evening is shared out, piece by piece; the list above says the same in words. -->
+				<span class="timeline" aria-hidden="true">
+					{#each timed as segment (segment.i)}
+						<!-- Hover only lights up the piece in the list; nothing to do with the keyboard. -->
+						<!-- svelte-ignore a11y_no_static_element_interactions -->
+						<span
+							class="segment"
+							class:lit={hovered === segment.i}
+							style:flex-grow={segment.share}
+							title="{segment.item.title} · {formatDuration(segment.item.duration ?? 0)}"
+							onpointerenter={() => (hovered = segment.i)}
+							onpointerleave={() => (hovered = null)}
+						></span>
+					{/each}
+				</span>
+			{/if}
+			<span class="length"><Icon name="clock" size={16} />{t.duration.total(roundMinutes(length.seconds), length.missing)}</span>
 		</li>
 	{/if}
 </ol>
@@ -123,13 +142,47 @@
 	}
 
 	.total {
-		display: flex;
-		align-items: center;
+		display: grid;
 		gap: var(--space-2);
-		padding: var(--space-2) var(--space-4);
+		padding: var(--space-3) var(--space-4);
 		background: var(--surface-2);
 		color: var(--text-muted);
 		font-size: 0.875rem;
+	}
+
+	.length {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+	}
+
+	.timeline {
+		display: flex;
+		gap: 3px;
+		height: 10px;
+	}
+
+	.segment {
+		flex-basis: 0;
+		min-width: 6px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--accent) 45%, var(--surface-2));
+		transition:
+			background var(--fast) var(--ease),
+			transform var(--fast) var(--ease);
+	}
+
+	.segment:nth-child(even) {
+		background: color-mix(in oklab, var(--accent) 70%, var(--surface-2));
+	}
+
+	.segment.lit {
+		background: var(--accent);
+		transform: scaleY(1.5);
+	}
+
+	li.lit a.item {
+		background: var(--surface-2);
 	}
 
 	.chevron {

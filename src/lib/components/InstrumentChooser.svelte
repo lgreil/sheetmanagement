@@ -176,7 +176,7 @@
 			onclick={() => (open ? close() : show())}
 		>
 			{#if value}
-				<span class="glyph"><InstrumentGlyph glyph={glyphOf(value)} size={22} /></span>
+				<span class="glyph"><InstrumentGlyph glyph={glyphOf(value)} size={24} /></span>
 				<span id="{labelledby}-value" class="value">{instrumentLabel(value)}</span>
 			{:else}
 				<span id="{labelledby}-value" class="value placeholder">{t.instruments.choose}</span>
@@ -198,7 +198,7 @@
 							<div class="grid" role="group" aria-label={section.label || undefined}>
 								{#each section.names as n (n)}
 									<button type="button" class="tile" data-name={n} aria-pressed={n === value} onclick={() => pick(n)}>
-										<span class="plate"><InstrumentGlyph glyph={glyphOf(n)} size={26} /></span>
+										<span class="plate"><InstrumentGlyph glyph={glyphOf(n)} size={34} /></span>
 										<span>{instrumentLabel(n)}</span>
 									</button>
 								{/each}
@@ -423,7 +423,7 @@
 		justify-items: center;
 		align-content: start;
 		gap: 6px;
-		min-height: 78px;
+		min-height: 88px;
 		padding: var(--space-2) var(--space-1);
 		border: 1px solid transparent;
 		border-radius: 12px;
@@ -444,11 +444,11 @@
 	.plate {
 		display: grid;
 		place-items: center;
-		width: 46px;
-		height: 46px;
+		width: 54px;
+		height: 54px;
 		border-radius: 50%;
 		background: var(--bg);
-		color: var(--text-muted);
+		color: color-mix(in oklab, var(--text) 78%, transparent);
 		transition:
 			color var(--fast) var(--ease),
 			background var(--fast) var(--ease),

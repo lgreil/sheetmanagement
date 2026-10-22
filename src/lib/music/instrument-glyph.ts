@@ -7,9 +7,9 @@ import type { InstrumentFamily } from '#lib/config/types.ts';
  */
 export type Glyph =
 	| 'violin'
-	| 'cello'
 	| 'flute'
 	| 'clarinet'
+	| 'bassoon'
 	| 'sax'
 	| 'horn'
 	| 'trumpet'
@@ -20,6 +20,7 @@ export type Glyph =
 	| 'cymbal'
 	| 'mallets'
 	| 'keys'
+	| 'organ'
 	| 'harp'
 	| 'voice'
 	| 'score';
@@ -27,7 +28,8 @@ export type Glyph =
 // First match wins, so "Englischhorn" is a clarinet before "horn" makes it a horn.
 const BY_NAME: [RegExp, Glyph][] = [
 	[/saxophon/, 'sax'],
-	[/oboe|englischhorn|klarinette|fagott/, 'clarinet'],
+	[/fagott/, 'bassoon'],
+	[/oboe|englischhorn|klarinette/, 'clarinet'],
 	[/fl(ö|oe)te|piccolo/, 'flute'],
 	[/horn/, 'horn'],
 	[/trompete|kornett|fl(ü|ue)gelhorn/, 'trumpet'],
@@ -36,9 +38,9 @@ const BY_NAME: [RegExp, Glyph][] = [
 	[/pauke/, 'timpani'],
 	[/glockenspiel|xylophon|vibraphon|marimba|mallet/, 'mallets'],
 	[/becken|tamtam|gong/, 'cymbal'],
-	[/cello|kontrabass|e-bass/, 'cello'],
-	[/geige|viola|violine/, 'violin'],
-	[/klavier|cembalo|orgel|synthesizer|continuo|piano/, 'keys'],
+	[/geige|viola|violine|bratsche|cello|kontrabass|e-bass/, 'violin'],
+	[/orgel/, 'organ'],
+	[/klavier|cembalo|synthesizer|continuo|piano/, 'keys'],
 	[/harfe/, 'harp'],
 	[/sopran|alt$|tenor$|bass$|chor|gesang/, 'voice']
 ];

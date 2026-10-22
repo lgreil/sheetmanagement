@@ -4,7 +4,9 @@ import { glyphOf, instrumentGlyph, partGlyph } from './instrument-glyph.ts';
 describe('instrumentGlyph', () => {
 	it('goes by the name first', () => {
 		expect(instrumentGlyph('Geige', 'streicher')).toBe('violin');
-		expect(instrumentGlyph('Kontrabass', 'streicher')).toBe('cello');
+		expect(instrumentGlyph('Kontrabass', 'streicher')).toBe('violin');
+		expect(instrumentGlyph('Fagott', 'holz')).toBe('bassoon');
+		expect(instrumentGlyph('Orgel', 'tasten')).toBe('organ');
 		expect(instrumentGlyph('Bassklarinette', 'holz')).toBe('clarinet');
 		expect(instrumentGlyph('Alt-Saxophon', 'holz')).toBe('sax');
 		expect(instrumentGlyph('Tenor-Blockflöte', 'holz')).toBe('flute');
@@ -29,7 +31,7 @@ describe('instrumentGlyph', () => {
 	it('knows the orchestra’s instruments by name and by label', () => {
 		expect(glyphOf('Viola')).toBe('violin');
 		expect(glyphOf('Bratsche')).toBe('violin');
-		expect(glyphOf('Cello')).toBe('cello');
+		expect(glyphOf('Cello')).toBe('violin');
 		expect(glyphOf('Pauke')).toBe('timpani');
 	});
 

@@ -25,6 +25,7 @@
 	import { searchText } from '#lib/music/text.ts';
 	import type { NavGroup } from '#lib/nav.ts';
 	import Icon, { type IconName } from './Icon.svelte';
+	import Nothing from './Nothing.svelte';
 
 	/**
 	 * Jump anywhere with Ctrl+K (⌘K on a Mac): pages, pieces and concerts, searched while typing.
@@ -218,7 +219,7 @@
 					{/each}
 				</div>
 			{:else}
-				<p class="empty">{loading ? t.quickSearch.loading : t.quickSearch.none(query.trim())}</p>
+				{#if loading}<p class="empty">{t.quickSearch.loading}</p>{:else}<Nothing text={t.quickSearch.none(query.trim())} />{/if}
 			{/each}
 			{#if loading && query.trim() && hits.length}<p class="empty">{t.quickSearch.loading}</p>{/if}
 		</div>

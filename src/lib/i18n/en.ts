@@ -34,7 +34,8 @@ export const en: Texts = {
 	},
 	footer: {
 		links: 'The orchestra online',
-		source: 'Source code'
+		source: 'Source code',
+		instruments: 'Instruments: game-icons.net (CC BY 3.0)'
 	},
 	theme: {
 		label: 'Colour scheme',

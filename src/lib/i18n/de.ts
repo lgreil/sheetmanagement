@@ -33,7 +33,8 @@ export const de = {
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
-		source: 'Quellcode'
+		source: 'Quellcode',
+		instruments: 'Instrumente: game-icons.net (CC BY 3.0)'
 	},
 	theme: {
 		label: 'Farbschema',

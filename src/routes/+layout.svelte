@@ -129,8 +129,8 @@
 			</nav>
 
 			{#if groups.length}
-				<button class="search" onclick={() => (searching = true)} onpointerenter={loadIndex} onfocus={loadIndex} aria-label={t.quickSearch.label}>
-					<Icon name="search" size={18} /><span class="search-label">{t.quickSearch.open}</span><kbd>{mac ? '⌘K' : t.quickSearch.shortcut}</kbd>
+				<button class="search" onclick={() => (searching = true)} onpointerenter={loadIndex} onfocus={loadIndex} data-shortcut={mac ? '⌘K' : t.quickSearch.shortcut}>
+					<Icon name="search" size={18} /><span class="search-label">{t.quickSearch.open}</span>
 				</button>
 			{/if}
 
@@ -178,6 +178,8 @@
 					{t.nav.appName} v{__APP_VERSION__} · <a href={sourceUrl} target="_blank" rel="noopener noreferrer">{t.footer.source}</a>
 				</p>
 			{/if}
+			<!-- The instrument drawings are CC BY: credited where everyone sees them. -->
+			<p class="source"><a href="/licenses/game-icons-CC-BY-3.0.txt">{t.footer.instruments}</a></p>
 		</footer>
 	</main>
 
@@ -388,7 +390,9 @@
 		color: var(--text);
 	}
 
-	.search kbd {
+	/* Decoration only: the button is called "Suchen", the shortcut isn't part of its name. */
+	.search::after {
+		content: attr(data-shortcut) / '';
 		padding: 1px 6px;
 		border-radius: 999px;
 		background: var(--bg);
@@ -445,9 +449,18 @@
 			padding: 0;
 		}
 
-		.search-label,
-		.search kbd {
+		.search::after {
 			display: none;
+		}
+
+		/* Still the button's name, only not shown. */
+		.search-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
 		}
 	}
 
