@@ -66,8 +66,8 @@
 		}
 		const usual = instruments.filter((n) => common.includes(n));
 		const families: { label: string; names: string[] }[] = [];
+		// Each family lists all its instruments, the usual ones too: nobody has to know which those are.
 		for (const n of instruments) {
-			if (common.includes(n)) continue;
 			const heading = familyLabel(family(n));
 			const section = families.find((s) => s.label === heading);
 			if (section) section.names.push(n);
