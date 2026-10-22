@@ -6,8 +6,12 @@
 	--brand: #e6b422;
 	--brand-ink: #0b0b0a;
 	--accent: var(--accent-light, color-mix(in oklab, var(--brand) 44%, #3a1f00));
-	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
+	--accent-soft: color-mix(in oklab, var(--brand) var(--soft-light, 22%), transparent);
 	--accent-contrast: #fff;
+	/* Banners like a piece's header: the accent with white text in light, a tinted dark surface in dark. */
+	--hero-from: var(--accent);
+	--hero-to: color-mix(in oklab, var(--accent) 72%, #000);
+	--hero-ink: var(--accent-contrast);
 
 	/* Light: a bright, nearly neutral page with white cards on it; gold stays the accent. */
 	--bg: #f4f4f1;
@@ -63,6 +67,9 @@
 		--text: #f2eee4;
 		--text-muted: #a9a293;
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
+		--hero-from: color-mix(in oklab, var(--accent) 30%, var(--surface));
+		--hero-to: color-mix(in oklab, var(--accent) 12%, var(--bg));
+		--hero-ink: var(--text);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 		--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 		--ok: #4fae78;
@@ -82,6 +89,9 @@
 	--text: #f2eee4;
 	--text-muted: #a9a293;
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
+	--hero-from: color-mix(in oklab, var(--accent) 30%, var(--surface));
+	--hero-to: color-mix(in oklab, var(--accent) 12%, var(--bg));
+	--hero-ink: var(--text);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
 	--ok: #4fae78;

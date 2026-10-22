@@ -10,6 +10,14 @@ const DARK_BG = '#0b0b0a';
 const DARK_INK = '#0b0b0a';
 const WHITE = '#ffffff';
 const MIN_CONTRAST = 4.5;
+/** Muted text in light, as in app.css; it sits on the soft accent tint too. */
+const LIGHT_MUTED = '#625e55';
+/** The raised dark surface the soft tint sits on most often (cards, the demo banner, active tabs). */
+const DARK_SURFACE = '#201e1b';
+/** The soft tint's strength in dark, as in app.css. */
+const SOFT_DARK = 0.16;
+/** Mixing in oklab (as the CSS does) and sRGB (as here) differ a little, hence the margin. */
+const TINT_MARGIN = 0.15;
 
 /** Ready-made accents offered on /einstellungen; each reads well in both schemes once derived. */
 export const COLOUR_PRESETS = {
@@ -73,21 +81,33 @@ export interface BrandColours {
 	dark: string;
 	/** Text on dark-scheme buttons: near-black or white, whichever reads better. */
 	ink: string;
+	/** How much of the colour the soft tint behind labels and banners takes in light, in %: up to 22, less for dark colours. */
+	softLight: number;
 	/** Whether a shade had to be darkened or lightened; /status says so. */
 	adjusted: { light: boolean; dark: boolean };
 }
 
 export function brandColours(brand: string): BrandColours {
 	const light = shift(brand, '#000000', (shade) => contrast(shade, LIGHT_BG) >= MIN_CONTRAST && contrast(shade, WHITE) >= MIN_CONTRAST);
-	const dark = shift(brand, WHITE, (shade) => contrast(shade, DARK_BG) >= MIN_CONTRAST);
+	// Accent text sits on the page and on the soft tint, so it has to read on both.
+	const darkTint = mix(DARK_SURFACE, brand, SOFT_DARK);
+	const dark = shift(brand, WHITE, (shade) => contrast(shade, DARK_BG) >= MIN_CONTRAST && contrast(shade, darkTint) >= MIN_CONTRAST + TINT_MARGIN);
 	const ink = contrast(dark, DARK_INK) >= contrast(dark, WHITE) ? DARK_INK : WHITE;
-	return { brand, light, dark, ink, adjusted: { light: light !== brand, dark: dark !== brand } };
+	// Accent and muted text must stay readable on the tint, so a dark colour tints less.
+	const readable = (percent: number) => {
+		const tint = mix(LIGHT_BG, brand, percent / 100);
+		return [light, LIGHT_MUTED].every((text) => contrast(text, tint) >= MIN_CONTRAST + TINT_MARGIN);
+	};
+	const softLight = [22, 20, 18, 16, 14, 12, 10, 8].find(readable) ?? 6;
+	return { brand, light, dark, ink, softLight, adjusted: { light: light !== brand, dark: dark !== brand } };
 }
 
 /**
  * The CSS custom properties app.css derives its theme from. `:root:root` outranks app.css's
- * defaults on `:root`, whichever stylesheet the browser loads last.
+ * defaults on `:root`, whichever stylesheet the browser loads last. A preset's own light shade
+ * keeps app.css's tint, which was checked with it (#141); the derived one gets its computed tint.
  */
 export function brandStyle(colours: BrandColours, lightOverride?: string): string {
-	return `:root:root{--brand:${colours.brand};--brand-ink:${colours.ink};--accent-light:${lightOverride ?? colours.light};--accent-dark:${colours.dark}}`;
+	const tint = lightOverride ? '' : `;--soft-light:${colours.softLight}%`;
+	return `:root:root{--brand:${colours.brand};--brand-ink:${colours.ink};--accent-light:${lightOverride ?? colours.light};--accent-dark:${colours.dark}${tint}}`;
 }

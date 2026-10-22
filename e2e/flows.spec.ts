@@ -55,7 +55,7 @@ test('several composers, separated by commas', async ({ page }) => {
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
 	// Each composer links to their works; the Mozart list now has Egmont too.
-	const eyebrow = page.locator('.head .eyebrow');
+	const eyebrow = page.locator('.hero .eyebrow');
 	await expect(eyebrow.getByRole('link', { name: 'Beethoven' })).toBeVisible();
 	await eyebrow.getByRole('link', { name: 'Mozart' }).click();
 	await expect(page).toHaveURL(/komponist=Mozart/);

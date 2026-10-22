@@ -83,7 +83,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				arranger: sheet?.arranger,
 				genre: sheet?.genre,
 				difficulty: sheet?.difficulty,
-				reviewedAt: sheet?.reviewedAt,
+				// "2026-10-22" reads "22. Oktober 2026"; anything else as entered.
+				reviewedAt: sheet?.reviewedAt && /^\d{4}-\d{2}-\d{2}$/.test(sheet.reviewedAt) ? formatDay(sheet.reviewedAt, config.locale) : sheet?.reviewedAt,
 				notes: sheet?.notes
 			}
 		},

@@ -44,8 +44,10 @@ describe('brandColours', () => {
 
 	it('writes the custom properties, with a preset shade for the light page when given', () => {
 		const colours = brandColours('#e6b422');
-		expect(brandStyle(colours)).toBe(`:root:root{--brand:#e6b422;--brand-ink:#0b0b0a;--accent-light:${colours.light};--accent-dark:#e6b422}`);
-		expect(brandStyle(colours, 'color-mix(in oklab, #e6b422 44%, #3a1f00)')).toContain('--accent-light:color-mix(in oklab, #e6b422 44%, #3a1f00);');
+		expect(brandStyle(colours)).toBe(`:root:root{--brand:#e6b422;--brand-ink:#0b0b0a;--accent-light:${colours.light};--accent-dark:#e6b422;--soft-light:${colours.softLight}%}`);
+		const preset = brandStyle(colours, 'color-mix(in oklab, #e6b422 44%, #3a1f00)');
+		expect(preset).toContain('--accent-light:color-mix(in oklab, #e6b422 44%, #3a1f00);');
+		expect(preset).not.toContain('--soft-light');
 	});
 });
 
@@ -55,5 +57,17 @@ describe('COLOUR_PRESETS', () => {
 			expect(parseColour(colour)).toBe(colour);
 			expect(contrast(brandColours(colour).dark, '#0b0b0a')).toBeGreaterThanOrEqual(4.5);
 		}
+	});
+});
+
+describe('softLight', () => {
+	it('tints as much as text on it allows, at most 22 %', () => {
+		for (const colour of ['#e6b422', '#2c5d8f', '#1e1b4b', '#fde68a']) {
+			const { softLight } = brandColours(colour);
+			expect(softLight).toBeGreaterThan(0);
+			expect(softLight).toBeLessThanOrEqual(22);
+		}
+		expect(brandColours('#fde68a').softLight).toBe(22);
+		expect(brandColours('#1e1b4b').softLight).toBeLessThan(22);
 	});
 });

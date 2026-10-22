@@ -9,7 +9,8 @@
 	 * link connections and shareable links · share sending elsewhere · download keeping on the
 	 * device · print · edit · text file names · table the sheet, tabular lists · sliders setup ·
 	 * activity connection status · refresh reloading · shield rights · eye looking at the pages ·
-	 * palette the orchestra's name, look and features.
+	 * palette the orchestra's name, look and features · gauge a piece's difficulty ·
+	 * book a publisher · tag a genre.
 	 */
 	const paths = {
 		home: 'M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z',
@@ -65,6 +66,9 @@
 		table: 'M3 4h18v16H3zM3 10h18M3 15h18M10 4v16',
 		sliders: 'M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6',
 		activity: 'M22 12h-4l-3 9L9 3l-3 9H2',
+		book: 'M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5v14ZM4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5',
+		tag: 'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8ZM7.5 7.5h.01',
+		gauge: 'M12 14l4-4M3.5 18a10 10 0 1 1 17 0',
 		palette:
 			'M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4.5 4H16a2 2 0 0 0-1.5 3.3A1.6 1.6 0 0 1 12 22ZM7.5 11.5h.01M10.5 7.5h.01M15.5 8.5h.01',
 		eye: 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12ZM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z'
