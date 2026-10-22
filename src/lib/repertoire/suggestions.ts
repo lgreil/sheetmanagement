@@ -1,3 +1,4 @@
+import { listItems, splitList } from './lists.ts';
 import { normalize } from './sheet.ts';
 
 /**
@@ -55,9 +56,10 @@ export function programSuggestions(input: {
 }): { wished: Suggestion[]; longAgo: Suggestion[]; genres: string[] } {
 	const byId = new Map(input.pieces.map((piece) => [piece.id, piece]));
 	const inProgram = new Set(input.programPieceIds);
-	const genres = [...new Set(input.programPieceIds.flatMap((id) => byId.get(id)?.genre ?? []))];
+	const genres = listItems(input.programPieceIds.map((id) => byId.get(id)?.genre));
 	const known = new Set(genres.map(normalize));
-	const isNew = (genre?: string) => !!genre && !known.has(normalize(genre));
+	// "Filmmusik, Pop" brings something new if one of its genres isn't in the programme yet.
+	const isNew = (genre?: string) => splitList(genre).some((item) => !known.has(normalize(item)));
 
 	// Wishes for this concert or any time, still open or planned; one entry per piece.
 	const wished = new Map<string, Suggestion>();

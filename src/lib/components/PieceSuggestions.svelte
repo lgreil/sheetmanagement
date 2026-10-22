@@ -5,6 +5,7 @@
 	import type { NamingRules } from '#lib/config/index.ts';
 	import { formatDuration } from '#lib/repertoire/duration.ts';
 	import { youtubeId } from '#lib/links.ts';
+	import { joinList, LIST_COLUMNS, listHas, splitList } from '#lib/repertoire/lists.ts';
 	import Icon from './Icon.svelte';
 	import ScoreViewer from './ScoreViewer.svelte';
 
@@ -108,7 +109,8 @@
 		try {
 			const title = values.title?.trim();
 			if (!title) return;
-			candidates = await searchWorks(title, values.composer?.trim() || undefined);
+			// One composer is enough to narrow the search.
+			candidates = await searchWorks(title, splitList(values.composer)[0]);
 			if (!candidates.length) message = t.suggest.nothingOnline;
 			else await choose(candidates[0].id);
 		} catch (error) {
@@ -127,6 +129,9 @@
 			const work = await workDetails(id);
 			wikidataUrl = work.url;
 			const list: Suggestion[] = [];
+			// A work by several composers: all of them as one list first, then each one.
+			if (work.composers.length > 1)
+				list.push({ field: 'composer', value: joinList(work.composers.map((composer) => composerAsUsual(composer, knownComposers))), source: 'wikidata' });
 			for (const composer of work.composers) {
 				list.push({ field: 'composer', value: composerAsUsual(composer, knownComposers), source: 'wikidata' });
 				list.push({ field: 'composer', value: composer, source: 'wikidata' });
@@ -172,7 +177,13 @@
 		const query = [values.title, values.composer, arranger && `arr. ${arranger}`].map((part) => part?.trim()).filter(Boolean).join(' ');
 		return `https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`;
 	});
-	const filled = (s: Suggestion) => (values[s.field] ?? '').trim() === s.value;
+	const isList = (field: Field) => (LIST_COLUMNS as readonly string[]).includes(field);
+	// In a list field a name counts as entered once it's one of the list's names.
+	const filled = (s: Suggestion) =>
+		isList(s.field) ? splitList(s.value).every((name) => listHas(values[s.field], name)) : (values[s.field] ?? '').trim() === s.value;
+	/** "Ergänzen": the suggestion after the names already there. */
+	const canAdd = (s: Suggestion) => isList(s.field) && !!splitList(values[s.field]).length;
+	const added = (s: Suggestion) => joinList(splitList(`${values[s.field]}, ${s.value}`));
 	const columns = t.sheet.pieces.columns;
 </script>
 
@@ -236,7 +247,12 @@
 					{#if filled(suggestion)}
 						<span class="done"><Icon name="check" size={14} />{t.suggest.applied}</span>
 					{:else}
-						<button class="take" type="button" onclick={() => apply(suggestion.field, suggestion.value)}>{t.suggest.apply}</button>
+						<span class="takes">
+							{#if canAdd(suggestion)}
+								<button class="take" type="button" onclick={() => apply(suggestion.field, added(suggestion))}>{t.suggest.add}</button>
+							{/if}
+							<button class="take" type="button" onclick={() => apply(suggestion.field, suggestion.value)}>{t.suggest.apply}</button>
+						</span>
 					{/if}
 				</li>
 			{/each}
@@ -375,6 +391,11 @@
 		font-size: 0.8125rem;
 		font-weight: 600;
 		cursor: pointer;
+	}
+
+	.takes {
+		display: flex;
+		gap: var(--space-1);
 	}
 
 	.done {

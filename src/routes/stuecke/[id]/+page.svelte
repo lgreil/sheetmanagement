@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { splitList } from '#lib/repertoire/lists.ts';
 	import { enhance } from '$app/forms';
 	import { t } from '#lib/i18n/index.ts';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
@@ -85,9 +86,8 @@
 <header class="head">
 	{#if piece.composer || piece.catalogue}
 		<p class="eyebrow">
-			{#if piece.composer}
-				<a href="/stuecke?komponist={encodeURIComponent(piece.composer)}" title={t.piece.allBy(piece.composer)}>{piece.composer}</a>
-			{/if}
+			<!-- Each composer of a list links to all of their works. -->
+			{#each splitList(piece.composer) as name, i (name)}{#if i}, {/if}<a href="/stuecke?komponist={encodeURIComponent(name)}" title={t.piece.allBy(name)}>{name}</a>{/each}
 			{#if piece.composer && piece.catalogue}·{/if}
 			{piece.catalogue ?? ''}
 		</p>

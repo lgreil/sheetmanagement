@@ -8,6 +8,7 @@ import { requireRight } from '#lib/server/auth/index.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
 import { youtubeEnabled } from '#lib/server/youtube.ts';
+import { listItems } from '#lib/repertoire/lists.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord, updateRecords } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -24,10 +25,10 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const values = pieceValues(row);
 	// A Drive piece without its own title in the sheet shows what the folder name says; start from that.
 	if (!values.title) values.title = piece.title;
-	// Genres and composers already in use, so suggestions and typing follow the archive's words.
+	// Names already in use, one by one ("Mozart, Haydn" offers both), so typing follows the archive's words.
 	const used = (pick: (p: (typeof library.pieces)[number]) => string | undefined) =>
-		[...new Set(library.pieces.map(pick).filter((v): v is string => !!v?.trim()))].sort((a, b) => a.localeCompare(b, config.locale));
-	const genres = [...new Set([...(config.genres ?? []), ...used((p) => p.sheet?.genre)])];
+		listItems(library.pieces.map(pick)).sort((a, b) => a.localeCompare(b, config.locale));
+	const genres = listItems([...(config.genres ?? []), ...used((p) => p.sheet?.genre)]);
 	const pdfs = (piece.detail?.parts ?? []).filter((part) => part.mimeType === 'application/pdf' && part.status === 'ok');
 	// The score first: its title page names composer and arranger most often.
 	const files = [...pdfs.filter((part) => part.kind === 'partitur'), ...pdfs.filter((part) => part.kind !== 'partitur')]
@@ -43,7 +44,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		// Columns an older sheet lacks; their fields wait until "Tabelle einrichten" adds them.
 		missing: EDITABLE.filter((column) => repertoire.ok && repertoire.repertoire.tables.pieces.missing.includes(column)),
 		genres,
-		composers: [...new Set([...config.naming.knownComposers, ...used((p) => p.sheet?.composer)])],
+		composers: listItems([...config.naming.knownComposers, ...used((p) => p.sheet?.composer)]),
+		arrangers: used((p) => p.sheet?.arranger),
+		publishers: used((p) => p.sheet?.publisher),
 		files,
 		// The PDFs come through the app, which is for signed-in members.
 		canRead: locals.auth === 'on' && locals.access.member,

@@ -46,6 +46,19 @@ describe('programSuggestions', () => {
 		expect(result.wished.find((s) => s.title === 'Bolero')?.newGenre).toBe(true);
 	});
 
+	it('compares genre lists name by name', () => {
+		const mixed = programSuggestions({
+			concertTitle: 'Sommer',
+			programPieceIds: ['fame', 'mix'],
+			pieces: [...pieces, { id: 'mix', title: 'Mix', genre: 'Pop, Film', pickable: true }, { id: 'both', title: 'Both', genre: 'film, pop', lastPlayed: '1990', pickable: true }],
+			today: '2026-10-20',
+			wishes: [wish({ id: 'w9', title: 'Both', pieceId: 'both', votes: 1 }), wish({ id: 'w10', title: 'Bolero', pieceId: 'bolero', votes: 1 })]
+		});
+		expect(mixed.genres).toEqual(['Film', 'Pop']);
+		expect(mixed.wished.find((s) => s.title === 'Both')?.newGenre).toBe(false);
+		expect(mixed.wished.find((s) => s.title === 'Bolero')?.newGenre).toBe(true);
+	});
+
 	it('suggests pickable pieces not played for a long time, new genres first', () => {
 		expect(result.longAgo.map((s) => s.title)).toEqual(['Carmen', 'Sleigh Ride']);
 	});

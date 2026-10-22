@@ -1,5 +1,6 @@
 import { cleanLink } from '#lib/links.ts';
 import { formatDuration, parseDuration } from './duration.ts';
+import { LIST_COLUMNS, tidyList } from './lists.ts';
 import { normalize, type ColumnKey, type Table, type TableRow } from './sheet.ts';
 
 /**
@@ -60,6 +61,8 @@ export function checkPieceValues(
 	// Programme rows find pieces by title, so it has to stay unique.
 	const title = normalize(cleaned.title);
 	if (table.rows.some((row) => row.row !== ownRow && normalize(row.values.title) === title)) return { problem: 'title-taken' };
+	// Several composers, genres …: "Mozart ,Haydn;" is saved as "Mozart, Haydn".
+	for (const column of LIST_COLUMNS) cleaned[column] = tidyList(cleaned[column]);
 	if (cleaned.recording) {
 		const link = cleanLink(cleaned.recording);
 		if (!link) return { problem: 'bad-link' };
