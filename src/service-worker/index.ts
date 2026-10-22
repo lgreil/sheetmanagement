@@ -15,8 +15,13 @@ const PAGES = 'pages-v1';
 /** Part PDFs saved on "Meine Noten". */
 const NOTEN = 'noten-v1';
 const MAX_PAGES = 80;
-/** Paths come relative to the base path; requests are matched by their absolute path. */
-const ASSETS = new Set([...immutable, ...assets].map(({ path }) => `/${path.replace(/^\//, '')}`));
+/**
+ * Paths come relative to the base path; requests are matched by their absolute path.
+ * The candidate fonts of the comparison page (#163) aren't the app's: nobody downloads them for offline use.
+ */
+const ASSETS = new Set(
+	[...immutable, ...assets].map(({ path }) => `/${path.replace(/^\//, '')}`).filter((path) => !path.startsWith('/vorschau-fonts/'))
+);
 
 sw.addEventListener('install', (event) => {
 	event.waitUntil(caches.open(APP).then((cache) => cache.addAll([...ASSETS])));
