@@ -57,7 +57,8 @@
 		users: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8',
 		list: 'M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01',
 		download: 'M12 3v12M7 10l5 5 5-5M5 21h14',
-		parts: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M10 17a2 2 0 1 1-4 0 2 2 0 0 1 4 0Zm0 0v-6l5-1.5',
+		// A bookmark with a note: your pick from the archive. The note sits a little left, so with its flag it's centred.
+		parts: 'M6 3h12v18l-6-4-6 4zM12.5 12a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm0 0V7l2-.5',
 		loan: 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3',
 		text: 'M4 7V4h16v3M9 20h6M12 4v16',
 		table: 'M3 4h18v16H3zM3 10h18M3 15h18M10 4v16',
