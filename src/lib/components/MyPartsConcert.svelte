@@ -222,16 +222,19 @@
 				<li class="piece" class:none={label && !piece.matches.some(hasPart)}>
 					<span class="position">{piece.position ?? i + 1}</span>
 					<div class="body">
-						<div class="title">
-							{#if piece.pieceId}
-								<a href="/stuecke/{encodeURIComponent(piece.pieceId)}">{piece.title}</a>
-							{:else}{piece.title}{/if}
-							{#if piece.subtitle}<span class="muted">{piece.subtitle}</span>{/if}
-							{#if piece.recording}
-								<a class="listen" href={piece.recording} target="_blank" rel="noopener noreferrer nofollow" title={t.piece.recording}>
-									<Icon name="headphones" size={14} />{t.piece.recording}
-								</a>
-							{/if}
+						<!-- The Hörbeispiel always follows the piece's name; composers get a line of their own below. -->
+						<div class="heading">
+							<div class="title">
+								{#if piece.pieceId}
+									<a href="/stuecke/{encodeURIComponent(piece.pieceId)}">{piece.title}</a>
+								{:else}{piece.title}{/if}
+								{#if piece.recording}
+									<a class="listen" href={piece.recording} target="_blank" rel="noopener noreferrer nofollow" title={t.piece.recording}>
+										<Icon name="headphones" size={14} />{t.piece.recording}
+									</a>
+								{/if}
+							</div>
+							{#if piece.subtitle}<span class="subtitle muted">{piece.subtitle}</span>{/if}
 						</div>
 						{#if !piece.hasMusic}
 							<span class="hint">{t.myParts.noMusic}</span>
@@ -416,6 +419,16 @@
 		align-items: baseline;
 		gap: var(--space-1) var(--space-2);
 		font-weight: 600;
+	}
+
+	.heading {
+		display: grid;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.subtitle {
+		font-size: 0.9375rem;
 	}
 
 	.title a:hover {
