@@ -88,6 +88,7 @@
 		color: var(--brand-ink);
 		font: inherit;
 		font-weight: 650;
+		white-space: nowrap;
 		cursor: pointer;
 	}
 

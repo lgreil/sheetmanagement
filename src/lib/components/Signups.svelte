@@ -18,7 +18,12 @@
 	} = $props();
 
 	const saving = new FormState();
-	const submit = saving.submit();
+	// The tapped answer shows as chosen at once; the sheet catches up in the background.
+	let tapped = $state<string | null>(null);
+	const submit = saving.submit({
+		onStart: ({ submitter }) => (tapped = submitter?.getAttribute('name') === 'answer' ? submitter.getAttribute('value') : null)
+	});
+	const chosen = $derived((saving.busy && tapped) || signups.mine?.answer);
 
 	const ICONS = { yes: 'check', maybe: 'minus', no: 'x' } as const;
 	const KINDS = ['yes', 'maybe', 'no', 'open'] as const;
@@ -26,15 +31,15 @@
 	const otherSections = $derived(signups.instruments.filter((name) => !signups.ownSections.includes(name)));
 </script>
 
-<section class="signups" id="anmeldung">
-	<div class="ask">
-		<h2>{t.signups.question}</h2>
+<section class="signups" id="anmeldung" aria-labelledby="signups-title">
+	<h2 class="ui-label" id="signups-title">{t.signups.question}</h2>
+	<div class="ui-card card">
 		<form class="answers" method="POST" action="?/answer" use:enhance={submit}>
 			{#each ANSWERS as answer (answer)}
 				<button
 					class="answer {answer}"
-					class:chosen={mine?.answer === answer}
-					aria-pressed={mine?.answer === answer}
+					class:chosen={chosen === answer}
+					aria-pressed={chosen === answer}
 					name="answer"
 					value={answer}
 					disabled={saving.busy}
@@ -73,7 +78,6 @@
 				</form>
 			</details>
 		{/if}
-	</div>
 
 	<!-- Who comes, per section: one line folded, the full list on demand. -->
 	<details class="coverage ui-disclosure">
@@ -95,17 +99,12 @@
 							{#if section.counts.yes === 0}{t.signups.uncovered}{:else}{section.counts.yes}/{expected}{/if}
 						</span>
 						{#if section.names}
-							<details class="names">
-								<summary aria-label={section.label}><Icon name="down" size={14} /></summary>
-								<dl>
-									{#each KINDS as kind (kind)}
-										{#if section.names[kind].length}
-											<dt>{t.signups.kinds[kind]}</dt>
-											<dd>{section.names[kind].join(', ')}</dd>
-										{/if}
-									{/each}
-								</dl>
-							</details>
+							<!-- Who it is, right under the bar: no second level to open. -->
+							<p class="names">
+								{#each KINDS.filter((kind) => section.names?.[kind].length) as kind (kind)}
+									<span class="who {kind}"><span class="kind">{t.signups.kinds[kind]}:</span> {section.names[kind].join(', ')}</span>
+								{/each}
+							</p>
 						{/if}
 					</li>
 				{/each}
@@ -120,22 +119,24 @@
 			</ul>
 		{/if}
 	</details>
+	</div>
 </section>
 
 <style>
 	.signups {
+		margin-bottom: var(--space-6);
+	}
+
+	/* One column at every width: the answer first, then who else comes. */
+	.card {
 		display: grid;
 		gap: var(--space-3);
-		margin-bottom: var(--space-6);
-		padding: var(--space-4) var(--space-5);
-		border: 1px solid var(--hairline);
-		border-radius: var(--radius-l);
-		background: var(--surface);
-		box-shadow: var(--shadow);
+		padding: var(--space-4);
 	}
 
 	.coverage {
-		padding-top: var(--space-2);
+		margin: 0 calc(-1 * var(--space-4)) calc(-1 * var(--space-4));
+		padding: var(--space-1) var(--space-4) var(--space-2);
 		border-top: 1px solid var(--hairline);
 	}
 
@@ -153,15 +154,6 @@
 		color: var(--text-muted);
 		font-size: 0.875rem;
 		font-weight: 400;
-	}
-
-	h2 {
-		margin: 0 0 var(--space-2);
-		color: var(--text-muted);
-		font-size: 0.8125rem;
-		font-weight: 600;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
 	}
 
 	h3 {
@@ -244,17 +236,16 @@
 		}
 	}
 
+	/* While saving, the chosen answer already shows; only the others step back. */
 	.answer:disabled {
-		opacity: 0.6;
 		cursor: progress;
 	}
 
-	.msg {
-		margin-top: var(--space-2);
+	.answer:disabled:not(.chosen) {
+		opacity: 0.6;
 	}
 
 	.details {
-		margin-top: var(--space-3);
 		font-size: 0.875rem;
 	}
 
@@ -295,7 +286,7 @@
 	.sections,
 	.comments {
 		display: grid;
-		gap: var(--space-1);
+		gap: var(--space-2);
 		margin: 0;
 		padding: 0;
 		list-style: none;
@@ -303,9 +294,9 @@
 
 	.sections li {
 		display: grid;
-		grid-template-columns: minmax(90px, 140px) 1fr auto auto;
+		grid-template-columns: minmax(90px, 140px) 1fr auto;
 		align-items: center;
-		gap: var(--space-1) var(--space-3);
+		gap: 2px var(--space-3);
 		font-size: 0.875rem;
 	}
 
@@ -319,6 +310,10 @@
 		overflow: hidden;
 		border-radius: 999px;
 		background: var(--surface-2);
+	}
+
+	.bar span {
+		transition: width 0.4s var(--ease);
 	}
 
 	.bar .yes {
@@ -342,51 +337,25 @@
 	}
 
 	.names {
-		display: contents;
-	}
-
-	.names summary {
-		display: grid;
-		place-items: center;
-		width: 24px;
-		height: 24px;
-		border-radius: 6px;
-		color: var(--text-muted);
-		list-style: none;
-		cursor: pointer;
-	}
-
-	.names summary::-webkit-details-marker {
-		display: none;
-	}
-
-	.names dl {
 		grid-column: 1 / -1;
-		display: grid;
-		grid-template-columns: auto 1fr;
-		gap: 2px var(--space-3);
-		margin: 0 0 var(--space-2);
-		padding: var(--space-2) var(--space-3);
-		border-radius: 8px;
-		background: var(--surface-2);
-	}
-
-	.names dt {
-		color: var(--text-muted);
-	}
-
-	.names dd {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0 var(--space-3);
 		margin: 0;
+		color: var(--text-muted);
+		font-size: 0.8125rem;
+	}
+
+	.kind {
+		font-weight: 600;
+	}
+
+	.who.yes .kind {
+		color: var(--ok);
 	}
 
 	.comments {
+		gap: var(--space-1);
 		font-size: 0.875rem;
-	}
-
-	@media (min-width: 800px) {
-		.signups {
-			grid-template-columns: minmax(260px, 1fr) 1.4fr;
-			align-items: start;
-		}
 	}
 </style>

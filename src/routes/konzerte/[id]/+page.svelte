@@ -168,6 +168,15 @@
 	{/if}
 </ul>
 
+<!-- The one thing every member does here, right below when and where. -->
+{#if data.kind === 'event' && data.signups}
+	{#if data.signups.state === 'ready'}
+		<Signups signups={data.signups} result={form} />
+	{:else}
+		<p class="placeholder block">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
+	{/if}
+{/if}
+
 {#if data.kind === 'event' && data.event.description}
 	<section class="block">
 		<h2 class="ui-label">{t.concert.description}</h2>
@@ -247,14 +256,6 @@
 			</a>
 		{/if}
 	</section>
-{/if}
-
-{#if data.kind === 'event' && data.signups}
-	{#if data.signups.state === 'ready'}
-		<Signups signups={data.signups} result={form} />
-	{:else}
-		<p class="placeholder block">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
-	{/if}
 {/if}
 
 {#if isConcert}
