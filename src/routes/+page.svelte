@@ -352,7 +352,7 @@
 	}
 
 	.event-body strong {
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.3125rem;
 		font-weight: 600;
 		line-height: 1.25;
@@ -456,7 +456,7 @@
 
 	.section-title {
 		margin-bottom: var(--space-4);
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.375rem;
 	}
 

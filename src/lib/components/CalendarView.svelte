@@ -225,7 +225,7 @@
 	.head h3 {
 		min-width: 10em;
 		margin: 0;
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.25rem;
 		text-align: center;
 	}
