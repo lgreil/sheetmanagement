@@ -11,7 +11,7 @@
 
 	/**
 	 * One instrument, picked from a grid of little drawings with a search field: the usual ones
-	 * first, the rest by family. Sends the name as `name`, like a select. Until the page runs
+	 * first, then every instrument by family. Sends the name as `name`, like a select. Until the page runs
 	 * JavaScript it's the plain dropdown, so the form also works without.
 	 */
 	let {
