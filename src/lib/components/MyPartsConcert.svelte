@@ -322,7 +322,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: 2px;
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.375rem;
 		font-weight: 600;
 		transition: color var(--fast) var(--ease);

@@ -254,7 +254,7 @@
 	}
 
 	.day {
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.25rem;
 		font-weight: 700;
 	}

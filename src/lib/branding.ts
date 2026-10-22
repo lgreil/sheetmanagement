@@ -29,6 +29,18 @@ export const COLOUR_PRESETS = {
 	violet: '#6d28d9'
 } as const;
 
+/**
+ * The look (#163): "bold" has headings in Barlow Condensed and the logo behind the start page's
+ * greeting, like the posters and stories; "plain" keeps a classic serif and no watermark.
+ */
+export const LOOKS = ['bold', 'plain'] as const;
+export type Look = (typeof LOOKS)[number];
+
+/** The custom properties a look changes, for the <style> on :root; the bold one is app.css's own. */
+export function lookStyle(look: Look): string {
+	return look === 'plain' ? ":root:root{--font-display:'Iowan Old Style','Palatino Linotype',Palatino,Georgia,serif}" : '';
+}
+
 /** "#e6b422" or "#E6B422" or "#eb2" → "#e6b422"; anything else undefined, since it ends up in a <style>. */
 export function parseColour(text: string | undefined): string | undefined {
 	const value = text?.trim().toLowerCase() ?? '';

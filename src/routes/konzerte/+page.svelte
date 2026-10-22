@@ -180,7 +180,7 @@
 
 	.section {
 		margin: var(--space-5) 0 var(--space-2);
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.375rem;
 	}
 

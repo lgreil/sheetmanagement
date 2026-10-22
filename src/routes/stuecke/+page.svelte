@@ -367,7 +367,7 @@
 	.letter {
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--accent);
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.125rem;
 	}
 

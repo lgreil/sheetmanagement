@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { brandColours, COLOUR_PRESETS, contrast, parseColour } from '#lib/branding.ts';
+	import { brandColours, COLOUR_PRESETS, contrast, LOOKS, parseColour } from '#lib/branding.ts';
 	import { config } from '#lib/config/index.ts';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
@@ -132,6 +132,22 @@
 					<span class="ratio">{t.settings.ratio(ratio(colours.dark, '#0b0b0a'))}</span>
 				</div>
 			</div>
+		</section>
+
+		<section class="ui-card card" aria-labelledby="look">
+			<h2 id="look"><Icon name="palette" size={18} />{t.settings.look}</h2>
+			<fieldset class="looks" aria-labelledby="look">
+				<label class="check">
+					<input type="radio" name="look" value="" checked={!values.look} />
+					{t.settings.lookDefault(t.settings.lookNames[data.defaults.look])}
+				</label>
+				{#each LOOKS as look (look)}
+					<label class="check">
+						<input type="radio" name="look" value={look} checked={values.look === look} />
+						{t.settings.looks[look]}
+					</label>
+				{/each}
+			</fieldset>
 		</section>
 
 		<section class="ui-card card" aria-labelledby="features">
@@ -286,6 +302,13 @@
 	.check > span {
 		display: grid;
 		gap: 2px;
+	}
+
+	.looks {
+		display: grid;
+		margin: 0;
+		padding: 0;
+		border: 0;
 	}
 
 	.presets {

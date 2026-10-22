@@ -277,6 +277,13 @@ export const de = {
 		sample: 'Knopf',
 		link: 'Link',
 		ratio: (value: string) => `Kontrast ${value}:1`,
+		look: 'Stil',
+		lookDefault: (look: string) => `Vorgabe der Installation (${look})`,
+		looks: {
+			bold: 'Kräftig: schmale, fette Überschriften und das Logo groß hinter der Begrüßung, wie auf Plakaten',
+			plain: 'Schlicht: klassische Überschriften mit Serifen, kein Logo im Hintergrund'
+		} as Record<string, string>,
+		lookNames: { bold: 'kräftig', plain: 'schlicht' } as Record<string, string>,
 		features: 'Funktionen',
 		featuresLead: 'Was das Orchester nicht nutzt, verschwindet aus Menüs und Seiten. Einträge in der Tabelle bleiben erhalten.',
 		featuresFromDefault: 'Noch nicht hier gespeichert: gezeigt ist die Vorgabe der Installation (FEATURES_OFF).',
@@ -312,6 +319,7 @@ export const de = {
 			shortName: 'Der Kurzname ist zu lang (höchstens 24 Zeichen).',
 			logo: 'Das Logo muss ein https-Link sein oder mit / beginnen.',
 			accent: 'Die Farbe muss die Form #rrggbb haben.',
+			look: 'Bitte einen der Stile wählen.',
 			featuresOff: ''
 		}
 	},
@@ -1205,7 +1213,13 @@ export const de = {
 				shortName: 'Kurzname',
 				logo: 'Logo',
 				accent: 'Akzentfarbe',
+				look: 'Stil',
 				featuresOff: 'Ausgeschaltet'
+			},
+			/** The words for the look in the "Wert" column (#163). */
+			lookValues: {
+				bold: 'kräftig',
+				plain: 'schlicht'
 			}
 		}
 	},

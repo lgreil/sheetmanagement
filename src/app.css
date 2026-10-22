@@ -1,3 +1,19 @@
+/* Headings in Barlow Condensed (OFL), bold and narrow like the orchestra's posters and stories (#163).
+   Served by the app itself, never from a font CDN, and kept offline by the service worker. */
+@font-face {
+	font-family: 'Barlow Condensed';
+	font-weight: 600;
+	font-display: swap;
+	src: url('/fonts/barlow-condensed-latin-600-normal.woff2') format('woff2');
+}
+
+@font-face {
+	font-family: 'Barlow Condensed';
+	font-weight: 700;
+	font-display: swap;
+	src: url('/fonts/barlow-condensed-latin-700-normal.woff2') format('woff2');
+}
+
 /* Design tokens. Components use only these variables, so a theme is one block here. */
 :root {
 	/* Black and gold, like the posters. --brand is the orchestra's accent; +layout.svelte sets it
@@ -48,7 +64,7 @@
 	--space-7: 48px;
 
 	--font: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-	--font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+	--font-display: 'Barlow Condensed', 'Arial Narrow', ui-sans-serif, system-ui, sans-serif;
 	--content-width: 1040px;
 	--header-height: 60px;
 	--tabbar-height: 64px;
@@ -132,10 +148,10 @@ h3 {
 }
 
 h1 {
-	font-family: var(--font-serif);
-	font-weight: 600;
-	font-size: clamp(1.875rem, 1.5rem + 1.4vw, 2.5rem);
-	letter-spacing: -0.015em;
+	font-family: var(--font-display);
+	font-weight: 700;
+	font-size: clamp(2.125rem, 1.75rem + 1.6vw, 2.875rem);
+	letter-spacing: 0;
 }
 
 h2 {

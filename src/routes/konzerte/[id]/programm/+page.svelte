@@ -428,7 +428,7 @@
 	.number {
 		width: 1.5rem;
 		color: var(--accent);
-		font-family: var(--font-serif);
+		font-family: var(--font-display);
 		font-size: 1.125rem;
 		font-weight: 700;
 		text-align: right;

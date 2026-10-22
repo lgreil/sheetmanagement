@@ -20,12 +20,12 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const rights = [...access.rights];
 	const counts = workspaceOf(navGroups({ auth, rights, features: on }), url.pathname) ? countsByPage(await openWork(locals)) : {};
 
-	const { name, shortName, logo, colours, style } = orchestra();
+	const { name, shortName, logo, colours, style, look } = orchestra();
 	return {
 		orchestraName: name,
 		orchestraShortName: shortName,
 		logo,
-		brand: { colour: colours.brand, style },
+		brand: { colour: colours.brand, style, look },
 		features: on,
 		instruments: instrumentOverrides(),
 		auth,

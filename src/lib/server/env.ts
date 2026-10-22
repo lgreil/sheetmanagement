@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { env, waitUntil } from 'cloudflare:workers';
-import { brandColours, brandStyle, parseColour } from '#lib/branding.ts';
+import { brandColours, brandStyle, lookStyle, parseColour } from '#lib/branding.ts';
 import { config } from '#lib/config/index.ts';
 import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
@@ -80,16 +80,18 @@ export function defaultSettings() {
 		accent: parseColour(env.ORCHESTRA_ACCENT) ?? parseColour(config.accent) ?? '#e6b422',
 		/** The preset's own light shade, used with the default colour. */
 		accentLight: parseColour(env.ORCHESTRA_ACCENT) ? undefined : config.accentLight,
+		look: config.look ?? 'bold',
 		features: resolveFeatures(config.features, env.FEATURES_OFF).features
 	};
 }
 
-/** Name, short name, logo and colours of this deployment: /einstellungen, else the variables, else the preset. */
+/** Name, short name, logo, colours and look of this deployment: /einstellungen, else the variables, else the preset. */
 export function orchestra() {
 	const env = appEnv();
 	const name = stored.name ?? env.ORCHESTRA_NAME?.trim();
 	const accent = stored.accent ?? parseColour(env.ORCHESTRA_ACCENT);
 	const colours = brandColours(accent ?? parseColour(config.accent) ?? '#e6b422');
+	const look = stored.look ?? config.look ?? 'bold';
 	return {
 		name: name || config.name,
 		// A custom name without a custom short name shouldn't fall back to the preset's short name.
@@ -97,7 +99,8 @@ export function orchestra() {
 		logo: stored.logo ?? orchestraLogo(env.ORCHESTRA_LOGO),
 		colours,
 		/** The theme's custom properties for a <style> on :root; the preset's light shade unless the variable sets a colour. */
-		style: brandStyle(colours, accent ? undefined : config.accentLight),
+		style: brandStyle(colours, accent ? undefined : config.accentLight) + lookStyle(look),
+		look,
 		/** The light shade is the preset's own (`accentLight`), not the derived one. */
 		presetLight: !accent && !!config.accentLight,
 		/** ORCHESTRA_ACCENT was set but isn't a colour; /status says so. */

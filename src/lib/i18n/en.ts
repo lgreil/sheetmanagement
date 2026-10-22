@@ -277,6 +277,13 @@ export const en: Texts = {
 		sample: 'Button',
 		link: 'Link',
 		ratio: (value: string) => `Contrast ${value}:1`,
+		look: 'Look',
+		lookDefault: (look: string) => `This installation's default (${look})`,
+		looks: {
+			bold: 'Bold: narrow, heavy headings and the logo large behind the greeting, like on posters',
+			plain: 'Plain: classic serif headings, no logo in the background'
+		} as Record<string, string>,
+		lookNames: { bold: 'bold', plain: 'plain' } as Record<string, string>,
 		features: 'Features',
 		featuresLead: "What the orchestra doesn't use disappears from menus and pages. Entries in the sheet are kept.",
 		featuresFromDefault: 'Not saved here yet: this shows the installation’s default (FEATURES_OFF).',
@@ -313,6 +320,7 @@ export const en: Texts = {
 			shortName: 'The short name is too long (at most 24 characters).',
 			logo: 'The logo must be an https link or start with /.',
 			accent: 'The colour must look like #rrggbb.',
+			look: 'Please choose one of the looks.',
 			featuresOff: ''
 		}
 	},
@@ -1191,7 +1199,12 @@ export const en: Texts = {
 				shortName: 'Short name',
 				logo: 'Logo',
 				accent: 'Accent colour',
+				look: 'Look',
 				featuresOff: 'Turned off'
+			},
+			lookValues: {
+				bold: 'bold',
+				plain: 'plain'
 			}
 		}
 	},
