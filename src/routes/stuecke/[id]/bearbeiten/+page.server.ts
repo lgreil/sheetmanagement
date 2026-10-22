@@ -7,6 +7,7 @@ import { checkPieceValues, EDITABLE, findPieceRow, pieceValues, pieceVersion, re
 import { requireRight } from '#lib/server/auth/index.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
+import { youtubeEnabled } from '#lib/server/youtube.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord, updateRecords } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -46,6 +47,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		files,
 		// The PDFs come through the app, which is for signed-in members.
 		canRead: locals.auth === 'on' && locals.access.member,
+		// A duration from the Hörbeispiel's video, with a YouTube key (#133).
+		videoLength: youtubeEnabled(),
 		list: list ? { filter: list, open: library.pieces.filter((p) => gapsOf(p, list).length).length } : null
 	};
 };

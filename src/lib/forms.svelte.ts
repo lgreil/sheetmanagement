@@ -15,6 +15,8 @@ export function showToast(message: string, ms = 6000) {
 export interface SubmitOptions {
 	/** Clear the form after a successful save, e.g. an "add" form. */
 	reset?: boolean;
+	/** Called as the form is sent, e.g. to show the choice at once while the sheet catches up. */
+	onStart?: (input: Parameters<SubmitFunction>[0]) => void;
 	/** Called after a successful save, with what the action returned. */
 	onSuccess?: (data: Record<string, unknown> | undefined) => void;
 }
@@ -30,8 +32,9 @@ export class FormState {
 	busy = $state(false);
 
 	submit(options: SubmitOptions = {}): SubmitFunction {
-		return () => {
+		return (input) => {
 			this.busy = true;
+			options.onStart?.(input);
 			return async ({ result, update }) => {
 				try {
 					if (result.type === 'error') {

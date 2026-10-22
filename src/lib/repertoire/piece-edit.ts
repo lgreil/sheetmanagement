@@ -1,4 +1,4 @@
-import { safeLink } from '#lib/links.ts';
+import { cleanLink } from '#lib/links.ts';
 import { formatDuration, parseDuration } from './duration.ts';
 import { normalize, type ColumnKey, type Table, type TableRow } from './sheet.ts';
 
@@ -61,7 +61,7 @@ export function checkPieceValues(
 	const title = normalize(cleaned.title);
 	if (table.rows.some((row) => row.row !== ownRow && normalize(row.values.title) === title)) return { problem: 'title-taken' };
 	if (cleaned.recording) {
-		const link = safeLink(cleaned.recording);
+		const link = cleanLink(cleaned.recording);
 		if (!link) return { problem: 'bad-link' };
 		cleaned.recording = link;
 	}

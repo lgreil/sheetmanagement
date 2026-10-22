@@ -1,6 +1,6 @@
 {
 	"name": "sheetmanagement",
-	"version": "0.9.1",
+	"version": "0.10.0",
 	"private": true,
 	"license": "MIT",
 	"type": "module",
@@ -12,14 +12,17 @@
 		"preview": "vite build && wrangler dev",
 		"deploy": "vite build && wrangler deploy",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"test": "vitest run"
+		"test": "vitest run",
+		"test:e2e": "playwright test"
 	},
 	"imports": {
 		"#lib": "./src/lib/index.ts",
 		"#lib/*": "./src/lib/*"
 	},
 	"devDependencies": {
+		"@axe-core/playwright": "^4.14.0",
 		"@cantoo/pdf-lib": "2.11.1",
+		"@playwright/test": "^1.64.1",
 		"@sveltejs/adapter-cloudflare": "^8.0.1",
 		"@sveltejs/kit": "^3.1.0",
 		"@sveltejs/vite-plugin-svelte": "^7.3.1",

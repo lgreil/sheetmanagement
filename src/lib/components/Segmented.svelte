@@ -22,14 +22,37 @@
 		value = next;
 		onchange?.(next);
 	}
+
+	/** Like any radio group: one tab stop, the arrow keys move between the choices (#141). */
+	function onkeydown(event: KeyboardEvent) {
+		const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const index = options.findIndex((option) => option.value === value);
+		const next = options[(index + step + options.length) % options.length];
+		choose(next.value);
+		const group = event.currentTarget as HTMLElement;
+		requestAnimationFrame(() => group.querySelector<HTMLElement>('[aria-checked="true"]')?.focus());
+	}
 </script>
 
-<div class="segmented" role="radiogroup" aria-label={label}>
+<div
+	class="segmented"
+	role="radiogroup"
+	aria-label={label}
+	tabindex="-1"
+	{onkeydown}
+	style:--count={options.length}
+	style:--index={Math.max(0, options.findIndex((option) => option.value === value))}
+>
+	<!-- One raised thumb that slides to the choice, instead of each button lighting up. -->
+	<span class="thumb" aria-hidden="true"></span>
 	{#each options as option (option.value)}
 		<button
 			type="button"
 			role="radio"
 			aria-checked={value === option.value}
+			tabindex={value === option.value ? 0 : -1}
 			aria-label={iconOnly ? option.label : undefined}
 			title={iconOnly ? option.label : undefined}
 			class:active={value === option.value}
@@ -44,6 +67,8 @@
 
 <style>
 	.segmented {
+		position: relative;
+		isolation: isolate;
 		display: inline-grid;
 		grid-auto-flow: column;
 		grid-auto-columns: 1fr;
@@ -90,11 +115,41 @@
 	}
 
 	button.active {
-		background: var(--surface);
 		color: var(--text);
+	}
+
+	button :global(svg) {
+		transition: transform 0.3s cubic-bezier(0.34, 1.36, 0.64, 1);
+	}
+
+	button.active :global(svg) {
+		transform: scale(1.1);
+	}
+
+	.thumb {
+		position: absolute;
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		z-index: -1;
+		width: calc((100% - 6px) / var(--count));
+		border-radius: 9px;
+		/* In dark mode the surface is barely lighter than the track: a lifted tone instead. */
+		background: light-dark(var(--surface), #3a362f);
 		box-shadow:
 			0 1px 3px rgb(0 0 0 / 0.12),
 			0 0 0 0.5px rgb(0 0 0 / 0.04);
+		transform: translateX(calc(var(--index) * 100%));
+		/* A little spring: it overshoots a touch and settles, like a physical switch. */
+		transition:
+			transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1),
+			scale var(--fast) var(--ease),
+			background 0.35s var(--ease);
+	}
+
+	/* Pressing gives way slightly before the thumb moves. */
+	.segmented:active .thumb {
+		scale: 0.97;
 	}
 
 	@media (pointer: coarse) {

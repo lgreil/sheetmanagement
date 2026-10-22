@@ -1,6 +1,6 @@
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { appEnv } from '#lib/server/env.ts';
+import { appEnv, orchestraLogo } from '#lib/server/env.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -10,6 +10,7 @@ import type { RequestHandler } from './$types';
 export const GET: RequestHandler = () => {
 	const env = appEnv();
 	const name = env.ORCHESTRA_NAME?.trim() || config.name;
+	const logo = orchestraLogo();
 	const shortName = env.ORCHESTRA_SHORT_NAME?.trim() || env.ORCHESTRA_NAME?.trim() || config.shortName;
 	const manifest = {
 		name: `${name} · ${t.nav.appName}`,
@@ -21,7 +22,11 @@ export const GET: RequestHandler = () => {
 		display: 'standalone',
 		background_color: '#f4f4f1',
 		theme_color: config.accent,
-		icons: [{ src: '/logo.png', sizes: '256x256', type: 'image/png', purpose: 'any' }],
+		icons: [
+			logo.endsWith('.svg')
+				? { src: logo, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }
+				: { src: logo, sizes: '256x256', type: 'image/png', purpose: 'any' }
+		],
 		shortcuts: [
 			{ name: t.nav.myParts, url: '/meine-noten' },
 			{ name: t.nav.concerts, url: '/konzerte' }

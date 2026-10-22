@@ -1,4 +1,4 @@
-import { safeLink } from '#lib/links.ts';
+import { cleanLink } from '#lib/links.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
@@ -197,7 +197,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			difficulty: optional(v.difficulty),
 			notes: optional(v.notes),
 			reviewedAt: optional(v.reviewedAt),
-			recording: safeLink(v.recording),
+			recording: cleanLink(v.recording),
 			duration: parseDuration(v.duration),
 			publisher: optional(v.publisher),
 			driveFolderId: optional(folder)

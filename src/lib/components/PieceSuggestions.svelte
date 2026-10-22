@@ -4,6 +4,7 @@
 	import { composerAsUsual, searchWorks, suggestGenre, WikidataBusyError, workDetails, type WorkCandidate } from '#lib/music/wikidata.ts';
 	import type { NamingRules } from '#lib/config/index.ts';
 	import { formatDuration } from '#lib/repertoire/duration.ts';
+	import { youtubeId } from '#lib/links.ts';
 	import Icon from './Icon.svelte';
 	import ScoreViewer from './ScoreViewer.svelte';
 
@@ -17,6 +18,7 @@
 		apply,
 		files,
 		canRead,
+		videoLength = false,
 		genres,
 		knownComposers,
 		naming,
@@ -29,6 +31,8 @@
 		files: { id: string; label: string }[];
 		/** Reading needs a signed-in member: the PDF comes through the app. */
 		canRead: boolean;
+		/** The deployment can ask YouTube for a video's length. */
+		videoLength?: boolean;
 		genres: string[];
 		knownComposers: string[];
 		naming: Pick<NamingRules, 'cataloguePatterns' | 'knownComposers'>;
@@ -38,11 +42,11 @@
 	interface Suggestion {
 		field: Field;
 		value: string;
-		source: 'score' | 'wikidata' | 'archive';
+		source: 'score' | 'wikidata' | 'archive' | 'youtube';
 	}
 
 	let suggestions = $state<Suggestion[]>([]);
-	let busy = $state<'score' | 'wikidata' | null>(null);
+	let busy = $state<'score' | 'wikidata' | 'video' | null>(null);
 	let message = $state<string | null>(null);
 	let candidates = $state<WorkCandidate[]>([]);
 	let chosen = $state<string | null>(null);
@@ -143,6 +147,25 @@
 		}
 	}
 
+	// The Hörbeispiel's length: a recording is rarely the orchestra's exact length, so a suggestion.
+	const video = $derived(videoLength ? youtubeId(values.recording ?? '') : undefined);
+	async function fromVideo() {
+		if (!video) return;
+		busy = 'video';
+		message = null;
+		try {
+			const response = await fetch(`/api/youtube/${video}`);
+			if (!response.ok) throw new Error(String(response.status));
+			const { seconds } = (await response.json()) as { seconds: number | null };
+			if (seconds) add([{ field: 'duration', value: formatDuration(seconds), source: 'youtube' }]);
+			else message = t.suggest.videoNoLength;
+		} catch {
+			message = t.suggest.videoFailed;
+		} finally {
+			busy = null;
+		}
+	}
+
 	// With an arranger, the search looks for that arrangement rather than the original work.
 	const youtube = $derived.by(() => {
 		const arranger = values.arranger?.trim();
@@ -176,6 +199,11 @@
 		<button class="btn ghost small" type="button" onclick={lookUp} disabled={!!busy || !values.title?.trim()}>
 			<Icon name="search" size={16} />{busy === 'wikidata' ? t.suggest.searching : t.suggest.online}
 		</button>
+		{#if video}
+			<button class="btn ghost small" type="button" onclick={fromVideo} disabled={!!busy}>
+				<Icon name="clock" size={16} />{busy === 'video' ? t.suggest.videoLooking : t.suggest.videoLength}
+			</button>
+		{/if}
 		<a class="btn ghost small" href={youtube} target="_blank" rel="noopener noreferrer">
 			<Icon name="headphones" size={16} />{t.suggest.youtube}
 		</a>

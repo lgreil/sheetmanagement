@@ -17,6 +17,7 @@
 	--text: #161512;
 	--text-muted: #625e55;
 
+	/* Status colours as text keep 4.5:1 on every surface (WCAG AA), in both schemes (#141). */
 	--ok: #2a7548;
 	--warn: #8f5c0a;
 	--danger: #b8342a;
@@ -63,9 +64,9 @@
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 		--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
-		--ok: #2e7d4f;
-		--warn: #b7791f;
-		--danger: #c0392b;
+		--ok: #4fae78;
+		--warn: #c98a2c;
+		--danger: #e8695c;
 		color-scheme: dark;
 	}
 }
@@ -82,9 +83,9 @@
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
-	--ok: #2e7d4f;
-	--warn: #b7791f;
-	--danger: #c0392b;
+	--ok: #4fae78;
+	--warn: #c98a2c;
+	--danger: #e8695c;
 	color-scheme: dark;
 }
 
@@ -103,7 +104,8 @@ body {
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font);
-	font-size: 16px;
+	/* The reader's own font size counts: 100% is 16px unless they chose larger. */
+	font-size: 100%;
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 	-webkit-tap-highlight-color: transparent;
@@ -145,10 +147,111 @@ a {
 	border-radius: var(--radius-s);
 }
 
+/* Read by screen readers, not shown. */
+.sr-only {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: -1px;
+	padding: 0;
+	overflow: hidden;
+	clip-path: inset(50%);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Between pages (#129): the old page fades out quickly, the new one rises in softly. */
+::view-transition-old(root) {
+	animation: 0.12s var(--ease) both vt-out;
+}
+
+::view-transition-new(root) {
+	animation: 0.24s var(--ease) both vt-in;
+}
+
+@keyframes vt-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes vt-in {
+	from {
+		opacity: 0;
+		transform: translateY(8px);
+	}
+}
+
+/* Switching the colour scheme (ThemeToggle.svelte): one calm cross-fade of the whole page,
+   header and tab bar included, instead of the page-change animation. */
+:root.theme-switch::view-transition-old(root),
+:root.theme-switch::view-transition-new(root) {
+	animation-duration: 0.35s;
+	animation-timing-function: var(--ease);
+}
+
+:root.theme-switch::view-transition-old(root) {
+	animation-name: vt-out;
+}
+
+:root.theme-switch::view-transition-new(root) {
+	animation-name: theme-in;
+}
+
+@keyframes theme-in {
+	from {
+		opacity: 0;
+	}
+}
+
+:root.theme-switch .topbar,
+:root.theme-switch .tabbar {
+	view-transition-name: none;
+}
+
+/* Browsers without View Transitions: the colours fade instead. */
+:root.theme-fade *,
+:root.theme-fade *::before,
+:root.theme-fade *::after {
+	transition:
+		background-color 0.3s var(--ease),
+		color 0.3s var(--ease),
+		border-color 0.3s var(--ease),
+		fill 0.3s var(--ease) !important;
+}
+
+/* Folded sections open smoothly where the browser can animate to "auto" height. */
+@supports (interpolate-size: allow-keywords) {
+	:root {
+		interpolate-size: allow-keywords;
+	}
+
+	details::details-content {
+		height: 0;
+		overflow: clip;
+		transition:
+			height 0.25s var(--ease),
+			content-visibility 0.25s allow-discrete;
+	}
+
+	details[open]::details-content {
+		height: auto;
+	}
+}
+
+/* A tap on a row answers at once, before the next page is there. */
+.ui-list a:not(.btn):active,
+a.ui-card:active {
+	background: var(--surface-2);
+}
+
 @media (prefers-reduced-motion: reduce) {
 	*,
 	*::before,
-	*::after {
+	*::after,
+	::view-transition-group(*),
+	::view-transition-old(*),
+	::view-transition-new(*) {
 		animation-duration: 0.01ms !important;
 		transition-duration: 0.01ms !important;
 	}

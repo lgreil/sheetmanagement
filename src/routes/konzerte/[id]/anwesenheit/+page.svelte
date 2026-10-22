@@ -209,7 +209,7 @@
 	.person.on .box {
 		border-color: var(--ok);
 		background: var(--ok);
-		color: #fff;
+		color: var(--bg);
 	}
 
 	.person input:focus-visible + .box {

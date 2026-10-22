@@ -24,7 +24,10 @@ export const de = {
 		close: 'Menü schließen',
 		crumbs: 'Seitenpfad',
 		groups: { musik: 'Proben & Noten', mitmachen: 'Mitmachen', pflege: 'Noten pflegen', verwaltung: 'Verwaltung' },
-		workspace: 'Bereich'
+		workspace: 'Bereich',
+		/** After a tab's count, for screen readers: "Meldungen 1 offen". */
+		open: 'offen',
+		skip: 'Zum Inhalt springen'
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
@@ -251,6 +254,8 @@ export const de = {
 		saving: (done: number, total: number) => `Speichere ${done} von ${total} …`,
 		saved: (n: number) => (n === 1 ? '1 Stimme offline gespeichert' : `${n} Stimmen offline gespeichert`),
 		update: 'Offline-Kopie erneuern',
+		newVersion: 'Neue Version verfügbar',
+		reload: 'Neu laden',
 		remove: 'Offline-Kopie löschen',
 		failed: (n: number) => (n === 1 ? '1 Stimme ließ sich nicht speichern.' : `${n} Stimmen ließen sich nicht speichern.`),
 		hint: 'Deine Stimmen auf diesem Gerät, für den Probenraum ohne Netz.',
@@ -513,11 +518,15 @@ export const de = {
 		searching: 'Suche bei Wikidata …',
 		youtube: 'Hörbeispiel auf YouTube suchen',
 		youtubeHint: 'Passende Aufnahme öffnen, Link kopieren, bei „Hörbeispiel“ einfügen.',
+		videoLength: 'Dauer aus dem Video',
+		videoLooking: 'Frage YouTube …',
+		videoNoLength: 'YouTube nennt für dieses Video keine Länge.',
+		videoFailed: 'YouTube ist gerade nicht erreichbar.',
 		whichWork: 'Welches Werk ist es?',
 		apply: 'Übernehmen',
 		applied: 'eingetragen',
 		openWikidata: 'Bei Wikidata ansehen',
-		sources: { score: 'aus den Noten', wikidata: 'Wikidata', archive: 'aus dem Archiv' } as Record<string, string>,
+		sources: { score: 'aus den Noten', wikidata: 'Wikidata', archive: 'aus dem Archiv', youtube: 'Video' } as Record<string, string>,
 		scanOnly: 'Ein Scan ohne Text. Vielleicht hilft eine andere Stimme oder „Online nachschlagen“.',
 		nothingInScore: 'In den Noten steht kein Komponist, Arrangeur oder Werkverzeichnis, das sich sicher lesen lässt.',
 		downloadFailed: 'Die Datei konnte nicht geladen werden.',

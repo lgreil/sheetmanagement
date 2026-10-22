@@ -2,6 +2,9 @@
 node_modules
 
 # Build output
+# End-to-end test results (Playwright)
+test-results
+playwright-report
 .svelte-kit
 .wrangler
 build

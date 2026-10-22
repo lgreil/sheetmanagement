@@ -5,6 +5,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import { config } from '#lib/config/index.ts';
 	import { eventDay } from '#lib/repertoire/dates.ts';
+	import { cleanLink } from '#lib/links.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import PieceSuggestions from '#lib/components/PieceSuggestions.svelte';
@@ -82,6 +83,7 @@
 						placeholder={'placeholder' in field ? field.placeholder : undefined}
 						maxlength="1000"
 						autocomplete="off"
+						onblur={field.name === 'recording' ? () => (current.recording = cleanLink(current.recording ?? '') ?? current.recording) : undefined}
 					/>
 					{#if field.name === 'reviewedAt'}
 						<button class="btn ghost small" type="button" onclick={() => (current.reviewedAt = today())}>{t.pieceEditor.today}</button>
@@ -112,6 +114,7 @@
 		{apply}
 		files={data.files}
 		canRead={data.canRead}
+		videoLength={data.videoLength}
 		genres={data.genres}
 		knownComposers={data.composers}
 		naming={config.naming}

@@ -25,13 +25,44 @@
 	function onkeydown(event: KeyboardEvent) {
 		if (open && event.key === 'Escape') open = false;
 	}
+
+	/**
+	 * Keyboard and screen readers (#141): focus moves into the menu, Tab stays inside it, and
+	 * closing returns focus to the button that opened it.
+	 */
+	function trap(panel: HTMLElement) {
+		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+		const focusable = () => [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select')];
+		(panel.querySelector<HTMLElement>('[aria-current="page"]') ?? focusable()[0])?.focus({ preventScroll: true });
+		const keep = (event: KeyboardEvent) => {
+			if (event.key !== 'Tab') return;
+			const items = focusable();
+			const first = items[0];
+			const last = items[items.length - 1];
+			if (event.shiftKey && document.activeElement === first) {
+				event.preventDefault();
+				last?.focus();
+			} else if (!event.shiftKey && document.activeElement === last) {
+				event.preventDefault();
+				first?.focus();
+			}
+		};
+		panel.addEventListener('keydown', keep);
+		return {
+			destroy() {
+				panel.removeEventListener('keydown', keep);
+				// Only back to the opener when focus would otherwise be lost (not after following a link).
+				if (opener?.isConnected && (!document.activeElement || document.activeElement === document.body)) opener.focus({ preventScroll: true });
+			}
+		};
+	}
 </script>
 
 <svelte:window {onkeydown} />
 
 {#if open}
-	<button class="backdrop" aria-label={t.nav.close} onclick={() => (open = false)} transition:fade={{ duration: 150 }}></button>
-	<div class="panel" id="nav-menu" role="dialog" aria-label={t.nav.menu} transition:fly={{ y: 10, duration: 200, opacity: 0 }}>
+	<button class="backdrop" tabindex="-1" aria-label={t.nav.close} onclick={() => (open = false)} transition:fade={{ duration: 150 }}></button>
+	<div class="panel" id="nav-menu" role="dialog" aria-modal="true" aria-label={t.nav.menu} use:trap transition:fly={{ y: 10, duration: 200, opacity: 0 }}>
 		<div class="groups">
 			{#each groups as group (group.key)}
 				<section>
@@ -65,7 +96,7 @@
 				</a>
 			{/if}
 			<div class="settings">
-				<ThemeToggle />
+				<ThemeToggle wide />
 				{#if user}
 					<form method="POST" action="/auth/logout">
 						<button class="logout"><Icon name="logout" size={16} />{t.auth.logout}</button>
@@ -197,12 +228,11 @@
 		white-space: nowrap;
 	}
 
+	/* The colour scheme across the whole menu, signing out below it. */
 	.settings {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		justify-content: space-between;
-		gap: var(--space-3);
+		display: grid;
+		justify-items: start;
+		gap: var(--space-2);
 	}
 
 	.logout {

@@ -8,6 +8,8 @@ import type { KvStore } from './cache.ts';
 export interface AppEnv {
 	ORCHESTRA_NAME?: string;
 	ORCHESTRA_SHORT_NAME?: string;
+	/** The orchestra's square logo: a path in the app ("/demo/musterorchester.svg") or an https link. Default: /logo.png. */
+	ORCHESTRA_LOGO?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
 	CALENDAR_ID?: string;
 	DRIVE_ARCHIVE_FOLDER_ID?: string;
@@ -30,6 +32,8 @@ export interface AppEnv {
 	LEGAL_ADDRESS?: string;
 	/** Contact email for privacy questions. */
 	LEGAL_EMAIL?: string;
+	/** YouTube Data API key: suggests a piece's duration from its Hörbeispiel (#133). Optional. */
+	YOUTUBE_API_KEY?: string;
 	/** "true": sample data instead of Google, signed in as a demo user; for trying the app (#121). */
 	DEMO?: string;
 	/** KV namespace binding from wrangler.toml; optional, memory is used without it. */
@@ -38,6 +42,12 @@ export interface AppEnv {
 
 export function appEnv(): AppEnv {
 	return env as unknown as AppEnv;
+}
+
+/** The logo for header, calendar and app icon; ORCHESTRA_LOGO if it is a path or a web link. */
+export function orchestraLogo(): string {
+	const logo = appEnv().ORCHESTRA_LOGO?.trim();
+	return logo && (/^\/(?!\/)[\w./-]+$/.test(logo) || /^https:\/\/\S+$/.test(logo)) ? logo : '/logo.png';
 }
 
 /** Demo mode: invented sample data in memory instead of Google, no real accounts. */

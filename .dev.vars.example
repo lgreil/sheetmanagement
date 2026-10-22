@@ -6,6 +6,8 @@
 ORCHESTRA_NAME="Mein Orchester"
 # Shorter name for the header on phones. Optional; defaults to ORCHESTRA_NAME.
 # ORCHESTRA_SHORT_NAME="Orchester"
+# Square logo for header, calendar and app icon: a file in static/ or an https link. Optional; default /logo.png.
+# ORCHESTRA_LOGO="/mein-logo.svg"
 
 # --- Google connection -----------------------------------------------------------
 # Service-account key: the key file base64-encoded on one line (or its JSON as is).
@@ -21,6 +23,10 @@ REPERTOIRE_SHEET_ID=""
 # Mirror problem reports into Drive: comments on the files, status words in file names.
 # Needs the service account as Editor of the archive folder. Default: read-only.
 # DRIVE_WRITE="true"
+
+# YouTube Data API key (Google Cloud console → APIs → "YouTube Data API v3" → Credentials).
+# Lets the piece editor suggest a duration from the Hörbeispiel's video. Optional, free.
+# YOUTUBE_API_KEY=""
 
 # --- Sign-in (docs/setup-google.md, step 9) ---------------------------------------
 # Without GOOGLE_OAUTH_CLIENT_ID the app is open to everyone and read-only.

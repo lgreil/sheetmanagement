@@ -11,6 +11,9 @@
 		{ value: 'dark' as const, label: t.theme.dark, icon: 'moon' as const }
 	];
 
+	/** Fills its row, e.g. in the menu, instead of sizing to its labels. */
+	let { wide = false }: { wide?: boolean } = $props();
+
 	let theme = $state<Theme>('system');
 
 	onMount(() => {
@@ -18,10 +21,27 @@
 		if (current === 'light' || current === 'dark') theme = current;
 	});
 
-	function apply(next: Theme) {
+	function set(next: Theme) {
 		const root = document.documentElement;
 		if (next === 'system') delete root.dataset.theme;
 		else root.dataset.theme = next;
+	}
+
+	/**
+	 * The whole page cross-fades into the new colour scheme (#129), with View Transitions or,
+	 * without them, by fading the colours; with reduced motion it simply changes.
+	 */
+	function apply(next: Theme) {
+		const root = document.documentElement;
+		if (matchMedia('(prefers-reduced-motion: reduce)').matches) set(next);
+		else if (document.startViewTransition) {
+			root.classList.add('theme-switch');
+			document.startViewTransition(() => set(next)).finished.finally(() => root.classList.remove('theme-switch'));
+		} else {
+			root.classList.add('theme-fade');
+			set(next);
+			setTimeout(() => root.classList.remove('theme-fade'), 400);
+		}
 		try {
 			if (next === 'system') localStorage.removeItem('theme');
 			else localStorage.setItem('theme', next);
@@ -31,4 +51,21 @@
 	}
 </script>
 
-<Segmented {options} bind:value={theme} label={t.theme.label} onchange={apply} />
+<div class="theme" class:wide>
+	<Segmented {options} bind:value={theme} label={t.theme.label} onchange={apply} />
+</div>
+
+<style>
+	.theme {
+		display: contents;
+	}
+
+	.theme.wide {
+		display: grid;
+		width: 100%;
+	}
+
+	.wide :global(.segmented) {
+		display: grid;
+	}
+</style>
