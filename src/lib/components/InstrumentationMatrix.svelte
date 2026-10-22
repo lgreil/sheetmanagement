@@ -58,7 +58,7 @@
 						{#each columns as column (column.name)}
 							{@const cell = row.cells[column.index]}
 							<td class={row.hasMusic ? cell : 'empty'} title="{instrumentLabel(column.name)}: {t.instrumentation.legend[cell]}">
-								{row.hasMusic ? SYMBOL[cell] : ''}
+								{#if row.hasMusic}<span aria-hidden="true">{SYMBOL[cell]}</span><span class="sr-only">{t.instrumentation.legend[cell]}</span>{/if}
 							</td>
 						{/each}
 					</tr>
@@ -69,7 +69,7 @@
 
 	<ul class="legend">
 		{#each ['own', 'shared', 'problem', 'none'] as const as kind (kind)}
-			<li><span class="cell {kind}">{SYMBOL[kind]}</span>{t.instrumentation.legend[kind]}</li>
+			<li><span class="cell {kind}" aria-hidden="true">{SYMBOL[kind]}</span>{t.instrumentation.legend[kind]}</li>
 		{/each}
 	</ul>
 </details>

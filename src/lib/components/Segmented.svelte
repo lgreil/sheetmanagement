@@ -22,14 +22,27 @@
 		value = next;
 		onchange?.(next);
 	}
+
+	/** Like any radio group: one tab stop, the arrow keys move between the choices (#141). */
+	function onkeydown(event: KeyboardEvent) {
+		const step = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[event.key];
+		if (!step) return;
+		event.preventDefault();
+		const index = options.findIndex((option) => option.value === value);
+		const next = options[(index + step + options.length) % options.length];
+		choose(next.value);
+		const group = event.currentTarget as HTMLElement;
+		requestAnimationFrame(() => group.querySelector<HTMLElement>('[aria-checked="true"]')?.focus());
+	}
 </script>
 
-<div class="segmented" role="radiogroup" aria-label={label}>
+<div class="segmented" role="radiogroup" aria-label={label} tabindex="-1" {onkeydown}>
 	{#each options as option (option.value)}
 		<button
 			type="button"
 			role="radio"
 			aria-checked={value === option.value}
+			tabindex={value === option.value ? 0 : -1}
 			aria-label={iconOnly ? option.label : undefined}
 			title={iconOnly ? option.label : undefined}
 			class:active={value === option.value}

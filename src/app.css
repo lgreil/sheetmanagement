@@ -17,6 +17,7 @@
 	--text: #161512;
 	--text-muted: #625e55;
 
+	/* Status colours as text keep 4.5:1 on every surface (WCAG AA), in both schemes (#141). */
 	--ok: #2a7548;
 	--warn: #8f5c0a;
 	--danger: #b8342a;
@@ -63,9 +64,9 @@
 		--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 		--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 		--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
-		--ok: #2e7d4f;
+		--ok: #4fae78;
 		--warn: #b7791f;
-		--danger: #c0392b;
+		--danger: #e8695c;
 		color-scheme: dark;
 	}
 }
@@ -82,9 +83,9 @@
 	--accent-soft: color-mix(in oklab, var(--brand) 16%, transparent);
 	--shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25);
 	--shadow-raised: 0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5);
-	--ok: #2e7d4f;
+	--ok: #4fae78;
 	--warn: #b7791f;
-	--danger: #c0392b;
+	--danger: #e8695c;
 	color-scheme: dark;
 }
 
@@ -103,7 +104,8 @@ body {
 	background: var(--bg);
 	color: var(--text);
 	font-family: var(--font);
-	font-size: 16px;
+	/* The reader's own font size counts: 100% is 16px unless they chose larger. */
+	font-size: 100%;
 	line-height: 1.5;
 	-webkit-font-smoothing: antialiased;
 	-webkit-tap-highlight-color: transparent;

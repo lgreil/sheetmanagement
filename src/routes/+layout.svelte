@@ -65,6 +65,7 @@
 </svelte:head>
 
 <div class="app">
+	<a class="skip" href="#inhalt">{t.nav.skip}</a>
 	{#if loading}
 		<div class="progress" role="progressbar" aria-label={t.common.loading}></div>
 	{/if}
@@ -110,7 +111,7 @@
 		</div>
 	</header>
 
-	<main>
+	<main id="inhalt" tabindex="-1">
 		<!-- A soft fade between pages; staying on a page (filters, forms) doesn't replay it. -->
 		<!-- Outside the fade: the tabs stay put while switching between the workspace's pages. -->
 		{#if workspace}<WorkspaceTabs group={workspace} {current} counts={data.counts} />{/if}
@@ -162,6 +163,29 @@
 </div>
 
 <style>
+	/* For keyboards: the first Tab shows it, Enter skips the navigation. */
+	.skip {
+		position: fixed;
+		top: var(--space-2);
+		left: var(--space-2);
+		z-index: 80;
+		padding: var(--space-2) var(--space-4);
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font-weight: 650;
+		transform: translateY(-200%);
+		transition: transform var(--fast) var(--ease);
+	}
+
+	.skip:focus {
+		transform: none;
+	}
+
+	main:focus {
+		outline: none;
+	}
+
 	.offline {
 		display: flex;
 		align-items: center;
