@@ -1,4 +1,4 @@
-import { config } from '#lib/config/index.ts';
+import { config, type Instrument } from '#lib/config/index.ts';
 import { buildCatalog, type Catalog } from '#lib/music/catalog.ts';
 import type { DriveIndex } from './drive-index.ts';
 import { isDemo } from './env.ts';
@@ -6,7 +6,8 @@ import { getArchiveIndex, NotConfiguredError } from './services.ts';
 
 // Parsing ~2000 file names takes a few milliseconds, so it happens once per archive
 // snapshot and Worker instance, not on every request.
-const built = new WeakMap<DriveIndex, Catalog>();
+// Built again when a deployment's own instrument labels or spellings change (#143).
+const built = new WeakMap<DriveIndex, { instruments: readonly Instrument[]; catalog: Catalog }>();
 
 export type CatalogResult =
 	| { ok: true; catalog: Catalog; storedAt: number }
@@ -15,10 +16,11 @@ export type CatalogResult =
 export async function getCatalog(): Promise<CatalogResult> {
 	try {
 		const { value: index, storedAt } = await getArchiveIndex();
-		let catalog = built.get(index);
+		const cached = built.get(index);
+		let catalog = cached?.instruments === config.instruments ? cached.catalog : undefined;
 		if (!catalog) {
 			catalog = buildCatalog(index, config);
-			built.set(index, catalog);
+			built.set(index, { instruments: config.instruments, catalog });
 		}
 		return { ok: true, catalog, storedAt };
 	} catch (error) {

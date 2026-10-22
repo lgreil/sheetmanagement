@@ -1,4 +1,4 @@
-import { config, type OrchestraConfig } from '#lib/config/index.ts';
+import { config, PRESET_INSTRUMENTS, useInstrumentOverrides, type InstrumentOverride, type OrchestraConfig } from '#lib/config/index.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
 import { ACCESS_TABS, buildAccessList, type AccessList, type AccessValues } from '#lib/access/access.ts';
 import { buildFeedback, FEEDBACK_TABS, type Feedback, type FeedbackValues } from '#lib/feedback/feedback.ts';
@@ -10,7 +10,7 @@ import { buildRehearsalPlan, type RehearsalPlan } from '#lib/rehearsals/plan.ts'
 import { buildLoans, type Loans } from '#lib/loans/loans.ts';
 import { buildAttendance, type Attendance } from '#lib/attendance/attendance.ts';
 import { buildRepertoire, LAYOUT, readTable, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
-import { readSettings, type StoredSettings } from '#lib/settings.ts';
+import { readInstrumentOverrides, readSettings, type StoredSettings } from '#lib/settings.ts';
 import { cached } from './cache.ts';
 import { getCatalog } from './catalog.ts';
 import { appEnv, runInBackground, useStoredSettings } from './env.ts';
@@ -49,18 +49,19 @@ export async function readSheet(
 	loans?: string[][];
 	attendance?: string[][];
 	settings?: string[][];
+	instruments?: string[][];
 }> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings'] as const).filter((key) =>
+	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings', 'instruments'] as const).filter((key) =>
 		info.tabs.includes(LAYOUT[key].tab)
 	);
 	const keys = [...REPERTOIRE_TABS, ...optional];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
 	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, ...access } = all;
+	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, instruments, ...access } = all;
 	return {
 		values: { pieces, concerts, program },
 		access,
@@ -71,7 +72,8 @@ export async function readSheet(
 		rehearsals,
 		loans,
 		attendance,
-		settings
+		settings,
+		instruments
 	};
 }
 
@@ -154,6 +156,8 @@ interface SheetSnapshot {
 	attendance: Attendance | null;
 	/** From "Einstellungen"; empty when the tab is missing. */
 	settings: StoredSettings;
+	/** From "Instrumente" (#143); empty when the tab is missing. */
+	instruments: Record<string, InstrumentOverride>;
 }
 
 /**
@@ -194,7 +198,11 @@ async function loadSheet(force: boolean): Promise<{ value: SheetSnapshot; sheet:
 			rehearsals: sheet.rehearsals ? buildRehearsalPlan(sheet.rehearsals) : null,
 			loans: sheet.loans ? buildLoans(sheet.loans) : null,
 			attendance: sheet.attendance ? buildAttendance(sheet.attendance) : null,
-			settings: readSettings(readTable(sheet.settings ?? [], LAYOUT.settings.columns).rows)
+			settings: readSettings(readTable(sheet.settings ?? [], LAYOUT.settings.columns).rows),
+			instruments: readInstrumentOverrides(
+				readTable(sheet.instruments ?? [], LAYOUT.instruments.columns).rows,
+				PRESET_INSTRUMENTS.map((instrument) => instrument.name)
+			)
 		};
 		snapshots.set(sheet, snapshot);
 	}
@@ -350,12 +358,14 @@ export async function getAttendance({ force = false } = {}): Promise<Attendance 
 }
 
 /**
- * Brings the settings from "Einstellungen" up to date for this request (#75, #134); the hook
+ * Brings the settings from "Einstellungen" and "Instrumente" up to date for this request (#75, #134); the hook
  * runs it first, so colours and features are known everywhere. Without the sheet nothing changes.
  */
 export async function refreshStoredSettings(): Promise<void> {
 	try {
-		useStoredSettings((await loadSheet(false)).value.settings);
+		const { settings, instruments } = (await loadSheet(false)).value;
+		useStoredSettings(settings);
+		useInstrumentOverrides(instruments);
 	} catch {
 		// Not configured, not set up or failing: the variables and the preset apply.
 	}

@@ -10,6 +10,7 @@
 
 	let { data, form } = $props();
 	const saving = new FormState();
+	const savingInstruments = new FormState();
 
 	// After a rejected save without JavaScript, what was typed; otherwise what's saved.
 	// svelte-ignore state_referenced_locally
@@ -37,7 +38,7 @@
 {:else if data.sheet === 'failed'}
 	<p class="msg error" role="alert">{t.settings.readFailed}</p>
 {:else}
-	<form method="POST" use:enhance={saving.submit()}>
+	<form method="POST" action="?/settings" use:enhance={saving.submit()}>
 		<p class="muted intro">{t.settings.emptyIsDefault}</p>
 
 		<section class="ui-card card" aria-labelledby="name">
@@ -156,6 +157,52 @@
 			{#if form?.saved}<span class="saved" role="status"><Icon name="check" size={16} />{t.settings.saved}</span>{/if}
 		</div>
 		<p class="hint">{t.settings.stored}</p>
+	</form>
+
+	<!-- Its own form: about 70 rows that are rarely changed, closed until needed (#143). -->
+	<form method="POST" action="?/instruments" use:enhance={savingInstruments.submit()}>
+		<details class="ui-card card instruments" open={!!form && ('instrumentsMessage' in form || 'instrumentsSaved' in form)}>
+			<summary><h2><Icon name="music" size={18} />{t.settings.instruments}</h2></summary>
+			<p class="hint">{t.settings.instrumentsLead} {t.settings.moreSpellingsHint}</p>
+			<div class="table" role="table" aria-label={t.settings.instruments}>
+				<div class="row head" role="row">
+					<span role="columnheader">{t.settings.fileWord}</span>
+					<span role="columnheader">{t.settings.shownAs}</span>
+					<span role="columnheader">{t.settings.moreSpellings}</span>
+				</div>
+				{#each data.instruments as instrument (instrument.name)}
+					<div class="row" role="row">
+						<span class="word" role="rowheader">{instrument.name}</span>
+						<span role="cell">
+							<input
+								name="label:{instrument.name}"
+								value={instrument.label}
+								placeholder={instrument.presetLabel || instrument.name}
+								maxlength="30"
+								aria-label="{t.settings.shownAs}: {instrument.name}"
+							/>
+						</span>
+						<span role="cell">
+							<input
+								name="aliases:{instrument.name}"
+								value={instrument.aliases}
+								aria-label="{t.settings.moreSpellings}: {instrument.name}"
+							/>
+							{#if instrument.presetAliases.length}
+								<span class="hint known" title={instrument.presetAliases.join(', ')}>
+									{t.settings.known(instrument.presetAliases.slice(0, 4).join(', ') + (instrument.presetAliases.length > 4 ? ' …' : ''))}
+								</span>
+							{/if}
+						</span>
+					</div>
+				{/each}
+			</div>
+			{#if form && 'instrumentsMessage' in form && form.instrumentsMessage}<p class="msg error" role="alert">{form.instrumentsMessage}</p>{/if}
+			<div class="actions">
+				<button class="btn" disabled={savingInstruments.busy}><Icon name="check" size={16} />{t.settings.saveInstruments}</button>
+				{#if form && 'instrumentsSaved' in form}<span class="saved" role="status"><Icon name="check" size={16} />{t.settings.instrumentsSaved}</span>{/if}
+			</div>
+		</details>
 	</form>
 {/if}
 
@@ -346,6 +393,102 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
+	}
+
+	.instruments summary {
+		display: flex;
+		align-items: center;
+		min-height: var(--tap);
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.instruments summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.instruments summary::after {
+		content: '';
+		width: 8px;
+		height: 8px;
+		margin-left: auto;
+		border-right: 2px solid var(--text-muted);
+		border-bottom: 2px solid var(--text-muted);
+		transform: rotate(45deg);
+		transition: transform var(--fast) var(--ease);
+	}
+
+	.instruments[open] summary::after {
+		transform: rotate(-135deg);
+	}
+
+	.table {
+		display: grid;
+	}
+
+	.row {
+		display: grid;
+		grid-template-columns: minmax(110px, 1fr) minmax(120px, 1fr) minmax(160px, 2fr);
+		gap: var(--space-2) var(--space-3);
+		align-items: start;
+		padding: var(--space-2) 0;
+		border-top: 1px solid var(--hairline);
+	}
+
+	.row.head {
+		border-top: 0;
+		color: var(--text-muted);
+		font-size: 0.75rem;
+		font-weight: 650;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+	}
+
+	.word {
+		padding-top: 9px;
+		font-weight: 600;
+		overflow-wrap: anywhere;
+	}
+
+	.row input {
+		width: 100%;
+		min-width: 0;
+		padding: 7px var(--space-2);
+		border: 1px solid var(--border);
+		border-radius: 8px;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+		font-size: 0.875rem;
+	}
+
+	.row [role='cell'] {
+		display: grid;
+		gap: 2px;
+		min-width: 0;
+	}
+
+	.known {
+		font-size: 0.75rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	/* Phones: the word above its two fields. */
+	@media (max-width: 560px) {
+		.row {
+			grid-template-columns: 1fr 1fr;
+		}
+
+		.row .word {
+			grid-column: 1 / -1;
+			padding-top: 0;
+		}
+
+		.row.head {
+			display: none;
+		}
 	}
 
 	.actions {

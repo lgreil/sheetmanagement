@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
-	import { config } from '#lib/config/index.ts';
+	import { config, useInstrumentOverrides } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -14,6 +14,11 @@
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
 
 	let { data, children } = $props();
+
+	// The orchestra's own instrument labels (#143), before any page reads the instruments.
+	// svelte-ignore state_referenced_locally
+	useInstrumentOverrides(data.instruments);
+	$effect.pre(() => useInstrumentOverrides(data.instruments));
 
 	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features }));
 	const nav = $derived(primaryNav(groups));

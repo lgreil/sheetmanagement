@@ -68,9 +68,19 @@ test('settings: colour and features for everyone (#75, #134)', async ({ page }) 
 	await page.getByLabel(/Standardfarbe/).uncheck();
 	await page.getByRole('textbox', { name: 'Akzentfarbe' }).fill('#0f766e');
 	await page.getByRole('checkbox', { name: /Leihmaterial/ }).uncheck();
-	await page.getByRole('button', { name: 'Speichern' }).click();
+	await page.getByRole('button', { name: 'Speichern', exact: true }).click();
 	await expect(page.getByText('Gespeichert.')).toBeVisible();
 	expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--brand'))).toBe('#0f766e');
 	const response = await page.goto('/leihmaterial');
 	expect(response?.status()).toBe(404);
+});
+
+test('an instrument with the orchestra’s own name (#143)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByText('Instrumente', { exact: true }).click();
+	await page.getByLabel('In der App: Viola').fill('Viola');
+	await page.getByRole('button', { name: 'Instrumente speichern' }).click();
+	await expect(page.getByText('Gespeichert. Gilt sofort für alle.')).toBeVisible();
+	await open(page, '/meine-noten?instrument=Viola');
+	await expect(page.getByText('Bratsche')).toHaveCount(0);
 });

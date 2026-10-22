@@ -1,4 +1,5 @@
 import { error, redirect } from '@sveltejs/kit';
+import { instrumentOverrides } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { DEMO_ROLE_COOKIE, isPublicPath } from '#lib/server/auth/index.ts';
 import { features, isDemo, orchestra } from '#lib/server/env.ts';
@@ -26,6 +27,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		logo,
 		brand: { colour: colours.brand, style },
 		features: on,
+		instruments: instrumentOverrides(),
 		auth,
 		user: access.user,
 		rights,

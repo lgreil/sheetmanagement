@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readTable } from '#lib/repertoire/sheet.ts';
-import { checkSettings, planSettingsSave, readSettings, validLogo, type SettingsForm } from './settings.ts';
+import { checkInstruments, checkSettings, planInstrumentSave, planSettingsSave, readInstrumentOverrides, readSettings, validLogo, type SettingsForm } from './settings.ts';
 
 const columns = { key: 'Einstellung', value: 'Wert' };
 const table = (rows: string[][]) => readTable([['Einstellung', 'Wert'], ...rows], columns);
@@ -83,5 +83,42 @@ describe('planSettingsSave', () => {
 		]);
 		const plan = planSettingsSave(existing, { ...form, name: 'Muster', accent: '#1D4ED8' });
 		expect(plan).toEqual({ updates: [{ row: 5, values: { value: '#1d4ed8' } }], append: [] });
+	});
+});
+
+describe('instrument overrides (#143)', () => {
+	const columns = { name: 'Instrument', label: 'Anzeige', aliases: 'Weitere Schreibweisen' };
+	const instruments = (rows: string[][]) => readTable([['Instrument', 'Anzeige', 'Weitere Schreibweisen'], ...rows], columns);
+
+	it('reads labels and spellings of known instruments only', () => {
+		expect(
+			readInstrumentOverrides(
+				instruments([
+					['geige', 'Violine', 'Vl., Violine I'],
+					['Kazoo', 'Summer', ''],
+					['Viola', '<b>', 'ok, <script>']
+				]).rows,
+				['Geige', 'Viola']
+			)
+		).toEqual({ Geige: { label: 'Violine', aliases: ['Vl.', 'Violine I'] }, Viola: { aliases: ['ok'] } });
+	});
+
+	it('names the first instrument that cannot be saved', () => {
+		expect(checkInstruments([{ name: 'Geige', label: 'Violine', aliases: 'Vl.' }])).toBeUndefined();
+		expect(checkInstruments([{ name: 'Viola', label: 'Bratsche<', aliases: '' }])).toBe('Viola');
+	});
+
+	it('changes rows that differ and adds instruments that have something of their own', () => {
+		const table = instruments([['Geige', 'Violine', '']]);
+		expect(
+			planInstrumentSave(table, [
+				{ name: 'Geige', label: '', aliases: '' },
+				{ name: 'Viola', label: 'Bratsche', aliases: 'Br, Br' },
+				{ name: 'Flöte', label: '', aliases: '' }
+			])
+		).toEqual({
+			updates: [{ row: 2, values: { label: '', aliases: '' } }],
+			append: [{ name: 'Viola', label: 'Bratsche', aliases: 'Br' }]
+		});
 	});
 });

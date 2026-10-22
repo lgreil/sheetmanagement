@@ -6,7 +6,18 @@ import { defaultSettings, features } from '#lib/server/env.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 import { appendRecords, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecords } from '#lib/server/sheet-writes.ts';
 import { NotConfiguredError } from '#lib/server/services.ts';
-import { checkSettings, planSettingsSave, readSettings, type SettingsForm } from '#lib/settings.ts';
+import { PRESET_INSTRUMENTS, type InstrumentOverride } from '#lib/config/index.ts';
+import { instrumentLabel } from '#lib/music/instrument-label.ts';
+import {
+	checkInstruments,
+	checkSettings,
+	planInstrumentSave,
+	planSettingsSave,
+	readInstrumentOverrides,
+	readSettings,
+	type InstrumentFormRow,
+	type SettingsForm
+} from '#lib/settings.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /**
@@ -23,13 +34,14 @@ function requireAdmin(locals: App.Locals) {
 export const load: PageServerLoad = async ({ locals }) => {
 	requireAdmin(locals);
 	let stored: ReturnType<typeof readSettings> = {};
+	let ownInstruments: Record<string, InstrumentOverride> = {};
 	let sheet: 'ready' | 'not-configured' | 'failed' = 'ready';
 	try {
-		stored = readSettings((await readTab('settings')).rows);
+		stored = readSettings((await readTab('settings').catch(missingTab)).rows);
+		ownInstruments = readInstrumentOverrides((await readTab('instruments').catch(missingTab)).rows, instrumentNames());
 	} catch (cause) {
 		if (cause instanceof NotConfiguredError) sheet = 'not-configured';
-		// A missing tab is created on the first save.
-		else if (!(cause instanceof SheetLayoutError)) {
+		else {
 			console.error('Reading the settings failed:', cause);
 			sheet = 'failed';
 		}
@@ -47,12 +59,20 @@ export const load: PageServerLoad = async ({ locals }) => {
 		defaults: { name: defaults.name, shortName: defaults.shortName, logo: defaults.logo, accent: defaults.accent, accentLight: defaults.accentLight },
 		features: FEATURES.map((feature) => ({ key: feature, on: on[feature], default: defaults.features[feature] })),
 		/** Whether the page decides the features, or FEATURES_OFF and the preset still do. */
-		featuresStored: !!stored.featuresOff
+		featuresStored: !!stored.featuresOff,
+		// Each instrument with the file names' word, the preset's label and spellings, and the orchestra's own.
+		instruments: PRESET_INSTRUMENTS.filter((instrument) => !instrument.voice).map((instrument) => ({
+			name: instrument.name,
+			presetLabel: instrument.label ?? '',
+			presetAliases: instrument.aliases ?? [],
+			label: ownInstruments[instrument.name]?.label ?? '',
+			aliases: (ownInstruments[instrument.name]?.aliases ?? []).join(', ')
+		}))
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ locals, request }) => {
+	settings: async ({ locals, request }) => {
 		requireAdmin(locals);
 		const data = await request.formData();
 		const text = (name: string) => String(data.get(name) ?? '');
@@ -89,5 +109,40 @@ export const actions: Actions = {
 			return fail(503, { message: t.settings.failed });
 		}
 		return { saved: true };
+	},
+
+	instruments: async ({ locals, request }) => {
+		requireAdmin(locals);
+		const data = await request.formData();
+		const rows: InstrumentFormRow[] = instrumentNames().map((name) => ({
+			name,
+			label: String(data.get(`label:${name}`) ?? ''),
+			aliases: String(data.get(`aliases:${name}`) ?? '')
+		}));
+		const invalid = checkInstruments(rows);
+		if (invalid) return fail(400, { instrumentsMessage: t.settings.invalidInstrument(instrumentLabel(invalid)) });
+		try {
+			await ensureTab('instruments');
+			const table = await readTab('instruments');
+			const plan = planInstrumentSave(table, rows);
+			await updateRecords('instruments', table, plan.updates);
+			await appendRecords('instruments', table, plan.append);
+			await refreshAfterWrite();
+			await refreshStoredSettings();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { instrumentsMessage: cause.message });
+			console.error('Saving the instruments failed:', cause);
+			return fail(503, { instrumentsMessage: t.settings.failed });
+		}
+		return { instrumentsSaved: true };
 	}
 };
+
+/** The instruments a deployment can name differently; numbered voices ("Stimme 3") aren't among them. */
+const instrumentNames = () => PRESET_INSTRUMENTS.filter((instrument) => !instrument.voice).map((instrument) => instrument.name);
+
+/** A tab that isn't there yet reads as empty; the first save creates it. */
+function missingTab(cause: unknown): { rows: [] } {
+	if (cause instanceof SheetLayoutError) return { rows: [] };
+	throw cause;
+}

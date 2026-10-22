@@ -1,5 +1,6 @@
 import { parseColour } from '#lib/branding.ts';
 import { FEATURES, type Feature } from '#lib/features.ts';
+import type { InstrumentOverride } from '#lib/config/index.ts';
 import type { Table } from '#lib/repertoire/sheet.ts';
 
 /**
@@ -84,6 +85,69 @@ export function planSettingsSave(table: Table<'key' | 'value'>, form: SettingsFo
 			if (row.values.value !== values[key]) updates.push({ row: row.row, values: { value: values[key] } });
 		} else {
 			append.push({ key: SETTING_KEYS[key], value: values[key] });
+		}
+	}
+	return { updates, append };
+}
+
+/** Longest label, and most extra spellings with their length, per instrument. */
+const MAX_LABEL = 30;
+const MAX_ALIASES = 12;
+const MAX_ALIAS = 40;
+/** Words that can be part of a file name: letters, digits, spaces and a few joiners. */
+const WORD = /^[\p{L}\p{N}][\p{L}\p{N} .'-]*$/u;
+
+const splitAliases = (text: string) => [...new Set(text.split(/[,;]/).map((alias) => alias.trim()).filter(Boolean))];
+
+/** The rows of "Instrumente" by instrument name; unknown instruments and unusable words are left out. */
+export function readInstrumentOverrides(
+	rows: { values: { name: string; label: string; aliases: string } }[],
+	known: readonly string[]
+): Record<string, InstrumentOverride> {
+	const result: Record<string, InstrumentOverride> = {};
+	for (const { values } of rows) {
+		const name = known.find((word) => word.toLowerCase() === values.name.trim().toLowerCase());
+		if (!name || result[name]) continue;
+		const label = values.label.trim();
+		const aliases = splitAliases(values.aliases).filter((alias) => alias.length <= MAX_ALIAS && WORD.test(alias)).slice(0, MAX_ALIASES);
+		const override: InstrumentOverride = {
+			...(label && label.length <= MAX_LABEL && WORD.test(label) ? { label } : {}),
+			...(aliases.length ? { aliases } : {})
+		};
+		if (override.label || override.aliases) result[name] = override;
+	}
+	return result;
+}
+
+export interface InstrumentFormRow {
+	name: string;
+	label: string;
+	aliases: string;
+}
+
+/** The first instrument whose label or spellings can't be saved. */
+export function checkInstruments(rows: InstrumentFormRow[]): string | undefined {
+	return rows.find(({ label, aliases }) => {
+		const words = splitAliases(aliases);
+		return (
+			(label.trim() && (label.trim().length > MAX_LABEL || !WORD.test(label.trim()))) ||
+			words.length > MAX_ALIASES ||
+			words.some((alias) => alias.length > MAX_ALIAS || !WORD.test(alias))
+		);
+	})?.name;
+}
+
+/** Rows to change and add so "Instrumente" holds the form; instruments without anything of their own get empty cells. */
+export function planInstrumentSave(table: Table<'name' | 'label' | 'aliases'>, rows: InstrumentFormRow[]) {
+	const updates: { row: number; values: { label: string; aliases: string } }[] = [];
+	const append: { name: string; label: string; aliases: string }[] = [];
+	for (const { name, label, aliases } of rows) {
+		const values = { label: label.trim(), aliases: splitAliases(aliases).join(', ') };
+		const existing = table.rows.find((row) => row.values.name.trim().toLowerCase() === name.toLowerCase());
+		if (existing) {
+			if (existing.values.label !== values.label || existing.values.aliases !== values.aliases) updates.push({ row: existing.row, values });
+		} else if (values.label || values.aliases) {
+			append.push({ name, ...values });
 		}
 	}
 	return { updates, append };

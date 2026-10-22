@@ -284,6 +284,17 @@ export const de = {
 			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
 			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.'
 		} as Record<string, string>,
+		instruments: 'Instrumente',
+		instrumentsLead:
+			'Wie Instrumente in der App heißen und welche Schreibweisen in Dateinamen erkannt werden. Die Dateinamen selbst und die Namensprüfung bleiben beim Wort aus den Dateinamen.',
+		fileWord: 'In Dateinamen',
+		shownAs: 'In der App',
+		moreSpellings: 'Weitere Schreibweisen',
+		moreSpellingsHint: 'Weitere Schreibweisen durch Kommas trennen, z. B. „Violine, Vl.“.',
+		known: (words: string) => `Bekannt: ${words}`,
+		saveInstruments: 'Instrumente speichern',
+		instrumentsSaved: 'Gespeichert. Gilt sofort für alle.',
+		invalidInstrument: (name: string) => `Bei „${name}“: höchstens 30 Zeichen für den Namen, höchstens 12 Schreibweisen mit je 40 Zeichen, nur Buchstaben, Ziffern, Leerzeichen, Punkt und Bindestrich.`,
 		emptyIsDefault: 'Leere Felder nehmen die Vorgabe der Installation, sie steht grau im Feld.',
 		save: 'Speichern',
 		saved: 'Gespeichert. Die Änderungen gelten sofort für alle.',
@@ -1133,6 +1144,15 @@ export const de = {
 				name: 'Name',
 				present: 'Anwesend',
 				eventId: 'Termin-ID'
+			}
+		},
+		/** A deployment's own instrument labels and spellings (#143); one row per instrument that differs from the preset. */
+		instruments: {
+			tab: 'Instrumente',
+			columns: {
+				name: 'Instrument',
+				label: 'Anzeige',
+				aliases: 'Weitere Schreibweisen'
 			}
 		},
 		/** Name, look and features set on /einstellungen; one row per setting. */

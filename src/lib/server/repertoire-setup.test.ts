@@ -94,6 +94,7 @@ describe('setUpSheet', () => {
 			'Proben',
 			'Leihmaterial',
 			'Anwesenheit',
+			'Instrumente',
 			'Einstellungen'
 		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
