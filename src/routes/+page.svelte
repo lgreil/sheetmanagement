@@ -28,7 +28,8 @@
 				note: data.rehearsalFor ? t.concerts.forConcert(data.rehearsalFor) : undefined,
 				piecesLabel: t.rehearsalPlan.title,
 				pieces: data.rehearsing,
-				partsUrl: data.rehearsalParts
+				partsUrl: data.rehearsalParts,
+				lastNote: data.lastNote
 			},
 			data.nextConcert && {
 				kind: 'konzert' as const,
@@ -37,7 +38,8 @@
 				note: undefined,
 				piecesLabel: `${t.home.program} · ${t.home.pieces(data.program.length)}`,
 				pieces: data.program,
-				partsUrl: data.program.length ? `/meine-noten?konzert=${encodeURIComponent(data.nextConcert.id)}` : undefined
+				partsUrl: data.program.length ? `/meine-noten?konzert=${encodeURIComponent(data.nextConcert.id)}` : undefined,
+				lastNote: null
 			}
 		]
 			.filter((card) => !!card)
@@ -133,6 +135,14 @@
 						{/if}
 					</ul>
 				</div>
+			{/if}
+			{#if card.lastNote}
+				<!-- What the last rehearsal left to practise (#145), for those who missed it. -->
+				<a class="last-note" href={card.lastNote.url}>
+					<span class="pieces-label"><Icon name="note" size={14} />{t.rehearsalNotes.home(card.lastNote.date)}</span>
+					{#if card.lastNote.practise}<span><strong>{t.rehearsalNotes.practise}:</strong> {card.lastNote.practise}</span>{/if}
+					{#if card.lastNote.next}<span><strong>{t.rehearsalNotes.next}:</strong> {card.lastNote.next}</span>{/if}
+				</a>
 			{/if}
 			<div class="actions">
 				{#if card.partsUrl}
@@ -429,6 +439,30 @@
 		color: var(--text-muted);
 		font-size: 0.8125rem;
 		font-weight: 600;
+	}
+
+	.last-note {
+		display: grid;
+		gap: 4px;
+		padding: var(--space-3);
+		border-left: 3px solid var(--accent);
+		border-radius: 0 var(--radius-m) var(--radius-m) 0;
+		background: var(--accent-soft);
+		font-size: 0.9375rem;
+		overflow-wrap: anywhere;
+		white-space: pre-line;
+		transition: background var(--fast) var(--ease);
+	}
+
+	.last-note:hover {
+		background: color-mix(in oklab, var(--accent) 16%, transparent);
+	}
+
+	.last-note .pieces-label {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		white-space: normal;
 	}
 
 	.chips {

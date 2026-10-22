@@ -2,15 +2,15 @@ import { describe, expect, it } from 'vitest';
 import { reportGaps, reportRows, toCsv } from './music-report.ts';
 
 const pieces = [
-	{ pieceId: 'a', title: 'Egmont Ouvertüre', composer: 'Ludwig van Beethoven', publisher: 'Breitkopf', duration: 510 },
-	{ pieceId: 'b', title: 'Themes from 007', composer: 'John Barry', arranger: 'Mia Musterfrau' },
+	{ pieceId: 'a', title: 'Egmont Ouvertüre', composer: 'Beethoven', composerFull: 'Ludwig van Beethoven', publisher: 'Breitkopf', duration: 510 },
+	{ pieceId: 'b', title: 'Themes from 007', composer: 'Barry', arranger: 'Mia Musterfrau' },
 	{ title: 'Zugabe; "Überraschung"' }
 ];
 
 describe('reportGaps', () => {
 	it('lists what each piece still lacks, in programme order', () => {
 		expect(reportGaps(pieces)).toEqual([
-			{ pieceId: 'b', title: 'Themes from 007', missing: ['publisher', 'duration'] },
+			{ pieceId: 'b', title: 'Themes from 007', missing: ['composerFull', 'publisher', 'duration'] },
 			{ pieceId: undefined, title: 'Zugabe; "Überraschung"', missing: ['composer', 'publisher', 'duration'] }
 		]);
 	});
@@ -22,6 +22,8 @@ describe('reportRows', () => {
 		expect(rows[0]).toEqual(['Nr.', 'Titel', 'Komponist', 'Bearbeiter', 'Verlag', 'Dauer']);
 		expect(rows[1]).toEqual(['1', 'Egmont Ouvertüre', 'Ludwig van Beethoven', '', 'Breitkopf', '8:30']);
 		expect(rows[2][3]).toBe('Mia Musterfrau');
+		// Without a full name (#146), the name as the archive writes it.
+		expect(rows[2][2]).toBe('Barry');
 	});
 });
 

@@ -61,3 +61,31 @@ test('settings page', async ({ page }) => {
 	await expect(page.getByRole('heading', { name: 'Funktionen' })).toBeVisible();
 	await expectAccessible(page);
 });
+
+test('Chronik: the timeline and the numbers (#61)', async ({ page }) => {
+	await open(page, '/chronik');
+	await expect(page.getByRole('heading', { level: 1, name: 'Chronik' })).toBeVisible();
+	await expect(page.getByText('1960er')).toBeVisible();
+	await expectAccessible(page);
+	await page.getByRole('radio', { name: 'In Zahlen' }).click();
+	await expect(page.getByRole('heading', { name: 'Am häufigsten gespielt' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Lange nicht gespielt' })).toBeVisible();
+	await expectAccessible(page);
+});
+
+test('season report for the annual meeting (#147)', async ({ page }) => {
+	await open(page, '/chronik');
+	await page.getByRole('link', { name: 'Saisonbericht' }).click();
+	await expect(page.getByRole('heading', { level: 1, name: /Saisonbericht/ })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Zum ersten Mal gespielt' })).toBeVisible();
+	await expectAccessible(page);
+});
+
+test('a rehearsal with its note, and the profile with the data download', async ({ page }) => {
+	await open(page, '/konzerte/demo-probe-2');
+	await expect(page.getByRole('heading', { name: 'Aus der Probe' })).toBeVisible();
+	await expectAccessible(page);
+	await open(page, '/profil');
+	await expect(page.getByRole('link', { name: 'Meine Daten herunterladen' })).toBeVisible();
+	await expectAccessible(page);
+});

@@ -7,6 +7,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
+	import RehearsalNote from '#lib/components/RehearsalNote.svelte';
 	import Segmented from '#lib/components/Segmented.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Signups from '#lib/components/Signups.svelte';
@@ -370,6 +371,10 @@
 			<p class="placeholder">{t.rehearsalPlan.empty}</p>
 		{/if}
 	</section>
+{/if}
+
+{#if data.kind === 'event' && data.rehearsalNote}
+	<RehearsalNote data={data.rehearsalNote} result={form} />
 {/if}
 
 {/if}

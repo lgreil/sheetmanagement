@@ -1,14 +1,15 @@
 import { getLibrary, namedItem } from '#lib/server/library.ts';
-import { getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { getRehearsalNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { currentRehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { openWork } from '#lib/server/todo.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const library = await getLibrary();
-	const [open, plan] = await Promise.all([openWork(locals), getRehearsalPlan()]);
+	const [open, plan, notes] = await Promise.all([openWork(locals), getRehearsalPlan(), getRehearsalNotes()]);
 	const result = library.schedule;
 	if (!result.ok)
-		return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsalFor: undefined, rehearsalParts: undefined, rehearsing: [], program: [], todo: open };
+		return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsalFor: undefined, rehearsalParts: undefined, rehearsing: [], program: [], lastNote: null, todo: open };
 
 	const upcoming = result.events.filter((event) => !event.past);
 	const nextConcert = upcoming.find((event) => event.type === 'konzert') ?? null;
@@ -27,8 +28,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const rehearsalConcert = nextRehearsal?.concertId ? library.concertsById.get(nextRehearsal.concertId) : undefined;
 	const rehearsalParts =
 		nextRehearsal && (rehearsing.length || rehearsalConcert?.program.length) ? `/meine-noten?probe=${encodeURIComponent(nextRehearsal.id)}` : undefined;
+	// What the last rehearsal left to practise (#145), until the next one is over too.
+	const last = currentRehearsalNote(
+		result.events.filter((event) => event.type === 'probe' || event.type === 'generalprobe'),
+		notes.byEvent
+	);
+	const lastNote =
+		last && (last.note.practise || last.note.next)
+			? { url: `/konzerte/${encodeURIComponent(last.event.id)}`, date: last.event.date.long, practise: last.note.practise, next: last.note.next }
+			: null;
 	return {
 		calendar: 'ok' as const,
+		lastNote,
 		nextConcert,
 		nextRehearsal,
 		rehearsalFor: rehearsalConcert?.title,

@@ -236,6 +236,14 @@
 							</div>
 							{#if piece.subtitle}<span class="subtitle muted">{piece.subtitle}</span>{/if}
 						</div>
+						{#if piece.notes.length}
+							<!-- Agreed in rehearsal (#125): cuts and repeats right where the part is opened. -->
+							<ul class="piece-notes" aria-label={t.pieceNotes.inMyParts}>
+								{#each piece.notes as note, n (n)}
+									<li><Icon name="note" size={14} /><span>{note.text}{#if note.section}<span class="muted">{` · ${note.section}`}</span>{/if}</span></li>
+								{/each}
+							</ul>
+						{/if}
 						{#if !piece.hasMusic}
 							<span class="hint">{t.myParts.noMusic}</span>
 						{:else}
@@ -361,6 +369,36 @@
 		margin: 0;
 		padding-left: var(--space-4);
 		font-size: 0.875rem;
+	}
+
+	.piece-notes {
+		display: grid;
+		gap: 4px;
+		margin: 0;
+		padding: var(--space-2) var(--space-3);
+		border-left: 3px solid var(--accent);
+		border-radius: 0 var(--radius-m) var(--radius-m) 0;
+		background: var(--accent-soft);
+		list-style: none;
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.piece-notes li {
+		display: flex;
+		align-items: baseline;
+		gap: var(--space-2);
+		overflow-wrap: anywhere;
+	}
+
+	.piece-notes :global(svg) {
+		flex: none;
+		translate: 0 2px;
+		color: var(--accent);
+	}
+
+	.piece-notes .muted {
+		font-weight: 400;
 	}
 
 	/* The programme as one card, a hairline between pieces. */

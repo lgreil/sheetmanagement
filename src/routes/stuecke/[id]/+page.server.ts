@@ -1,26 +1,36 @@
 import { error, fail } from '@sveltejs/kit';
-import { REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
+import { newId, REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
-import { getFeedback, getLoans, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { requireRight } from '#lib/server/auth/index.ts';
+import { getFeedback, getLoans, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { checkNote, notesOf, sectionOptions } from '#lib/notes/piece-notes.ts';
+import { today } from '#lib/server/members.ts';
+import { normalize } from '#lib/repertoire/sheet.ts';
 import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { pieceArt } from '#lib/music/piece-art.ts';
 import { portraitFor, portraitPageUrl } from '#lib/server/portraits.ts';
-import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
+import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { listsOverlap } from '#lib/repertoire/lists.ts';
 import { workKey } from '#lib/music/piece-name.ts';
 import { formatDuration } from '#lib/repertoire/duration.ts';
-import { concertSummary, getLibrary, namedItem, type Library, type LibraryPiece } from '#lib/server/library.ts';
+import { concertSummary, getLibrary, isPastConcert, namedItem, type Library, type LibraryPiece } from '#lib/server/library.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const on = features();
-	const [library, feedback, plan, loans] = await Promise.all([getLibrary(), getFeedback(), getRehearsalPlan(), on.loans ? getLoans() : null]);
+	const [library, feedback, plan, loans, pieceNotes] = await Promise.all([
+		getLibrary(),
+		getFeedback(),
+		getRehearsalPlan(),
+		on.loans ? getLoans() : null,
+		getPieceNotes()
+	]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
 		if (!library.catalog.ok) error(503, t.messages.archiveUnavailable);
@@ -126,7 +136,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		// "Weitere Werke von Bach": the same composer, as read from the folder or corrected in the sheet.
 		otherVersions: byComposer.filter((other) => work && workKey(other.title) === work).map(summary),
 		moreByComposer: byComposer.filter((other) => !work || workKey(other.title) !== work).map(summary),
-		sheet: library.sheet
+		sheet: library.sheet,
+		notes: notesFor(library, piece, pieceNotes.notes, locals)
 	};
 };
 
@@ -143,12 +154,100 @@ function upcoming(library: Library, piece: LibraryPiece, planned: Map<string, { 
 	);
 }
 
+/**
+ * The piece's notes from rehearsals (#125): current ones, and those for concerts that are
+ * over, kept apart so an old cut doesn't confuse the next performance. Who may write them
+ * gets the choices for "Für" and "Konzert".
+ */
+function notesFor(library: Library, piece: LibraryPiece, notes: Awaited<ReturnType<typeof getPieceNotes>>['notes'], locals: App.Locals) {
+	const concerts = new Map(library.concerts.flatMap((concert) => (concert.sheet ? [[normalize(concert.sheet.title), concert] as const] : [])));
+	const shown = notesOf(notes, piece.sheet?.title ?? piece.title).map((note) => {
+		const concert = note.concert ? concerts.get(normalize(note.concert)) : undefined;
+		return {
+			id: note.id,
+			text: note.text,
+			section: note.section,
+			concert: note.concert ? (concert?.title ?? note.concert) : undefined,
+			by: note.by,
+			at: /^\d{4}-\d{2}-\d{2}$/.test(note.at) ? formatDay(note.at, config.locale) : note.at,
+			earlier: !!concert && isPastConcert(concert, library.today)
+		};
+	});
+	const canWrite = locals.access.rights.has('programme.bearbeiten') && !!piece.sheet;
+	return {
+		current: shown.filter((note) => !note.earlier),
+		earlier: shown.filter((note) => note.earlier),
+		form: canWrite ? { ...sectionOptions(config), concerts: noteConcerts(library, piece) } : null
+	};
+}
+
+/** The concerts a note can be for: coming ones with a row in the sheet, those playing the piece first. */
+function noteConcerts(library: Library, piece: LibraryPiece) {
+	return library.concerts
+		.filter((concert) => concert.sheet && !isPastConcert(concert, library.today))
+		.reverse()
+		.sort((a, b) => Number(piece.playedAt.includes(b.id)) - Number(piece.playedAt.includes(a.id)))
+		.map((concert) => ({ value: concert.sheet!.title, label: concert.label ? `${concert.title} · ${concert.label.long}` : concert.title }));
+}
+
 /** Shares a composer: "Mozart, Haydn" and "Haydn" do. */
 const sameComposer = listsOverlap;
 
 const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({ id, title, catalogue, status, programs });
 
 export const actions: Actions = {
+	addNote: async ({ params, request, locals }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const library = await getLibrary();
+		const piece = library.piecesById.get(params.id);
+		if (!piece?.sheet) error(404, t.messages.noPiece);
+		const data = await request.formData();
+		const input = { text: formText(data, 'text', 2000), section: formText(data, 'section', 100), concert: formText(data, 'concert', 300) };
+		const options = sectionOptions(config);
+		const checked = checkNote(input, {
+			sections: [...options.sections, ...options.instruments],
+			concerts: noteConcerts(library, piece).map((concert) => concert.value)
+		});
+		if ('problem' in checked) return fail(400, { noteError: t.pieceNotes.problems[checked.problem], noteValues: input });
+		try {
+			await ensureTab('pieceNotes');
+			const table = await readTab('pieceNotes');
+			await appendRecords('pieceNotes', table, [
+				{
+					piece: piece.sheet.title,
+					section: checked.values.section,
+					concert: checked.values.concert,
+					note: checked.values.text,
+					by: locals.access.user?.name ?? '',
+					at: today(),
+					id: newId()
+				}
+			]);
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { noteError: t.pieceNotes.notSetUp, noteValues: input });
+			console.error('Saving a note on a piece failed:', cause);
+			return fail(503, { noteError: t.pieceNotes.failed, noteValues: input });
+		}
+		return { noteSaved: true };
+	},
+
+	deleteNote: async ({ request, locals }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const id = formText(await request.formData(), 'id', 40);
+		try {
+			const table = await readTab('pieceNotes');
+			const row = id ? table.rows.find((r) => r.values.id === id) : undefined;
+			if (!row) return fail(409, { noteError: t.pieceNotes.gone });
+			await deleteRows('pieceNotes', [row.row]);
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { noteError: t.pieceNotes.notSetUp });
+			console.error('Deleting a note on a piece failed:', cause);
+			return fail(503, { noteError: t.pieceNotes.failed });
+		}
+		return { noteDeleted: true };
+	},
 	again: async ({ params, locals }) => {
 		const user = feedbackUser(locals);
 		if (!isOn('wishes')) return fail(404, { againError: t.wishes.failed });

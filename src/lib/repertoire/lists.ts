@@ -7,7 +7,7 @@ import { searchText } from '#lib/music/text.ts';
  */
 
 /** The columns that hold a list. */
-export const LIST_COLUMNS = ['composer', 'arranger', 'genre', 'publisher'] as const;
+export const LIST_COLUMNS = ['composer', 'composerFull', 'arranger', 'genre', 'publisher'] as const;
 
 /** "Mozart,  Haydn; Mozart" → ["Mozart", "Haydn"]: trimmed, without empty or repeated names. */
 export function splitList(text: string | undefined): string[] {
