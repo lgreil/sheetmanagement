@@ -9,10 +9,10 @@ import type { RequestHandler } from './$types';
 /** The music list (#118) as a CSV file, to paste into the collecting society's form. */
 export const GET: RequestHandler = async ({ params, locals }) => {
 	requireRight(locals, 'programme.bearbeiten');
-	if (!isOn('musicReport')) error(404, 'Nicht eingeschaltet.');
+	if (!isOn('musicReport')) error(404, t.messages.featureOff);
 	const library = await getLibrary();
 	const concert = library.concertsById.get(params.id);
-	if (!concert) error(404, 'Dieses Konzert gibt es nicht.');
+	if (!concert) error(404, t.messages.noConcert);
 	const name = `${t.musicReport.title} ${concert.title}`.replace(/[^\p{L}\p{N} ._-]+/gu, '').trim();
 	return new Response(toCsv(reportRows(reportPieces(library, concert))), {
 		headers: {

@@ -1,4 +1,5 @@
 import type { PageServerLoad } from './$types';
+import { config } from '#lib/config/index.ts';
 import { contrast } from '#lib/branding.ts';
 import { FEATURES } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
@@ -29,16 +30,14 @@ export interface Check {
 
 function describeError(error: unknown, what: string, serviceAccountEmail?: string): Check {
 	if (error instanceof NotConfiguredError) {
-		return { state: 'missing', details: [], problem: `${error.variable} ist nicht gesetzt.` };
+		return { state: 'missing', details: [], problem: t.messages.notSet(error.variable) };
 	}
 	if (error instanceof GoogleApiError && (error.status === 403 || error.status === 404)) {
 		return {
 			state: 'error',
 			details: [],
-			problem: `Kein Zugriff auf ${what} (${error.status}).`,
-			hint: serviceAccountEmail
-				? `Prüfe die ID und teile ${what} mit ${serviceAccountEmail} (Lesezugriff reicht).`
-				: 'Prüfe die ID und die Freigabe.'
+			problem: t.status.noAccess(what, error.status),
+			hint: serviceAccountEmail ? t.status.shareWith(what, serviceAccountEmail) : t.status.checkShare
 		};
 	}
 	return { state: 'error', details: [], problem: error instanceof Error ? error.message : String(error) };
@@ -47,7 +46,7 @@ function describeError(error: unknown, what: string, serviceAccountEmail?: strin
 /** The deployment's colours with their contrast (#75) and the parts of the app that are off (#134). */
 function lookCheck(): Check {
 	const { colours, badAccent, presetLight } = orchestra();
-	const ratio = (value: number) => value.toFixed(1).replace('.', ',');
+	const ratio = (value: number) => new Intl.NumberFormat(config.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(value);
 	const off = FEATURES.filter((feature) => !features()[feature]).map((feature) => t.features[feature]);
 	const unknown = unknownFeatures();
 	const problems = [
@@ -68,8 +67,8 @@ function lookCheck(): Check {
 	};
 }
 
-const dateTime = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
-const dateOnly = new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium', timeZone: 'UTC' });
+const dateTime = new Intl.DateTimeFormat(config.locale, { dateStyle: 'medium', timeStyle: 'short', timeZone: config.timeZone });
+const dateOnly = new Intl.DateTimeFormat(config.locale, { dateStyle: 'medium', timeZone: 'UTC' });
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	requireAdminWhenSignInIsOn(locals);
@@ -80,19 +79,18 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			serviceAccountEmail = email;
 			// A cheap call that proves the key works: the token request itself.
 			await client.request('https://www.googleapis.com/drive/v3/about', { params: { fields: 'user(emailAddress)' } });
-			const drive = driveWriteEnabled() ? 'lesen und Meldungen spiegeln (DRIVE_WRITE)' : 'nur lesen';
-			return { state: 'ok', details: [`Dienstkonto: ${email}`, `Drive: ${drive}`] } satisfies Check;
+			return { state: 'ok', details: [t.status.serviceAccount(email), t.status.driveAccess(driveWriteEnabled())] } satisfies Check;
 		} catch (error) {
-			const check = describeError(error, 'das Google-Konto', serviceAccountEmail);
+			const check = describeError(error, t.status.what.account, serviceAccountEmail);
 			if (check.state === 'error') {
-				check.hint = 'Prüfe, ob der Schlüssel vollständig eingefügt ist und das Dienstkonto noch existiert. Notfalls einen neuen Schlüssel erstellen.';
+				check.hint = t.status.keyHint;
 			}
 			return check;
 		}
 	})();
 
 	const googleReady = account.state === 'ok';
-	const skipped: Check = { state: 'missing', details: [], problem: 'Erst das Dienstkonto einrichten.' };
+	const skipped: Check = { state: 'missing', details: [], problem: t.status.accountFirst };
 
 	const [drive, calendar, sheet] = await Promise.all([
 		googleReady
@@ -109,20 +107,22 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 						return {
 							state: 'ok',
 							details: [
-								`${index.pieces.length} Stücke mit ${files} Dateien`,
-								...(categories.length ? [`Kategorien: ${categories.join(', ')}`] : []),
+								t.status.archiveCounts(index.pieces.length, files),
+								...(categories.length ? [t.status.categories(categories.join(', '))] : []),
 							...(index.programs.length
 								? [
-										`Aktuelle Programme: ${index.programs
-											.map((program) => `${program} (${index.pieces.filter((p) => p.programs?.includes(program)).length})`)
-											.join(', ')}`
+										t.status.programs(
+											index.programs
+												.map((program) => `${program} (${index.pieces.filter((p) => p.programs?.includes(program)).length})`)
+												.join(', ')
+										)
 									]
 								: []),
-								`Stand: ${dateTime.format(new Date(result.storedAt))} (${result.source === 'fresh' ? 'gerade geladen' : 'aus dem Cache'}, ${index.requestCount} Google-Anfragen)`
+								t.status.indexed(dateTime.format(new Date(result.storedAt)), result.source === 'fresh', index.requestCount)
 							]
 						};
 					} catch (error) {
-						return describeError(error, 'den Notenarchiv-Ordner', serviceAccountEmail);
+						return describeError(error, t.status.what.drive, serviceAccountEmail);
 					}
 				})()
 			: skipped,
@@ -137,18 +137,19 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 						return {
 							state: 'ok',
 							details: [
-								`${events.length} Termine in den nächsten 4 Monaten`,
+								t.status.events(events.length),
 								...(next
 									? [
-											`Nächster Termin: ${next.title}, ${
+											t.status.nextEvent(
+												next.title,
 												next.allDay ? dateOnly.format(new Date(next.start)) : dateTime.format(new Date(next.start))
-											}`
+											)
 										]
 									: [])
 							]
 						};
 					} catch (error) {
-						return describeError(error, 'den Kalender', serviceAccountEmail);
+						return describeError(error, t.status.what.calendar, serviceAccountEmail);
 					}
 				})()
 			: skipped,
@@ -156,21 +157,21 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			? (async (): Promise<Check> => {
 					try {
 						const info = await getSpreadsheetInfo(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'));
-						const title = `„${info.title}"`;
+						const title = t.common.quote(info.title);
 						const missing = (keys: readonly TabKey[]) =>
 							keys.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
-						const setupHint = 'Auf der Seite „Tabelle einrichten“ werden sie angelegt.';
+						const setupHint = t.status.setupHint;
 						const missingRepertoire = missing(REPERTOIRE_TABS);
 						if (missingRepertoire.length) {
 							return {
 								state: 'missing',
 								details: [title],
-								problem: `Es fehlen die Blätter ${missingRepertoire.join(', ')}.`,
+								problem: t.status.missingTabs(missingRepertoire.join(', ')),
 								hint: setupHint
 							};
 						}
 						const result = await getRepertoire();
-						if (!result.ok) return { state: 'error', details: [title], problem: 'Die Tabelle konnte nicht gelesen werden.' };
+						if (!result.ok) return { state: 'error', details: [title], problem: t.status.sheetUnreadable };
 						const { pieces, concerts, problems } = result.repertoire;
 						// Without the access tabs the repertoire works; only sign-in needs them.
 						const missingAccess = missing(ACCESS_TABS);
@@ -178,18 +179,18 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 							state: 'ok',
 							details: [
 								title,
-								`${pieces.length} Stücke, ${concerts.length} Konzerte`,
-								...(problems.length ? [`${problems.length} Hinweise, siehe „Tabelle einrichten“`] : [])
+								t.status.sheetCounts(pieces.length, concerts.length),
+								...(problems.length ? [t.status.sheetProblems(problems.length)] : [])
 							],
 							...(missingAccess.length
-								? { problem: `Für die Anmeldung fehlen die Blätter ${missingAccess.join(', ')}.`, hint: setupHint }
+								? { problem: t.status.accessTabsMissing(missingAccess.join(', ')), hint: setupHint }
 								: {})
 						};
 					} catch (error) {
-						const check = describeError(error, 'die Repertoire-Tabelle', serviceAccountEmail);
-						if (check.state === 'missing') check.hint = 'Für Programme und „Gespielt bei“. Siehe Anleitung, Schritt 5.';
+						const check = describeError(error, t.status.what.sheet, serviceAccountEmail);
+						if (check.state === 'missing') check.hint = t.status.sheetMissingHint;
 						if (check.state === 'error' && serviceAccountEmail) {
-							check.hint = `Prüfe die ID und teile die Tabelle mit ${serviceAccountEmail} als Bearbeiter.`;
+							check.hint = t.status.sheetShare(serviceAccountEmail);
 						}
 						return check;
 					}
@@ -204,20 +205,20 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 				? {
 						state: 'error',
 						details: [],
-						problem: 'Die Anmeldung ist mit FORCE_AUTH=false ausgeschaltet.',
-						hint: 'Die App ist für alle offen und nur lesbar, auch diese Seite. Zum Einschalten FORCE_AUTH löschen oder auf true setzen.'
+						problem: t.status.signInDisabled,
+						hint: t.status.signInDisabledHint
 					}
 				: {
 						state: 'missing',
 						details: [],
-						problem: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
-						hint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.'
+						problem: t.status.signInMissing,
+						hint: t.status.signInMissingHint
 					}
 			: {
 					state: auth.problems.length ? 'error' : 'ok',
 					details: [
-						`Weiterleitungs-URI: ${url.origin}/auth/callback`,
-						`${auth.bootstrapAdmins.length} Bootstrap-Admins`
+						t.status.redirectUri(`${url.origin}/auth/callback`),
+						t.status.bootstrapAdmins(auth.bootstrapAdmins.length)
 					],
 					problem: auth.problems.join(' ') || undefined
 				};

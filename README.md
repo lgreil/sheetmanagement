@@ -104,7 +104,9 @@ Everything else orchestra-specific lives in [`src/lib/config/`](src/lib/config):
 - **Logo**: `ORCHESTRA_LOGO` (a file in `static/` or an https link) replaces `static/logo.png`; the demo uses `static/demo/musterorchester.svg`
 - **Features**: what the orchestra doesn't use (rented music, the GEMA list, attendance, sign-ups, wishes, the calendar feed, saving parts offline) is turned off with `features` in the preset or `FEATURES_OFF="leihmaterial, gema"`; its pages, menu entries and sheet tabs go away
 
-Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`. All texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts).
+Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`.
+
+**Language:** German by default; English with `APP_LANGUAGE=en` when building (`APP_LANGUAGE=en pnpm deploy`, or in a `.env` file). One language per deployment: the texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts) and [`en.ts`](src/lib/i18n/en.ts), and the type checker makes sure both have every text. A new English deployment also gets English tab and column names in its sheet; an existing sheet keeps its names, so don't switch the language of a deployment that already has one. Instrument names come from the preset and can be renamed on /einstellungen.
 
 ## Contributing
 

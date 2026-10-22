@@ -1,5 +1,6 @@
 import { LOOKS, parseColour, type Look } from '#lib/branding.ts';
 import { FEATURES, type Feature } from '#lib/features.ts';
+import { t } from '#lib/i18n/index.ts';
 import type { InstrumentOverride } from '#lib/config/index.ts';
 import type { Table } from '#lib/repertoire/sheet.ts';
 
@@ -9,18 +10,11 @@ import type { Table } from '#lib/repertoire/sheet.ts';
  * without a variable or a code change. They win over the variables, which win over the preset.
  */
 
-/** The words in the "Einstellung" column. They stay German, since sheets depend on them. */
-export const SETTING_KEYS = {
-	name: 'Name',
-	shortName: 'Kurzname',
-	logo: 'Logo',
-	accent: 'Akzentfarbe',
-	look: 'Stil',
-	featuresOff: 'Ausgeschaltet'
-} as const;
+/** The words in the "Einstellung" column, in the deployment's language like the sheet's other names. */
+export const SETTING_KEYS = t.sheet.settings.keys;
 
-/** The look's word in the "Wert" column, German like the keys. */
-export const LOOK_WORDS: Record<Look, string> = { bold: 'kräftig', plain: 'schlicht' };
+/** The look's word in the value column, in the deployment's language like the keys. */
+export const LOOK_WORDS: Record<Look, string> = t.sheet.settings.lookValues;
 
 const lookOf = (word: string) => LOOKS.find((look) => look === word.toLowerCase() || LOOK_WORDS[look] === word.toLowerCase());
 

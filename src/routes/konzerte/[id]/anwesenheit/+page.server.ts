@@ -17,9 +17,9 @@ const RIGHT = 'anwesenheit.erfassen';
 
 function eventOf(library: Library, id: string): ShownEvent {
 	const schedule = library.schedule;
-	if (!schedule.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
+	if (!schedule.ok) error(503, t.messages.calendarUnavailable);
 	const event = schedule.byId.get(id);
-	if (!event) error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
+	if (!event) error(404, t.messages.noEvent);
 	return event;
 }
 

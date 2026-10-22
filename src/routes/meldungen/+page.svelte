@@ -34,7 +34,7 @@
 							<strong>{report.part || t.reports.wholePiece}</strong>
 							– {t.feedbackValues.reportKind[report.kind]}
 						</span>
-						{#if report.comment}<span class="comment">„{report.comment}“</span>{/if}
+						{#if report.comment}<span class="comment">{t.common.quote(report.comment)}</span>{/if}
 						<span class="muted">{t.reports.by(report.reportedBy, report.reportedAt)}</span>
 						{#if done && report.note}<span class="muted">{t.sheet.reports.columns.note}: {report.note}</span>{/if}
 						{#if report.inDrive || report.marked}

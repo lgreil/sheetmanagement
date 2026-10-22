@@ -15,7 +15,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	requireRight(locals, 'programme.bearbeiten');
 	const [library, repertoire, feedback] = await Promise.all([getLibrary(), getRepertoire(), getFeedback()]);
 	const concert = library.concertsById.get(params.id);
-	if (!concert) error(404, 'Dieses Konzert gibt es nicht.');
+	if (!concert) error(404, t.messages.noConcert);
 	if (!concert.sheet || !repertoire.ok) {
 		return { state: 'not-in-sheet' as const, concert: { id: concert.id, title: concert.title } };
 	}
@@ -116,7 +116,7 @@ export const actions: Actions = {
 		requireRight(locals, 'programme.bearbeiten');
 		const data = await request.formData();
 		const entries = parseEntries(String(data.get('entries') ?? ''));
-		if (!entries) return fail(400, { message: 'Das Programm konnte nicht gelesen werden.' });
+		if (!entries) return fail(400, { message: t.messages.programUnreadable });
 
 		const library = await getLibrary();
 		const sheet = library.concertsById.get(params.id)?.sheet;
@@ -140,7 +140,7 @@ export const actions: Actions = {
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: cause.message });
 			console.error('Saving a programme failed:', cause);
-			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
+			return fail(503, { message: t.messages.sheetFailed });
 		}
 		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);
 	},
@@ -171,7 +171,7 @@ export const actions: Actions = {
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: t.editor.shareNeedsSetup });
 			console.error('Sharing a programme failed:', cause);
-			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
+			return fail(503, { message: t.messages.sheetFailed });
 		}
 		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);
 	}

@@ -12,9 +12,9 @@ import type { Actions, PageServerLoad } from './$types';
 /** The concert and its rehearsals from the calendar; the plan is edited per concert. */
 function concertOf(library: Library, id: string) {
 	const schedule = library.schedule;
-	if (!schedule.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
+	if (!schedule.ok) error(503, t.messages.calendarUnavailable);
 	const event = schedule.byId.get(id);
-	if (!event) error(404, 'Diesen Termin gibt es nicht (mehr) im Kalender.');
+	if (!event) error(404, t.messages.noEvent);
 	const rehearsals = event.rehearsalIds.map((rid) => schedule.byId.get(rid)).filter((e): e is ShownEvent => !!e);
 	return { event, rehearsals };
 }
@@ -85,7 +85,7 @@ export const actions: Actions = {
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: t.rehearsalPlan.notSetUp });
 			console.error('Saving a rehearsal plan failed:', cause);
-			return fail(503, { message: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.' });
+			return fail(503, { message: t.messages.sheetFailed });
 		}
 		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?probenplan`);
 	}

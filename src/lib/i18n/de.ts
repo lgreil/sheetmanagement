@@ -28,7 +28,8 @@ export const de = {
 		workspace: 'Bereich',
 		/** After a tab's count, for screen readers: "Meldungen 1 offen". */
 		open: 'offen',
-		skip: 'Zum Inhalt springen'
+		skip: 'Zum Inhalt springen',
+		main: 'Hauptnavigation'
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
@@ -98,6 +99,8 @@ export const de = {
 		count: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
 		parts: (n: number) => (n === 1 ? '1 Stimme' : `${n} Stimmen`),
 		noResults: 'Nichts gefunden.',
+		clearSearch: 'Suche leeren',
+		filter: 'Filter',
 		status: {
 			ok: '',
 			missing: 'Stimmen fehlen',
@@ -376,6 +379,7 @@ export const de = {
 		title: 'Konzert-Check',
 		lead: 'Was für dieses Konzert schon steht und was noch fehlt.',
 		allDone: 'Alles erledigt',
+		pieces: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücken`),
 		open: (n: number) => (n === 1 ? '1 Punkt offen' : `${n} Punkte offen`),
 		program: (n: number) => (n === 1 ? 'Programm mit 1 Stück eingetragen' : `Programm mit ${n} Stücken eingetragen`),
 		noProgram: 'Noch kein Programm eingetragen',
@@ -714,6 +718,8 @@ export const de = {
 		alsoPlayedBy: 'auch gespielt von',
 		mutual: 'gegenseitig mit',
 		groupPart: 'Stimme',
+		groupPartExample: 'Percussion',
+		groupPlayersExample: 'Schlagwerk, Mallet Percussion',
 		groupPlayers: 'Gespielt von (mit Komma trennen)',
 		mutualLabel: 'Gegenseitig: alle spielen die Stimmen der anderen',
 		groupMissing: 'Bitte eine Stimme und mindestens ein Instrument angeben.',
@@ -933,7 +939,36 @@ export const de = {
 		missing: 'Nicht eingerichtet',
 		refresh: 'Archiv neu einlesen',
 		setupGuide: 'Anleitung zur Einrichtung',
-		setupSheet: 'Tabelle einrichten'
+		setupSheet: 'Tabelle einrichten',
+		noAccess: (what: string, status: number) => `Kein Zugriff auf ${what} (${status}).`,
+		shareWith: (what: string, email: string) => `Prüfe die ID und teile ${what} mit ${email} (Lesezugriff reicht).`,
+		checkShare: 'Prüfe die ID und die Freigabe.',
+		what: { account: 'das Google-Konto', drive: 'den Notenarchiv-Ordner', calendar: 'den Kalender', sheet: 'die Repertoire-Tabelle' },
+		serviceAccount: (email: string) => `Dienstkonto: ${email}`,
+		driveAccess: (write: boolean) => `Drive: ${write ? 'lesen und Meldungen spiegeln (DRIVE_WRITE)' : 'nur lesen'}`,
+		keyHint: 'Prüfe, ob der Schlüssel vollständig eingefügt ist und das Dienstkonto noch existiert. Notfalls einen neuen Schlüssel erstellen.',
+		accountFirst: 'Erst das Dienstkonto einrichten.',
+		archiveCounts: (pieces: number, files: number) => `${pieces} Stücke mit ${files} Dateien`,
+		categories: (list: string) => `Kategorien: ${list}`,
+		programs: (list: string) => `Aktuelle Programme: ${list}`,
+		indexed: (when: string, fresh: boolean, requests: number) =>
+			`Stand: ${when} (${fresh ? 'gerade geladen' : 'aus dem Cache'}, ${requests} Google-Anfragen)`,
+		events: (n: number) => `${n} Termine in den nächsten 4 Monaten`,
+		nextEvent: (title: string, when: string) => `Nächster Termin: ${title}, ${when}`,
+		setupHint: 'Auf der Seite „Tabelle einrichten“ werden sie angelegt.',
+		missingTabs: (tabs: string) => `Es fehlen die Blätter ${tabs}.`,
+		sheetUnreadable: 'Die Tabelle konnte nicht gelesen werden.',
+		sheetCounts: (pieces: number, concerts: number) => `${pieces} Stücke, ${concerts} Konzerte`,
+		sheetProblems: (n: number) => `${n} Hinweise, siehe „Tabelle einrichten“`,
+		accessTabsMissing: (tabs: string) => `Für die Anmeldung fehlen die Blätter ${tabs}.`,
+		sheetMissingHint: 'Für Programme und „Gespielt bei“. Siehe Anleitung, Schritt 5.',
+		sheetShare: (email: string) => `Prüfe die ID und teile die Tabelle mit ${email} als Bearbeiter.`,
+		signInDisabled: 'Die Anmeldung ist mit FORCE_AUTH=false ausgeschaltet.',
+		signInDisabledHint: 'Die App ist für alle offen und nur lesbar, auch diese Seite. Zum Einschalten FORCE_AUTH löschen oder auf true setzen.',
+		signInMissing: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
+		signInMissingHint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.',
+		redirectUri: (uri: string) => `Weiterleitungs-URI: ${uri}`,
+		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`
 	},
 	setup: {
 		title: 'Repertoire-Tabelle einrichten',
@@ -1171,6 +1206,20 @@ export const de = {
 			columns: {
 				key: 'Einstellung',
 				value: 'Wert'
+			},
+			/** The words in the "Einstellung" column, one row each. */
+			keys: {
+				name: 'Name',
+				shortName: 'Kurzname',
+				logo: 'Logo',
+				accent: 'Akzentfarbe',
+				look: 'Stil',
+				featuresOff: 'Ausgeschaltet'
+			},
+			/** The words for the look in the "Wert" column (#163). */
+			lookValues: {
+				bold: 'kräftig',
+				plain: 'schlicht'
 			}
 		}
 	},
@@ -1328,7 +1377,39 @@ export const de = {
 		unsaved: 'Deine Änderungen sind noch nicht gespeichert. Seite trotzdem verlassen?',
 		share: 'Teilen',
 		copied: 'Kopiert. Jetzt z. B. in WhatsApp einfügen.',
-		copyFailed: 'Kopieren hat nicht geklappt.'
+		copyFailed: 'Kopieren hat nicht geklappt.',
+		quote: (text: string) => `„${text}“`
+	},
+	/** Short answers from the server: refusals, things that are gone or unreachable, setup problems. */
+	messages: {
+		signInFirst: 'Bitte zuerst anmelden.',
+		noRight: 'Dafür fehlt dir die Berechtigung.',
+		membersOnly: 'Nur für angemeldete Mitglieder.',
+		badRequest: 'Ungültige Anfrage.',
+		archiveUnavailable: 'Das Notenarchiv ist gerade nicht erreichbar.',
+		calendarUnavailable: 'Der Kalender ist gerade nicht erreichbar.',
+		sheetFailed: 'Die Tabelle konnte gerade nicht geändert werden. Bitte versuch es noch einmal.',
+		noFile: 'Diese Datei gibt es nicht im Notenarchiv.',
+		driveFailed: (status: string) => `Die Datei konnte nicht aus Drive geladen werden (Drive: ${status}).`,
+		noAnswer: 'keine Antwort',
+		noPicture: 'Kein Bild.',
+		wikimediaUnavailable: 'Wikimedia ist gerade nicht erreichbar.',
+		noVideoLength: 'Ohne YOUTUBE_API_KEY gibt es keine Videolänge.',
+		youtubeUnavailable: 'YouTube ist gerade nicht erreichbar.',
+		signInOff: 'Die Anmeldung ist nicht eingerichtet.',
+		noCalendar: 'Diesen Kalender gibt es nicht.',
+		noEvent: 'Diesen Termin gibt es nicht (mehr) im Kalender.',
+		noConcert: 'Dieses Konzert gibt es nicht.',
+		noPiece: 'Dieses Stück gibt es nicht (mehr) im Notenarchiv.',
+		featureOff: 'Nicht eingeschaltet.',
+		programUnreadable: 'Das Programm konnte nicht gelesen werden.',
+		grantMissing: 'Bitte „Wer“ und ein Recht angeben.',
+		notSet: (variable: string) => `${variable} ist nicht gesetzt.`,
+		noAdmins: 'BOOTSTRAP_ADMINS ist nicht gesetzt: niemand kann Mitglieder freischalten.',
+		runSetup: (page: string) => `Bitte „${page}“ ausführen.`,
+		shortSecret: (min: number) => `SESSION_SECRET fehlt oder ist kürzer als ${min} Zeichen.`,
+		missingTab: (tab: string) => `Das Blatt „${tab}“ fehlt.`,
+		missingColumns: (tab: string, columns: string) => `Im Blatt „${tab}“ fehlen Spalten: ${columns}.`
 	},
 	error: {
 		title: 'Da ist etwas schiefgelaufen',

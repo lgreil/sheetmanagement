@@ -1,4 +1,5 @@
 import { toSheetRow } from '#lib/repertoire/link.ts';
+import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, readTable, type ColumnKey, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
 import { appendRows, batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
 import { getRepertoire } from './repertoire.ts';
@@ -12,7 +13,7 @@ import { getGoogle, requireSetting } from './services.ts';
 
 export class SheetLayoutError extends Error {
 	constructor(readonly tab: string, readonly columns: string[] = []) {
-		super(columns.length ? `Im Blatt „${tab}“ fehlen Spalten: ${columns.join(', ')}.` : `Das Blatt „${tab}“ fehlt.`);
+		super(columns.length ? t.messages.missingColumns(tab, columns.join(', ')) : t.messages.missingTab(tab));
 		this.name = 'SheetLayoutError';
 	}
 }

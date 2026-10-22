@@ -5,6 +5,7 @@ import { GoogleApiError } from '#lib/server/google/client.ts';
 import { downloadFile } from '#lib/server/google/drive.ts';
 import { getGoogle } from '#lib/server/services.ts';
 import type { RequestHandler } from './$types';
+import { t } from '#lib/i18n/index.ts';
 
 const PDF = 'application/pdf';
 
@@ -27,16 +28,16 @@ function archivePdfs(catalog: Catalog): Set<string> {
  * are in the archive, never any other file the service account can see.
  */
 export const GET: RequestHandler = async ({ params, locals }) => {
-	if (locals.auth !== 'on' || !locals.access.member) error(403, 'Nur für angemeldete Mitglieder.');
+	if (locals.auth !== 'on' || !locals.access.member) error(403, t.messages.membersOnly);
 	const catalog = await getCatalog();
-	if (!catalog.ok) error(503, 'Das Notenarchiv ist gerade nicht erreichbar.');
-	if (!archivePdfs(catalog.catalog).has(params.id)) error(404, 'Diese Datei gibt es nicht im Notenarchiv.');
+	if (!catalog.ok) error(503, t.messages.archiveUnavailable);
+	if (!archivePdfs(catalog.catalog).has(params.id)) error(404, t.messages.noFile);
 
 	const file = await downloadFile(getGoogle().client, params.id).catch((cause) => {
 		// Drive's status and message tell "not shared" (403/404) from "try again" (429/5xx).
 		const status = cause instanceof GoogleApiError ? cause.status : 0;
 		console.error(`Downloading part ${params.id} failed (${status || 'no status'}):`, cause instanceof Error ? cause.message : cause);
-		error(502, `Die Datei konnte nicht aus Drive geladen werden (Drive: ${status || 'keine Antwort'}).`);
+		error(502, t.messages.driveFailed(String(status || t.messages.noAnswer)));
 	});
 	return new Response(file.body, {
 		headers: {

@@ -376,11 +376,11 @@
 		<form class="add" method="POST" action="?/addGroup" use:enhance={submit}>
 			<label>
 				{t.admin.groupPart}
-				<input name="part" list="instrument-names" required autocomplete="off" placeholder="Percussion" />
+				<input name="part" list="instrument-names" required autocomplete="off" placeholder={t.admin.groupPartExample} />
 			</label>
 			<label>
 				{t.admin.groupPlayers}
-				<input name="players" required autocomplete="off" placeholder="Schlagwerk, Mallet Percussion" />
+				<input name="players" required autocomplete="off" placeholder={t.admin.groupPlayersExample} />
 			</label>
 			<label class="check"><input type="checkbox" name="mutual" />{t.admin.mutualLabel}</label>
 			<button class="button" disabled={saving.busy}><Icon name="plus" size={16} />{t.admin.add}</button>

@@ -21,14 +21,14 @@ const PAST_DAYS = 60;
  */
 export const GET: RequestHandler = async ({ params, url }) => {
 	const auth = authConfig();
-	if (auth.mode !== 'on') error(404, 'Nicht eingerichtet.');
+	if (auth.mode !== 'on') error(404, t.messages.signInOff);
 	const token = await readFeedToken(params.token, auth.sessionSecret);
-	if (!token) error(404, 'Diesen Kalender gibt es nicht.');
+	if (!token) error(404, t.messages.noCalendar);
 	const [access, library, plan, signups] = await Promise.all([getAccessList(), getLibrary(), getRehearsalPlan(), isOn('signups') ? getSignups() : null]);
 	const member = access?.membersByEmail.get(token.email);
 	// Same answer for a revoked link and an unknown one.
-	if (!member || !linkValid(member.feedVersion, token.version)) error(404, 'Diesen Kalender gibt es nicht.');
-	if (!library.schedule.ok) error(503, 'Der Kalender ist gerade nicht erreichbar.');
+	if (!member || !linkValid(member.feedVersion, token.version)) error(404, t.messages.noCalendar);
+	if (!library.schedule.ok) error(503, t.messages.calendarUnavailable);
 
 	const concertOf = (id: string) => {
 		const event = library.schedule.ok ? library.schedule.byId.get(id) : undefined;

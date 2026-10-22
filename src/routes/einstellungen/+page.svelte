@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import { brandColours, COLOUR_PRESETS, contrast, LOOKS, parseColour } from '#lib/branding.ts';
+	import { config } from '#lib/config/index.ts';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
@@ -22,7 +23,8 @@
 
 	// What the app will look like: the colour as chosen, with the shades derived from it.
 	const colours = $derived(brandColours(useDefault ? data.defaults.accent : (parseColour(accent) ?? data.defaults.accent)));
-	const ratio = (a: string, b: string) => contrast(a, b).toFixed(1).replace('.', ',');
+	const oneDecimal = new Intl.NumberFormat(config.locale, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+	const ratio = (a: string, b: string) => oneDecimal.format(contrast(a, b));
 	// With the default colour, the preset's own light shade, as the app shows it.
 	const presetLight = $derived(useDefault ? data.defaults.accentLight : undefined);
 	const light = $derived(presetLight ?? colours.light);
