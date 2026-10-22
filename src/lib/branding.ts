@@ -11,6 +11,16 @@ const DARK_INK = '#0b0b0a';
 const WHITE = '#ffffff';
 const MIN_CONTRAST = 4.5;
 
+/** Ready-made accents offered on /einstellungen; each reads well in both schemes once derived. */
+export const COLOUR_PRESETS = {
+	gold: '#e6b422',
+	navy: '#2c5d8f',
+	petrol: '#0f766e',
+	forest: '#3f7d3a',
+	bordeaux: '#9f1239',
+	violet: '#6d28d9'
+} as const;
+
 /** "#e6b422" or "#E6B422" or "#eb2" → "#e6b422"; anything else undefined, since it ends up in a <style>. */
 export function parseColour(text: string | undefined): string | undefined {
 	const value = text?.trim().toLowerCase() ?? '';

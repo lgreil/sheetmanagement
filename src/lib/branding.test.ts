@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { brandColours, brandStyle, contrast, parseColour } from './branding.ts';
+import { brandColours, brandStyle, COLOUR_PRESETS, contrast, parseColour } from './branding.ts';
 
 describe('parseColour', () => {
 	it('takes #rrggbb and #rgb, in any case', () => {
@@ -46,5 +46,14 @@ describe('brandColours', () => {
 		const colours = brandColours('#e6b422');
 		expect(brandStyle(colours)).toBe(`:root:root{--brand:#e6b422;--brand-ink:#0b0b0a;--accent-light:${colours.light};--accent-dark:#e6b422}`);
 		expect(brandStyle(colours, 'color-mix(in oklab, #e6b422 44%, #3a1f00)')).toContain('--accent-light:color-mix(in oklab, #e6b422 44%, #3a1f00);');
+	});
+});
+
+describe('COLOUR_PRESETS', () => {
+	it('are valid colours with a readable shade on the dark page', () => {
+		for (const colour of Object.values(COLOUR_PRESETS)) {
+			expect(parseColour(colour)).toBe(colour);
+			expect(contrast(brandColours(colour).dark, '#0b0b0a')).toBeGreaterThanOrEqual(4.5);
+		}
 	});
 });

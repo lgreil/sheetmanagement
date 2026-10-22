@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import { brandColours, contrast, parseColour } from '#lib/branding.ts';
+	import { brandColours, COLOUR_PRESETS, contrast, parseColour } from '#lib/branding.ts';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
@@ -88,6 +88,25 @@
 				<input type="checkbox" name="accentDefault" bind:checked={useDefault} />
 				{t.settings.accentDefault(data.defaults.accent)}
 			</label>
+			<fieldset class="presets">
+				<legend class="hint">{t.settings.presets}</legend>
+				{#each Object.entries(COLOUR_PRESETS) as [key, colour] (key)}
+					{@const chosen = !useDefault && parseColour(accent) === colour}
+					<button
+						type="button"
+						class="swatch"
+						class:chosen
+						style="--swatch:{colour}"
+						aria-pressed={chosen}
+						onclick={() => {
+							useDefault = false;
+							accent = colour;
+						}}
+					>
+						<span class="dot" aria-hidden="true"></span>{t.settings.presetNames[key]}
+					</button>
+				{/each}
+			</fieldset>
 			<label class="field colour" class:off={useDefault}
 				>{t.settings.accent}
 				<span class="colour-input">
@@ -218,6 +237,48 @@
 	.check > span {
 		display: grid;
 		gap: 2px;
+	}
+
+	.presets {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.presets legend {
+		margin-bottom: var(--space-2);
+		padding: 0;
+	}
+
+	.swatch {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: var(--tap);
+		padding: 0 var(--space-4) 0 var(--space-2);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text);
+		font: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+	}
+
+	.swatch .dot {
+		width: 26px;
+		height: 26px;
+		border-radius: 50%;
+		background: var(--swatch);
+	}
+
+	.swatch.chosen {
+		border-color: var(--swatch);
+		box-shadow: 0 0 0 1px var(--swatch);
+		font-weight: 650;
 	}
 
 	.colour.off {

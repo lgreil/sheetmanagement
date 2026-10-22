@@ -264,6 +264,8 @@ export const de = {
 		colour: 'Farbe',
 		accent: 'Akzentfarbe',
 		accentDefault: (colour: string) => `Standardfarbe (${colour})`,
+		presets: 'Vorschläge',
+		presetNames: { gold: 'Gold', navy: 'Marineblau', petrol: 'Petrol', forest: 'Waldgrün', bordeaux: 'Bordeaux', violet: 'Violett' } as Record<string, string>,
 		colourHint: 'Für Hell und Dunkel wird die Farbe so weit angepasst, dass Text gut lesbar bleibt (mindestens 4,5:1).',
 		light: 'Hell',
 		dark: 'Dunkel',
