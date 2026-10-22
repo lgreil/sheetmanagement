@@ -93,7 +93,9 @@ The app's own settings (Google keys, ids, sign-in) stay Cloudflare secrets, set 
 
 ## Adapting it for your orchestra
 
-Everything orchestra-specific lives in [`src/lib/config/`](src/lib/config):
+Name, logo, accent colour and the features in use can be changed by an admin on **/einstellungen** without touching code or variables. The page saves them in the sheet's "Einstellungen" tab; they win over the variables below, which win over the preset, and an empty field falls back to them.
+
+Everything else orchestra-specific lives in [`src/lib/config/`](src/lib/config):
 
 - **Instruments**: names, display order, alternative spellings
 - **Naming rules**: how part files are named (separator, status words like `FEHLT`, the `@` prefix for scores)

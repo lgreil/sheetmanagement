@@ -93,7 +93,8 @@ describe('setUpSheet', () => {
 			'Anmeldungen',
 			'Proben',
 			'Leihmaterial',
-			'Anwesenheit'
+			'Anwesenheit',
+			'Einstellungen'
 		];
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);

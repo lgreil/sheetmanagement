@@ -22,7 +22,7 @@ describe('navGroups', () => {
 	});
 
 	it('gives admins every page', () => {
-		expect(hrefs('on', ['ansehen', 'stuecke.bearbeiten', 'mitglieder.verwalten']).verwaltung).toEqual(['/admin', '/setup', '/status']);
+		expect(hrefs('on', ['ansehen', 'stuecke.bearbeiten', 'mitglieder.verwalten']).verwaltung).toEqual(['/admin', '/einstellungen', '/setup', '/status']);
 	});
 
 	it('keeps setup and status reachable while sign-in is off, without wishes or admin', () => {

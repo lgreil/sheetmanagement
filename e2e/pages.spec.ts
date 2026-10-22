@@ -54,3 +54,10 @@ test('the "Mehr" menu takes and returns focus', async ({ page }) => {
 	await expect(menu).toBeHidden();
 	await expect(more).toBeFocused();
 });
+
+test('settings page', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await expect(page.getByRole('heading', { level: 1, name: 'Einstellungen' })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Funktionen' })).toBeVisible();
+	await expectAccessible(page);
+});

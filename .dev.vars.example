@@ -2,6 +2,8 @@
 # In production, set each value with `wrangler secret put <NAME>`. Never commit real values.
 # Step-by-step instructions for the Google values: docs/setup-google.md
 
+# Name, short name, logo, accent colour and features can also be set by an admin on
+# /einstellungen; what's saved there wins over the values here.
 # Display name of the orchestra. Optional; defaults to the name in the active config preset.
 ORCHESTRA_NAME="Mein Orchester"
 # Shorter name for the header on phones. Optional; defaults to ORCHESTRA_NAME.

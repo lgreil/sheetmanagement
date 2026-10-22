@@ -62,3 +62,15 @@ test('several composers, separated by commas', async ({ page }) => {
 	await expect(page.getByRole('link', { name: /Egmont Ouvertüre/ })).toBeVisible();
 	await expect(page.getByRole('link', { name: /Eine kleine Nachtmusik/ })).toBeVisible();
 });
+
+test('settings: colour and features for everyone (#75, #134)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByLabel(/Standardfarbe/).uncheck();
+	await page.getByRole('textbox', { name: 'Akzentfarbe' }).fill('#0f766e');
+	await page.getByRole('checkbox', { name: /Leihmaterial/ }).uncheck();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Gespeichert.')).toBeVisible();
+	expect(await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--brand'))).toBe('#0f766e');
+	const response = await page.goto('/leihmaterial');
+	expect(response?.status()).toBe(404);
+});

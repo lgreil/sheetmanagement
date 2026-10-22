@@ -4,6 +4,7 @@ import { t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
+import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 
 /** Sent with every response: no framing (clickjacking on the admin forms), no MIME sniffing. */
 const SECURITY_HEADERS = {
@@ -14,6 +15,8 @@ const SECURITY_HEADERS = {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Name, colours and features from /einstellungen, from the cached sheet (#75, #134).
+	if (event.url.pathname !== '/api/health') await refreshStoredSettings();
 	const auth = authConfig();
 	event.locals.auth = auth.mode;
 	// The health check must answer even while Google doesn't.

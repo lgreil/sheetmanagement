@@ -16,6 +16,7 @@ export const de = {
 		naming: 'Dateinamen',
 		admin: 'Mitglieder & Rechte',
 		setup: 'Tabelle einrichten',
+		settings: 'Einstellungen',
 		status: 'Status',
 		more: 'Mehr',
 		profile: 'Profil',
@@ -76,6 +77,7 @@ export const de = {
 			'/leihmaterial': 'Geliehene Noten und wann sie zurückmüssen.',
 			'/admin': 'Mitglieder, Rollen und Anfragen.',
 			'/setup': 'Die Repertoire-Tabelle anlegen.',
+			'/einstellungen': 'Name, Logo, Farbe und Funktionen.',
 			'/status': 'Verbindung zu Google prüfen.'
 		} as Record<string, string>
 	},
@@ -247,6 +249,54 @@ export const de = {
 		count: (present: number, of: number) => `${present}/${of}`
 	},
 	/** Offline use and the installable app (#62). */
+	/** /einstellungen: name, logo, colour and features per orchestra (#75, #134). */
+	settings: {
+		title: 'Einstellungen',
+		lead: 'Wie die App für alle aussieht und was sie anbietet.',
+		identity: 'Name',
+		name: 'Name des Orchesters',
+		shortName: 'Kurzname',
+		shortNameHint: 'Für die Kopfzeile auf dem Handy, höchstens 24 Zeichen.',
+		logo: 'Logo',
+		logoField: 'Link zum Logo',
+		logoHint: 'Ein quadratisches Bild als https-Link, z. B. von der Website des Orchesters, oder eine Datei der App wie /logo.png.',
+		logoPreview: 'Vorschau',
+		colour: 'Farbe',
+		accent: 'Akzentfarbe',
+		accentDefault: (colour: string) => `Standardfarbe (${colour})`,
+		colourHint: 'Für Hell und Dunkel wird die Farbe so weit angepasst, dass Text gut lesbar bleibt (mindestens 4,5:1).',
+		light: 'Hell',
+		dark: 'Dunkel',
+		sample: 'Knopf',
+		link: 'Link',
+		ratio: (value: string) => `Kontrast ${value}:1`,
+		features: 'Funktionen',
+		featuresLead: 'Was das Orchester nicht nutzt, verschwindet aus Menüs und Seiten. Einträge in der Tabelle bleiben erhalten.',
+		featuresFromDefault: 'Noch nicht hier gespeichert: gezeigt ist die Vorgabe der Installation (FEATURES_OFF).',
+		describe: {
+			loans: 'Geliehene Noten mit Rückgabedatum.',
+			musicReport: 'Die Musikfolge für die GEMA beim Drucken eines Konzerts.',
+			attendance: 'Wer bei den Proben war.',
+			signups: 'Zu- und Absagen für Proben und Konzerte.',
+			wishes: 'Stücke und Ideen vorschlagen, mit +1.',
+			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
+			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.'
+		} as Record<string, string>,
+		emptyIsDefault: 'Leere Felder nehmen die Vorgabe der Installation, sie steht grau im Feld.',
+		save: 'Speichern',
+		saved: 'Gespeichert. Die Änderungen gelten sofort für alle.',
+		failed: 'Speichern hat nicht geklappt. Gleich noch einmal versuchen.',
+		notConfigured: 'Es ist noch keine Repertoire-Tabelle verbunden; dort werden die Einstellungen gespeichert.',
+		readFailed: 'Die Einstellungen konnten gerade nicht gelesen werden.',
+		stored: 'Gespeichert im Blatt „Einstellungen“ der Repertoire-Tabelle.',
+		invalid: {
+			name: 'Der Name ist zu lang (höchstens 80 Zeichen).',
+			shortName: 'Der Kurzname ist zu lang (höchstens 24 Zeichen).',
+			logo: 'Das Logo muss ein https-Link sein oder mit / beginnen.',
+			accent: 'Die Farbe muss die Form #rrggbb haben.',
+			featuresOff: ''
+		}
+	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
 	features: {
 		loans: 'Leihmaterial',
@@ -1081,6 +1131,14 @@ export const de = {
 				name: 'Name',
 				present: 'Anwesend',
 				eventId: 'Termin-ID'
+			}
+		},
+		/** Name, look and features set on /einstellungen; one row per setting. */
+		settings: {
+			tab: 'Einstellungen',
+			columns: {
+				key: 'Einstellung',
+				value: 'Wert'
 			}
 		}
 	},

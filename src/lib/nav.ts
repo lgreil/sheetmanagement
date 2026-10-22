@@ -85,7 +85,12 @@ export function navGroups({ auth, rights, features = ALL_ON }: NavContext): NavG
 			label: t.nav.groups.verwaltung,
 			workspace: true,
 			items: [
-				...(admin && auth === 'on' ? [{ href: '/admin', label: t.nav.admin, icon: 'shield' as const }] : []),
+				...(admin && auth === 'on'
+					? [
+							{ href: '/admin', label: t.nav.admin, icon: 'shield' as const },
+							{ href: '/einstellungen', label: t.nav.settings, icon: 'palette' as const }
+						]
+					: []),
 				// Setup and status are open while sign-in is off; that's how a deployment is set up.
 				...(admin || auth === 'off'
 					? [
