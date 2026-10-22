@@ -8,6 +8,12 @@ ORCHESTRA_NAME="Mein Orchester"
 # ORCHESTRA_SHORT_NAME="Orchester"
 # Square logo for header, calendar and app icon: a file in static/ or an https link. Optional; default /logo.png.
 # ORCHESTRA_LOGO="/mein-logo.svg"
+# Accent colour as #rrggbb. The shades for the light and the dark scheme are derived from it,
+# darkened or lightened just enough to stay readable; /status shows them. Optional.
+# ORCHESTRA_ACCENT="#1d4ed8"
+# Parts of the app this orchestra doesn't use, comma-separated. Their pages, menu entries and
+# sheet tabs go away. Any of: leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline
+# FEATURES_OFF="leihmaterial, gema"
 
 # --- Google connection -----------------------------------------------------------
 # Service-account key: the key file base64-encoded on one line (or its JSON as is).

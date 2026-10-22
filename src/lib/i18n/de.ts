@@ -247,6 +247,16 @@ export const de = {
 		count: (present: number, of: number) => `${present}/${of}`
 	},
 	/** Offline use and the installable app (#62). */
+	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
+	features: {
+		loans: 'Leihmaterial',
+		musicReport: 'Musikfolge (GEMA)',
+		attendance: 'Anwesenheit',
+		signups: 'Anmeldungen',
+		wishes: 'Wünsche',
+		calendarFeed: 'Kalender-Abo',
+		offline: 'Noten offline speichern'
+	},
 	pwa: {
 		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
 		offline: 'Offline: Du siehst die zuletzt geladene Fassung. Offline gespeicherte Noten lassen sich öffnen.',
@@ -835,6 +845,16 @@ export const de = {
 		calendar: 'Probenkalender (Google Calendar)',
 		sheet: 'Repertoire-Tabelle (Google Sheets)',
 		signIn: 'Anmeldung (Google)',
+		look: 'Aussehen und Funktionen',
+		accent: (light: string, lightRatio: string, dark: string, darkRatio: string) =>
+			`Akzentfarbe: ${light} auf Hell (${lightRatio}:1), ${dark} auf Dunkel (${darkRatio}:1)`,
+		accentPreset: (dark: string, darkRatio: string) => `Akzentfarbe: auf Hell der Farbton der Vorgabe, ${dark} auf Dunkel (${darkRatio}:1)`,
+		accentAdjusted: 'Damit Text lesbar bleibt (mindestens 4,5:1), ist die Akzentfarbe für dieses Farbschema angepasst.',
+		badAccent: (value: string) => `ORCHESTRA_ACCENT „${value}" ist keine Farbe. Erwartet wird #rrggbb, z. B. #1d4ed8.`,
+		featuresOff: (names: string) => `Ausgeschaltet: ${names}`,
+		allFeatures: 'Alle Funktionen sind eingeschaltet.',
+		unknownFeatures: (words: string) => `FEATURES_OFF enthält unbekannte Wörter: ${words}.`,
+		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender und offline.',
 		ok: 'Verbunden',
 		error: 'Fehler',
 		missing: 'Nicht eingerichtet',
@@ -853,6 +873,7 @@ export const de = {
 		tabs: 'Blätter',
 		present: 'vorhanden',
 		absent: 'fehlt',
+		off: 'nicht nötig, ausgeschaltet',
 		ready: 'Alles eingerichtet. Neue Stücke aus Drive und Konzerte aus dem Kalender werden automatisch eingetragen.',
 		run: 'Jetzt einrichten',
 		rerun: 'Formatierung erneuern',

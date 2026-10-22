@@ -1,10 +1,11 @@
 /* Design tokens. Components use only these variables, so a theme is one block here. */
 :root {
-	/* Black and gold, like the posters. --brand is the preset's accent (set in +layout.svelte);
-	   on light backgrounds a deeper gold keeps accent text and buttons readable. */
+	/* Black and gold, like the posters. --brand is the orchestra's accent; +layout.svelte sets it
+	   with the shades derived from it (src/lib/branding.ts): --accent-light, darkened just enough
+	   for text and buttons on the light page, and --accent-dark for the dark one (#75). */
 	--brand: #e6b422;
 	--brand-ink: #0b0b0a;
-	--accent: color-mix(in oklab, var(--brand) 44%, #3a1f00);
+	--accent: var(--accent-light, color-mix(in oklab, var(--brand) 44%, #3a1f00));
 	--accent-soft: color-mix(in oklab, var(--brand) 22%, transparent);
 	--accent-contrast: #fff;
 
@@ -53,7 +54,7 @@
 
 @media (prefers-color-scheme: dark) {
 	:root:not([data-theme='light']) {
-		--accent: var(--brand);
+		--accent: var(--accent-dark, var(--brand));
 		--accent-contrast: var(--brand-ink);
 		--bg: #0b0b0a;
 		--surface: #161513;
@@ -72,7 +73,7 @@
 }
 
 :root[data-theme='dark'] {
-	--accent: var(--brand);
+	--accent: var(--accent-dark, var(--brand));
 	--accent-contrast: var(--brand-ink);
 	--bg: #0b0b0a;
 	--surface: #161513;

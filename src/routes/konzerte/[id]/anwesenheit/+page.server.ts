@@ -7,6 +7,7 @@ import { t } from '#lib/i18n/index.ts';
 import { formatInstrument } from '#lib/music/my-parts.ts';
 import { sectionOf } from '#lib/signups/signups.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
+import { isOn, requireFeature } from '#lib/server/env.ts';
 import { getLibrary, type Library } from '#lib/server/library.ts';
 import { getAccessList, getAttendance, getSignups } from '#lib/server/repertoire.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecords } from '#lib/server/sheet-writes.ts';
@@ -33,7 +34,7 @@ const label = (event: ShownEvent) => `${event.displayTitle} · ${event.date.long
  * Nobody ticked yet: the sign-ups' "Zusage" are the starting point.
  */
 async function people(library: Library, event: ShownEvent) {
-	const [access, signups, attendance] = await Promise.all([getAccessList(), getSignups(), getAttendance()]);
+	const [access, signups, attendance] = await Promise.all([getAccessList(), isOn('signups') ? getSignups() : null, getAttendance()]);
 	const orchestra = event.concertId ? library.concertsById.get(event.concertId)?.orchestra : undefined;
 	const members = access?.members ?? [];
 	const byEmail = new Map(members.map((member) => [member.email, member]));
@@ -66,6 +67,7 @@ async function people(library: Library, event: ShownEvent) {
 }
 
 export const load: PageServerLoad = async ({ params, locals }) => {
+	requireFeature('attendance');
 	requireRight(locals, RIGHT);
 	const library = await getLibrary();
 	const event = eventOf(library, params.id);

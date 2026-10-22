@@ -98,8 +98,9 @@ Everything orchestra-specific lives in [`src/lib/config/`](src/lib/config):
 - **Instruments**: names, display order, alternative spellings
 - **Naming rules**: how part files are named (separator, status words like `FEHLT`, the `@` prefix for scores)
 - **Event keywords**: which calendar titles count as concert, rehearsal or dress rehearsal
-- **Name and accent colour**
+- **Name and accent colour**; per deployment also `ORCHESTRA_NAME` and `ORCHESTRA_ACCENT` (`#rrggbb`). The shades for the light and dark scheme are derived from the accent so text stays readable; /status shows them with their contrast
 - **Logo**: `ORCHESTRA_LOGO` (a file in `static/` or an https link) replaces `static/logo.png`; the demo uses `static/demo/musterorchester.svg`
+- **Features**: what the orchestra doesn't use (rented music, the GEMA list, attendance, sign-ups, wishes, the calendar feed, saving parts offline) is turned off with `features` in the preset or `FEATURES_OFF="leihmaterial, gema"`; its pages, menu entries and sheet tabs go away
 
 Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`. All texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts).
 

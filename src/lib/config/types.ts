@@ -1,4 +1,5 @@
 import type { RolePreset } from '#lib/access/access.ts';
+import type { Features } from '#lib/features.ts';
 
 /**
  * Everything an orchestra adjusts to run this app lives in one OrchestraConfig.
@@ -143,10 +144,17 @@ export interface OrchestraConfig {
 	 */
 	roles?: RolePreset[];
 	/**
-	 * The music list for the collecting society on the print page ("Musikfolge (GEMA)").
-	 * On unless false; its words are in the texts, so another country's society only needs a translation.
+	 * Accent for the light scheme as any CSS colour, when the one derived from `accent` isn't
+	 * the look wanted. Only used while ORCHESTRA_ACCENT doesn't set another colour.
 	 */
-	musicReport?: boolean;
+	accentLight?: string;
+	/**
+	 * Parts of the app this orchestra doesn't use, e.g. { loans: false, musicReport: false }.
+	 * Everything is on by default; FEATURES_OFF turns more off per deployment (#134).
+	 * `musicReport` is the music list for the collecting society ("Musikfolge (GEMA)"); its words
+	 * are in the texts, so another country's society only needs a translation.
+	 */
+	features?: Partial<Features>;
 	/** The orchestra's website, socials and newsletter, in the footer and on the start page. */
 	links?: OrchestraLink[];
 	/**

@@ -2,6 +2,7 @@ import { config } from '#lib/config/index.ts';
 import { urgentLoans } from '#lib/loans/loans.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans } from './repertoire.ts';
+import { features } from './env.ts';
 import { getSchedule } from './schedule.ts';
 
 /** Rehearsals this many days back still ask for their attendance to be taken. */
@@ -25,14 +26,15 @@ export interface OpenWork {
  */
 export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 	const rights = locals.access.rights;
+	const on = features();
 	const reports = rights.has('stuecke.bearbeiten');
 	const admin = rights.has('mitglieder.verwalten') && locals.auth === 'on';
-	const attendance = rights.has('anwesenheit.erfassen') && locals.auth === 'on';
+	const attendance = on.attendance && rights.has('anwesenheit.erfassen') && locals.auth === 'on';
 	if (!reports && !admin && !attendance) return null;
 	const [feedback, access, loans, taken, schedule] = await Promise.all([
 		getFeedback(),
 		admin ? getAccessList() : null,
-		reports ? getLoans() : null,
+		reports && on.loans ? getLoans() : null,
 		attendance ? getAttendance() : null,
 		attendance ? getSchedule() : null
 	]).catch(() => [null, null, null, null, null] as const);
@@ -50,7 +52,7 @@ export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 			: [];
 	return {
 		reports: reports ? (feedback?.reports.filter((report) => report.status === 'open').length ?? 0) : 0,
-		wishes: admin ? (feedback?.wishes.filter((wish) => wish.status === 'open').length ?? 0) : 0,
+		wishes: admin && on.wishes ? (feedback?.wishes.filter((wish) => wish.status === 'open').length ?? 0) : 0,
 		requests: admin ? (access?.requests.length ?? 0) : 0,
 		loans: loans ? urgentLoans(loans.loans, today).length : 0,
 		attendance: untaken.length,

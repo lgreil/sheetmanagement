@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { page as app } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import { mergedFileName } from '#lib/music/my-parts.ts';
 	import type { PageData } from '../../routes/meine-noten/$types';
@@ -87,7 +88,8 @@
 	}
 
 	$effect(() => {
-		supported = 'caches' in window && 'serviceWorker' in navigator;
+		// Off for orchestras that don't use it (#134); copies saved earlier still open offline.
+		supported = app.data.features.offline && 'caches' in window && 'serviceWorker' in navigator;
 		const update = () => (online = navigator.onLine);
 		update();
 		addEventListener('online', update);

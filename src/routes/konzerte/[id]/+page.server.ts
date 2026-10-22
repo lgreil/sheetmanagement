@@ -5,6 +5,7 @@ import { coverage, formatInstrument, parseInstruments, playableInstruments, play
 import { t } from '#lib/i18n/index.ts';
 import { ANSWERS, coverage as signupCoverage, totals, type Answer } from '#lib/signups/signups.ts';
 import { feedbackUser, formText } from '#lib/server/feedback.ts';
+import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
@@ -76,7 +77,7 @@ async function instrumentation(items: ProgramItem[], library: Library, orchestra
  * section. Everyone sees the counts; names and comments need "anmeldungen.sehen".
  */
 async function signups(event: ShownEvent, orchestra: string | undefined, locals: App.Locals) {
-	if (event.past) return null;
+	if (event.past || !isOn('signups')) return null;
 	const user = feedbackUser(locals);
 	if (!user) return locals.auth === 'on' ? { state: 'sign-in' as const } : null;
 	const [list, access] = await Promise.all([getSignups(), getAccessList()]);
@@ -117,6 +118,7 @@ async function signups(event: ShownEvent, orchestra: string | undefined, locals:
  * for those who take attendance; members see only their own count.
  */
 async function attendance(event: ShownEvent, library: Library, plan: RehearsalPlan | null, locals: App.Locals) {
+	if (!isOn('attendance')) return null;
 	const canTake = locals.access.rights.has('anwesenheit.erfassen');
 	const user = feedbackUser(locals);
 	const isRehearsal = event.type === 'probe' || event.type === 'generalprobe';
@@ -193,7 +195,8 @@ async function check(concert: LibraryConcert | undefined, event: ShownEvent | un
 	if (!concert?.sheet) return null;
 	const past = isPastConcert(concert, library.today);
 	if (past && (!event || event.daysUntil < -CHECK_AFTER_DAYS)) return null;
-	const loans = (await getLoans())?.loans ?? [];
+	const on = features();
+	const loans = on.loans ? ((await getLoans())?.loans ?? []) : [];
 	const names = concert.sheet.program.map((entry) => entry.pieceName);
 	const rehearsalIds = event?.rehearsalIds ?? [];
 	const planned = new Set(rehearsalIds.flatMap((id) => (plan?.byEvent.get(id) ?? []).map((entry) => normalize(entry.pieceName))));
@@ -213,7 +216,7 @@ async function check(concert: LibraryConcert | undefined, event: ShownEvent | un
 		urls: {
 			program: `/konzerte/${id}/programm`,
 			plan: rehearsalIds.length ? `/konzerte/${id}/probenplan` : undefined,
-			report: config.musicReport === false ? undefined : `/konzerte/${id}/drucken?art=musikfolge`,
+			report: on.musicReport ? `/konzerte/${id}/drucken?art=musikfolge` : undefined,
 			loans: '/leihmaterial',
 			gaps: '/fehlende-stimmen'
 		}
@@ -222,6 +225,7 @@ async function check(concert: LibraryConcert | undefined, event: ShownEvent | un
 }
 
 async function openWishes(concertTitle: string) {
+	if (!isOn('wishes')) return 0;
 	const wishes = (await getFeedback())?.wishes ?? [];
 	return wishes.filter(
 		(wish) => wish.kind === 'piece' && wish.status === 'open' && (!wish.concert || normalize(wish.concert) === normalize(concertTitle))
@@ -273,20 +277,22 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const canPlan = locals.access.rights.has('programme.bearbeiten') && !!planConcert?.rehearsalIds.length;
 	// The "Planung" view (concerts only): for those who plan the programme or take attendance.
 	const rights = locals.access.rights;
+	const on = features();
 	const lastRehearsal = event.rehearsalIds
 		.map(lookup)
 		.filter((e): e is ShownEvent => !!e && e.daysUntil <= 0)
 		.at(-1);
+	const takesAttendance = on.attendance && rights.has('anwesenheit.erfassen');
 	const planning =
-		event.type === 'konzert' && (rights.has('programme.bearbeiten') || rights.has('anwesenheit.erfassen'))
+		event.type === 'konzert' && (rights.has('programme.bearbeiten') || takesAttendance)
 			? {
 					printUrl: items.length ? `/konzerte/${encodeURIComponent(event.id)}/drucken` : undefined,
 					reportUrl:
-						items.length && rights.has('programme.bearbeiten') && config.musicReport !== false
+						items.length && rights.has('programme.bearbeiten') && on.musicReport
 							? `/konzerte/${encodeURIComponent(event.id)}/drucken?art=musikfolge`
 							: undefined,
 					attendanceUrl:
-						lastRehearsal && rights.has('anwesenheit.erfassen')
+						lastRehearsal && takesAttendance
 							? { href: `/konzerte/${encodeURIComponent(lastRehearsal.id)}/anwesenheit`, label: lastRehearsal.date.long }
 							: undefined
 				}
@@ -327,6 +333,7 @@ async function upcoming(id: string) {
 /** Runs one sign-up write; a missing tab or a failed write becomes a message. */
 async function signupChange(locals: App.Locals, id: string, work: (event: { id: string; label: string }, user: NonNullable<ReturnType<typeof feedbackUser>>) => Promise<void>) {
 	const user = feedbackUser(locals);
+	if (!isOn('signups')) return fail(404, { signupError: t.signups.gone });
 	if (!user) return fail(403, { signupError: t.signups.signInNeeded });
 	const event = await upcoming(id);
 	if (!event) return fail(404, { signupError: t.signups.gone });

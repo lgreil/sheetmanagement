@@ -15,7 +15,7 @@
 
 	let { data, children } = $props();
 
-	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights }));
+	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features }));
 	const nav = $derived(primaryNav(groups));
 	const path = $derived(page.url.pathname);
 	// The most specific entry counts: "Angaben ergänzen" lights up "Mehr", not "Archiv".
@@ -76,10 +76,10 @@
 </script>
 
 <svelte:head>
-	<meta name="theme-color" content={config.accent} />
+	<meta name="theme-color" content={data.brand.colour} />
 	{#if data.logo !== '/logo.png'}<link rel="icon" href={data.logo} />{/if}
 	<!-- On :root, so the theme tokens in app.css derive from it. -->
-	{@html `<style>:root{--brand:${config.accent}}</style>`}
+	{@html `<style>${data.brand.style}</style>`}
 </svelte:head>
 
 <div class="app">

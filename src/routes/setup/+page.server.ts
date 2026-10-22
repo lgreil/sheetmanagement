@@ -1,7 +1,9 @@
 import { fail } from '@sveltejs/kit';
 import { config } from '#lib/config/index.ts';
 import { requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
-import { LAYOUT, REPERTOIRE_TABS } from '#lib/repertoire/sheet.ts';
+import { FEATURE_TABS } from '#lib/features.ts';
+import { LAYOUT, REPERTOIRE_TABS, type TabKey } from '#lib/repertoire/sheet.ts';
+import { features } from '#lib/server/env.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
 import { getAccessList, getRepertoire } from '#lib/server/repertoire.ts';
@@ -27,7 +29,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		const { client, serviceAccountEmail: email } = getGoogle();
 		serviceAccountEmail = email;
 		const info = await getSpreadsheetInfo(client, spreadsheetId);
-		const tabs = Object.values(LAYOUT).map(({ tab }) => ({ name: tab, present: info.tabs.includes(tab) }));
+		const on = features();
+		// A tab of a feature that's off isn't needed (#134), unless it's there anyway.
+		const tabs = (Object.keys(LAYOUT) as TabKey[]).map((key) => {
+			const feature = FEATURE_TABS[key];
+			const present = info.tabs.includes(LAYOUT[key].tab);
+			return { name: LAYOUT[key].tab, present, off: !present && !!feature && !on[feature] };
+		});
 		const ready = REPERTOIRE_TABS.every((key) => info.tabs.includes(LAYOUT[key].tab));
 		const [repertoire, access] = ready ? await Promise.all([getRepertoire(), getAccessList()]) : [null, null];
 		return {
@@ -59,7 +67,8 @@ export const actions: Actions = {
 		try {
 			const result = await setUpSheet(getGoogle().client, requireSetting('REPERTOIRE_SHEET_ID'), {
 				orchestras: config.orchestras,
-				sharedParts: config.sharedParts
+				sharedParts: config.sharedParts,
+				features: features()
 			});
 			// Read the new tabs right away, which also adds the pieces and concerts.
 			await getRepertoire({ force: true });

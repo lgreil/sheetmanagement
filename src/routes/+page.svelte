@@ -47,7 +47,7 @@
 	// Every page by group, so the start page doubles as a map of the app. A workspace is one
 	// entry, its pages named underneath; the tabs on its pages lead on from there.
 	const groups = $derived(
-		navGroups({ auth: data.auth, rights: data.rights }).map((group) =>
+		navGroups({ auth: data.auth, rights: data.rights, features: data.features }).map((group) =>
 			group.workspace && group.items.length > 1
 				? {
 						...group,

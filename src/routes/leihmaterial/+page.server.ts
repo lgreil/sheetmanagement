@@ -5,6 +5,7 @@ import { t } from '#lib/i18n/index.ts';
 import { checkLoan, daysUntilDue, loanState, sortLoans } from '#lib/loans/loans.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
+import { requireFeature } from '#lib/server/env.ts';
 import { formText } from '#lib/server/feedback.ts';
 import { getLibrary, namedItem } from '#lib/server/library.ts';
 import { getLoans } from '#lib/server/repertoire.ts';
@@ -15,6 +16,7 @@ import type { Actions, PageServerLoad } from './$types';
 const RIGHT = 'stuecke.bearbeiten';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
+	requireFeature('loans');
 	requireRight(locals, RIGHT);
 	const [library, loans] = await Promise.all([getLibrary(), getLoans()]);
 	if (!loans) return { state: 'not-set-up' as const };

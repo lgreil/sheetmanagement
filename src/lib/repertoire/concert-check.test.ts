@@ -54,4 +54,8 @@ describe('concertCheck', () => {
 		]);
 		expect(concertCheck({ ...base, past: true }).find((item) => item.key === 'loans')?.text).toContain('Bolero');
 	});
+
+	it('after the concert: no music list while it is turned off (#134)', () => {
+		expect(summary({ ...base, past: true, urls: { ...urls, report: undefined } })).toEqual([['loans', false]]);
+	});
 });

@@ -1,8 +1,7 @@
 import { error } from '@sveltejs/kit';
 import { playsIn } from '#lib/access/access.ts';
-import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { appEnv } from '#lib/server/env.ts';
+import { isOn, orchestra } from '#lib/server/env.ts';
 import { feedEvents } from '#lib/events/feed.ts';
 import { buildCalendar } from '#lib/events/ical.ts';
 import { linkValid } from '#lib/server/auth/links.ts';
@@ -25,7 +24,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	if (auth.mode !== 'on') error(404, 'Nicht eingerichtet.');
 	const token = await readFeedToken(params.token, auth.sessionSecret);
 	if (!token) error(404, 'Diesen Kalender gibt es nicht.');
-	const [access, library, plan, signups] = await Promise.all([getAccessList(), getLibrary(), getRehearsalPlan(), getSignups()]);
+	const [access, library, plan, signups] = await Promise.all([getAccessList(), getLibrary(), getRehearsalPlan(), isOn('signups') ? getSignups() : null]);
 	const member = access?.membersByEmail.get(token.email);
 	// Same answer for a revoked link and an unknown one.
 	if (!member || !linkValid(member.feedVersion, token.version)) error(404, 'Diesen Kalender gibt es nicht.');
@@ -48,8 +47,7 @@ export const GET: RequestHandler = async ({ params, url }) => {
 		origin: url.origin,
 		since: Date.now() - PAST_DAYS * 86_400_000
 	});
-	const orchestra = appEnv().ORCHESTRA_NAME?.trim() || config.name;
-	return new Response(buildCalendar(t.feed.calendarName(orchestra), events), {
+	return new Response(buildCalendar(t.feed.calendarName(orchestra().name), events), {
 		headers: {
 			'content-type': 'text/calendar; charset=utf-8',
 			'content-disposition': 'inline; filename="termine.ics"',

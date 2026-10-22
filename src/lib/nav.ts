@@ -1,5 +1,6 @@
 import type { Right } from '#lib/access/access.ts';
 import type { IconName } from '#lib/components/Icon.svelte';
+import { ALL_ON, type Features } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
 
 /**
@@ -32,12 +33,14 @@ export interface NavContext {
 	/** Sign-in mode: "off" leaves the app open and read-only. */
 	auth: 'on' | 'off';
 	rights: readonly Right[] | ReadonlySet<Right>;
+	/** Parts of the app that are on (#134); all of them when left out. */
+	features?: Features;
 }
 
 const has = (rights: NavContext['rights'], right: Right) =>
 	Array.isArray(rights) ? rights.includes(right) : (rights as ReadonlySet<Right>).has(right);
 
-export function navGroups({ auth, rights }: NavContext): NavGroup[] {
+export function navGroups({ auth, rights, features = ALL_ON }: NavContext): NavGroup[] {
 	const admin = has(rights, 'mitglieder.verwalten');
 	const groups: NavGroup[] = [
 		{
@@ -56,7 +59,7 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 			items:
 				auth === 'on'
 					? [
-							{ href: '/wuensche', label: t.nav.wishes, icon: 'bulb' as const },
+							...(features.wishes ? [{ href: '/wuensche', label: t.nav.wishes, icon: 'bulb' as const }] : []),
 							// Also behind the avatar in the header; here it's reachable from the phone's tab bar.
 							{ href: '/profil', label: t.nav.profile, icon: 'user' as const }
 						]
@@ -73,7 +76,7 @@ export function navGroups({ auth, rights }: NavContext): NavGroup[] {
 						{ href: '/fehlende-stimmen', label: t.nav.gaps, icon: 'alert' },
 						{ href: '/stuecke/angaben', label: t.nav.details, icon: 'sparkle' },
 						{ href: '/namen', label: t.nav.naming, icon: 'text' },
-						{ href: '/leihmaterial', label: t.nav.loans, icon: 'loan' }
+						...(features.loans ? [{ href: '/leihmaterial', label: t.nav.loans, icon: 'loan' as const }] : [])
 					]
 				: []
 		},
