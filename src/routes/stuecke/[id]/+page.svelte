@@ -7,6 +7,7 @@
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon, { type IconName } from '#lib/components/Icon.svelte';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
+	import PieceArt from '#lib/components/PieceArt.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
@@ -84,6 +85,10 @@
 		].filter((tile) => !!tile)
 	);
 
+	// A portrait that doesn't load (Wikimedia unreachable) gives way to the drawing.
+	let portraitFailed = $state<string | null>(null);
+	const portrait = $derived(portraitFailed === piece.id ? null : data.banner.portrait);
+
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
 	);
@@ -93,23 +98,16 @@
 
 <Crumbs items={[{ href: '/stuecke', label: t.pieces.title }]} />
 
-<!-- One card: the banner in the orchestra's colour (faint staff lines, so it reads as music at a
-     glance), the facts underneath. -->
+<!-- One card: the banner in the orchestra's colour with the composer's portrait (or a drawing for
+     the genre), the facts underneath. -->
 <div class="piece-card">
 <header class="hero">
-	<svg class="staff" viewBox="0 0 400 160" preserveAspectRatio="xMaxYMid slice" aria-hidden="true">
-		<g fill="none" stroke="currentColor" stroke-width="1.2">
-			{#each [40, 56, 72, 88, 104] as y (y)}<path d="M0 {y} C 120 {y - 14}, 260 {y + 14}, 400 {y}" />{/each}
-		</g>
-		<g fill="currentColor">
-			<ellipse cx="250" cy="66" rx="7" ry="5" transform="rotate(-20 250 66)" />
-			<path d="M256.5 64V28" stroke="currentColor" stroke-width="1.6" />
-			<ellipse cx="300" cy="85" rx="7" ry="5" transform="rotate(-20 300 85)" />
-			<ellipse cx="330" cy="76" rx="7" ry="5" transform="rotate(-20 330 76)" />
-			<path d="M306.5 83V47L336.5 40V74" fill="none" stroke="currentColor" stroke-width="1.6" />
-			<path d="M306.5 47L336.5 40V46L306.5 53Z" />
-		</g>
-	</svg>
+	{#if portrait}
+		<img class="portrait" src={portrait.src} alt={t.piece.portrait(portrait.name)} onerror={() => (portraitFailed = piece.id)} />
+		<a class="credit" href={portrait.source} target="_blank" rel="noopener noreferrer">{t.piece.portraitCredit}</a>
+	{:else}
+		<div class="art"><PieceArt art={data.banner.art} /></div>
+	{/if}
 	<div class="hero-text">
 		{#if piece.composer || piece.catalogue}
 			<p class="eyebrow">
@@ -416,7 +414,7 @@
 		font-weight: 600;
 	}
 
-	/* The banner: the accent colour (a tinted surface in dark), deepening towards the staff on the right. */
+	/* The banner: the accent colour (a tinted surface in dark), deepening towards the picture on the right. */
 	.piece-card {
 		margin-bottom: var(--space-4);
 		border: 1px solid var(--hairline);
@@ -435,23 +433,59 @@
 		overflow: hidden;
 	}
 
-	.staff {
+	/* The picture on the right, fading into the banner towards the text. */
+	.portrait,
+	.art {
 		position: absolute;
-		inset: 0 0 0 auto;
-		width: min(70%, 460px);
-		height: 100%;
-		color: var(--hero-ink);
-		opacity: 0.16;
-		/* Fades out towards the text, so no line runs through the title. */
-		mask-image: linear-gradient(to right, transparent, #000 55%);
+		top: 0;
+		right: 0;
+		bottom: 0;
 		pointer-events: none;
+		mask-image: linear-gradient(to right, transparent, #000 50%);
 	}
 
+	/* The portrait takes the banner's colour (luminosity blend), so any portrait suits any orchestra. */
+	.portrait {
+		width: min(42%, 280px);
+		height: 100%;
+		object-fit: cover;
+		object-position: 50% 20%;
+		filter: grayscale(1) contrast(1.08);
+		mix-blend-mode: luminosity;
+		opacity: 0.9;
+	}
+
+	.art {
+		display: grid;
+		align-items: center;
+		width: min(40%, 220px);
+		padding: var(--space-4) var(--space-5) var(--space-4) 0;
+		color: var(--hero-ink);
+		opacity: 0.22;
+	}
+
+	.credit {
+		position: absolute;
+		right: var(--space-3);
+		bottom: var(--space-2);
+		padding: 1px 6px;
+		border-radius: 6px;
+		background: color-mix(in oklab, var(--hero-to) 80%, transparent);
+		color: var(--hero-ink);
+		font-size: 0.6875rem;
+	}
+
+	.credit:hover {
+		text-decoration: underline;
+	}
+
+	/* Room for the picture, so a long title doesn't run into the face. */
 	.hero-text {
 		position: relative;
 		display: grid;
 		gap: var(--space-2);
 		max-width: 46rem;
+		padding-right: min(32%, 200px);
 	}
 
 	.hero h1 {

@@ -8,6 +8,8 @@ import { features, isOn } from '#lib/server/env.ts';
 import { getFeedback, getLoans, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
 import { formatDay } from '#lib/events/format.ts';
+import { pieceArt } from '#lib/music/piece-art.ts';
+import { portraitFor, portraitPageUrl } from '#lib/server/portraits.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
 import { listsOverlap } from '#lib/repertoire/lists.ts';
@@ -34,7 +36,17 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	// "Wieder spielen": the +1s on the piece's open or planned wish.
 	const user = feedbackUser(locals);
 	const againWish = (feedback?.wishes ?? []).find((wish) => wish.pieceId === piece.id && (wish.status === 'open' || wish.status === 'planned'));
+	// The banner's picture: the composer's portrait, else a drawing for the genre or the title.
+	const portrait = await portraitFor(piece.composer);
 	return {
+		banner: {
+			art: pieceArt({ genre: sheet?.genre, title: piece.title }),
+			portrait: portrait && {
+				src: `/api/portraet?komponist=${encodeURIComponent(portrait.query)}`,
+				name: portrait.name,
+				source: portraitPageUrl(portrait.file)
+			}
+		},
 		canEdit: locals.access.rights.has('stuecke.bearbeiten') && !!sheet,
 		saved: url.searchParams.has('gespeichert'),
 		// How many programmes followed a rename.

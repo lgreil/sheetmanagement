@@ -166,7 +166,9 @@ export const de = {
 			reviewedAt: 'Geprüft am',
 			notes: 'Notiz'
 		},
-		driveHint: 'Öffnet sich in Google Drive (Zugriff auf den Noten-Ordner nötig).'
+		driveHint: 'Öffnet sich in Google Drive (Zugriff auf den Noten-Ordner nötig).',
+		portrait: (name: string) => `Porträt von ${name}`,
+		portraitCredit: 'Bild: Wikimedia Commons'
 	},
 	concerts: {
 		title: 'Konzerte',
