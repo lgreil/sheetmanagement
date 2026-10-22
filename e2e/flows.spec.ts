@@ -111,3 +111,16 @@ test('picking an instrument from the grid (#165)', async ({ page }) => {
 	await expect(page.getByText('Gemerkt.')).toBeVisible();
 	await expect(page.locator('.chip')).toContainText('Cello');
 });
+
+test('the current programme in Drive follows the programme (#60)', async ({ page }) => {
+	await open(page, '/konzerte/demo-herbstkonzert');
+	const drive = page.locator('form.drive');
+	await expect(drive).toContainText('Alle 4 Stücke');
+	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	await page.getByRole('button', { name: 'Entfernen' }).last().click();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Auch im Drive-Ordner »Aktuelles Programm« abgeglichen.')).toBeVisible();
+	await expect(drive).toContainText('Alle 3 Stücke');
+	await drive.getByRole('button', { name: 'Abgleichen' }).click();
+	await expect(drive).toContainText('Abgeglichen: 0 ergänzt, 0 herausgenommen.');
+});

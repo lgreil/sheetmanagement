@@ -4,10 +4,12 @@ import { config } from '#lib/config/index.ts';
 import { coverage, formatInstrument, parseInstruments, playableInstruments, playedParts, programInstruments } from '#lib/music/my-parts.ts';
 import { t } from '#lib/i18n/index.ts';
 import { ANSWERS, coverage as signupCoverage, totals, type Answer } from '#lib/signups/signups.ts';
+import { requireRight } from '#lib/server/auth/index.ts';
 import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
+import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
 import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
@@ -259,7 +261,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		sharedWith: concert?.sharedWith ?? [],
 		// For planners: open piece wishes for this concert or any time, shown in the editor.
 		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0,
-		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null
+		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null,
+		// "01 | Aktuelles Programm" in Drive (#60), for upcoming concerts once Drive may be written to.
+		drive:
+			locals.access.rights.has('programme.bearbeiten') && concert && currentProgramAvailable() && !isPastConcert(concert, library.today)
+				? { ...currentProgramStatus(concert, library), orchestra: concert.orchestra ?? concert.title, next: isCurrentConcert(concert, library), auto: url.searchParams.get('drive') }
+				: null
 	};
 
 	if (!event) {
@@ -362,5 +369,21 @@ export const actions: Actions = {
 		return signupChange(locals, params.id, (event, user) => saveSignup(event, user, { answer, ...details }));
 	},
 
-	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user))
+	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
+
+	/** Puts the programme's pieces into "01 | Aktuelles Programm" and takes the others out (#60). */
+	currentProgram: async ({ locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		if (!currentProgramAvailable()) error(404, t.messages.noEvent);
+		const library = await getLibrary();
+		const concert = library.concertsById.get(params.id);
+		if (!concert) error(404, t.messages.noEvent);
+		try {
+			return { currentProgram: await syncCurrentProgram(concert, library) };
+		} catch (cause) {
+			if (cause instanceof NoProgramFolderError) return fail(409, { currentProgramError: t.currentProgram[cause.reason] });
+			console.error('Syncing the current programme failed:', cause);
+			return fail(503, { currentProgramError: t.currentProgram.failed });
+		}
+	}
 };

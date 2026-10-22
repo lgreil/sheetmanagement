@@ -156,6 +156,8 @@ function drive(url: URL, method: string, body: Record<string, unknown> | undefin
 			parents: (body?.parents as string[]) ?? [],
 			modifiedTime: new Date().toISOString()
 		};
+		const target = (body?.shortcutDetails as { targetId?: string } | undefined)?.targetId;
+		if (target) file.shortcutDetails = { targetId: target, targetMimeType: current.files.get(target)?.mimeType ?? '' };
 		current.files.set(file.id, file);
 		return json({ id: file.id, name: file.name });
 	}
@@ -165,6 +167,8 @@ function drive(url: URL, method: string, body: Record<string, unknown> | undefin
 	if (sub === 'comments') return json({ id: `demo-comment-${current.nextFileId++}` });
 	if (sub) return json({ id: `demo-reply-${current.nextFileId++}` });
 	if (method === 'PATCH') {
+		// The bin: gone from every listing, as in Drive.
+		if (body?.trashed === true) current.files.delete(file.id);
 		file.name = String(body?.name ?? file.name);
 		return json({ id: file.id, name: file.name });
 	}

@@ -550,6 +550,23 @@ export const en: Texts = {
 		none: (query: string) => `Nothing found for “${query}”.`,
 		keys: '↑↓ choose · ↵ open · Esc close'
 	},
+	currentProgram: {
+		title: 'Current programme in Drive',
+		sync: 'Sync',
+		noFolder: (name: string) => `No programme folder for ${name} yet – syncing adds the shortcuts.`,
+		complete: (count: number, folder: string) => `All ${count} pieces are in the programme folder “${folder}”.`,
+		partly: (linked: number, total: number, folder: string) => `${linked} of ${total} pieces are in the programme folder “${folder}”.`,
+		extra: (count: number) => (count === 1 ? '1 other piece is still in it.' : `${count} other pieces are still in it.`),
+		notNext: 'Not this orchestra’s next concert.',
+		done: (added: number, removed: number) => `Synced: ${added} added, ${removed} taken out.`,
+		removedHint: 'Shortcuts taken out are in the bin.',
+		open: 'Open folder',
+		failed: 'Syncing didn’t work. Is the service account an editor of the folder?',
+		ambiguous: 'Several programme folders and no orchestra on the concert: please enter the orchestra in the sheet.',
+		none: 'There’s no programme folder for this orchestra, and DRIVE_CURRENT_PROGRAM_FOLDER_ID names no folder to make one in.',
+		autoDone: 'Also synced to the Drive folder “Aktuelles Programm”.',
+		autoFailed: 'The programme couldn’t be synced to the Drive folder “Aktuelles Programm”.'
+	},
 	auth: {
 		title: 'Sign in',
 		lead: 'Sign in with your Google account to see music, concerts and programmes.',
