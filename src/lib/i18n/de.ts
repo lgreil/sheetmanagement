@@ -24,7 +24,10 @@ export const de = {
 		close: 'Menü schließen',
 		crumbs: 'Seitenpfad',
 		groups: { musik: 'Proben & Noten', mitmachen: 'Mitmachen', pflege: 'Noten pflegen', verwaltung: 'Verwaltung' },
-		workspace: 'Bereich'
+		workspace: 'Bereich',
+		/** After a tab's count, for screen readers: "Meldungen 1 offen". */
+		open: 'offen',
+		skip: 'Zum Inhalt springen'
 	},
 	footer: {
 		links: 'Das Orchester im Netz',

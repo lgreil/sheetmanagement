@@ -112,7 +112,7 @@
 	<main>
 		<!-- A soft fade between pages; staying on a page (filters, forms) doesn't replay it. -->
 		<!-- Outside the fade: the tabs stay put while switching between the workspace's pages. -->
-		{#if workspace}<WorkspaceTabs group={workspace} {current} />{/if}
+		{#if workspace}<WorkspaceTabs group={workspace} {current} counts={data.counts} />{/if}
 		{#key path}
 			<div class="page" in:fade={{ duration: 160 }}>
 				{@render children()}

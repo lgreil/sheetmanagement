@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { t } from '#lib/i18n/index.ts';
 	import type { NavGroup } from '#lib/nav.ts';
 	import Icon from './Icon.svelte';
 
@@ -7,7 +8,16 @@
 	 * Stimmen · …), so the next chore is one tap away instead of a trip through "Mehr".
 	 * Scrolls sideways on phones; the current tab is scrolled into view.
 	 */
-	let { group, current }: { group: NavGroup; current: string | undefined } = $props();
+	let {
+		group,
+		current,
+		counts = {}
+	}: {
+		group: NavGroup;
+		current: string | undefined;
+		/** Open work per page ("Meldungen 1"), the same numbers as "Wartet auf dich" (#139). */
+		counts?: Record<string, number>;
+	} = $props();
 
 	function reveal(node: HTMLElement) {
 		node.querySelector('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
@@ -21,6 +31,7 @@
 			<li>
 				<a href={item.href} class:active={item.href === current} aria-current={item.href === current ? 'page' : undefined}>
 					<Icon name={item.icon} size={16} />{item.label}
+					{#if counts[item.href]}<span class="count">{counts[item.href]}<span class="sr-only"> {t.nav.open}</span></span>{/if}
 				</a>
 			</li>
 		{/each}
@@ -84,5 +95,21 @@
 		border-color: transparent;
 		background: var(--accent-soft);
 		color: var(--accent);
+	}
+
+	/* Something waits here: the warm "Wartet auf dich" colour, in a small pill. */
+	.count {
+		display: grid;
+		place-items: center;
+		min-width: 20px;
+		height: 20px;
+		margin-right: -4px;
+		padding: 0 6px;
+		border-radius: 999px;
+		background: var(--warn);
+		color: var(--bg);
+		font-size: 0.75rem;
+		font-weight: 700;
+		font-variant-numeric: tabular-nums;
 	}
 </style>
