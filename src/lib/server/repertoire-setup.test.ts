@@ -102,7 +102,7 @@ describe('setUpSheet', () => {
 		expect(result).toEqual({ createdTabs: all, addedColumns: [], removedTab: 'Tabellenblatt1' });
 		expect(fake.tabs.map((tab) => tab.title)).toEqual(all);
 		expect(fake.tabs[1].values[0]).toEqual(['Datum', 'Anlass', 'Ort', 'Orchester', 'Programm wie', 'Kalender-Event-ID']);
-		expect(fake.tabs[2].values[0]).toEqual(['Konzert', 'Nr.', 'Stück', 'Notiz']);
+		expect(fake.tabs[2].values[0]).toEqual(['Konzert', 'Nr.', 'Stück', 'Notiz', 'Orchester']);
 
 		const dropdowns = fake.requests.filter((r) => 'setDataValidation' in r) as any[];
 		expect(dropdowns.map((r) => r.setDataValidation.rule.condition.values)).toEqual([
@@ -124,6 +124,7 @@ describe('setUpSheet', () => {
 			undefined,
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
+			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }],
 			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
 		]);
 		expect(fake.tabs[9].values[0]).toEqual(['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt']);

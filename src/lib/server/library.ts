@@ -5,6 +5,7 @@ import { searchText } from '#lib/music/text.ts';
 import type { PieceDetail, PieceStatus, PieceSummary } from '#lib/music/types.ts';
 import { eventDay, formatFuzzyDate, fuzzyDateKey, parseFuzzyDate, type FuzzyDate, type FuzzyDateLabel } from '#lib/repertoire/dates.ts';
 import type { ReportPiece } from '#lib/repertoire/music-report.ts';
+import { sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { normalize, type SheetConcert, type SheetPiece } from '#lib/repertoire/sheet.ts';
 import { getCatalog } from './catalog.ts';
 import { getRepertoire, type RepertoireResult } from './repertoire.ts';
@@ -28,6 +29,8 @@ export interface ProgramItem {
 	notes?: string;
 	/** Seconds, from the piece's "Dauer". */
 	duration?: number;
+	/** Which of the concert's orchestras plays it. */
+	orchestra?: string;
 }
 
 export interface LibraryConcert {
@@ -41,7 +44,10 @@ export interface LibraryConcert {
 	/** As entered in the sheet, for dates that couldn't be read. */
 	dateText?: string;
 	location?: string;
+	/** As entered, e.g. "EO, A". */
 	orchestra?: string;
+	/** Each with its own programme; empty when the sheet names none. */
+	orchestras: string[];
 	event?: ShownEvent;
 	sheet?: SheetConcert;
 	program: ProgramItem[];
@@ -133,6 +139,7 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 				dateText: row.dateText,
 				location: event?.location ?? row.location,
 				orchestra: row.orchestra,
+				orchestras: row.orchestras,
 				event,
 				sheet: row,
 				program: row.program.map((entry) => {
@@ -144,7 +151,8 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 						pieceId: piece?.id,
 						status: piece?.status,
 						notes: entry.notes,
-						duration: piece?.sheet?.duration
+						duration: piece?.sheet?.duration,
+						orchestra: entry.orchestra
 					};
 				})
 			})
@@ -154,7 +162,7 @@ export async function getLibrary(now = Date.now()): Promise<Library> {
 	for (const event of events.values()) {
 		if (event.type !== 'konzert' || known.has(event.id)) continue;
 		concerts.push(
-			concert({ id: event.id, title: event.displayTitle, date: eventDate(event), location: event.location, event, program: [] })
+			concert({ id: event.id, title: event.displayTitle, date: eventDate(event), location: event.location, orchestras: [], event, program: [] })
 		);
 	}
 	concerts.sort((a, b) => b.dateKey.localeCompare(a.dateKey) || collator.compare(a.title, b.title));
@@ -212,6 +220,32 @@ export function isPastConcert(concert: LibraryConcert, today: string): boolean {
 	if (concert.event) return concert.event.past;
 	if (!concert.date) return true;
 	return concert.dateKey < today.slice(0, concert.dateKey.length);
+}
+
+export interface OrchestraProgram {
+	/** Undefined for a concert that names no orchestra. */
+	orchestra?: string;
+	items: ProgramItem[];
+}
+
+/**
+ * The programme per orchestra, in the order the concert names them; an orchestra without
+ * pieces yet is there too, so it can get some. One entry for a concert of one orchestra.
+ */
+export function programsOf(concert: Pick<LibraryConcert, 'orchestras' | 'program'>): OrchestraProgram[] {
+	const named = concert.orchestras.length ? concert.orchestras : [undefined];
+	const others = [...new Set(concert.program.map((item) => item.orchestra))].filter(
+		(orchestra) => !named.some((name) => sameOrchestra(name, orchestra))
+	);
+	return [...named, ...others].map((orchestra) => ({
+		orchestra,
+		items: concert.program.filter((item) => sameOrchestra(item.orchestra, orchestra))
+	}));
+}
+
+/** One orchestra's part of the programme; the whole programme when the concert has just one. */
+export function programOf(concert: Pick<LibraryConcert, 'orchestras' | 'program'>, orchestra: string | undefined): ProgramItem[] {
+	return concert.program.filter((item) => sameOrchestra(item.orchestra, orchestra));
 }
 
 /** A piece named in another tab (e.g. "Proben") as the pages show it. */

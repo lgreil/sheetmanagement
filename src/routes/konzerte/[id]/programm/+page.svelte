@@ -88,6 +88,23 @@
 {:else}
 	{#if form?.message}<p class="message" role="alert">{form.message}</p>{/if}
 
+	{#if data.orchestras.length}
+		<!-- One programme per orchestra; a full load, so the list starts from that orchestra's. -->
+		<nav class="tabs" aria-label={t.editor.orchestras}>
+			{#each data.orchestras as orchestra (orchestra)}
+				<a
+					class="tab"
+					class:active={orchestra === data.orchestra}
+					aria-current={orchestra === data.orchestra ? 'page' : undefined}
+					href="?orchester={encodeURIComponent(orchestra)}"
+					data-sveltekit-reload
+				>
+					{t.editor.orchestraTab(orchestra)}
+				</a>
+			{/each}
+		</nav>
+	{/if}
+
 	{#if data.sharedFrom}
 		<p class="shared">
 			<Icon name="link" size={16} />
@@ -263,6 +280,7 @@
 	>
 		<input type="hidden" name="entries" value={payload} />
 		<input type="hidden" name="version" value={data.version} />
+		<input type="hidden" name="orchestra" value={data.orchestra} />
 		<input type="hidden" name="wishes" value={takenWishes.join(',')} />
 		<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.editor.save}</button>
 		<a class="cancel" href="/konzerte/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
@@ -274,6 +292,7 @@
 			<p class="muted small">{t.editor.shareLead}</p>
 			<form method="POST" action="?/share" use:enhance={sharing.submit()}>
 				<input type="hidden" name="version" value={data.version} />
+				<input type="hidden" name="orchestra" value={data.orchestra} />
 				<label class="select">
 					<span class="muted">{t.editor.shareSource}</span>
 					<select name="source" required>
@@ -534,6 +553,28 @@
 
 	.message {
 		background: color-mix(in oklab, var(--danger) 10%, transparent);
+	}
+
+	.tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-bottom: var(--space-4);
+	}
+
+	.tab {
+		padding: 6px 14px;
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.tab.active {
+		border-color: var(--accent);
+		background: var(--accent);
+		color: var(--accent-contrast);
 	}
 
 	.shared {

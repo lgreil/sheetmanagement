@@ -1,3 +1,4 @@
+import { rowOrchestra, sameOrchestra } from './orchestras.ts';
 import { normalize, type ColumnKey, type Table } from './sheet.ts';
 
 type ProgramColumns = ColumnKey<'program'> & string;
@@ -32,23 +33,43 @@ export function parseEntries(json: string): EditorEntry[] | null {
 	return entries;
 }
 
-const rowsOf = (table: ProgramTable, concert: string) =>
-	table.rows.filter((row) => normalize(row.values.concert) === normalize(concert));
+/** One orchestra's programme of a concert that names `orchestras`; left out: the whole concert's. */
+export interface OrchestraScope {
+	orchestra?: string;
+	orchestras: string[];
+}
+
+const rowsOf = (table: ProgramTable, concert: string, scope?: OrchestraScope) =>
+	table.rows.filter(
+		(row) =>
+			normalize(row.values.concert) === normalize(concert) &&
+			(!scope || sameOrchestra(rowOrchestra(row.values.orchestra, scope.orchestras), scope.orchestra))
+	);
 
 /**
  * The concert's programme rows as they are in the sheet. The editor sends this back
  * when saving; if the sheet changed in between, someone else edited the programme.
  */
-export function programVersion(table: ProgramTable, concert: string): string {
+export function programVersion(table: ProgramTable, concert: string, scope?: OrchestraScope): string {
 	return JSON.stringify(
-		rowsOf(table, concert).map(({ values: v }) => [v.position, v.piece, v.notes])
+		rowsOf(table, concert, scope).map(({ values: v }) => [v.position, v.piece, v.notes])
 	);
 }
 
-/** Rows to append (numbered 1, 2, 3 …) and the concert's old rows to delete afterwards. */
-export function planProgramSave(table: ProgramTable, concert: string, entries: EditorEntry[]) {
+/**
+ * Rows to append (numbered 1, 2, 3 …) and the old rows to delete afterwards. With several
+ * orchestras, only the scope's rows go, and the new ones name their orchestra.
+ */
+export function planProgramSave(table: ProgramTable, concert: string, entries: EditorEntry[], scope?: OrchestraScope) {
+	const orchestra = scope && scope.orchestras.length > 1 ? (scope.orchestra ?? '') : '';
 	return {
-		append: entries.map((entry, i) => ({ concert, position: String(i + 1), piece: entry.piece, notes: entry.notes })),
-		remove: rowsOf(table, concert).map((row) => row.row)
+		append: entries.map((entry, i) => ({
+			concert,
+			position: String(i + 1),
+			piece: entry.piece,
+			notes: entry.notes,
+			...(orchestra ? { orchestra } : {})
+		})),
+		remove: rowsOf(table, concert, scope).map((row) => row.row)
 	};
 }

@@ -84,13 +84,16 @@ describe('resolveAccess', () => {
 describe('programme editor', () => {
 	const table = readTable(
 		[
-			['Konzert', 'Nr.', 'Stück', 'Notiz'],
+			['Konzert', 'Nr.', 'Stück', 'Notiz', 'Orchester'],
 			['Herbstkonzert 2026', '1', 'Bolero', ''],
 			['Weihnachtskonzert 2026', '1', 'Sleigh Ride', ''],
-			['herbstkonzert 2026', '2', 'Jesu bleibet meine Freude', 'Zugabe']
+			['herbstkonzert 2026', '2', 'Jesu bleibet meine Freude', 'Zugabe'],
+			['Herbstkonzert 2026', '1', 'Fame', '', 'A']
 		],
-		{ concert: 'Konzert', position: 'Nr.', piece: 'Stück', notes: 'Notiz' }
+		{ concert: 'Konzert', position: 'Nr.', piece: 'Stück', notes: 'Notiz', orchestra: 'Orchester' }
 	);
+	const eo = { orchestra: 'EO', orchestras: ['EO', 'A'] };
+	const a = { orchestra: 'A', orchestras: ['EO', 'A'] };
 
 	it('accepts only well-formed entries', () => {
 		expect(parseEntries('[{"piece":" Bolero ","notes":""}]')).toEqual([{ piece: 'Bolero', notes: '' }]);
@@ -111,11 +114,29 @@ describe('programme editor', () => {
 			{ piece: 'Jesu bleibet meine Freude', notes: 'Zugabe' },
 			{ piece: 'Bolero', notes: '' }
 		]);
-		expect(plan.remove).toEqual([2, 4]);
+		expect(plan.remove).toEqual([2, 4, 5]);
 		expect(plan.append).toEqual([
 			{ concert: 'Herbstkonzert 2026', position: '1', piece: 'Jesu bleibet meine Freude', notes: 'Zugabe' },
 			{ concert: 'Herbstkonzert 2026', position: '2', piece: 'Bolero', notes: '' }
 		]);
+	});
+
+	it('replaces only one orchestra\'s rows; rows without one belong to the first', () => {
+		const plan = planProgramSave(table, 'Herbstkonzert 2026', [{ piece: 'Skyfall', notes: '' }], a);
+		expect(plan.remove).toEqual([5]);
+		expect(plan.append).toEqual([{ concert: 'Herbstkonzert 2026', position: '1', piece: 'Skyfall', notes: '', orchestra: 'A' }]);
+		expect(planProgramSave(table, 'Herbstkonzert 2026', [], eo).remove).toEqual([2, 4]);
+	});
+
+	it('notices changes only in the orchestra being edited', () => {
+		const changed = { ...table, rows: table.rows.map((r) => (r.row === 5 ? { ...r, values: { ...r.values, piece: 'Skyfall' } } : r)) };
+		expect(programVersion(changed, 'Herbstkonzert 2026', eo)).toBe(programVersion(table, 'Herbstkonzert 2026', eo));
+		expect(programVersion(changed, 'Herbstkonzert 2026', a)).not.toBe(programVersion(table, 'Herbstkonzert 2026', a));
+	});
+
+	it('names no orchestra on the rows of a concert one orchestra plays', () => {
+		const plan = planProgramSave(table, 'Weihnachtskonzert 2026', [{ piece: 'Sleigh Ride', notes: '' }], { orchestra: 'EO', orchestras: ['EO'] });
+		expect(plan.append[0]).not.toHaveProperty('orchestra');
 	});
 });
 
@@ -212,6 +233,12 @@ describe('member status and orchestras', () => {
 		expect(playsIn(members[0], 'B')).toBe(false);
 		expect(playsIn(members[1], 'B')).toBe(true);
 		expect(playsIn(members[3], undefined)).toBe(true);
+	});
+
+	it('counts members of any orchestra a concert names', () => {
+		expect(playsIn(members[2], 'EO, A')).toBe(true);
+		expect(playsIn(members[3], 'B; A')).toBe(true);
+		expect(playsIn(members[3], 'EO, A')).toBe(false);
 	});
 
 	it('counts only active members of the concert orchestra', () => {

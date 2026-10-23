@@ -31,6 +31,12 @@ const shown = (part: Part, viaLink?: boolean) => ({
 	glyph: partGlyph(part)
 });
 
+/** What the member plays of a concert: with several orchestras, only their own orchestras' programmes. */
+function programFor(concert: LibraryConcert | undefined, member: Member | undefined): ProgramItem[] {
+	const program = concert?.program ?? [];
+	return member && (concert?.orchestras.length ?? 0) > 1 ? program.filter((item) => playsIn(member, item.orchestra)) : program;
+}
+
 /**
  * The concerts to show, one below the other: every upcoming one of the member's orchestras,
  * soonest first, and one asked for in the URL on top. `focus` is where the page starts: the
@@ -42,7 +48,7 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
 		.reverse();
 	const asked = wanted ? concerts.find((c) => c.id === wanted) : undefined;
 	const shown = asked && !upcoming.includes(asked) ? [asked, ...upcoming] : upcoming;
-	const focus = asked ?? upcoming.find((c) => c.program.length) ?? upcoming[0];
+	const focus = asked ?? upcoming.find((c) => programFor(c, member).length) ?? upcoming[0];
 	return { shown, focus };
 }
 
@@ -50,10 +56,10 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
  * One rehearsal asked for in the URL (#115): the pieces planned for it, in the programme's
  * order, else the whole programme of the concert it prepares for, with a note saying so.
  */
-async function rehearsalOf(library: Library, id: string | null) {
+async function rehearsalOf(library: Library, id: string | null, member: Member | undefined) {
 	const event = id && library.schedule.ok ? library.schedule.byId.get(id) : undefined;
 	if (!event || (event.type !== 'probe' && event.type !== 'generalprobe')) return null;
-	const program = (event.concertId && library.concertsById.get(event.concertId)?.program) || [];
+	const program = programFor(event.concertId ? library.concertsById.get(event.concertId) : undefined, member);
 	const planned = ((await getRehearsalPlan())?.byEvent.get(event.id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
 	return {
 		id: event.id,
@@ -67,8 +73,8 @@ async function rehearsalOf(library: Library, id: string | null) {
 
 export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const [library, access, music, pieceNotes] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig(), getPieceNotes()]);
-	const rehearsal = await rehearsalOf(library, url.searchParams.get('probe'));
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
+	const rehearsal = await rehearsalOf(library, url.searchParams.get('probe'), member);
 
 	// What to show: asked for in the URL, else from "Mitglieder" (it follows members to every
 	// device and the profile page edits it), else remembered in this browser.
@@ -123,7 +129,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 				title: concert.title,
 				label: concert.label?.long,
 				note: undefined as string | undefined,
-				pieces: piecesOf(concert.program, concert)
+				pieces: piecesOf(programFor(concert, member), concert)
 			}))
 		],
 		focus: rehearsal?.id ?? focus?.id ?? null,

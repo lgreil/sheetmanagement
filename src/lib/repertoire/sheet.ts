@@ -3,6 +3,7 @@ import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { fuzzyDateKey, parseFuzzyDate, type FuzzyDate } from './dates.ts';
 import { parseDuration } from './duration.ts';
+import { concertOrchestras, rowOrchestra, sameOrchestra } from './orchestras.ts';
 
 /** Tab and column names of the Repertoire sheet, in the order /setup creates them. */
 export const LAYOUT = t.sheet;
@@ -12,7 +13,11 @@ export const REPERTOIRE_TABS = ['pieces', 'concerts', 'program'] as const;
 export type RepertoireTab = (typeof REPERTOIRE_TABS)[number];
 export type ColumnKey<T extends TabKey> = keyof (typeof LAYOUT)[T]['columns'];
 /** Columns added later that an older sheet works without, so they aren't reported missing. */
-const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = { pieces: ['duration', 'publisher', 'composerFull'], concerts: ['sameProgramAs'] };
+const OPTIONAL_COLUMNS: Partial<Record<RepertoireTab, string[]>> = {
+	pieces: ['duration', 'publisher', 'composerFull'],
+	concerts: ['sameProgramAs'],
+	program: ['orchestra']
+};
 
 /** The raw cell values of the repertoire tabs, header row included. */
 export type SheetValues = Record<RepertoireTab, string[][]>;
@@ -92,6 +97,8 @@ export interface ProgramEntry {
 	/** The name as entered. */
 	pieceName: string;
 	notes?: string;
+	/** Which of the concert's orchestras plays it; undefined when the concert names none. */
+	orchestra?: string;
 }
 
 export interface SheetConcert {
@@ -103,7 +110,10 @@ export interface SheetConcert {
 	/** As entered, shown when it can't be read as a date. */
 	dateText: string;
 	location?: string;
+	/** As entered, e.g. "EO, A". */
 	orchestra?: string;
+	/** "EO, A" → ["EO", "A"]: each has its own programme. */
+	orchestras: string[];
 	eventId?: string;
 	/** "Programm wie" as entered: the concert whose programme this one plays too. */
 	sameProgramAs?: string;
@@ -239,6 +249,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			dateText: v.date,
 			location: optional(v.location),
 			orchestra: optional(v.orchestra),
+			orchestras: concertOrchestras(v.orchestra),
 			eventId: optional(event),
 			sameProgramAs: optional(v.sameProgramAs),
 			program: []
@@ -265,7 +276,8 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			position: Number.isFinite(position) ? position : undefined,
 			pieceKey: piece?.key,
 			pieceName: v.piece,
-			notes: optional(v.notes)
+			notes: optional(v.notes),
+			orchestra: rowOrchestra(v.orchestra, concert.orchestras)
 		});
 	}
 
@@ -294,8 +306,13 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 		(a.date ? fuzzyDateKey(a.date) : '~').localeCompare(b.date ? fuzzyDateKey(b.date) : '~')
 	);
 	for (const concert of byDate) {
+		// Each orchestra's programme together, in the order the concert names them.
+		const rank = (entry: ProgramEntry) => {
+			const index = concert.orchestras.findIndex((orchestra) => sameOrchestra(orchestra, entry.orchestra));
+			return index === -1 ? concert.orchestras.length : index;
+		};
 		concert.program.sort(
-			(a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || a.row - b.row
+			(a, b) => rank(a) - rank(b) || (a.position ?? Infinity) - (b.position ?? Infinity) || a.row - b.row
 		);
 		for (const entry of concert.program) {
 			if (!entry.pieceKey) continue;
