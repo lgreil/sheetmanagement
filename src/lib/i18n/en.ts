@@ -1238,6 +1238,10 @@ export const en: Texts = {
 	editor: {
 		orchestras: 'Programme per orchestra',
 		orchestraTab: (orchestra: string) => `Programme ${orchestra}`,
+		jointTab: (orchestras: string[]) => `Together: ${orchestras.join(' + ')}`,
+		jointHint: (orchestras: string[]) =>
+			`Pieces ${orchestras.join(' and ')} play together. They are in every one of these orchestras’ Drive folders and in all their members’ “My parts”.`,
+		addJoint: (orchestras: string[]) => `Add pieces ${orchestras.join(' and ')} play together`,
 		suggestions: 'Suggestions',
 		wished: 'Wished for',
 		longAgo: 'Not played for a long time',

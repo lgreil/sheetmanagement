@@ -5,7 +5,7 @@ import { searchText } from '#lib/music/text.ts';
 import type { PieceDetail, PieceStatus, PieceSummary } from '#lib/music/types.ts';
 import { eventDay, formatFuzzyDate, fuzzyDateKey, parseFuzzyDate, type FuzzyDate, type FuzzyDateLabel } from '#lib/repertoire/dates.ts';
 import type { ReportPiece } from '#lib/repertoire/music-report.ts';
-import { sameOrchestra } from '#lib/repertoire/orchestras.ts';
+import { isJoint, playedBy, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { normalize, type SheetConcert, type SheetPiece } from '#lib/repertoire/sheet.ts';
 import { getCatalog } from './catalog.ts';
 import { getRepertoire, type RepertoireResult } from './repertoire.ts';
@@ -223,14 +223,17 @@ export function isPastConcert(concert: LibraryConcert, today: string): boolean {
 }
 
 export interface OrchestraProgram {
-	/** Undefined for a concert that names no orchestra. */
+	/** Undefined for a concert that names no orchestra; "EO, A" for what they play together. */
 	orchestra?: string;
+	/** Played together by several orchestras: it's in each one's Drive folder. */
+	joint: boolean;
 	items: ProgramItem[];
 }
 
 /**
  * The programme per orchestra, in the order the concert names them; an orchestra without
  * pieces yet is there too, so it can get some. One entry for a concert of one orchestra.
+ * Pieces played together ("EO, A") come after, once they are there.
  */
 export function programsOf(concert: Pick<LibraryConcert, 'orchestras' | 'program'>): OrchestraProgram[] {
 	const named = concert.orchestras.length ? concert.orchestras : [undefined];
@@ -239,13 +242,17 @@ export function programsOf(concert: Pick<LibraryConcert, 'orchestras' | 'program
 	);
 	return [...named, ...others].map((orchestra) => ({
 		orchestra,
+		joint: isJoint(orchestra),
 		items: concert.program.filter((item) => sameOrchestra(item.orchestra, orchestra))
 	}));
 }
 
-/** One orchestra's part of the programme; the whole programme when the concert has just one. */
+/**
+ * What one orchestra plays: its own programme and the pieces it plays together with others;
+ * the whole programme when the concert has just one.
+ */
 export function programOf(concert: Pick<LibraryConcert, 'orchestras' | 'program'>, orchestra: string | undefined): ProgramItem[] {
-	return concert.program.filter((item) => sameOrchestra(item.orchestra, orchestra));
+	return concert.program.filter((item) => playedBy(item.orchestra, orchestra));
 }
 
 /** A piece named in another tab (e.g. "Proben") as the pages show it. */

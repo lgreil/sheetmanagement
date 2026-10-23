@@ -114,21 +114,22 @@ test('picking an instrument from the grid (#165)', async ({ page }) => {
 
 test('the current programme in Drive follows the programme (#60)', async ({ page }) => {
 	await open(page, '/kalender/demo-herbstkonzert');
-	// EO and A play this concert, each with its own programme and folder.
+	// EO and A play this concert, each with its own programme and folder; the finale they
+	// play together is in both.
 	const drive = page.locator('form.drive').first();
 	const driveA = page.locator('form.drive').last();
-	await expect(drive).toContainText('Alle 4 Stücke');
+	await expect(drive).toContainText('4 von 5 Stücken');
 	await expect(driveA).toContainText('Noch kein Programmordner für A');
 	await open(page, '/kalender/demo-herbstkonzert/programm');
 	await page.getByRole('button', { name: 'Entfernen' }).last().click();
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page.getByText('Auch im Drive-Ordner »Aktuelles Programm« abgeglichen.')).toBeVisible();
-	await expect(drive).toContainText('Alle 3 Stücke');
+	await expect(drive).toContainText('Alle 4 Stücke');
 	await expect(driveA).toContainText('Noch kein Programmordner für A');
 	await drive.getByRole('button', { name: 'Abgleichen' }).click();
 	await expect(drive).toContainText('Abgeglichen: 0 ergänzt, 0 herausgenommen.');
 	await driveA.getByRole('button', { name: 'Abgleichen' }).click();
-	await expect(driveA).toContainText('Abgeglichen: 2 ergänzt, 0 herausgenommen.');
+	await expect(driveA).toContainText('Abgeglichen: 3 ergänzt, 0 herausgenommen.');
 });
 
 test('a date poll from start to calendar (#95)', async ({ page }) => {

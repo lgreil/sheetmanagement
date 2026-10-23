@@ -134,6 +134,22 @@ describe('programme editor', () => {
 		expect(programVersion(changed, 'Herbstkonzert 2026', a)).not.toBe(programVersion(table, 'Herbstkonzert 2026', a));
 	});
 
+	it('keeps pieces played together apart from each orchestra’s own', () => {
+		const joint = readTable(
+			[
+				['Konzert', 'Nr.', 'Stück', 'Notiz', 'Orchester'],
+				['Herbstkonzert 2026', '1', 'Bolero', ''],
+				['Herbstkonzert 2026', '1', 'Finale', '', 'A, EO']
+			],
+			{ concert: 'Konzert', position: 'Nr.', piece: 'Stück', notes: 'Notiz', orchestra: 'Orchester' }
+		);
+		const together = { orchestra: 'EO, A', orchestras: ['EO', 'A'] };
+		expect(planProgramSave(joint, 'Herbstkonzert 2026', [], eo).remove).toEqual([2]);
+		const plan = planProgramSave(joint, 'Herbstkonzert 2026', [{ piece: 'Radetzky', notes: '' }], together);
+		expect(plan.remove).toEqual([3]);
+		expect(plan.append[0]).toMatchObject({ piece: 'Radetzky', orchestra: 'EO, A' });
+	});
+
 	it('names no orchestra on the rows of a concert one orchestra plays', () => {
 		const plan = planProgramSave(table, 'Weihnachtskonzert 2026', [{ piece: 'Sleigh Ride', notes: '' }], { orchestra: 'EO', orchestras: ['EO'] });
 		expect(plan.append[0]).not.toHaveProperty('orchestra');

@@ -1,6 +1,7 @@
 import { MEMBER_STATUSES, RIGHTS } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { defaultRows, type SharedParts } from '#lib/music/instrument-groups.ts';
+import { orchestraChoices } from '#lib/repertoire/orchestras.ts';
 import { ALL_ON, FEATURE_TABS, type Features } from '#lib/features.ts';
 import { LAYOUT, normalize, type TabKey } from '#lib/repertoire/sheet.ts';
 import type { GoogleClient } from './google/client.ts';
@@ -239,8 +240,8 @@ export async function setUpSheet(
 		['pieceNotes', 'concert', fromColumn('concerts', 'title')]
 	];
 	if (orchestras.length) {
-		const values = orchestras.map((name) => ({ userEnteredValue: name }));
-		// Not strict: a concert several orchestras play names them all ("EO, A").
+		// Each orchestra and the combinations ("EO, A"): concerts and pieces they play together.
+		const values = orchestraChoices(orchestras).map((name) => ({ userEnteredValue: name }));
 		dropdowns.push(['concerts', 'orchestra', { type: 'ONE_OF_LIST', values }]);
 		dropdowns.push(['program', 'orchestra', { type: 'ONE_OF_LIST', values }]);
 	}

@@ -318,6 +318,8 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			...program(sommer, [titles['demo-nachtmusik'], titles['demo-007']]),
 			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']]),
 			...program(herbst, [titles['demo-cancan'], titles['demo-sleigh']], 'A'),
+			// The finale both play together.
+			...program(herbst, [titles['demo-jesu']], 'EO, A'),
 			...program(weihnacht, [titles['demo-sleigh'], titles['demo-jesu'], titles['demo-stille-nacht']])
 		]),
 		tab('rehearsals', [

@@ -3,7 +3,7 @@ import { parseEntries, planProgramSave, programVersion, type OrchestraScope } fr
 import { requireRight } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
 import { getLibrary, type Library, type LibraryConcert } from '#lib/server/library.ts';
-import { pickOrchestra, sameOrchestra } from '#lib/repertoire/orchestras.ts';
+import { concertOrchestras, pickOrchestra, programScopes, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { getFeedback, getRepertoire } from '#lib/server/repertoire.ts';
 import { planWishes } from '#lib/server/feedback.ts';
 import { programSuggestions } from '#lib/repertoire/suggestions.ts';
@@ -34,9 +34,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	return {
 		state: 'ready' as const,
 		concert: { id: concert.id, title: concert.title },
-		// Tabs only when several orchestras play the concert.
+		// Tabs only when several orchestras play the concert: one each, and one for playing together.
 		orchestra: scope.orchestra ?? '',
-		orchestras: concert.orchestras.length > 1 ? concert.orchestras : [],
+		orchestras: concert.orchestras.length > 1 ? programScopes(concert.orchestras) : [],
 		version: programVersion(repertoire.repertoire.tables.program, sheet.title, scope),
 		entries: own.map(({ entry, item }) => ({
 			piece: entry.pieceName,
@@ -124,19 +124,28 @@ async function clearShare(title: string) {
 	for (const row of rows) await updateRecord('concerts', concerts, row.row, { sameProgramAs: '' });
 }
 
-/** "ok" or "fehler" after syncing the orchestra's Drive folder, empty when it isn't this concert's turn. */
-async function syncIfCurrent(id: string, orchestra: string | undefined): Promise<string> {
+/**
+ * "ok" or "fehler" after syncing the orchestra's Drive folder, empty when it isn't this
+ * concert's turn. Pieces played together go into each of their orchestras' folders.
+ */
+async function syncIfCurrent(id: string, scope: string | undefined): Promise<string> {
 	if (!currentProgramAvailable()) return '';
 	const library = await getLibrary();
 	const concert = library.concertsById.get(id);
-	if (!concert || !isCurrentConcert(concert, library, orchestra)) return '';
-	return syncCurrentProgram(concert, library, orchestra).then(
-		() => 'ok',
-		(cause) => {
-			console.error('Syncing the current programme failed:', cause);
-			return 'fehler';
-		}
-	);
+	if (!concert) return '';
+	const orchestras = scope ? concertOrchestras(scope) : [undefined];
+	let result = '';
+	for (const orchestra of orchestras.filter((name) => isCurrentConcert(concert, library, name))) {
+		const done = await syncCurrentProgram(concert, library, orchestra).then(
+			() => 'ok',
+			(cause) => {
+				console.error('Syncing the current programme failed:', cause);
+				return 'fehler';
+			}
+		);
+		if (result !== 'fehler') result = done;
+	}
+	return result;
 }
 
 export const actions: Actions = {

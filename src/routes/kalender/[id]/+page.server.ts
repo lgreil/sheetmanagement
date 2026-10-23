@@ -10,7 +10,7 @@ import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
 import { getLibrary, isPastConcert, namedItem, programsOf, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
-import { pickOrchestra } from '#lib/repertoire/orchestras.ts';
+import { pickOrchestra, programScopes, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
@@ -285,16 +285,23 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	}
 
 	const items = concert?.program ?? [];
+	const several = (concert?.orchestras.length ?? 0) > 1;
+	const editUrl = (orchestra: string | undefined) =>
+		`/kalender/${encodeURIComponent(params.id)}/programm${orchestra && several ? `?orchester=${encodeURIComponent(orchestra)}` : ''}`;
+	// For several orchestras: the editor's tab for pieces they play together.
+	const together = several ? programScopes(concert!.orchestras).at(-1) : undefined;
 	// "01 | Aktuelles Programm" in Drive (#60), for upcoming concerts once Drive may be written to.
 	const showDrive = locals.access.rights.has('programme.bearbeiten') && !!concert && currentProgramAvailable() && !isPastConcert(concert, library.today);
 	const program = {
 		items,
-		// One per orchestra that plays the concert, each with its own programme and Drive folder.
-		groups: (concert ? programsOf(concert) : [{ orchestra: undefined, items }]).map((group) => ({
+		// One per orchestra that plays the concert, each with its own programme and Drive folder;
+		// what they play together after, its pieces in each of their folders.
+		groups: (concert ? programsOf(concert) : [{ orchestra: undefined, joint: false, items }]).map((group) => ({
 			orchestra: group.orchestra ?? '',
+			joint: group.joint,
 			items: group.items,
-			editUrl: `/kalender/${encodeURIComponent(params.id)}/programm${group.orchestra && concert!.orchestras.length > 1 ? `?orchester=${encodeURIComponent(group.orchestra)}` : ''}`,
-			drive: showDrive
+			editUrl: editUrl(group.orchestra),
+			drive: showDrive && !group.joint
 				? {
 						...currentProgramStatus(concert!, library, group.orchestra),
 						orchestra: group.orchestra ?? concert!.title,
@@ -303,6 +310,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				: null
 		})),
 		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
+		// Where to add pieces the orchestras play together, while there are none yet.
+		jointUrl: together && !concert!.program.some((item) => sameOrchestra(item.orchestra, together)) ? editUrl(together) : undefined,
+		jointLabel: together ?? '',
 		// For whoever plans programmes; it reads every piece's parts.
 		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library, concert?.orchestra) : null,
 		saved: url.searchParams.has('gespeichert'),
