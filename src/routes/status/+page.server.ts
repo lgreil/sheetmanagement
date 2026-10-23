@@ -1,9 +1,14 @@
-import type { PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { isJobName, JOB_NAMES, JOBS, lastRuns, runJob, type JobName } from '#lib/server/jobs/index.ts';
 import { config } from '#lib/config/index.ts';
 import { contrast } from '#lib/branding.ts';
 import { FEATURES } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
-import { appEnv, features, orchestra, unknownFeatures } from '#lib/server/env.ts';
+import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
+import { getStore } from '#lib/server/db/index.ts';
+import { pushReady } from '#lib/server/push/index.ts';
+import { extras } from '#lib/server/extras.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
@@ -223,5 +228,66 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck() } };
+	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck() }, jobs: JOB_NAMES, extras: extras() };
 };
+
+export const actions: Actions = {
+	/** Starts a job by hand (#160), e.g. to try it after a deploy or in the demo. */
+	runJob: async ({ request, locals }) => {
+		requireAdminWhenSignInIsOn(locals);
+		const name = String((await request.formData()).get('job') ?? '');
+		if (!isJobName(name)) return fail(400);
+		const run = await runJob(name, false);
+		return { job: name, ok: run.ok, summary: run.summary };
+	}
+};
+
+/** Where the app keeps what it writes itself (#161), and its schema version. */
+async function storeCheck(): Promise<Check> {
+	const store = getStore();
+	if (store.kind === 'memory') {
+		return isDemo()
+			? { state: 'ok', details: [t.status.storeDemo] }
+			: { state: 'missing', details: [], problem: t.status.storeMemory, hint: t.status.storeMemoryHint };
+	}
+	try {
+		const version = await store.schemaVersion();
+		if (!version) return { state: 'missing', details: [], problem: t.status.storeNoSchema, hint: t.status.storeNoSchemaHint };
+		return { state: 'ok', details: [t.status.storeD1(version)] };
+	} catch (error) {
+		return { state: 'error', details: [], problem: t.status.storeFailed(error instanceof Error ? error.message : String(error)) };
+	}
+}
+
+/** Whether notifications can be sent (#157), and to how many devices. */
+async function pushCheck(): Promise<Check> {
+	if (!pushReady()) return { state: 'missing', details: [], problem: t.status.pushMissing, hint: t.status.pushMissingHint };
+	const devices = await getStore()
+		.allPush()
+		.catch(() => []);
+	return { state: 'ok', details: [t.status.pushOn(devices.length)] };
+}
+
+/** When the jobs last ran; a trigger that stopped firing shows as an error (#160). */
+async function jobsCheck(): Promise<Check> {
+	const runs = await lastRuns();
+	const label = (name: JobName) => t.status.jobNames[name];
+	const failed = JOB_NAMES.filter((name) => runs[name] && !runs[name].ok);
+	const lastAuto = Math.max(0, ...JOB_NAMES.map((name) => (runs[name]?.auto ? runs[name].at : 0)));
+	const longest = Math.max(...JOB_NAMES.map((name) => JOBS[name].everyMinutes));
+	const stale = lastAuto > 0 && Date.now() - lastAuto > 3 * longest * 60 * 1000;
+	return {
+		state: failed.length || stale ? 'error' : lastAuto ? 'ok' : 'missing',
+		details: JOB_NAMES.map((name) => {
+			const run = runs[name];
+			return run ? `${t.status.jobRun(label(name), dateTime.format(new Date(run.at)), run.auto, run.ms)} · ${run.summary}` : t.status.jobNever(label(name));
+		}),
+		problem:
+			[
+				...failed.map((name) => t.status.jobFailed(label(name), runs[name]!.summary)),
+				...(stale ? [t.status.jobsStale(dateTime.format(new Date(lastAuto)))] : []),
+				...(lastAuto ? [] : [t.status.jobsNever])
+			].join(' ') || undefined,
+		hint: stale ? t.status.jobsStaleHint : lastAuto ? undefined : t.status.jobsNeverHint
+	};
+}

@@ -239,7 +239,7 @@ export const actions: Actions = {
 			const table = await readTab('pieceNotes');
 			const row = id ? table.rows.find((r) => r.values.id === id) : undefined;
 			if (!row) return fail(409, { noteError: t.pieceNotes.gone });
-			await deleteRows('pieceNotes', [row.row]);
+			await deleteRows('pieceNotes', table, [row.row]);
 			await refreshAfterWrite();
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { noteError: t.pieceNotes.notSetUp });

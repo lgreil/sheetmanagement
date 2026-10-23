@@ -8,9 +8,9 @@
 	"scripts": {
 		"dev": "vite dev",
 		"dev:demo": "vite dev --mode demo",
-		"build": "vite build",
-		"preview": "vite build && wrangler dev",
-		"deploy": "vite build && wrangler deploy",
+		"build": "vite build && node scripts/wrap-worker.mjs",
+		"preview": "pnpm build && wrangler dev",
+		"deploy": "pnpm build && wrangler deploy",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"test": "vitest run",
 		"test:e2e": "playwright test"

@@ -6,6 +6,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import MemberFields from '#lib/components/MemberFields.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
+	import PushSettings from '#lib/components/PushSettings.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -114,6 +115,10 @@
 				</div>
 			{/if}
 		</section>
+	{/if}
+
+	{#if data.member && data.push}
+		<PushSettings publicKey={data.push.publicKey} endpoints={data.push.endpoints} />
 	{/if}
 
 	<!-- What the app keeps about the member, as one file (#158, Art. 15 GDPR). -->

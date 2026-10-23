@@ -58,6 +58,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Notifications',
+				paragraphs: [
+					"On your profile you can allow notifications for a device. The app then reminds you of rehearsals and concerts in the next few days that you haven't answered yet; people who look after rented music of return dates, and people who run the app of problems with the connection to Google. Nothing is sent at night.",
+					"For this the app stores the address your browser assigns for notifications, two keys for encryption and your email address, plus which reminder went to whom, so nobody gets one twice. This is kept in a database at Cloudflare (D1), not in the Google Sheet. The messages are delivered encrypted through your browser's service (Google for Chrome and Android, Apple for Safari and iPhone, Mozilla for Firefox), which can't read them.",
+					'The legal basis is your consent (Art. 6(1)(a) GDPR). “Turn off” or signing out deletes the device at once; records of sent reminders are deleted after a year.'
+				]
+			},
+			{
 				heading: 'Attendance at rehearsals',
 				paragraphs: [
 					"After a rehearsal, people with the right “Take attendance” (e.g. conductor and organisers) can enter who was there. Only the date, name, email address and whether you were present are saved, in the “Attendance” tab of the orchestra's Google sheet. From this the app shows how many rehearsals before a concert you attended.",

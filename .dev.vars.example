@@ -48,6 +48,13 @@ REPERTOIRE_SHEET_ID=""
 # Comma-separated emails that always have every right (the first admins).
 # BOOTSTRAP_ADMINS="admin@example.org,second-admin@example.org"
 
+# --- Notifications (#157) ------------------------------------------------------------
+# Reminders on members' phones (unanswered rehearsals, rented music due) and a notice to the
+# admins when the Google connection breaks. Make the pair with `node scripts/vapid-keys.mjs`;
+# keep it, a new pair makes every device sign up again. Without it there are no notifications.
+# VAPID_PUBLIC_KEY=""
+# VAPID_PRIVATE_KEY=""
+
 # --- Privacy notice (/datenschutz) and terms (/nutzungsbedingungen) -----------------
 # Who is responsible for the app. LEGAL_NAME defaults to ORCHESTRA_NAME; LEGAL_ADDRESS is optional.
 # LEGAL_NAME="Musterorchester e. V."

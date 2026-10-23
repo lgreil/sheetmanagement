@@ -8,6 +8,8 @@ import { getAccessList } from '#lib/server/repertoire.ts';
 import { authConfig } from '#lib/server/auth/index.ts';
 import { feedToken } from '#lib/server/auth/feed.ts';
 import { isOn } from '#lib/server/env.ts';
+import { getStore } from '#lib/server/db/index.ts';
+import { vapidKeys } from '#lib/server/push/index.ts';
 import { nextLinkVersion, revokedLinkVersion } from '#lib/server/auth/links.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -31,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			groups: member.groups
 		},
 		feed: await feed(member.email, member.feedVersion, !!list?.tables.members?.missing.includes('feedVersion'), url.origin),
+		push: await push(member.email),
 		instruments: playableInstruments(config),
 		common: commonInstruments(config),
 		orchestras: config.orchestras
@@ -45,6 +48,16 @@ async function feed(email: string, version: number, missingColumn: boolean, orig
 	if (version < 1) return { state: 'none' as const };
 	const url = `${origin}/kalender/${await feedToken(email, version, auth.sessionSecret)}.ics`;
 	return { state: 'active' as const, url, webcal: url.replace(/^https?:/, 'webcal:') };
+}
+
+/** Notifications (#157): the key the browser subscribes with, and the member's devices; null while not set up. */
+async function push(email: string) {
+	const keys = vapidKeys();
+	if (!keys) return null;
+	const devices = await getStore()
+		.pushOf(email)
+		.catch(() => []);
+	return { publicKey: keys.publicKey, endpoints: devices.map((device) => device.endpoint) };
 }
 
 /** A new link (a higher version) or revoking (the version made negative), on the member's own row. */

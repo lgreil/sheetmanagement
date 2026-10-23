@@ -13,7 +13,7 @@ import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type 
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
-import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
+import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord, withSheetLock } from '#lib/server/sheet-writes.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { concertCheck } from '#lib/repertoire/concert-check.ts';
 import { reportGaps } from '#lib/repertoire/music-report.ts';
@@ -434,18 +434,21 @@ export const actions: Actions = {
 		if (!values) return fail(400, { rehearsalNoteError: t.rehearsalNotes.tooLong, rehearsalNoteValues: input });
 		try {
 			await ensureTab('rehearsalNotes');
-			const table = await readTab('rehearsalNotes');
-			const rows = table.rows.filter((row) => row.values.eventId === event.id);
 			const signed = { ...values, by: locals.access.user?.name ?? '', at: today() };
-			if (isEmptyNote(values)) {
-				await deleteRows('rehearsalNotes', rows.map((row) => row.row));
-			} else if (rows.length) {
-				// The last row is the one shown; extra rows entered by hand go.
-				await updateRecord('rehearsalNotes', table, rows.at(-1)!.row, signed);
-				await deleteRows('rehearsalNotes', rows.slice(0, -1).map((row) => row.row));
-			} else {
-				await appendRecords('rehearsalNotes', table, [{ rehearsal: `${event.displayTitle} · ${event.date.long}`, ...signed, eventId: event.id }]);
-			}
+			// Read and write in one turn (#156): two saves at once each find the other's row.
+			await withSheetLock(async () => {
+				const table = await readTab('rehearsalNotes');
+				const rows = table.rows.filter((row) => row.values.eventId === event.id);
+				if (isEmptyNote(values)) {
+					await deleteRows('rehearsalNotes', table, rows.map((row) => row.row));
+				} else if (rows.length) {
+					// The last row is the one shown; extra rows entered by hand go.
+					await updateRecord('rehearsalNotes', table, rows.at(-1)!.row, signed);
+					await deleteRows('rehearsalNotes', table, rows.slice(0, -1).map((row) => row.row));
+				} else {
+					await appendRecords('rehearsalNotes', table, [{ rehearsal: `${event.displayTitle} · ${event.date.long}`, ...signed, eventId: event.id }]);
+				}
+			});
 			await refreshAfterWrite();
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { rehearsalNoteError: t.rehearsalNotes.notSetUp, rehearsalNoteValues: input });

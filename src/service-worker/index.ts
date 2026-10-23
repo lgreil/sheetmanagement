@@ -6,7 +6,7 @@ import { self as sw } from '$app/service-worker';
  * Offline mode for rehearsal halls with bad reception (#62). The app's own files come from
  * the cache; pages are fetched fresh and kept, so the last version of every page a member
  * opened still shows without a connection. Parts saved on "Meine Noten" are kept too.
- * Signing out deletes everything personal.
+ * Signing out deletes everything personal. It also shows reminders (#157).
  */
 
 const APP = `app-${version}`;
@@ -78,9 +78,24 @@ sw.addEventListener('fetch', (event) => {
 	const url = new URL(request.url);
 	if (url.origin !== sw.location.origin) return;
 
-	// Signing out: nothing personal stays on the device.
+	// Signing out: nothing personal stays on the device, and it gets no more reminders. The
+	// device is taken off first, while the member is still signed in.
 	if (request.method === 'POST' && url.pathname === '/auth/logout') {
 		event.waitUntil(Promise.all([caches.delete(PAGES), caches.delete(NOTEN)]));
+		event.respondWith(
+			(async () => {
+				const subscription = await sw.registration.pushManager?.getSubscription().catch(() => null);
+				if (subscription) {
+					await fetch('/api/push', {
+						method: 'DELETE',
+						headers: { 'content-type': 'application/json' },
+						body: JSON.stringify({ endpoint: subscription.endpoint })
+					}).catch(() => undefined);
+					await subscription.unsubscribe().catch(() => undefined);
+				}
+				return fetch(request);
+			})()
+		);
 		return;
 	}
 	if (request.method !== 'GET') return;
@@ -131,6 +146,36 @@ sw.addEventListener('fetch', (event) => {
 				if (cached) return cached;
 				return data ? Response.error() : offlinePage();
 			}
+		})()
+	);
+});
+
+/** A reminder from the app (#157): title, text, the page to open, and a tag that replaces an older one. */
+sw.addEventListener('push', (event) => {
+	const notice = (() => {
+		try {
+			return (event.data?.json() ?? {}) as { title?: string; body?: string; url?: string; tag?: string; icon?: string };
+		} catch {
+			return { body: event.data?.text() };
+		}
+	})();
+	event.waitUntil(
+		sw.registration.showNotification(notice.title ?? '', { body: notice.body, tag: notice.tag, icon: notice.icon, data: { url: notice.url ?? '/' } })
+	);
+});
+
+/** A tap opens the page, in an open window of the app if there is one. */
+sw.addEventListener('notificationclick', (event) => {
+	event.notification.close();
+	const url = new URL((event.notification.data as { url?: string } | null)?.url ?? '/', sw.location.origin);
+	if (url.origin !== sw.location.origin) return;
+	event.waitUntil(
+		(async () => {
+			const windows = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
+			const open = windows.find((client) => new URL(client.url).origin === url.origin);
+			if (!open) return void (await sw.clients.openWindow(url.href));
+			await open.focus();
+			await open.navigate(url.href).catch(() => undefined);
 		})()
 	);
 });

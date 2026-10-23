@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAYOUT, readTable } from '#lib/repertoire/sheet.ts';
-import { exportFileName, myData } from './my-data.ts';
+import { exportFileName, myData, storedData } from './my-data.ts';
 
 const table = <K extends keyof typeof LAYOUT>(key: K, rows: Record<string, string>[]) => {
 	const columns = LAYOUT[key].columns as Record<string, string>;
@@ -57,5 +57,29 @@ describe('myData', () => {
 describe('exportFileName', () => {
 	it('makes a safe file name from the email', () => {
 		expect(exportFileName('Mia.Beispiel+orchester@Example.org')).toBe('meine-daten-mia-beispiel-orchester-example-org.json');
+	});
+});
+
+describe('storedData', () => {
+	it('names the device’s push service and date, never its keys', () => {
+		const data = storedData(
+			[{ endpoint: 'https://fcm.googleapis.com/fcm/send/abc', createdAt: '2026-10-23 08:30:00' }],
+			[
+				{ kind: 'signup', subject: 'event-1', sentAt: '2026-10-24 09:00:00' },
+				{ kind: 'loan-due', subject: 'moldau|2026-11-01', sentAt: '2026-10-25 09:00:00' }
+			]
+		);
+		expect(data['Geräte für Benachrichtigungen']).toEqual([
+			{ Zustelldienst: 'fcm.googleapis.com', 'Angemeldet seit (UTC)': '2026-10-23 08:30:00', 'Schlüssel zum Verschlüsseln': 'gespeichert, hier nicht ausgegeben' }
+		]);
+		expect(data['Verschickte Erinnerungen']).toEqual([
+			{ Art: 'Zu- oder Absage fehlt', Wofür: 'event-1', 'Verschickt (UTC)': '2026-10-24 09:00:00' },
+			{ Art: 'Leihmaterial bald fällig', Wofür: 'moldau, 2026-11-01', 'Verschickt (UTC)': '2026-10-25 09:00:00' }
+		]);
+		expect(JSON.stringify(data)).not.toContain('/fcm/send/abc');
+	});
+
+	it('leaves out what isn’t there', () => {
+		expect(storedData([], [])).toEqual({});
 	});
 });

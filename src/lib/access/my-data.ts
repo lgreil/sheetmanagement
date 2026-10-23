@@ -2,6 +2,7 @@ import { normalizeEmail } from '#lib/access/access.ts';
 import { parseVotes, submitterEmail } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
+import type { PushDevice, SentReminder } from '#lib/server/db/types.ts';
 
 /**
  * "Meine Daten herunterladen" (#158): everything the sheet keeps about one member, row by
@@ -60,6 +61,30 @@ export function myData(who: { email: string; name: string }, tables: Partial<Rec
 				return out;
 			});
 		if (rows.length) data[LAYOUT[key].tab] = rows;
+	}
+	return data;
+}
+
+/**
+ * What the app keeps about the member in D1 (#161): their devices for notifications and the
+ * reminders they got. A device's keys only encrypt messages to it; they're named, not given.
+ */
+export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[], reminders: SentReminder[]): MyData {
+	const data: MyData = {};
+	if (devices.length) {
+		data[t.myData.devices] = devices.map((device) => ({
+			[t.myData.pushService]: new URL(device.endpoint).host,
+			[t.myData.since]: device.createdAt ?? '',
+			[t.myData.keys]: t.myData.keysStored
+		}));
+	}
+	if (reminders.length) {
+		data[t.myData.reminders] = reminders.map((reminder) => ({
+			[t.myData.reminderKind]: t.myData.reminderKinds[reminder.kind] ?? reminder.kind,
+			// Loans are "piece|return date".
+			[t.myData.reminderAbout]: reminder.subject.replaceAll('|', ', '),
+			[t.myData.sentAt]: reminder.sentAt
+		}));
 	}
 	return data;
 }

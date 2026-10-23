@@ -10,7 +10,7 @@ import { requireRight } from '#lib/server/auth/index.ts';
 import { isOn, requireFeature } from '#lib/server/env.ts';
 import { getLibrary, type Library } from '#lib/server/library.ts';
 import { getAccessList, getAttendance, getSignups } from '#lib/server/repertoire.ts';
-import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecords } from '#lib/server/sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecords, withSheetLock } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const RIGHT = 'anwesenheit.erfassen';
@@ -101,13 +101,18 @@ export const actions: Actions = {
 		if (!ticks) return fail(400, { message: t.attendance.failed });
 
 		try {
-			const table = await readTab('attendance');
-			if (attendanceVersion(table, event.id) !== String(data.get('version'))) return fail(409, { message: t.attendance.conflict });
-			const plan = planAttendanceSave(table, event.id, label(event), ticks);
-			await updateRecords('attendance', table, plan.update);
-			// New rows before deleting: if deleting fails, nothing is lost, only doubled.
-			await appendRecords('attendance', table, plan.append);
-			await deleteRows('attendance', plan.remove);
+			// The version check and the writes in one turn: nobody's save lands in between.
+			const conflict = await withSheetLock(async () => {
+				const table = await readTab('attendance');
+				if (attendanceVersion(table, event.id) !== String(data.get('version'))) return true;
+				const plan = planAttendanceSave(table, event.id, label(event), ticks);
+				await updateRecords('attendance', table, plan.update);
+				// New rows before deleting: if deleting fails, nothing is lost, only doubled.
+				await appendRecords('attendance', table, plan.append);
+				await deleteRows('attendance', table, plan.remove);
+				return false;
+			});
+			if (conflict) return fail(409, { message: t.attendance.conflict });
 			await refreshAfterWrite();
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: t.attendance.notSetUp });

@@ -4,6 +4,7 @@ import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
+import { isScheduledCall } from '#lib/server/jobs/token.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 
 /** Sent with every response: no framing (clickjacking on the admin forms), no MIME sniffing. */
@@ -26,7 +27,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	// Pages redirect to sign-in in the root layout's load. That doesn't cover form
 	// actions and endpoints, so anything that isn't a plain read is checked here.
 	const write = event.request.method !== 'GET' && event.request.method !== 'HEAD';
-	if (auth.mode === 'on' && write && !isPublicPath(event.url.pathname) && !event.locals.access.member) {
+	// The Cron Trigger's own call to /api/jobs (#160) has no session; its token is the proof.
+	const scheduled = isScheduledCall(event.request);
+	if (auth.mode === 'on' && write && !isPublicPath(event.url.pathname) && !event.locals.access.member && !scheduled) {
 		const unavailable = event.locals.access.unavailable;
 		return new Response(unavailable ? t.error.unavailable : t.messages.signInFirst, {
 			status: unavailable ? 503 : 403,

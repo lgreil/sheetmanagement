@@ -81,7 +81,11 @@ The new tabs are optional: the first note creates its tab, and /setup adds them 
 4. Connect Google Drive, Calendar and Sheets, and turn on sign-in: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
 5. Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
 
-The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret.
+The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret. It also sets up a Durable Object (`SHEET_LOCK`, free plan) that lets saves to the sheet take turns, so two people saving at once don't end up in each other's rows; it stores nothing. `pnpm build` adds it to the worker (`scripts/wrap-worker.mjs`).
+
+What the app writes itself and nobody edits by hand (push subscriptions, which reminders went out) lives in a D1 database (`DB`, free plan), not in the sheet. To keep it in the EU, create it before the first deploy with `pnpm wrangler d1 create noten --jurisdiction eu` and put its `database_id` into `wrangler.toml`; otherwise the first deploy creates one. Its tables are in `migrations/`. D1 keeps 30 days of history on its own ([Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)): `pnpm wrangler d1 time-travel restore noten --timestamp=…` goes back to any minute in that time.
+
+Reminders need a key pair for Web Push: `node scripts/vapid-keys.mjs`, then store both values with `pnpm wrangler secret put VAPID_PUBLIC_KEY` and `… VAPID_PRIVATE_KEY`. Members turn notifications on per device under **Profil**. A Cron Trigger runs the background jobs: filling the caches, reminders about unanswered rehearsals and rented music that is due, and a daily check of the Google connection that notifies the admins when it breaks. `/status` shows when each last ran and can start one by hand.
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 
@@ -91,7 +95,7 @@ Once set up, every merge into `main` deploys by itself (`.github/workflows/deplo
 
 It needs, in the GitHub repository settings:
 
-- Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the template **Edit Cloudflare Workers** (Cloudflare dashboard → My Profile → API Tokens).
+- Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the template **Edit Cloudflare Workers** (Cloudflare dashboard → My Profile → API Tokens). It also applies the database schema, so the token needs **D1: Edit**; add it if the template doesn't include it.
 - Secret `CLOUDFLARE_ACCOUNT_ID`: shown by `pnpm wrangler whoami`.
 - Variable `APP_URL`: the app's address, e.g. `https://noten.<your-account>.workers.dev`.
 
