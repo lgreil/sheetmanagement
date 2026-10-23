@@ -31,7 +31,7 @@ sw.addEventListener('activate', (event) => {
 	);
 });
 
-// A new version waits until the "Neu laden" button asks for it (#140): no tab changes under someone's hands.
+// A new version waits until a page asks for it (#140); pages take it over quietly, and open tabs aren't reloaded.
 sw.addEventListener('message', (event) => {
 	if (event.data === 'skip-waiting') sw.skipWaiting();
 });
