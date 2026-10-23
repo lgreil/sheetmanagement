@@ -549,7 +549,8 @@ export const en: Texts = {
 		install: 'As an app on the home screen',
 		installHint: 'Opens like an app and shows loaded pages without a connection too.',
 		installManual: 'iPhone: Safari → Share → Add to Home Screen. Android: menu → Install app.',
-		installButton: 'Install'
+		installButton: 'Install',
+		installSamsung: 'Samsung Internet warns about an old Android version when installing; that comes from the browser, not the app. Open the page in Chrome and choose menu → Install app there.'
 	},
 	/** The personal calendar feed (#122), on /profil and in the feed itself. */
 	feed: {

@@ -198,3 +198,13 @@ test('a member downloads their own data (#158)', async ({ page }) => {
 	// Who else gave a wish a +1 stays out.
 	expect(JSON.stringify(body)).not.toContain('lea@example.org');
 });
+
+test.describe('installing from Samsung Internet', () => {
+	test.use({ userAgent: 'Mozilla/5.0 (Linux; Android 15; SM-S931B) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/28.0 Chrome/130.0.0.0 Mobile Safari/537.36' });
+
+	test('points to Chrome, whose install Android does not warn about', async ({ page }) => {
+		await open(page, '/profil');
+		await expect(page.getByText('Öffne die Seite in Chrome')).toBeVisible();
+		await expect(page.getByRole('button', { name: 'Installieren' })).toHaveCount(0);
+	});
+});

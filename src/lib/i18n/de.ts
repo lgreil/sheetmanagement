@@ -548,7 +548,8 @@ export const de = {
 		install: 'Als App auf dem Startbildschirm',
 		installHint: 'Öffnet sich wie eine App und zeigt geladene Seiten auch ohne Netz.',
 		installManual: 'iPhone: Safari → Teilen → Zum Home-Bildschirm. Android: Menü → App installieren.',
-		installButton: 'Installieren'
+		installButton: 'Installieren',
+		installSamsung: 'Samsung Internet warnt beim Installieren vor einer alten Android-Version; das liegt am Browser, nicht an der App. Öffne die Seite in Chrome und wähle dort Menü → App installieren.'
 	},
 	/** The personal calendar feed (#122), on /profil and in the feed itself. */
 	feed: {
