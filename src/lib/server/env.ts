@@ -29,6 +29,8 @@ export interface AppEnv {
 	REPERTOIRE_SHEET_ID?: string;
 	/** "true" lets the app mirror problem reports into Drive (comments, status words in file names). Needs the service account as editor. */
 	DRIVE_WRITE?: string;
+	/** "true" lets people with "termine.planen" add concerts and rehearsals to the calendar. Needs the calendar shared with "Make changes to events". */
+	CALENDAR_WRITE?: string;
 	/** Google sign-in (OAuth client of type "Web application"). Without it the app is open and read-only. */
 	GOOGLE_OAUTH_CLIENT_ID?: string;
 	GOOGLE_OAUTH_CLIENT_SECRET?: string;

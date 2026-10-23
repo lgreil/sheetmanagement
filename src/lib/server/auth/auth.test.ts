@@ -88,7 +88,7 @@ describe('Google sign-in', () => {
 
 describe('safeReturnPath', () => {
 	it.each([
-		['/konzerte/abc?x=1', '/konzerte/abc?x=1'],
+		['/kalender/abc?x=1', '/kalender/abc?x=1'],
 		['https://evil.example', '/'],
 		['//evil.example', '/'],
 		['/\\evil.example', '/'],

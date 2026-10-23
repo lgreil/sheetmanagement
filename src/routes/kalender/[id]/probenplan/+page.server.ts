@@ -87,6 +87,6 @@ export const actions: Actions = {
 			console.error('Saving a rehearsal plan failed:', cause);
 			return fail(503, { message: t.messages.sheetFailed });
 		}
-		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?probenplan`);
+		redirect(303, `/kalender/${encodeURIComponent(params.id)}?probenplan`);
 	}
 };

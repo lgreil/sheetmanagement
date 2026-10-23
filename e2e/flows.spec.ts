@@ -5,7 +5,7 @@ import { open, resetDemo } from './demo.ts';
 test.beforeEach(async ({ page }) => resetDemo(page));
 
 test('signing up for a concert', async ({ page }) => {
-	await open(page, '/konzerte/demo-herbstkonzert');
+	await open(page, '/kalender/demo-herbstkonzert');
 	const yes = page.getByRole('button', { name: 'Ich komme' });
 	await yes.click();
 	await expect(yes).toHaveAttribute('aria-pressed', 'true');
@@ -15,19 +15,19 @@ test('signing up for a concert', async ({ page }) => {
 });
 
 test('the programme editor saves', async ({ page }) => {
-	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	await open(page, '/kalender/demo-herbstkonzert/programm');
 	const remove = page.getByRole('button', { name: 'Entfernen' });
 	const before = await remove.count();
 	expect(before).toBeGreaterThan(1);
 	await remove.last().click();
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page.getByText('Programm gespeichert.')).toBeVisible();
-	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	await open(page, '/kalender/demo-herbstkonzert/programm');
 	await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(before - 1);
 });
 
 test('taking attendance', async ({ page }) => {
-	await open(page, '/konzerte/demo-probe-2/anwesenheit');
+	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');
 	await boxes.first().check({ force: true });
 	await page.getByRole('button', { name: 'Speichern' }).click();
@@ -95,9 +95,9 @@ test('quick search jumps to a piece and to a page', async ({ page }) => {
 	await expect(page).toHaveURL(/\/stuecke\/demo-egmont/);
 
 	await page.keyboard.press('Control+k');
-	await search.fill('konzerte');
+	await search.fill('kalender');
 	await search.press('Enter');
-	await expect(page).toHaveURL(/\/konzerte$/);
+	await expect(page).toHaveURL(/\/kalender$/);
 });
 
 test('picking an instrument from the grid (#165)', async ({ page }) => {
@@ -113,13 +113,13 @@ test('picking an instrument from the grid (#165)', async ({ page }) => {
 });
 
 test('the current programme in Drive follows the programme (#60)', async ({ page }) => {
-	await open(page, '/konzerte/demo-herbstkonzert');
+	await open(page, '/kalender/demo-herbstkonzert');
 	// EO and A play this concert, each with its own programme and folder.
 	const drive = page.locator('form.drive').first();
 	const driveA = page.locator('form.drive').last();
 	await expect(drive).toContainText('Alle 4 Stücke');
 	await expect(driveA).toContainText('Noch kein Programmordner für A');
-	await open(page, '/konzerte/demo-herbstkonzert/programm');
+	await open(page, '/kalender/demo-herbstkonzert/programm');
 	await page.getByRole('button', { name: 'Entfernen' }).last().click();
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page.getByText('Auch im Drive-Ordner »Aktuelles Programm« abgeglichen.')).toBeVisible();
@@ -171,7 +171,7 @@ test('a note on a piece reaches the section’s Meine Noten (#125)', async ({ pa
 });
 
 test('a rehearsal note shows on the start page until the next rehearsal (#145)', async ({ page }) => {
-	await open(page, '/konzerte/demo-probe-2');
+	await open(page, '/kalender/demo-probe-2');
 	await page.getByRole('button', { name: 'Notiz bearbeiten' }).click();
 	await page.getByRole('textbox', { name: 'Zum Üben' }).fill('Egmont ab Buchstabe C langsam');
 	await page.getByRole('button', { name: 'Speichern' }).click();
@@ -180,7 +180,7 @@ test('a rehearsal note shows on the start page until the next rehearsal (#145)',
 	await expect(page.getByText(/Aus der Probe am/)).toBeVisible();
 	await expect(page.getByText('Egmont ab Buchstabe C langsam')).toBeVisible();
 	// Before the next rehearsal, its page says what to prepare.
-	await open(page, '/konzerte/demo-probe-3');
+	await open(page, '/kalender/demo-probe-3');
 	await expect(page.getByRole('heading', { name: /Aus der letzten Probe/ })).toBeVisible();
 	await expect(page.getByText('Egmont ab Buchstabe C langsam')).toBeVisible();
 });

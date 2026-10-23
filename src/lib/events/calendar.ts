@@ -1,5 +1,5 @@
 /**
- * The month grid for the calendar view on /konzerte (#100): whole weeks from Monday to
+ * The month grid for the calendar view on /kalender (#100): whole weeks from Monday to
  * Sunday, with the days of the neighbouring months to fill them. Days are "2026-11-15",
  * calendar days without a time zone.
  */

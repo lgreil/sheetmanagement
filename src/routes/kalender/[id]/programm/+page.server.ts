@@ -175,7 +175,7 @@ export const actions: Actions = {
 		// The orchestra's next concert: its pieces go into "01 | Aktuelles Programm" too (#60).
 		// The programme is saved either way; the concert page says how Drive went.
 		const drive = await syncIfCurrent(params.id, scope.orchestra);
-		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert${drive ? `&drive=${drive}` : ''}`);
+		redirect(303, `/kalender/${encodeURIComponent(params.id)}?gespeichert${drive ? `&drive=${drive}` : ''}`);
 	},
 
 	/** Plays another concert's programme from now on; this concert's own rows go. */
@@ -208,6 +208,6 @@ export const actions: Actions = {
 			console.error('Sharing a programme failed:', cause);
 			return fail(503, { message: t.messages.sheetFailed });
 		}
-		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);
+		redirect(303, `/kalender/${encodeURIComponent(params.id)}?gespeichert`);
 	}
 };

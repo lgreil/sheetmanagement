@@ -73,8 +73,8 @@
 
 <Crumbs
 	items={[
-		{ href: '/konzerte', label: t.concerts.title },
-		{ href: `/konzerte/${encodeURIComponent(data.concert.id)}`, label: data.concert.title }
+		{ href: '/kalender', label: t.concerts.title },
+		{ href: `/kalender/${encodeURIComponent(data.concert.id)}`, label: data.concert.title }
 	]}
 />
 
@@ -110,7 +110,7 @@
 			<Icon name="link" size={16} />
 			<span>
 				{t.editor.sharedFrom(data.sharedFrom.title)}
-				<a href="/konzerte/{encodeURIComponent(data.sharedFrom.id)}/programm">{t.editor.editSource}</a>.
+				<a href="/kalender/{encodeURIComponent(data.sharedFrom.id)}/programm">{t.editor.editSource}</a>.
 				{t.editor.ownProgram}
 			</span>
 		</p>
@@ -283,7 +283,7 @@
 		<input type="hidden" name="orchestra" value={data.orchestra} />
 		<input type="hidden" name="wishes" value={takenWishes.join(',')} />
 		<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.editor.save}</button>
-		<a class="cancel" href="/konzerte/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
+		<a class="cancel" href="/kalender/{encodeURIComponent(data.concert.id)}">{t.editor.cancel}</a>
 	</form>
 
 	{#if data.shareOptions.length && !data.sharedWith.length}

@@ -4,7 +4,7 @@ import { buildDriveIndex, INDEX_VERSION, type DriveIndex } from './drive-index.t
 import { demoClient } from './demo/backend.ts';
 import { DEMO_IDS } from './demo/data.ts';
 import { appEnv, isDemo, runInBackground } from './env.ts';
-import { createTokenProvider, parseServiceAccountKey, SCOPES, WRITE_SCOPES } from './google/auth.ts';
+import { createTokenProvider, parseServiceAccountKey, scopesFor } from './google/auth.ts';
 import { GoogleClient } from './google/client.ts';
 
 const INDEX_MAX_AGE_MS = 5 * 60 * 1000;
@@ -16,7 +16,7 @@ export class NotConfiguredError extends Error {
 	}
 }
 
-let google: { json: string; write: boolean; client: GoogleClient; email: string } | null = null;
+let google: { json: string; scopes: string; client: GoogleClient; email: string } | null = null;
 
 /**
  * Whether the app may change files in Drive (DRIVE_WRITE=true). Off by default: reading needs
@@ -24,19 +24,31 @@ let google: { json: string; write: boolean; client: GoogleClient; email: string 
  */
 export function driveWriteEnabled(): boolean {
 	if (isDemo()) return true;
-	return ['true', '1', 'yes', 'on'].includes((appEnv().DRIVE_WRITE ?? '').trim().toLowerCase());
+	return switchedOn(appEnv().DRIVE_WRITE);
 }
+
+/**
+ * Whether the app may add events to the calendar (CALENDAR_WRITE=true): asks Google for the
+ * calendar.events scope, and needs the calendar shared with the service account with "Make
+ * changes to events". Off by default. The demo's calendar is in memory, so it's always on there.
+ */
+export function calendarWriteEnabled(): boolean {
+	if (isDemo()) return true;
+	return switchedOn(appEnv().CALENDAR_WRITE);
+}
+
+const switchedOn = (value: string | undefined) => ['true', '1', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
 
 /** The Google client for this deployment. Token caching lives as long as the Worker instance. */
 export function getGoogle(): { client: GoogleClient; serviceAccountEmail: string } {
 	if (isDemo()) return { client: demoClient(), serviceAccountEmail: 'demo@example.org' };
 	const json = appEnv().GOOGLE_SERVICE_ACCOUNT_JSON?.trim();
 	if (!json) throw new NotConfiguredError('GOOGLE_SERVICE_ACCOUNT_JSON');
-	const write = driveWriteEnabled();
-	if (google?.json !== json || google.write !== write) {
+	const scopes = scopesFor({ drive: driveWriteEnabled(), calendar: calendarWriteEnabled() });
+	if (google?.json !== json || google.scopes !== scopes.join(' ')) {
 		const key = parseServiceAccountKey(json);
-		const tokens = createTokenProvider(key, write ? WRITE_SCOPES : SCOPES);
-		google = { json, write, client: new GoogleClient(tokens), email: key.client_email };
+		const tokens = createTokenProvider(key, scopes);
+		google = { json, scopes: scopes.join(' '), client: new GoogleClient(tokens), email: key.client_email };
 	}
 	return { client: google.client, serviceAccountEmail: google.email };
 }

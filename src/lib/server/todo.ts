@@ -61,7 +61,7 @@ export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 		requests: admin ? (access?.requests.length ?? 0) : 0,
 		loans: loans ? urgentLoans(loans.loans, today).length : 0,
 		attendance: untaken.length,
-		attendanceUrl: untaken[0] ? `/konzerte/${encodeURIComponent(untaken[0].id)}/anwesenheit` : undefined,
+		attendanceUrl: untaken[0] ? `/kalender/${encodeURIComponent(untaken[0].id)}/anwesenheit` : undefined,
 		polls: polls.length,
 		pollsUrl: polls.length === 1 ? `/termine/${polls[0].id}` : '/termine'
 	};

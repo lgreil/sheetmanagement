@@ -37,7 +37,7 @@ Share with the service account's email, like you would with a person:
 |---|---|---|
 | The sheet-music archive folder | Drive → right-click the folder → **Share** | Viewer (Editor for `DRIVE_WRITE`, see step 9) |
 | The current-programme folders ("Programm A-Orchester" …) | same | Viewer |
-| The rehearsal/concert calendar | Calendar → ⋮ next to the calendar → **Settings and sharing → Share with specific people** | See all event details |
+| The rehearsal/concert calendar | Calendar → ⋮ next to the calendar → **Settings and sharing → Share with specific people** | See all event details (Make changes to events for `CALENDAR_WRITE`) |
 | The Repertoire sheet (create it first, see below) | Sheets → **Share** | Editor |
 
 Drive may warn that the address is outside your organisation. That's expected.
@@ -209,6 +209,10 @@ None of these is needed to start; `/status` lists the ones that aren't set up ye
 ### Drive writing
 
 `DRIVE_WRITE=true`, with the service account as **Editor** of the sheet-music folder (step 4). Problem reports then also appear as comments on the files, status words can be put into file names, and the current-programme folders can be filled from a programme. Without it the app only reads Drive. Details in step 9 under "Problem reports in Drive".
+
+### Calendar writing
+
+`CALENDAR_WRITE=true`, with the calendar shared with the service account as **Make changes to events** (step 4). People with the right "termine.planen" can then add a concert, rehearsal or Generalprobe on **Kalender** (button "Termin"); it goes straight into the Google Calendar. Without it the app only reads the calendar and the form says what's missing.
 
 ### YouTube durations
 

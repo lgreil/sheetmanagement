@@ -1,3 +1,4 @@
+import type { NewEventBody } from '#lib/events/new-event.ts';
 import type { GoogleClient } from './client.ts';
 
 interface ApiEvent {
@@ -61,4 +62,15 @@ export async function listEvents(
 		(page) => page.items
 	);
 	return items.map(toCalendarEvent).filter((event): event is CalendarEvent => event !== null);
+}
+
+/** Adds an event (needs the calendar.events scope and "Make changes to events" on the calendar). */
+export async function insertEvent(client: GoogleClient, calendarId: string, event: NewEventBody): Promise<CalendarEvent> {
+	const created = await client.request<ApiEvent>(`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events`, {
+		method: 'POST',
+		body: event
+	});
+	const result = toCalendarEvent(created);
+	if (!result) throw new Error('Google returned the new event without a start');
+	return result;
 }

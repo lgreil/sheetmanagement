@@ -2,6 +2,7 @@ import type { Handle } from '@sveltejs/kit/hooks';
 import { resolveAccess } from '#lib/access/access.ts';
 import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
+import { movedPath } from '#lib/nav.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
 import { isScheduledCall } from '#lib/server/jobs/token.ts';
@@ -16,6 +17,9 @@ const SECURITY_HEADERS = {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Old addresses of moved pages; 308 keeps the method, so a form posted to the old page still arrives.
+	const moved = movedPath(event.url.pathname);
+	if (moved) return new Response(null, { status: 308, headers: { location: moved + event.url.search, ...SECURITY_HEADERS } });
 	// Name, colours and features from /einstellungen, from the cached sheet (#75, #134).
 	if (event.url.pathname !== '/api/health') await refreshStoredSettings();
 	const auth = authConfig();

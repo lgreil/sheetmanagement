@@ -119,6 +119,6 @@ export const actions: Actions = {
 			console.error('Saving attendance failed:', cause);
 			return fail(503, { message: t.attendance.failed });
 		}
-		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?anwesenheit`);
+		redirect(303, `/kalender/${encodeURIComponent(params.id)}?anwesenheit`);
 	}
 };

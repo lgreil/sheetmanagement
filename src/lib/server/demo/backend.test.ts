@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { buildRepertoire, LAYOUT } from '#lib/repertoire/sheet.ts';
 import { buildRehearsalPlan } from '#lib/rehearsals/plan.ts';
-import { listEvents } from '../google/calendar.ts';
+import { insertEvent, listEvents } from '../google/calendar.ts';
 import { downloadFile, getFile, listChildren } from '../google/drive.ts';
 import { appendRows, batchUpdate, getTabs, getValues, tabRange, updateValues } from '../google/sheets.ts';
 import { demoClient, parseRange, resetDemo } from './backend.ts';
@@ -83,5 +83,22 @@ describe('the fake Drive and Calendar', () => {
 
 		const events = await listEvents(client, DEMO_IDS.calendar, { from: new Date(Date.now() - 365 * 86_400_000) });
 		expect(events.map((e) => e.title)).toContain('Herbstkonzert');
+	});
+});
+
+describe('demo calendar', () => {
+	beforeEach(() => resetDemo());
+
+	it('keeps an added event in memory, like Google would', async () => {
+		const day = new Date(Date.now() + 30 * 86_400_000).toISOString().slice(0, 10);
+		const created = await insertEvent(client, DEMO_IDS.calendar, {
+			summary: 'Probe Frühlingskonzert',
+			location: 'Aula',
+			start: { dateTime: `${day}T10:00:00`, timeZone: 'Europe/Berlin' },
+			end: { dateTime: `${day}T13:00:00`, timeZone: 'Europe/Berlin' }
+		});
+		expect(created).toMatchObject({ title: 'Probe Frühlingskonzert', start: `${day}T10:00:00`, allDay: false, location: 'Aula' });
+		const events = await listEvents(client, DEMO_IDS.calendar, { from: new Date() });
+		expect(events.map((event) => event.id)).toContain(created.id);
 	});
 });

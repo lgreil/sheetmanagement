@@ -8,7 +8,7 @@ export const en: Texts = {
 		appName: 'Music library',
 		home: 'Overview',
 		pieces: 'Library',
-		concerts: 'Concerts',
+		concerts: 'Calendar',
 		myParts: 'My parts',
 		wishes: 'Wishes',
 		reports: 'Reports',
@@ -72,7 +72,7 @@ export const en: Texts = {
 		/** One line under each page on the start page. */
 		describe: {
 			'/meine-noten': 'Your parts for the next concert.',
-			'/konzerte': 'Rehearsals and concerts.',
+			'/kalender': 'Rehearsals and concerts.',
 			'/chronik': 'Every concert since the beginning, in numbers.',
 			'/profil': 'Instrument, orchestra, your own calendar.',
 			'/stuecke': 'Every piece with every part.',
@@ -181,8 +181,8 @@ export const en: Texts = {
 		portraitCredit: 'Image: Wikimedia Commons'
 	},
 	concerts: {
-		title: 'Concerts',
-		lead: 'Rehearsals and concerts from the calendar.',
+		title: 'Calendar',
+		lead: 'Rehearsals, concerts and date polls.',
 		empty: 'Once the rehearsal calendar is connected, every concert and rehearsal shows here.',
 		failed: "The calendar couldn't be loaded just now. Please try again in a moment.",
 		past: 'Past concerts',
@@ -192,7 +192,7 @@ export const en: Texts = {
 		filters: { all: 'All', concerts: 'Concerts', rehearsals: 'Rehearsals' },
 		view: 'View',
 		list: 'List',
-		calendar: 'Calendar',
+		calendar: 'Month',
 		next: 'Up next',
 		today: 'Today',
 		previousMonth: 'Previous month',
@@ -210,10 +210,60 @@ export const en: Texts = {
 			days === 0 ? 'today' : days === 1 ? 'tomorrow' : days > 1 ? `in ${days} days` : days === -1 ? 'yesterday' : `${-days} days ago`,
 		forConcert: (title: string) => `for ${title}`
 	},
+	calendar: {
+		/** Date polls next to the dates (#95). */
+		polls: {
+			new: 'New date poll',
+			candidate: 'Proposed',
+			waiting: (n: number, title: string) => (n === 1 ? `Date poll “${title}”: your answer is missing` : `${n} date polls are waiting for your answer`)
+		},
+		add: {
+			open: 'Add a date',
+			short: 'Date',
+			more: 'More details',
+			lead: 'Goes straight into the Google Calendar, for everyone to see.',
+			type: 'Type',
+			title: 'Title',
+			concertHint: 'e.g. Spring concert',
+			untitled: (word: string) => `empty: “${word}”`,
+			date: 'Date',
+			start: 'Start',
+			end: 'End',
+			timeHint: 'No start: all day. No end: two hours for a concert, three for rehearsals.',
+			location: 'Place',
+			locationHint: 'e.g. School hall',
+			concert: 'Rehearsal for',
+			noConcert: 'No particular concert',
+			tentative: 'Not certain yet (shows with “(?)”)',
+			description: 'Note',
+			save: 'Add to the calendar',
+			added: (title: string) => `“${title}” is in the calendar now.`,
+			show: 'View',
+			readOnly:
+				'Adding dates is off: the app may only read the calendar. Set CALENDAR_WRITE="true" and share the calendar with the service account with “Make changes to events”.',
+			problems: {
+				type: 'Please choose concert, rehearsal or dress rehearsal.',
+				title: 'A concert needs a title.',
+				date: 'Please choose a date.',
+				time: 'Please give times as HH:MM; an end only with a start.',
+				end: 'The end must be after the start.',
+				concert: "That concert isn't in the calendar (any more); please pick one from the list.",
+				'too-long': "That's too long: title up to 120, place up to 200, note up to 2000 characters."
+			},
+			errors: {
+				'not-configured': "The calendar isn't connected yet (CALENDAR_ID).",
+				'read-only':
+					'Adding dates is off: the app may only read the calendar. Set CALENDAR_WRITE="true" and share the calendar with the service account with “Make changes to events”.',
+				refused: 'Google refused: the service account may not change events in this calendar. Please share it with “Make changes to events”.',
+				failed: "The date couldn't be added just now. Please try again in a moment."
+			}
+		}
+	},
 	concert: {
 		map: 'Map',
 		openInCalendar: 'In Google Calendar',
 		rehearsals: 'Rehearsals',
+		addRehearsal: 'Add a rehearsal',
 		noRehearsals: 'No rehearsals in the calendar.',
 		pastRehearsals: (n: number) => (n === 1 ? '1 past rehearsal' : `${n} past rehearsals`),
 		program: 'Programme',

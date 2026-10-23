@@ -39,7 +39,7 @@
 		}));
 	});
 	const unplanned = $derived(counts.filter((piece) => piece.inProgram && !piece.total).length);
-	const concertUrl = $derived(`/konzerte/${encodeURIComponent(data.concert.id)}`);
+	const concertUrl = $derived(`/kalender/${encodeURIComponent(data.concert.id)}`);
 
 	// svelte-ignore state_referenced_locally
 	const saved = payload;
@@ -48,7 +48,7 @@
 
 <Title title={t.rehearsalPlan.edit} />
 
-<Crumbs items={[{ href: '/konzerte', label: t.concerts.title }, { href: concertUrl, label: data.concert.title }]} />
+<Crumbs items={[{ href: '/kalender', label: t.concerts.title }, { href: concertUrl, label: data.concert.title }]} />
 
 <header class="head">
 	<h1>{t.rehearsalPlan.pageTitle(data.concert.title)}</h1>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Right } from '#lib/access/access.ts';
 import { ALL_ON } from '#lib/features.ts';
-import { currentItem, isActive, navGroups, primaryNav, workspaceOf } from './nav.ts';
+import { currentItem, isActive, movedPath, navGroups, primaryNav, workspaceOf } from './nav.ts';
 
 const hrefs = (auth: 'on' | 'off', rights: Right[]) =>
 	Object.fromEntries(navGroups({ auth, rights }).map((group) => [group.key, group.items.map((item) => item.href)]));
@@ -9,7 +9,7 @@ const hrefs = (auth: 'on' | 'off', rights: Right[]) =>
 describe('navGroups', () => {
 	it('shows members their music, the archive, wishes and their profile', () => {
 		expect(hrefs('on', ['ansehen'])).toEqual({
-			musik: ['/meine-noten', '/konzerte', '/stuecke', '/chronik'],
+			musik: ['/meine-noten', '/kalender', '/stuecke', '/chronik'],
 			mitmachen: ['/wuensche', '/profil']
 		});
 	});
@@ -58,14 +58,14 @@ describe('currentItem and workspaceOf', () => {
 		expect(workspaceOf(groups, '/leihmaterial')?.key).toBe('pflege');
 		expect(workspaceOf(groups, '/status')?.key).toBe('verwaltung');
 		expect(workspaceOf(groups, '/stuecke')).toBeUndefined();
-		expect(workspaceOf(groups, '/konzerte/abc')).toBeUndefined();
+		expect(workspaceOf(groups, '/kalender/abc')).toBeUndefined();
 	});
 });
 
 describe('primaryNav', () => {
 	it('is home plus the pages members use most, at most five with "Mehr"', () => {
 		const nav = primaryNav(navGroups({ auth: 'on', rights: ['ansehen', 'stuecke.bearbeiten', 'mitglieder.verwalten'] }));
-		expect(nav.map((item) => item.href)).toEqual(['/', '/meine-noten', '/konzerte', '/stuecke']);
+		expect(nav.map((item) => item.href)).toEqual(['/', '/meine-noten', '/kalender', '/stuecke']);
 	});
 });
 
@@ -75,5 +75,18 @@ describe('isActive', () => {
 		expect(isActive('/stuecke', '/stueckeliste')).toBe(false);
 		expect(isActive('/', '/stuecke')).toBe(false);
 		expect(isActive('/', '/')).toBe(true);
+	});
+});
+
+describe('movedPath', () => {
+	it('sends the old concert pages to the calendar', () => {
+		expect(movedPath('/konzerte')).toBe('/kalender');
+		expect(movedPath('/konzerte/abc')).toBe('/kalender/abc');
+		expect(movedPath('/konzerte/abc/programm')).toBe('/kalender/abc/programm');
+		expect(movedPath('/konzerte/abc/musikfolge.csv')).toBe('/kalender/abc/musikfolge.csv');
+	});
+
+	it('leaves other pages alone', () => {
+		for (const path of ['/', '/kalender', '/kalender/abc.ics', '/konzertesaal', '/stuecke/konzerte']) expect(movedPath(path)).toBeNull();
 	});
 });

@@ -50,7 +50,7 @@ export function navGroups({ auth, rights, features = ALL_ON, polls = false }: Na
 			label: t.nav.groups.musik,
 			items: [
 				{ href: '/meine-noten', label: t.nav.myParts, icon: 'parts', primary: true },
-				{ href: '/konzerte', label: t.nav.concerts, icon: 'calendar', primary: true },
+				{ href: '/kalender', label: t.nav.concerts, icon: 'calendar', primary: true },
 				{ href: '/stuecke', label: t.nav.pieces, icon: 'music', primary: true },
 				{ href: '/chronik', label: t.nav.chronicle, icon: 'history' }
 			]
@@ -127,6 +127,14 @@ export function workspaceOf(groups: NavGroup[], path: string): NavGroup | undefi
 /** The pages shown directly in the header and the tab bar: the home page plus the primary ones. */
 export function primaryNav(groups: NavGroup[]): NavItem[] {
 	return [{ href: '/', label: t.nav.home, icon: 'home' }, ...groups.flatMap((group) => group.items.filter((item) => item.primary))];
+}
+
+/**
+ * Where a page that moved now lives: "/konzerte/…" became the calendar, "/kalender/…", so
+ * shared links and bookmarks keep working. Null for every other path.
+ */
+export function movedPath(path: string): string | null {
+	return path === '/konzerte' || path.startsWith('/konzerte/') ? '/kalender' + path.slice('/konzerte'.length) : null;
 }
 
 /** Whether `href` is the current page or a page below it ("/stuecke" for "/stuecke/abc"). */

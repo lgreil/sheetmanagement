@@ -115,7 +115,7 @@ export const legal = {
 					'„session“: hält dich angemeldet. Enthält deinen Namen und deine E-Mail-Adresse, ist gegen Veränderung gesichert und läuft nach 30 Tagen ab, beim Abmelden sofort.',
 					'„oauth_state“: schützt die Anmeldung vor Missbrauch und wird nach höchstens 10 Minuten gelöscht.',
 					'„instrument“: merkt sich auf „Meine Noten“, welches Instrument du spielst, wenn du nicht angemeldet bist. Läuft nach einem Jahr ab.',
-					'„konzerte-ansicht“: merkt sich, ob du die Konzerte als Liste oder Kalender sehen willst. Läuft nach einem Jahr ab.',
+					'„konzerte-ansicht“: merkt sich, ob du den Kalender als Liste oder als Monat sehen willst. Läuft nach einem Jahr ab.',
 					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast, und welche Stücke und Konzerte du zuletzt über die Schnellsuche geöffnet hast. Diese Angaben verlassen deinen Browser nicht.'
 				]
 			},

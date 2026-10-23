@@ -12,7 +12,7 @@
 
 	let { data, form } = $props();
 	const saving = new FormState();
-	const eventUrl = $derived(`/konzerte/${encodeURIComponent(data.rehearsal.id)}`);
+	const eventUrl = $derived(`/kalender/${encodeURIComponent(data.rehearsal.id)}`);
 
 	// The page's working copy: who's ticked, by email.
 	// svelte-ignore state_referenced_locally
@@ -50,8 +50,8 @@
 
 <Crumbs
 	items={[
-		{ href: '/konzerte', label: t.concerts.title },
-		...(data.concert ? [{ href: `/konzerte/${encodeURIComponent(data.concert.id)}`, label: data.concert.title }] : []),
+		{ href: '/kalender', label: t.concerts.title },
+		...(data.concert ? [{ href: `/kalender/${encodeURIComponent(data.concert.id)}`, label: data.concert.title }] : []),
 		{ href: eventUrl, label: data.rehearsal.title }
 	]}
 />

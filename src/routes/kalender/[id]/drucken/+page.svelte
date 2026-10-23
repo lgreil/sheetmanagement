@@ -6,7 +6,7 @@
 	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 
 	let { data } = $props();
-	const concertUrl = $derived(`/konzerte/${encodeURIComponent(data.concert.id)}`);
+	const concertUrl = $derived(`/kalender/${encodeURIComponent(data.concert.id)}`);
 	const when = $derived([data.concert.date, data.concert.time].filter(Boolean).join(', '));
 	const length = $derived(programLength(data.items.map((item) => item.duration)));
 	const hints = $derived({ handout: t.print.handoutHint, setlist: t.print.setlistHint, musikfolge: t.musicReport.hint });

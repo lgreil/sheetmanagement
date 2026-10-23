@@ -11,7 +11,7 @@
 	const CHIPS = 4;
 	/** "Städtisches Gymnasium Bergkamen, Hubert-Biernat-Straße 1, …" → the venue's name. */
 	const venue = (location: string) => location.split(',')[0].trim();
-	const eventUrl = (event: ShownEvent) => `/konzerte/${encodeURIComponent(event.id)}`;
+	const eventUrl = (event: ShownEvent) => `/kalender/${encodeURIComponent(event.id)}`;
 
 	const firstName = $derived(data.user?.name.split(' ')[0] ?? '');
 
@@ -71,7 +71,7 @@
 					{ href: '/wuensche', count: data.todo.wishes, text: t.home.todo.wishes },
 					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests },
 					{ href: '/leihmaterial', count: data.todo.loans, text: t.home.todo.loans },
-					{ href: data.todo.attendanceUrl ?? '/konzerte', count: data.todo.attendance, text: t.home.todo.attendance },
+					{ href: data.todo.attendanceUrl ?? '/kalender', count: data.todo.attendance, text: t.home.todo.attendance },
 					{ href: data.todo.pollsUrl ?? '/termine', count: data.todo.polls, text: t.home.todo.polls }
 				].filter((item) => item.count > 0)
 			: []
@@ -156,7 +156,7 @@
 		<div class="ui-card empty">
 			<span class="empty-icon"><Icon name="calendar" size={22} /></span>
 			<p>{data.calendar === 'ok' ? t.home.noNextConcert : t.home.nextConcertEmpty}</p>
-			<a class="btn ghost" href="/konzerte">{t.home.allDates}</a>
+			<a class="btn ghost" href="/kalender">{t.home.allDates}</a>
 		</div>
 	{/each}
 </section>

@@ -180,8 +180,17 @@ function drive(url: URL, method: string, body: Record<string, unknown> | undefin
 	return json(metadata);
 }
 
-function calendar(url: URL): Response {
+function calendar(url: URL, method: string, body: Record<string, unknown> | undefined): Response {
 	if (!decodeURIComponent(url.pathname).includes(DEMO_IDS.calendar)) return notFound('Calendar not found');
+	if (method === 'POST') {
+		// Added on /kalender: kept like the sample events, local times without a zone.
+		const event = { ...(body as Omit<DemoEvent, 'id'>), id: `demo-neu-${crypto.randomUUID().slice(0, 8)}` } as DemoEvent;
+		const local = (time: DemoEvent['start']) => (time.dateTime ? { dateTime: time.dateTime } : { date: time.date });
+		event.start = local(event.start);
+		event.end = local(event.end);
+		load().events.push(event);
+		return json(event);
+	}
 	const from = url.searchParams.get('timeMin') ?? '';
 	const to = url.searchParams.get('timeMax') ?? '9999';
 	const start = (event: DemoEvent) => event.start.dateTime ?? event.start.date ?? '';
@@ -198,7 +207,7 @@ export const demoFetch: typeof fetch = async (input, init) => {
 	const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : undefined;
 	if (url.hostname === 'sheets.googleapis.com') return sheets(url, method, body);
 	if (url.pathname.startsWith('/drive/v3/files')) return drive(url, method, body);
-	if (url.pathname.startsWith('/calendar/v3/')) return calendar(url);
+	if (url.pathname.startsWith('/calendar/v3/')) return calendar(url, method, body);
 	return notFound();
 };
 

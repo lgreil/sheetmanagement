@@ -13,7 +13,7 @@ test('start page: greeting, open work and the next dates', async ({ page }) => {
 });
 
 test('concert page with the programme', async ({ page }) => {
-	await open(page, '/konzerte/demo-herbstkonzert');
+	await open(page, '/kalender/demo-herbstkonzert');
 	await expect(page.getByRole('heading', { level: 1, name: 'Herbstkonzert' })).toBeVisible();
 	await expect(page.getByRole('heading', { name: 'Bist du dabei?' })).toBeVisible();
 	await expect(page.getByText('Egmont Ouvertüre').first()).toBeVisible();
@@ -98,7 +98,7 @@ test('season report for the annual meeting (#147)', async ({ page }) => {
 });
 
 test('a rehearsal with its note, and the profile with the data download', async ({ page }) => {
-	await open(page, '/konzerte/demo-probe-2');
+	await open(page, '/kalender/demo-probe-2');
 	await expect(page.getByRole('heading', { name: 'Aus der Probe' })).toBeVisible();
 	await expectAccessible(page);
 	await open(page, '/profil');

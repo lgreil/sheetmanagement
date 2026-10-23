@@ -137,7 +137,7 @@ async function attendance(event: ShownEvent, library: Library, plan: RehearsalPl
 			state: 'ready' as const,
 			present: entries.filter((entry) => entry.present).length,
 			of: entries.length,
-			url: `/konzerte/${encodeURIComponent(event.id)}/anwesenheit`
+			url: `/kalender/${encodeURIComponent(event.id)}/anwesenheit`
 		};
 	}
 	if (event.type !== 'konzert' || !user) return null;
@@ -219,9 +219,9 @@ async function check(concert: LibraryConcert | undefined, event: ShownEvent | un
 			}))
 		),
 		urls: {
-			program: `/konzerte/${id}/programm`,
-			plan: rehearsalIds.length ? `/konzerte/${id}/probenplan` : undefined,
-			report: on.musicReport ? `/konzerte/${id}/drucken?art=musikfolge` : undefined,
+			program: `/kalender/${id}/programm`,
+			plan: rehearsalIds.length ? `/kalender/${id}/probenplan` : undefined,
+			report: on.musicReport ? `/kalender/${id}/drucken?art=musikfolge` : undefined,
 			loans: '/leihmaterial',
 			gaps: '/fehlende-stimmen'
 		}
@@ -293,7 +293,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		groups: (concert ? programsOf(concert) : [{ orchestra: undefined, items }]).map((group) => ({
 			orchestra: group.orchestra ?? '',
 			items: group.items,
-			editUrl: `/konzerte/${encodeURIComponent(params.id)}/programm${group.orchestra && concert!.orchestras.length > 1 ? `?orchester=${encodeURIComponent(group.orchestra)}` : ''}`,
+			editUrl: `/kalender/${encodeURIComponent(params.id)}/programm${group.orchestra && concert!.orchestras.length > 1 ? `?orchester=${encodeURIComponent(group.orchestra)}` : ''}`,
 			drive: showDrive
 				? {
 						...currentProgramStatus(concert!, library, group.orchestra),
@@ -340,14 +340,14 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const planning =
 		event.type === 'konzert' && (rights.has('programme.bearbeiten') || takesAttendance)
 			? {
-					printUrl: items.length ? `/konzerte/${encodeURIComponent(event.id)}/drucken` : undefined,
+					printUrl: items.length ? `/kalender/${encodeURIComponent(event.id)}/drucken` : undefined,
 					reportUrl:
 						items.length && rights.has('programme.bearbeiten') && on.musicReport
-							? `/konzerte/${encodeURIComponent(event.id)}/drucken?art=musikfolge`
+							? `/kalender/${encodeURIComponent(event.id)}/drucken?art=musikfolge`
 							: undefined,
 					attendanceUrl:
 						lastRehearsal && takesAttendance
-							? { href: `/konzerte/${encodeURIComponent(lastRehearsal.id)}/anwesenheit`, label: lastRehearsal.date.long }
+							? { href: `/kalender/${encodeURIComponent(lastRehearsal.id)}/anwesenheit`, label: lastRehearsal.date.long }
 							: undefined
 				}
 			: null;
@@ -357,6 +357,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		signups: await signups(event, orchestra, locals),
 		attendance: await attendance(event, library, plan, locals),
 		attendanceSaved: url.searchParams.has('anwesenheit'),
+		// Planners add a rehearsal for an upcoming concert from its page: the form on /kalender, filled in.
+		addRehearsalUrl:
+			event.type === 'konzert' && !event.past && rights.has('termine.planen') ? `/kalender?neu=probe&konzert=${encodeURIComponent(event.id)}#termin` : undefined,
 		rehearsalNote: await rehearsalNote(event, schedule.ok ? schedule.events : [], locals),
 		event: { ...event, description: plainText(event.description) },
 		rehearsals: event.rehearsalIds
@@ -365,7 +368,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			.map((rehearsal) => ({ ...rehearsal, planned: planned(rehearsal.id).map(({ title, pieceId }) => ({ title, pieceId })) })),
 		rehearsalPlan: {
 			items: event.type === 'konzert' ? [] : planned(event.id),
-			editUrl: canPlan ? `/konzerte/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined,
+			editUrl: canPlan ? `/kalender/${encodeURIComponent(planConcert!.id)}/probenplan` : undefined,
 			// The member's parts for this rehearsal (#115): planned pieces, else the whole programme.
 			partsUrl:
 				event.type !== 'konzert' && !event.past && (planned(event.id).length || library.concertsById.get(planConcert?.id ?? '')?.program.length)

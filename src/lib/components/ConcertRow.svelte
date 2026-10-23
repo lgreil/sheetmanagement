@@ -17,7 +17,7 @@
 </script>
 
 <!-- A concert that may be known only by year or month, e.g. from the orchestra's history. -->
-<a class="row" href="/konzerte/{encodeURIComponent(concert.id)}">
+<a class="row" href="/kalender/{encodeURIComponent(concert.id)}">
 	<span class="date" class:year-only={!label?.month} aria-hidden="true">
 		{#if label?.day}<span class="day">{label.day}</span>{/if}
 		{#if label?.month}<span class="month">{label.month}</span>{/if}

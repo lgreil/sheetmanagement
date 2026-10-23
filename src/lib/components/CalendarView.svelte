@@ -15,8 +15,15 @@
 	let {
 		events,
 		today,
-		concertTitles
-	}: { events: ShownEvent[]; today: string; concertTitles: Record<string, string> } = $props();
+		concertTitles,
+		pollDays = {}
+	}: {
+		events: ShownEvent[];
+		today: string;
+		concertTitles: Record<string, string>;
+		/** Days that open date polls propose (#95), with the polls: a dashed ring, and listed below. */
+		pollDays?: Record<string, { id: string; title: string }[]>;
+	} = $props();
 
 	const byDay = $derived.by(() => {
 		const map = new Map<string, ShownEvent[]>();
@@ -37,6 +44,7 @@
 		Array.from({ length: 7 }, (_, i) => dateFormat(config.locale, { weekday: 'short', timeZone: 'UTC' }).format(new Date(Date.UTC(2024, 0, 1 + i))))
 	);
 	const selectedEvents = $derived(byDay.get(selected) ?? []);
+	const selectedPolls = $derived(pollDays[selected] ?? []);
 	const selectedLabel = $derived(
 		dateFormat(config.locale, { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${selected}T00:00:00Z`))
 	);
@@ -117,6 +125,7 @@
 				{#each week as day (day.key)}
 					{@const dayEvents = byDay.get(day.key) ?? []}
 					{@const main = mainType(dayEvents)}
+					{@const dayPolls = pollDays[day.key] ?? []}
 					<div
 						class="day"
 						class:stage={main === 'konzert'}
@@ -125,9 +134,10 @@
 						class:today={day.key === today}
 						class:selected={day.key === selected}
 						class:past={day.key < today}
+						class:poll-day={dayPolls.length > 0}
 						role="gridcell"
 					>
-						<button class="number" onclick={() => (selected = day.key)} aria-pressed={day.key === selected} aria-label="{day.day}. {dayEvents.map((e) => e.displayTitle).join(', ')}">
+						<button class="number" onclick={() => (selected = day.key)} aria-pressed={day.key === selected} aria-label="{day.day}. {[...dayEvents.map((e) => e.displayTitle), ...dayPolls.map((poll) => `${t.calendar.polls.candidate}: ${poll.title}`)].join(', ')}">
 							{day.day}
 						</button>
 						{#if main === 'konzert'}
@@ -144,16 +154,19 @@
 								<img src={page.data.logo ?? '/logo.png'} alt="" width="40" height="40" loading="lazy" />
 							</span>
 						{/if}
-						{#if dayEvents.length}
+						{#if dayEvents.length || dayPolls.length}
 							<ul class="chips">
 								{#each dayEvents.slice(0, 3) as event (event.id)}
 									<li>
-										<a class="chip {event.type}" class:tentative={event.tentative} href="/konzerte/{encodeURIComponent(event.id)}" title={event.displayTitle}>
+										<a class="chip {event.type}" class:tentative={event.tentative} href="/kalender/{encodeURIComponent(event.id)}" title={event.displayTitle}>
 											{event.date.time ? `${event.date.time.split(' ')[0]} ` : ''}{event.displayTitle}
 										</a>
 									</li>
 								{/each}
 								{#if dayEvents.length > 3}<li class="more">+{dayEvents.length - 3}</li>{/if}
+								{#each dayPolls.slice(0, 1) as poll (poll.id)}
+									<li><a class="chip poll" href="/termine/{encodeURIComponent(poll.id)}" title={poll.title}>? {poll.title}</a></li>
+								{/each}
 							</ul>
 						{/if}
 					</div>
@@ -172,14 +185,24 @@
 			<span class="sticker probe mini" style={stickerStyle('legend-probe')}><span class="paper"></span><img src={page.data.logo ?? '/logo.png'} alt="" width="20" height="20" /></span>
 			{t.concerts.types.probe}
 		</span>
+		{#if Object.keys(pollDays).length}<span><span class="swatch poll-swatch"></span>{t.calendar.polls.candidate}</span>{/if}
 	</div>
 
 	<div class="selected">
 		<h4>{selectedLabel}</h4>
-		{#if selectedEvents.length}
+		{#if selectedEvents.length || selectedPolls.length}
 			<ul class="list">
 				{#each selectedEvents as event (event.id)}
 					<li><EventRow {event} concertTitle={event.concertId ? concertTitles[event.concertId] : undefined} /></li>
+				{/each}
+				{#each selectedPolls as poll (poll.id)}
+					<li>
+						<a class="poll-row" href="/termine/{encodeURIComponent(poll.id)}">
+							<span class="poll-icon"><Icon name="poll" size={18} /></span>
+							<span class="poll-body"><span class="poll-over">{t.calendar.polls.candidate}</span><strong>{poll.title}</strong></span>
+							<Icon name="chevron" size={16} />
+						</a>
+					</li>
 				{/each}
 			</ul>
 		{:else}
@@ -577,6 +600,68 @@
 
 	.sonstiges {
 		--tone: var(--sonstiges);
+	}
+
+	/* A date a poll proposes: not booked yet, so only a dashed ring around the day. */
+	.poll-day .number {
+		outline: 1.5px dashed var(--accent);
+		outline-offset: 1px;
+	}
+
+	.chip.poll {
+		--tone: var(--accent);
+		border-left-style: dashed;
+		background: none;
+		color: var(--text-muted);
+	}
+
+	.swatch.poll-swatch {
+		width: 18px;
+		height: 18px;
+		border: 1.5px dashed var(--accent);
+		border-radius: 999px;
+		background: none;
+	}
+
+	.poll-row {
+		display: flex;
+		align-items: center;
+		gap: var(--space-4);
+		padding: var(--space-3) var(--space-4);
+		color: inherit;
+	}
+
+	.poll-row:hover {
+		background: var(--surface-2);
+	}
+
+	.poll-row > :global(svg) {
+		color: var(--text-muted);
+	}
+
+	.poll-icon {
+		display: grid;
+		place-items: center;
+		flex: none;
+		width: 52px;
+		height: 44px;
+		border: 1.5px dashed color-mix(in oklab, var(--accent) 60%, transparent);
+		border-radius: 12px;
+		color: var(--accent);
+	}
+
+	.poll-body {
+		display: grid;
+		flex: 1;
+		min-width: 0;
+	}
+
+	.poll-over {
+		color: var(--accent);
+		font-size: 0.75rem;
+		font-weight: 650;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
 	}
 
 	.more {

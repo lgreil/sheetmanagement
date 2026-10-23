@@ -50,7 +50,7 @@
 <section class="block rehearsal-note" aria-labelledby="rehearsal-note-title">
 	{#if data.previous && !data.note}
 		<h2 class="ui-label" id="rehearsal-note-title"><Icon name="note" size={14} />{t.rehearsalNotes.previous(data.previous.date)}</h2>
-		<a class="ui-card card link" href="/konzerte/{encodeURIComponent(data.previous.id)}">{@render show(data.previous.note)}</a>
+		<a class="ui-card card link" href="/kalender/{encodeURIComponent(data.previous.id)}">{@render show(data.previous.note)}</a>
 	{:else}
 		<h2 class="ui-label" id="rehearsal-note-title"><Icon name="note" size={14} />{t.rehearsalNotes.title}</h2>
 		{#if result?.rehearsalNoteSaved}<p class="msg ok" role="status"><Icon name="check" size={16} />{t.rehearsalNotes.saved}</p>{/if}
