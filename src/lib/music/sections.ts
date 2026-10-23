@@ -5,6 +5,12 @@
  * Each set is a section, shown as its own tab on the piece page.
  */
 
+/**
+ * Labels in natural order ("Violine 2" before "Violine 10"). One shared collator: localeCompare
+ * with options builds a new one on every call, which made a catalog cost ~70 ms of CPU (#69).
+ */
+export const byLabel = new Intl.Collator('de', { numeric: true });
+
 export type SectionKind =
 	/** The files directly in the piece folder, next to subfolders: what is played. */
 	| 'played'
@@ -51,6 +57,6 @@ export function compareSections(a: SectionName, b: SectionName): number {
 	return (
 		rank[a.kind] - rank[b.kind] ||
 		(a.movement ?? 0) - (b.movement ?? 0) ||
-		a.label.localeCompare(b.label, 'de', { numeric: true })
+		byLabel.compare(a.label, b.label)
 	);
 }

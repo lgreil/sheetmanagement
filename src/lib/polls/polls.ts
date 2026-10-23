@@ -4,6 +4,8 @@
  * by the app itself (D1), not in the sheet: nobody edits them by hand, and many answer at once.
  */
 
+import { dateFormat } from '#lib/events/format.ts';
+
 export const ANSWERS = ['yes', 'maybe', 'no'] as const;
 export type PollAnswer = (typeof ANSWERS)[number];
 
@@ -155,7 +157,7 @@ export function calendarLink(title: string, option: PollOption, timeZone: string
 /** How an option reads: "Sa", "6", "März", "10:00–17:00", and all of it in one line. */
 export function optionLabel(option: PollOption, locale: string) {
 	const date = new Date(`${option.date}T12:00:00Z`);
-	const part = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, { timeZone: 'UTC', ...options }).format(date);
+	const part = (options: Intl.DateTimeFormatOptions) => dateFormat(locale, { timeZone: 'UTC', ...options }).format(date);
 	const time = option.start ? (option.end ? `${option.start}–${option.end}` : option.start) : '';
 	const long = part({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 	return {

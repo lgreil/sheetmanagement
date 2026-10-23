@@ -4,7 +4,7 @@ import type { DriveIndex } from './drive-index.ts';
 import { isDemo } from './env.ts';
 import { getArchiveIndex, NotConfiguredError } from './services.ts';
 
-// Parsing ~2000 file names takes a few milliseconds, so it happens once per archive
+// Parsing ~2000 file names takes 15-40 ms of CPU, so it happens once per archive
 // snapshot and Worker instance, not on every request.
 // Built again when a deployment's own instrument labels or spellings change (#143).
 const built = new WeakMap<DriveIndex, { instruments: readonly Instrument[]; catalog: Catalog }>();

@@ -2,7 +2,7 @@ import type { OrchestraConfig } from '#lib/config/index.ts';
 import type { DriveIndex, IndexedFile, IndexedPiece } from '#lib/server/drive-index.ts';
 import { createInstrumentMatcher, parsePartName, type InstrumentMatcher } from './part-name.ts';
 import { parsePieceName } from './piece-name.ts';
-import { compareSections, sectionName, sharedMovement, type SectionName } from './sections.ts';
+import { byLabel, compareSections, sectionName, sharedMovement, type SectionName } from './sections.ts';
 import { searchText, sharedPrefix } from './text.ts';
 import type { Part, PieceDetail, PieceStatus, Section } from './types.ts';
 
@@ -62,7 +62,7 @@ function buildPiece(piece: IndexedPiece, config: OrchestraConfig, matcher: Instr
 					order: parsed.order
 				};
 			})
-			.sort((a, b) => a.order - b.order || a.label.localeCompare(b.label, 'de', { numeric: true }));
+			.sort((a, b) => a.order - b.order || byLabel.compare(a.label, b.label));
 		parts.push(...sectionParts);
 		sections.push({
 			key,
