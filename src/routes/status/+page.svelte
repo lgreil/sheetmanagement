@@ -19,6 +19,8 @@
 	]);
 
 	const icons: Record<string, IconName> = { ok: 'check', error: 'alert', missing: 'minus' };
+	const missingExtras = $derived(data.extras.filter((extra) => extra.state !== 'on'));
+	const setUpExtras = $derived(data.extras.filter((extra) => extra.state === 'on').map((extra) => t.status.extraNames[extra.key]));
 </script>
 
 <Title title={t.status.title} />
@@ -40,6 +42,29 @@
 		</li>
 	{/each}
 </ul>
+
+<!-- Optional services this deployment doesn't have yet, each with its part of the guide. -->
+<section class="extras" aria-labelledby="extras-title">
+	<h2 id="extras-title">{t.status.extras}</h2>
+	{#if missingExtras.length}
+		<p class="hint">{t.status.extrasLead}</p>
+		<ul>
+			{#each missingExtras as extra (extra.key)}
+				<li>
+					<div class="head">
+						<strong>{t.status.extraNames[extra.key]}</strong>
+						{#if extra.state === 'planned'}<span class="pill">{t.status.extraPlanned}</span>{/if}
+					</div>
+					<p>{t.status.extraWhat[extra.key]}</p>
+					<a class="link" href={extra.guide} target="_blank" rel="noopener">{t.status.extraGuide}<Icon name="external" size={14} /></a>
+				</li>
+			{/each}
+		</ul>
+	{:else}
+		<p>{t.status.extrasAllOn}</p>
+	{/if}
+	{#if setUpExtras.length}<p class="hint">{t.status.extrasOn(setUpExtras.join(', '))}</p>{/if}
+</section>
 
 <div class="actions">
 	{#if data.checks.drive.state === 'ok'}
@@ -68,6 +93,53 @@
 <p class="version">{t.nav.appName} v{__APP_VERSION__}</p>
 
 <style>
+	.extras {
+		/* The pill's colour: neutral, it's not an error. */
+		--state: var(--text-muted);
+		display: grid;
+		gap: var(--space-3);
+		margin-top: var(--space-6);
+	}
+
+	.extras h2 {
+		margin: 0;
+		font-size: 1.125rem;
+	}
+
+	.extras p {
+		margin: 0;
+	}
+
+	.extras ul {
+		display: grid;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.extras li {
+		display: grid;
+		gap: var(--space-1);
+		padding: var(--space-3) var(--space-4);
+		border: 1px solid var(--border);
+		border-radius: 12px;
+		background: var(--surface);
+	}
+
+	.extras li p {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.extras .link {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		justify-self: start;
+		font-size: 0.875rem;
+	}
+
 	.version {
 		margin-top: var(--space-5);
 		color: var(--text-muted);

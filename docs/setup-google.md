@@ -198,6 +198,49 @@ Until this step, the app is open to anyone with the link and nobody can change a
   - Backups: D1 keeps 30 days of history (Time Travel), see `pnpm wrangler d1 time-travel info noten`.
 - **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
+## 10. Optional extras
+
+None of these is needed to start; `/status` lists the ones that aren't set up yet, each with a link here. Values are stored as secrets like the others (`pnpm wrangler secret put <NAME>`).
+
+### Current-programme folders
+
+`DRIVE_CURRENT_PROGRAM_FOLDER_ID`: the folder ids of "Programm A-Orchester" and the like, separated by commas (step 5). The archive then shows which pieces are on the current programme, and with Drive writing the app keeps those folders in step with the concert programmes (see step 9).
+
+### Drive writing
+
+`DRIVE_WRITE=true`, with the service account as **Editor** of the sheet-music folder (step 4). Problem reports then also appear as comments on the files, status words can be put into file names, and the current-programme folders can be filled from a programme. Without it the app only reads Drive. Details in step 9 under "Problem reports in Drive".
+
+### YouTube durations
+
+`YOUTUBE_API_KEY`: lets the piece editor suggest a piece's duration from its Hörbeispiel video. Free.
+
+1. In the Cloud project from step 1: **APIs & Services → Library**, search **YouTube Data API v3**, **Enable**.
+2. **APIs & Services → Credentials → Create credentials → API key**.
+3. Optional but sensible: **Edit API key → API restrictions → Restrict key → YouTube Data API v3**.
+4. `pnpm wrangler secret put YOUTUBE_API_KEY` and paste the key.
+
+### Notifications
+
+`VAPID_PUBLIC_KEY` and `VAPID_PRIVATE_KEY`: reminders on members' phones (unanswered rehearsals, rented music that is due) and a notice to the admins when the Google connection breaks. Members turn them on per device under **Profil**. No Google setup and no email account needed.
+
+1. `node scripts/vapid-keys.mjs` prints a new key pair.
+2. Store both values with `pnpm wrangler secret put VAPID_PUBLIC_KEY` and `pnpm wrangler secret put VAPID_PRIVATE_KEY`.
+3. Keep them: a new pair makes every device sign up again.
+
+The privacy contact (`LEGAL_EMAIL`) is passed to the push services as the app's contact.
+
+### Database (D1)
+
+The binding `DB` in `wrangler.toml`: where notifications, the reminder log and date polls are kept. The deploy creates it on its own; to keep it in the EU, create it first with `pnpm wrangler d1 create noten --jurisdiction eu` and add its `database_id` to `wrangler.toml` (see "Date polls" in step 9). The deploy workflow applies the tables from `migrations/`; `/status` shows the version.
+
+### Privacy contact
+
+`LEGAL_NAME`, `LEGAL_ADDRESS` and `LEGAL_EMAIL`: who is responsible for the app, shown on `/datenschutz` and `/nutzungsbedingungen`. Without them the pages say the contact is missing.
+
+### Email
+
+Not in the app yet: sign-in links and reminders by email ([#123](https://github.com/lgreil/sheetmanagement/issues/123)) need the orchestra's Google account to allow sending. Until then, reminders go out as notifications (above).
+
 ## Troubleshooting
 
 | Message | Cause |

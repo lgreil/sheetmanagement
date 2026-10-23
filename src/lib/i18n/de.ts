@@ -1247,7 +1247,32 @@ export const de = {
 		push: 'Benachrichtigungen (Web Push)',
 		pushOn: (devices: number) => (devices === 1 ? 'Eingerichtet, 1 Gerät angemeldet' : `Eingerichtet, ${devices} Geräte angemeldet`),
 		pushMissing: 'VAPID_PUBLIC_KEY und VAPID_PRIVATE_KEY sind nicht gesetzt.',
-		pushMissingHint: 'Mit „node scripts/vapid-keys.mjs“ erzeugen und als Secrets speichern. Bis dahin gibt es keine Erinnerungen.'
+		pushMissingHint: 'Mit „node scripts/vapid-keys.mjs“ erzeugen und als Secrets speichern. Bis dahin gibt es keine Erinnerungen.',
+		/** Optional services not set up yet, with the guide (docs/setup-google.md, step 10). */
+		extras: 'Optionale Dienste',
+		extrasLead: 'Für den Start nicht nötig. Was noch fehlt, mit Anleitung:',
+		extrasAllOn: 'Alle optionalen Dienste sind eingerichtet.',
+		extrasOn: (names: string) => `Eingerichtet: ${names}`,
+		extraGuide: 'Anleitung',
+		extraPlanned: 'Noch nicht in der App',
+		extraNames: {
+			currentProgram: 'Ordner für das aktuelle Programm',
+			driveWrite: 'In Drive schreiben',
+			youtube: 'YouTube-Dauer',
+			push: 'Benachrichtigungen',
+			database: 'Datenbank (D1)',
+			legal: 'Kontakt für den Datenschutz',
+			email: 'E-Mail'
+		},
+		extraWhat: {
+			currentProgram: 'Zeigt, was im aktuellen Programm ist, und hält die Programm-Ordner im Drive aktuell (DRIVE_CURRENT_PROGRAM_FOLDER_ID).',
+			driveWrite: 'Meldungen als Kommentare an den Dateien, Statuswörter im Dateinamen, Programm-Ordner abgleichen (DRIVE_WRITE).',
+			youtube: 'Schlägt die Dauer eines Stücks aus seinem Hörbeispiel vor (YOUTUBE_API_KEY).',
+			push: 'Erinnerungen aufs Handy und Hinweise an die Admins bei Störungen (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY).',
+			database: 'Speichert Benachrichtigungen, Erinnerungen und Terminumfragen dauerhaft (DB in wrangler.toml).',
+			legal: 'Name, Anschrift und E-Mail für Datenschutz und Nutzungsbedingungen (LEGAL_ADDRESS, LEGAL_EMAIL).',
+			email: 'Anmeldelinks und Erinnerungen per E-Mail; braucht ein Google-Konto, das senden darf (#123).'
+		}
 	},
 	/** What the reminder and check jobs send and report (#157, #144, #159). */
 	reminders: {

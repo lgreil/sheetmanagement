@@ -1246,7 +1246,32 @@ export const en: Texts = {
 		push: 'Notifications (Web Push)',
 		pushOn: (devices: number) => (devices === 1 ? 'Set up, 1 device signed up' : `Set up, ${devices} devices signed up`),
 		pushMissing: 'VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY are not set.',
-		pushMissingHint: 'Create them with “node scripts/vapid-keys.mjs” and store them as secrets. Until then there are no reminders.'
+		pushMissingHint: 'Create them with “node scripts/vapid-keys.mjs” and store them as secrets. Until then there are no reminders.',
+		/** Optional services not set up yet, with the guide (docs/setup-google.md, step 10). */
+		extras: 'Optional services',
+		extrasLead: "Not needed to start. What's still missing, with a guide:",
+		extrasAllOn: 'All optional services are set up.',
+		extrasOn: (names: string) => `Set up: ${names}`,
+		extraGuide: 'Guide',
+		extraPlanned: 'Not in the app yet',
+		extraNames: {
+			currentProgram: 'Current-programme folders',
+			driveWrite: 'Writing to Drive',
+			youtube: 'YouTube durations',
+			push: 'Notifications',
+			database: 'Database (D1)',
+			legal: 'Privacy contact',
+			email: 'Email'
+		},
+		extraWhat: {
+			currentProgram: 'Shows what is on the current programme and keeps the programme folders in Drive in step (DRIVE_CURRENT_PROGRAM_FOLDER_ID).',
+			driveWrite: 'Reports as comments on the files, status words in file names, syncing programme folders (DRIVE_WRITE).',
+			youtube: "Suggests a piece's duration from its reference recording (YOUTUBE_API_KEY).",
+			push: 'Reminders on phones and notices to the admins when something breaks (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY).',
+			database: 'Keeps notifications, reminders and date polls for good (DB in wrangler.toml).',
+			legal: 'Name, address and email for the privacy notice and terms (LEGAL_ADDRESS, LEGAL_EMAIL).',
+			email: 'Sign-in links and reminders by email; needs a Google account that may send (#123).'
+		}
 	},
 	/** What the reminder and check jobs send and report (#157, #144, #159). */
 	reminders: {

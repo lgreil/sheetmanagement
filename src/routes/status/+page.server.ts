@@ -8,6 +8,7 @@ import { t } from '#lib/i18n/index.ts';
 import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { pushReady } from '#lib/server/push/index.ts';
+import { extras } from '#lib/server/extras.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
@@ -227,7 +228,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck() }, jobs: JOB_NAMES };
+	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck() }, jobs: JOB_NAMES, extras: extras() };
 };
 
 export const actions: Actions = {
