@@ -6,26 +6,27 @@ vi.mock('./legal.ts', () => ({ legalContact: () => ({ name: 'Orchester', email: 
 vi.mock('./push/index.ts', () => ({ pushReady: () => !!env.VAPID_PUBLIC_KEY }));
 vi.mock('./services.ts', () => ({ driveWriteEnabled: () => env.DRIVE_WRITE === 'true' }));
 vi.mock('./db/index.ts', () => ({ getStore: () => ({ kind: 'memory' }) }));
+vi.mock('./mail/index.ts', () => ({ mailReady: async () => !!env.MAIL }));
 
 const { extras } = await import('./extras.ts');
-const states = () => Object.fromEntries(extras().map((extra) => [extra.key, extra.state]));
+const states = async () => Object.fromEntries((await extras()).map((extra) => [extra.key, extra.state]));
 
 describe('extras', () => {
-	it('lists what is missing, each with its part of the guide', () => {
-		expect(states()).toEqual({
+	it('lists what is missing, each with its part of the guide', async () => {
+		expect(await states()).toEqual({
 			currentProgram: 'off',
 			driveWrite: 'off',
 			youtube: 'off',
 			push: 'off',
 			database: 'off',
 			legal: 'off',
-			email: 'planned'
+			email: 'off'
 		});
-		expect(extras().find((extra) => extra.key === 'youtube')?.guide).toMatch(/setup-google\.md#youtube-durations$/);
+		expect((await extras()).find((extra) => extra.key === 'youtube')?.guide).toMatch(/setup-google\.md#youtube-durations$/);
 	});
 
-	it('follows the settings; email stays planned', () => {
-		Object.assign(env, { YOUTUBE_API_KEY: 'key', DRIVE_WRITE: 'true', VAPID_PUBLIC_KEY: 'k', LEGAL_EMAIL: 'a@b.org', LEGAL_ADDRESS: 'Weg 1' });
-		expect(states()).toMatchObject({ youtube: 'on', driveWrite: 'on', push: 'on', legal: 'on', email: 'planned' });
+	it('follows the settings and the connected mail account (#123)', async () => {
+		Object.assign(env, { YOUTUBE_API_KEY: 'key', DRIVE_WRITE: 'true', VAPID_PUBLIC_KEY: 'k', LEGAL_EMAIL: 'a@b.org', LEGAL_ADDRESS: 'Weg 1', MAIL: 'yes' });
+		expect(await states()).toMatchObject({ youtube: 'on', driveWrite: 'on', push: 'on', legal: 'on', email: 'on' });
 	});
 });

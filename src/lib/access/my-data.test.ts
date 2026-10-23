@@ -82,4 +82,8 @@ describe('storedData', () => {
 	it('leaves out what isn’t there', () => {
 		expect(storedData([], [])).toEqual({});
 	});
+
+	it('says when reminders by email are turned off (#123)', () => {
+		expect(storedData([], [], true)).toEqual({ 'Erinnerungen per E-Mail': [{ Stand: 'abbestellt' }] });
+	});
 });

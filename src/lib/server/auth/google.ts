@@ -1,3 +1,4 @@
+import { GMAIL_SEND_SCOPE } from '../mail/gmail.ts';
 import { fromBase64url } from './session.ts';
 
 /**
@@ -16,16 +17,21 @@ export interface OAuthClient {
 	redirectUri: string;
 }
 
-export function authorizationUrl(client: Pick<OAuthClient, 'clientId' | 'redirectUri'>, state: string): string {
+/**
+ * Google's consent page. With `sendMail` (#123) it asks the orchestra's account for permission
+ * to send email, and for a refresh token, so the app can send later without anyone signed in.
+ */
+export function authorizationUrl(client: Pick<OAuthClient, 'clientId' | 'redirectUri'>, state: string, { sendMail = false } = {}): string {
 	const url = new URL(AUTHORIZE_URL);
 	url.search = new URLSearchParams({
 		client_id: client.clientId,
 		redirect_uri: client.redirectUri,
 		response_type: 'code',
-		scope: 'openid email profile',
+		scope: sendMail ? `openid email ${GMAIL_SEND_SCOPE}` : 'openid email profile',
 		state,
-		// Lets people with several Google accounts pick the right one.
-		prompt: 'select_account'
+		// Lets people with several Google accounts pick the right one; "consent" makes Google send a refresh token again.
+		prompt: sendMail ? 'select_account consent' : 'select_account',
+		...(sendMail ? { access_type: 'offline' } : {})
 	}).toString();
 	return url.toString();
 }

@@ -8,8 +8,12 @@ const notify = vi.fn(async (emails: Iterable<string>) => new Set(emails));
 
 vi.mock('../db/index.ts', async (original) => ({ ...(await original<object>()), getStore: () => store.current }));
 vi.mock('../push/index.ts', () => ({ pushReady: () => true, notify: (emails: Iterable<string>) => notify(emails) }));
-vi.mock('../env.ts', () => ({ features: () => ({ signups: true, loans: true }) }));
-vi.mock('../auth/index.ts', () => ({ authConfig: () => ({ mode: 'on', bootstrapAdmins: [] }) }));
+vi.mock('../env.ts', () => ({ features: () => ({ signups: true, loans: true }), orchestra: () => ({ name: 'Musterorchester' }) }));
+vi.mock('../auth/index.ts', () => ({ authConfig: () => ({ mode: 'on', bootstrapAdmins: [], sessionSecret: 'x'.repeat(32) }) }));
+// Email (#123): off unless a test connects an account.
+const mail = { account: null as null | { email: string; origin: string; connectedAt: string } };
+const sendMail = vi.fn(async (_to: string, _subject: string, _text: string) => true);
+vi.mock('../mail/index.ts', () => ({ mailAccount: async () => mail.account, sendMail: (to: string, subject: string, text: string) => sendMail(to, subject, text) }));
 
 const access = buildAccessList({
 	members: [
@@ -38,6 +42,8 @@ describe('sendReminders', () => {
 	beforeEach(async () => {
 		store.current = memoryStore();
 		notify.mockClear();
+		sendMail.mockClear();
+		mail.account = null;
 		for (const email of ['anna@example.org', 'ben@example.org']) {
 			await store.current.savePush({ endpoint: `https://push/${email}`, email, p256dh: 'k', auth: 'a' });
 		}
@@ -64,6 +70,34 @@ describe('sendReminders', () => {
 		await store.current.deletePush('https://push/ben@example.org');
 		await sendReminders(MORNING);
 		expect(notify.mock.calls.every(([emails]) => [...emails][0] === 'anna@example.org')).toBe(true);
+	});
+
+	it('emails those without a device, unless they turned it off (#123)', async () => {
+		mail.account = { email: 'orchester@example.org', origin: 'https://noten.example.org', connectedAt: '' };
+		await store.current.deletePush('https://push/ben@example.org');
+		await store.current.deletePush('https://push/anna@example.org');
+		await store.current.setMailOptOut('anna@example.org', true);
+		const run = await sendReminders(MORNING);
+		expect(notify).not.toHaveBeenCalled();
+		expect(sendMail.mock.calls.map(([to]) => to)).toEqual(['ben@example.org']);
+		const [, subject, text] = sendMail.mock.calls[0];
+		expect(subject).toBe('Probe: Kommst du?');
+		expect(text).toContain('Hallo Ben,');
+		// One-click answers and the way out.
+		expect(text).toMatch(/Ich komme: https:\/\/noten\.example\.org\/antwort\/[\w.-]+\?a=yes/);
+		expect(text).toContain('https://noten.example.org/profil#email');
+		expect(run.summary).toContain('E-Mail');
+	});
+
+	it('emails when a device couldn’t be reached', async () => {
+		mail.account = { email: 'orchester@example.org', origin: 'https://noten.example.org', connectedAt: '' };
+		notify.mockImplementation(async () => new Set());
+		await sendReminders(MORNING);
+		notify.mockImplementation(async (emails: Iterable<string>) => new Set(emails));
+		expect(sendMail).toHaveBeenCalledTimes(3);
+		sendMail.mockClear();
+		await sendReminders(MORNING + 30 * 60_000);
+		expect(sendMail).not.toHaveBeenCalled();
 	});
 
 	it('sends nothing at night', async () => {

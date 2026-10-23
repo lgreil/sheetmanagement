@@ -63,6 +63,22 @@ describe.each([
 		expect(await store.remindersOf('nobody@x.org')).toEqual([]);
 	});
 
+	it('remembers who turned email reminders off (#123)', async () => {
+		const store = make();
+		await store.setMailOptOut('a@x.org', true);
+		await store.setMailOptOut('a@x.org', true);
+		await store.setMailOptOut('b@x.org', true);
+		await store.setMailOptOut('b@x.org', false);
+		expect(await store.mailOptOuts()).toEqual(new Set(['a@x.org']));
+	});
+
+	it('counts uses for rate limits', async () => {
+		const store = make();
+		expect(await store.hit('mail:a@x.org', 60)).toBe(1);
+		expect(await store.hit('mail:a@x.org', 60)).toBe(2);
+		expect(await store.hit('mail:b@x.org', 60)).toBe(1);
+	});
+
 	it('keeps values between runs', async () => {
 		const store = make();
 		expect(await store.getState('check')).toBeNull();

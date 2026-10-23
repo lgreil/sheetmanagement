@@ -39,6 +39,16 @@ export interface Store {
 	/** Forgets reminders older than this many days. */
 	pruneReminders(days: number): Promise<void>;
 
+	/** Members who turned email reminders off (#123). */
+	mailOptOuts(): Promise<Set<string>>;
+	setMailOptOut(email: string, off: boolean): Promise<void>;
+
+	/**
+	 * Counts one more use of `key` in a window of this many minutes and returns the count so
+	 * far, this one included; a window older than that starts again at 1. For rate limits.
+	 */
+	hit(key: string, windowMinutes: number): Promise<number>;
+
 	getState(key: string): Promise<string | null>;
 	setState(key: string, value: string): Promise<void>;
 }

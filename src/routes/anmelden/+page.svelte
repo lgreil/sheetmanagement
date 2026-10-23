@@ -1,8 +1,10 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
 	import { t } from '#lib/i18n/index.ts';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
+	let sending = $state(false);
 </script>
 
 <Title title={t.auth.title} />
@@ -34,6 +36,32 @@
 			{t.auth.button}
 		</a>
 		<p class="small">{t.auth.privacy}</p>
+		{#if data.mail}
+			<!-- Without a Google account: a sign-in link by email (#123). -->
+			<p class="or"><span>{t.email.or}</span></p>
+			{#if form?.mailSent}
+				<p class="sent" role="status">{t.email.sent(form.mailSent)}</p>
+			{:else}
+				<form
+					class="mail"
+					method="POST"
+					action="?/email"
+					use:enhance={() => {
+						sending = true;
+						return async ({ update }) => {
+							await update({ reset: false });
+							sending = false;
+						};
+					}}
+				>
+					<label for="mail">{t.email.noGoogle}</label>
+					<input id="mail" name="email" type="email" autocomplete="email" required placeholder={t.email.label} value={form?.email ?? ''} aria-invalid={!!form?.mailError} />
+					<input type="hidden" name="weiter" value={data.returnTo} />
+					<button class="btn secondary" disabled={sending}>{t.email.send}</button>
+					{#if form?.mailError}<p class="error" role="alert">{t.email[form.mailError]}</p>{/if}
+				</form>
+			{/if}
+		{/if}
 	{/if}
 </section>
 
@@ -92,6 +120,50 @@
 		background: color-mix(in oklab, var(--danger) 10%, transparent);
 		color: var(--text);
 		text-align: left;
+	}
+
+	.or {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		width: 100%;
+		margin: var(--space-2) 0 0;
+		font-size: 0.8125rem;
+	}
+
+	.or::before,
+	.or::after {
+		content: '';
+		flex: 1;
+		border-top: 1px solid var(--border);
+	}
+
+	.mail {
+		display: grid;
+		gap: var(--space-2);
+		width: 100%;
+		text-align: left;
+	}
+
+	.mail label {
+		color: var(--text-muted);
+		font-size: 0.875rem;
+	}
+
+	.mail input[type='email'] {
+		padding: 10px 12px;
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+	}
+
+	.sent {
+		padding: var(--space-3);
+		border-radius: var(--radius-m);
+		background: color-mix(in oklab, var(--accent) 12%, transparent);
+		color: var(--text);
 	}
 
 	.error ul {

@@ -66,6 +66,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Email',
+				paragraphs: [
+					"If the orchestra has connected an email account, you can ask for a sign-in link on the sign-in page; it works for 15 minutes and is only sent to addresses on the member list. Anyone who hasn't allowed notifications on any device gets the same reminders by email, with links to answer straight away.",
+					"The emails are sent through Gmail from the orchestra's Google account (Google Ireland Ltd.); Google processes your email address and the message for this. The app stores nothing more for it: links are signed and kept nowhere. So that the sign-in page can't be misused, the app counts for an hour how often a link was asked for per address and per IP address (in the database at Cloudflare).",
+					"The legal basis is Art. 6(1)(b) GDPR (the club's rehearsals). You can turn email reminders off on your profile at any time; the app keeps that until you turn them on again."
+				]
+			},
+			{
 				heading: 'Attendance at rehearsals',
 				paragraphs: [
 					"After a rehearsal, people with the right “Take attendance” (e.g. conductor and organisers) can enter who was there. Only the date, name, email address and whether you were present are saved, in the “Attendance” tab of the orchestra's Google sheet. From this the app shows how many rehearsals before a concert you attended.",

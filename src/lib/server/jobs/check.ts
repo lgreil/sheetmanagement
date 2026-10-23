@@ -4,10 +4,10 @@ import { getStore } from '../db/index.ts';
 import { GoogleApiError } from '../google/client.ts';
 import { listEvents } from '../google/calendar.ts';
 import { getSpreadsheetInfo } from '../google/sheets.ts';
-import { notify, pushReady } from '../push/index.ts';
 import { getAccessList } from '../repertoire.ts';
 import { peopleWithRight } from '#lib/reminders/reminders.ts';
 import { getGoogle, NotConfiguredError, requireSetting } from '../services.ts';
+import { channels, channelsSetUp, deliver } from './deliver.ts';
 import type { JobResult } from './index.ts';
 
 /**
@@ -67,16 +67,16 @@ export async function checkConnections(): Promise<JobResult> {
 	// The first run counts as "all fine before": a working fresh deploy isn't news, a broken one is.
 	const changed = (before ?? '') !== state;
 	let told = '';
-	if (changed && pushReady()) {
+	const ways = changed ? await channels() : null;
+	if (ways && channelsSetUp(ways)) {
 		const auth = authConfig();
 		const admins = peopleWithRight(await getAccessList().catch(() => null), auth.mode === 'on' ? auth.bootstrapAdmins : [], 'mitglieder.verwalten');
-		const reached = await notify(
-			admins,
-			parts.length
-				? { title: t.reminders.checkFailedTitle, body: t.reminders.checkFailedBody(parts.map((part) => `${label(part)} (${problems[part]})`).join(', ')), url: '/status', tag: 'connection-check' }
-				: { title: t.reminders.checkOkTitle, body: t.reminders.checkOkBody, url: '/status', tag: 'connection-check' }
-		);
-		told = ` ${t.reminders.adminsTold(reached.size)}`;
+		const notice = parts.length
+			? { title: t.reminders.checkFailedTitle, body: t.reminders.checkFailedBody(parts.map((part) => `${label(part)} (${problems[part]})`).join(', ')), url: '/status', tag: 'connection-check' }
+			: { title: t.reminders.checkOkTitle, body: t.reminders.checkOkBody, url: '/status', tag: 'connection-check' };
+		// By push, else by email (#123): a broken sheet doesn't stop the mail, which needs only Google's sign-in.
+		const reached = (await Promise.all(admins.map((admin) => deliver(admin, notice, ways)))).filter(Boolean);
+		told = ` ${t.reminders.adminsTold(reached.length)}`;
 	}
 	await store.setState(STATE_KEY, state);
 	return { ok: !parts.length, summary: (parts.length ? t.reminders.checkFailed(names) : t.reminders.checkOk) + told };

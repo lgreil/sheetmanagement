@@ -114,6 +114,31 @@ export function sqlStore(db: D1): Store {
 			await run(`DELETE FROM reminders_sent WHERE sent_at < datetime('now', ?)`, `-${days} days`);
 		},
 
+		async mailOptOuts() {
+			return new Set((await all<{ email: string }>('SELECT email FROM email_opt_out')).map((row) => row.email));
+		},
+		async setMailOptOut(email, off) {
+			if (off) await run('INSERT OR IGNORE INTO email_opt_out (email) VALUES (?)', email);
+			else await run('DELETE FROM email_opt_out WHERE email = ?', email);
+		},
+
+		async hit(key, windowMinutes) {
+			const since = `-${windowMinutes} minutes`;
+			const [row] = await all<{ count: number }>(
+				`INSERT INTO rate_limits (key, count) VALUES (?, 1)
+				 ON CONFLICT (key) DO UPDATE SET
+					count = CASE WHEN window_start < datetime('now', ?) THEN 1 ELSE count + 1 END,
+					window_start = CASE WHEN window_start < datetime('now', ?) THEN datetime('now') ELSE window_start END
+				 RETURNING count`,
+				key,
+				since,
+				since
+			);
+			// Old windows are of no use any more; a day covers every limit the app has.
+			await run(`DELETE FROM rate_limits WHERE window_start < datetime('now', '-1 day')`);
+			return row?.count ?? 1;
+		},
+
 		async getState(key) {
 			await schema();
 			return (await db.prepare('SELECT value FROM job_state WHERE key = ?').bind(key).first<{ value: string }>())?.value ?? null;

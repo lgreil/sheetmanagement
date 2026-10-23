@@ -8,6 +8,7 @@ import { t } from '#lib/i18n/index.ts';
 import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { pushReady } from '#lib/server/push/index.ts';
+import { disconnectMail, mailAccount, mailError } from '#lib/server/mail/index.ts';
 import { extras } from '#lib/server/extras.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
@@ -228,10 +229,23 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck() }, jobs: JOB_NAMES, extras: extras() };
+	const mail = await mailCheck();
+	return {
+		checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck(), mail: mail.check },
+		mail: { connected: mail.connected, canConnect: mail.canConnect, result: url.searchParams.get('mail') },
+		jobs: JOB_NAMES,
+		extras: await extras()
+	};
 };
 
 export const actions: Actions = {
+	/** Forgets the account that sends email (#123); Google keeps the permission until it's removed there too. */
+	disconnectMail: async ({ locals }) => {
+		requireAdminWhenSignInIsOn(locals);
+		await disconnectMail();
+		return { mailDisconnected: true };
+	},
+
 	/** Starts a job by hand (#160), e.g. to try it after a deploy or in the demo. */
 	runJob: async ({ request, locals }) => {
 		requireAdminWhenSignInIsOn(locals);
@@ -266,6 +280,29 @@ async function pushCheck(): Promise<Check> {
 		.allPush()
 		.catch(() => []);
 	return { state: 'ok', details: [t.status.pushOn(devices.length)] };
+}
+
+/** The account that sends sign-in links and reminders by email (#123). */
+async function mailCheck(): Promise<{ check: Check; connected: boolean; canConnect: boolean }> {
+	const auth = authConfig();
+	const canConnect = auth.mode === 'on' && !auth.problems.length && !isDemo();
+	if (!canConnect) return { check: { state: 'missing', details: [], problem: t.email.notConnected, hint: isDemo() ? undefined : t.email.needsSignIn }, connected: false, canConnect };
+	const account = await mailAccount();
+	if (!account) return { check: { state: 'missing', details: [], problem: t.email.notConnected, hint: t.email.connectHint }, connected: false, canConnect };
+	const [lastError, optOut] = await Promise.all([mailError(), getStore().mailOptOuts().catch(() => new Set<string>())]);
+	return {
+		check: {
+			state: lastError ? 'error' : 'ok',
+			details: [
+				t.email.connected(account.email, dateOnly.format(new Date(account.connectedAt))),
+				t.email.links(account.origin),
+				...(optOut.size ? [t.email.optOuts(optOut.size)] : [])
+			],
+			problem: lastError ? (lastError === 'revoked' ? t.email.revoked : t.email.lastError(lastError)) : undefined
+		},
+		connected: true,
+		canConnect
+	};
 }
 
 /** When the jobs last ran; a trigger that stopped firing shows as an error (#160). */

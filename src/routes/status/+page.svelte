@@ -15,8 +15,20 @@
 		{ label: t.status.look, check: data.checks.look },
 		{ label: t.status.jobs, check: data.checks.jobs },
 		{ label: t.status.store, check: data.checks.store },
-		{ label: t.status.push, check: data.checks.push }
+		{ label: t.status.push, check: data.checks.push },
+		{ label: t.email.status, check: data.checks.mail }
 	]);
+
+	// Back from Google's consent page (#123), or after disconnecting.
+	const mailResults: Record<string, string> = {
+		verbunden: t.email.connectedNow,
+		erlaubnis: t.email.noScope,
+		recht: t.email.wrongUser,
+		abgebrochen: t.email.connectFailed,
+		abgelaufen: t.email.connectFailed,
+		fehler: t.email.connectFailed
+	};
+	const mailResult = $derived(form && 'mailDisconnected' in form ? t.email.disconnectedNow : data.mail.result ? mailResults[data.mail.result] : '');
 
 	const icons: Record<string, IconName> = { ok: 'check', error: 'alert', missing: 'minus' };
 	const missingExtras = $derived(data.extras.filter((extra) => extra.state !== 'on'));
@@ -42,6 +54,24 @@
 		</li>
 	{/each}
 </ul>
+
+{#if data.mail.canConnect}
+	<!-- The account that sends email (#123): connected through Google's consent page, as an admin. -->
+	<div class="actions mail">
+		<a class="button" class:secondary={data.mail.connected} href="/auth/login?zweck=mail" data-sveltekit-reload>
+			<Icon name="mail" size={16} />
+			{t.email.connect}
+		</a>
+		{#if data.mail.connected}
+			<form method="POST" action="?/disconnectMail" onsubmit={(event) => confirm(t.email.confirmDisconnect) || event.preventDefault()}>
+				<button class="button secondary" type="submit">{t.email.disconnect}</button>
+			</form>
+		{/if}
+	</div>
+{/if}
+{#if mailResult}
+	<p class="result" class:problem={data.mail.result !== null && data.mail.result !== 'verbunden' && !(form && 'mailDisconnected' in form)} role="status">{mailResult}</p>
+{/if}
 
 <!-- Optional services this deployment doesn't have yet, each with its part of the guide. -->
 <section class="extras" aria-labelledby="extras-title">
@@ -243,6 +273,10 @@
 	}
 
 	.result {
+		margin-top: var(--space-4);
+	}
+
+	.actions.mail {
 		margin-top: var(--space-4);
 	}
 
