@@ -186,13 +186,13 @@ export const bachkreis: OrchestraConfig = {
 		{ name: 'Notenwart', description: 'Pflegt Noten, Stücke und das Archiv.', rights: ['stuecke.bearbeiten', 'archiv.bearbeiten'] },
 		{
 			name: 'Orga',
-			description: 'Organisiert Proben und Konzerte, sieht, wer kommt, und erfasst, wer da war.',
-			rights: ['anmeldungen.sehen', 'anwesenheit.erfassen']
+			description: 'Organisiert Proben und Konzerte, plant Termine, sieht, wer kommt, und erfasst, wer da war.',
+			rights: ['anmeldungen.sehen', 'anwesenheit.erfassen', 'termine.planen']
 		},
 		{
 			name: 'Vorstand',
 			description: 'Verwaltet Mitglieder und Rechte.',
-			rights: ['mitglieder.verwalten', 'programme.bearbeiten', 'stuecke.bearbeiten', 'archiv.bearbeiten', 'anmeldungen.sehen', 'anwesenheit.erfassen']
+			rights: ['mitglieder.verwalten', 'programme.bearbeiten', 'stuecke.bearbeiten', 'archiv.bearbeiten', 'anmeldungen.sehen', 'anwesenheit.erfassen', 'termine.planen']
 		}
 	],
 	orchestras: ['EO', 'A', 'B'],

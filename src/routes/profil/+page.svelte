@@ -2,6 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
+	import Avatar from '#lib/components/Avatar.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import MemberFields from '#lib/components/MemberFields.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
@@ -49,7 +50,7 @@
 <div class="stack">
 	<!-- Who is signed in, and where their choices show up. -->
 	<section class="ui-card account">
-		<span class="avatar" aria-hidden="true">{name.charAt(0).toUpperCase()}</span>
+		<Avatar {name} instrument={data.user?.instrument} size={52} />
 		<div class="who">
 			<strong>{name}</strong>
 			<span>{data.email}</span>
@@ -189,19 +190,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-3) var(--space-4);
-	}
-
-	.avatar {
-		display: grid;
-		place-items: center;
-		flex: none;
-		width: 52px;
-		height: 52px;
-		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-size: 1.375rem;
-		font-weight: 700;
 	}
 
 	.who {

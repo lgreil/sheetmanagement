@@ -35,12 +35,14 @@ export interface NavContext {
 	rights: readonly Right[] | ReadonlySet<Right>;
 	/** Parts of the app that are on (#134); all of them when left out. */
 	features?: Features;
+	/** Date polls (#95): for those who plan dates, and for those a poll is meant for. */
+	polls?: boolean;
 }
 
 const has = (rights: NavContext['rights'], right: Right) =>
 	Array.isArray(rights) ? rights.includes(right) : (rights as ReadonlySet<Right>).has(right);
 
-export function navGroups({ auth, rights, features = ALL_ON }: NavContext): NavGroup[] {
+export function navGroups({ auth, rights, features = ALL_ON, polls = false }: NavContext): NavGroup[] {
 	const admin = has(rights, 'mitglieder.verwalten');
 	const groups: NavGroup[] = [
 		{
@@ -61,6 +63,7 @@ export function navGroups({ auth, rights, features = ALL_ON }: NavContext): NavG
 				auth === 'on'
 					? [
 							...(features.wishes ? [{ href: '/wuensche', label: t.nav.wishes, icon: 'bulb' as const }] : []),
+							...(polls ? [{ href: '/termine', label: t.nav.polls, icon: 'poll' as const }] : []),
 							// Also behind the avatar in the header; here it's reachable from the phone's tab bar.
 							{ href: '/profil', label: t.nav.profile, icon: 'user' as const }
 						]

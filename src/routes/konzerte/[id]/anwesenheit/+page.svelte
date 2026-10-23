@@ -1,4 +1,6 @@
 <script lang="ts">
+	import InstrumentGlyph from '#lib/components/InstrumentGlyph.svelte';
+	import { glyphOf } from '#lib/music/instrument-glyph.ts';
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { guardUnsaved } from '#lib/unsaved.svelte.ts';
@@ -84,7 +86,7 @@
 
 	{#each sections as section (section.label)}
 		<section class="section">
-			<h2 class="ui-label">{section.label}</h2>
+			<h2 class="ui-label"><InstrumentGlyph glyph={glyphOf(section.label)} size={18} />{section.label}</h2>
 			<ul class="ui-list">
 				{#each section.people as person (person.email)}
 					<li>
@@ -271,5 +273,12 @@
 		.bar {
 			bottom: calc(var(--tabbar-height) + var(--space-2) + env(safe-area-inset-bottom));
 		}
+	}
+
+	/* The section's instrument, drawn next to its name. */
+	h2.ui-label {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
 	}
 </style>

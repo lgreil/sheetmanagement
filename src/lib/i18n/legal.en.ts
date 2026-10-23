@@ -88,13 +88,14 @@ export const legal = {
 					'“oauth_state”: protects sign-in against misuse and is deleted after 10 minutes at most.',
 					'“instrument”: remembers on “My parts” which instrument you play when you aren’t signed in. Expires after a year.',
 					'“konzerte-ansicht”: remembers whether you want to see the concerts as a list or a calendar. Expires after a year.',
-					'Your browser’s storage (localStorage) remembers whether you chose the light or dark colour scheme. This never leaves your browser.'
+					'Your browser’s storage (localStorage) remembers whether you chose the light or dark colour scheme, and which pieces and concerts you last opened from the quick search. This never leaves your browser.'
 				]
 			},
 			{
 				heading: 'Hosting at Cloudflare',
 				paragraphs: [
-					'The app runs at Cloudflare (Cloudflare, Inc., USA, with data centres worldwide). For every visit, your IP address, the time and the address visited are processed to deliver the page and protect it from attacks (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.'
+					'The app runs at Cloudflare (Cloudflare, Inc., USA, with data centres worldwide). For every visit, your IP address, the time and the address visited are processed to deliver the page and protect it from attacks (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.',
+					'Date polls (if the orchestra uses them): polls and answers – your name, email address, answers and comment – are stored by the app in a database at Cloudflare (D1). Only the groups a poll is meant for see them, and they’re gone when the poll is deleted.'
 				]
 			},
 			{

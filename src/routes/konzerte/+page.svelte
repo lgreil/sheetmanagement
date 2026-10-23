@@ -5,6 +5,7 @@
 	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import CalendarView from '#lib/components/CalendarView.svelte';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
+	import Nothing from '#lib/components/Nothing.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import EventRow from '#lib/components/EventRow.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -101,7 +102,7 @@
 		<CalendarView events={calendarEvents} today={data.today} concertTitles={data.concertTitles} />
 	{:else}
 	{#if months.length === 0}
-		<p class="none">{t.concerts.noUpcoming}</p>
+		<Nothing text={t.concerts.noUpcoming} glyphs={['timpani', 'violin', 'voice']} />
 	{:else}
 		{#each months as month (month.key)}
 			<h2 class="ui-label month">{month.label}</h2>
@@ -196,7 +197,6 @@
 		margin-top: 0;
 	}
 
-	.none,
 	.notice {
 		padding: var(--space-5) var(--space-4);
 		text-align: center;

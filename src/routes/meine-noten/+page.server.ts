@@ -3,6 +3,7 @@ import { currentStatus, normalizeEmail, playsIn, type Member } from '#lib/access
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
+import { partGlyph } from '#lib/music/instrument-glyph.ts';
 import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
 import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
@@ -26,7 +27,8 @@ const shown = (part: Part, viaLink?: boolean) => ({
 	notes: part.notes,
 	status: part.status,
 	url: partUrl(part.id, part.mimeType, viaLink),
-	pdf: part.mimeType === PDF
+	pdf: part.mimeType === PDF,
+	glyph: partGlyph(part)
 });
 
 /**

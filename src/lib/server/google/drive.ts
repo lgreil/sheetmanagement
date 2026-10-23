@@ -122,6 +122,33 @@ export function createGoogleDoc(client: GoogleClient, name: string, folderId: st
 	});
 }
 
+/** A folder inside another, e.g. "Programm A-Orchester" in the current-programme folder (#60). */
+export function createFolder(client: GoogleClient, name: string, parentId: string): Promise<DriveFile> {
+	return client.request<DriveFile>(FILES_URL, {
+		method: 'POST',
+		params: { fields: 'id, name', supportsAllDrives: true },
+		body: { name, mimeType: FOLDER_MIME, parents: [parentId] }
+	});
+}
+
+/** A shortcut to a folder or file, as people make them by hand with "Verknüpfung hinzufügen". */
+export function createShortcut(client: GoogleClient, name: string, targetId: string, parentId: string): Promise<DriveFile> {
+	return client.request<DriveFile>(FILES_URL, {
+		method: 'POST',
+		params: { fields: 'id, name', supportsAllDrives: true },
+		body: { name, mimeType: SHORTCUT_MIME, parents: [parentId], shortcutDetails: { targetId } }
+	});
+}
+
+/** Into the bin, not deleted: whoever owns it can take it out again for 30 days. */
+export function trashFile(client: GoogleClient, fileId: string): Promise<DriveFile> {
+	return client.request<DriveFile>(`${FILES_URL}/${encodeURIComponent(fileId)}`, {
+		method: 'PATCH',
+		params: { fields: 'id, name', supportsAllDrives: true },
+		body: { trashed: true }
+	});
+}
+
 /** A file's content (e.g. a PDF), as a response to stream on. */
 export function downloadFile(client: GoogleClient, fileId: string): Promise<Response> {
 	return client.fetchRaw(`${FILES_URL}/${encodeURIComponent(fileId)}`, { alt: 'media', supportsAllDrives: true });

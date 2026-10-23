@@ -19,6 +19,7 @@ export const en: Texts = {
 		setup: 'Set up sheet',
 		settings: 'Settings',
 		status: 'Status',
+		polls: 'Date polls',
 		more: 'More',
 		profile: 'Profile',
 		details: 'Complete details',
@@ -35,7 +36,8 @@ export const en: Texts = {
 	},
 	footer: {
 		links: 'The orchestra online',
-		source: 'Source code'
+		source: 'Source code',
+		instruments: 'Instruments: game-icons.net (CC BY 3.0)'
 	},
 	theme: {
 		label: 'Colour scheme',
@@ -64,7 +66,8 @@ export const en: Texts = {
 			wishes: (n: number) => (n === 1 ? 'open wish' : 'open wishes'),
 			requests: (n: number) => (n === 1 ? 'access request' : 'access requests'),
 			loans: (n: number) => (n === 1 ? 'return due' : 'returns due'),
-			attendance: (n: number) => (n === 1 ? 'rehearsal without attendance' : 'rehearsals without attendance')
+			attendance: (n: number) => (n === 1 ? 'rehearsal without attendance' : 'rehearsals without attendance'),
+			polls: (n: number) => (n === 1 ? 'date poll' : 'date polls')
 		},
 		/** One line under each page on the start page. */
 		describe: {
@@ -82,7 +85,8 @@ export const en: Texts = {
 			'/admin': 'Members, roles and requests.',
 			'/setup': 'Create the repertoire sheet.',
 			'/einstellungen': 'Name, logo, colour and features.',
-			'/status': 'Check the connection to Google.'
+			'/status': 'Check the connection to Google.',
+			'/termine': 'Agree on dates with the orga team.'
 		} as Record<string, string>
 	},
 	pieces: {
@@ -663,10 +667,95 @@ export const en: Texts = {
 	},
 	instruments: {
 		more: 'More instruments …',
+		choose: 'Choose an instrument',
+		search: 'Search instruments …',
+		common: 'Common',
+		none: (query: string) => `No instrument matches “${query}”.`,
 		add: 'Another instrument',
 		remove: 'Remove instrument',
 		numbers: 'Parts',
 		numbersHint: 'none chosen: all parts'
+	},
+	quickSearch: {
+		label: 'Quick search',
+		open: 'Search',
+		shortcut: 'Ctrl K',
+		placeholder: 'Piece, concert or page …',
+		pages: 'Pages',
+		pieces: 'Pieces',
+		concerts: 'Concerts',
+		upcoming: 'Coming up',
+		recent: 'Recently opened',
+		loading: 'Loading …',
+		none: (query: string) => `Nothing found for “${query}”.`,
+		keys: '↑↓ choose · ↵ open · Esc close'
+	},
+	currentProgram: {
+		title: 'Current programme in Drive',
+		sync: 'Sync',
+		noFolder: (name: string) => `No programme folder for ${name} yet – syncing adds the shortcuts.`,
+		complete: (count: number, folder: string) => `All ${count} pieces are in the programme folder “${folder}”.`,
+		partly: (linked: number, total: number, folder: string) => `${linked} of ${total} pieces are in the programme folder “${folder}”.`,
+		extra: (count: number) => (count === 1 ? '1 other piece is still in it.' : `${count} other pieces are still in it.`),
+		notNext: 'Not this orchestra’s next concert.',
+		done: (added: number, removed: number) => `Synced: ${added} added, ${removed} taken out.`,
+		removedHint: 'Shortcuts taken out are in the bin.',
+		open: 'Open folder',
+		failed: 'Syncing didn’t work. Is the service account an editor of the folder?',
+		ambiguous: 'Several programme folders and no orchestra on the concert: please enter the orchestra in the sheet.',
+		none: 'There’s no programme folder for this orchestra, and DRIVE_CURRENT_PROGRAM_FOLDER_ID names no folder to make one in.',
+		autoDone: 'Also synced to the Drive folder “Aktuelles Programm”.',
+		autoFailed: 'The programme couldn’t be synced to the Drive folder “Aktuelles Programm”.'
+	},
+	polls: {
+		title: 'Date polls',
+		lead: 'Agree on dates before they go into the calendar – only with the groups concerned.',
+		notSetUp: 'Date polls need a database (D1). How to set it up is in docs/setup-google.md.',
+		empty: 'No poll is running for you right now.',
+		open: 'Open',
+		closed: 'Closed',
+		yourTurn: 'Waiting for you',
+		new: 'New poll',
+		fields: {
+			title: 'What is it about?',
+			titleHint: 'e.g. rehearsal weekend in spring',
+			note: 'Note (optional)',
+			dates: 'Dates to choose from',
+			date: 'Date',
+			start: 'from',
+			end: 'to',
+			addDate: 'Another date',
+			removeDate: 'Remove date',
+			groups: 'For whom?',
+			deadline: 'Answers until (optional)'
+		},
+		create: 'Start poll',
+		errors: {
+			title: 'Please say what it is about.',
+			options: 'Please give at least two dates (at most 30).',
+			groups: 'Please choose at least one group.',
+			time: 'Please check the times: “to” comes after “from”.'
+		},
+		forGroups: (groups: string) => `For ${groups}`,
+		by: (name: string) => `by ${name}`,
+		until: (date: string) => `Answers until ${date}`,
+		answers: (count: number) => (count === 1 ? '1 answer' : `${count} answers`),
+		answer: { yes: 'Yes', maybe: 'Maybe', no: 'No' },
+		you: 'You',
+		comment: 'Comment (optional)',
+		save: 'Save answer',
+		saved: 'Answer saved.',
+		best: 'Best date',
+		chosen: 'Chosen',
+		choose: 'Take this one',
+		closeWithout: 'Close without a date',
+		reopen: 'Reopen',
+		remove: 'Delete poll',
+		removeConfirm: 'Delete this poll with all its answers?',
+		toCalendar: 'Add to Google Calendar',
+		waiting: 'No answer yet from',
+		noAccess: 'This poll isn’t for you.',
+		failed: 'Saving didn’t work. Please try again in a moment.'
 	},
 	auth: {
 		title: 'Sign in',
@@ -808,6 +897,7 @@ export const en: Texts = {
 		'archiv.bearbeiten': 'Enter past concerts and pieces',
 		'anmeldungen.sehen': "See everyone's answers",
 		'anwesenheit.erfassen': 'Take and see attendance at rehearsals',
+		'termine.planen': 'Create and close date polls, and see them all',
 		'mitglieder.verwalten': 'Manage members and rights'
 	},
 	admin: {

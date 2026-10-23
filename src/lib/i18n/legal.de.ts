@@ -100,13 +100,14 @@ export const legal = {
 					'„oauth_state“: schützt die Anmeldung vor Missbrauch und wird nach höchstens 10 Minuten gelöscht.',
 					'„instrument“: merkt sich auf „Meine Noten“, welches Instrument du spielst, wenn du nicht angemeldet bist. Läuft nach einem Jahr ab.',
 					'„konzerte-ansicht“: merkt sich, ob du die Konzerte als Liste oder Kalender sehen willst. Läuft nach einem Jahr ab.',
-					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast. Diese Angabe verlässt deinen Browser nicht.'
+					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast, und welche Stücke und Konzerte du zuletzt über die Schnellsuche geöffnet hast. Diese Angaben verlassen deinen Browser nicht.'
 				]
 			},
 			{
 				heading: 'Hosting bei Cloudflare',
 				paragraphs: [
-					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.'
+					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.',
+					'Terminumfragen (falls das Orchester sie nutzt): Umfragen und Antworten – dein Name, deine E-Mail-Adresse, deine Antworten und dein Kommentar – speichert die App in einer Datenbank bei Cloudflare (D1). Sie sind nur für die Gruppen sichtbar, an die sich die Umfrage richtet, und verschwinden, wenn die Umfrage gelöscht wird.'
 				]
 			},
 			{

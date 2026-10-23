@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { glyphOf } from '#lib/music/instrument-glyph.ts';
 	import { instrumentLabel } from '#lib/music/instrument-label.ts';
+	import InstrumentGlyph from './InstrumentGlyph.svelte';
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
@@ -90,7 +92,7 @@
 				{#each signups.sections as section (section.label)}
 					{@const expected = section.counts.yes + section.counts.maybe + section.counts.open}
 					<li class:uncovered={section.counts.yes === 0}>
-						<span class="label">{section.label}</span>
+						<span class="label"><InstrumentGlyph glyph={glyphOf(section.label)} size={18} />{section.label}</span>
 						<span class="bar" aria-hidden="true">
 							<span class="yes" style:width="{expected ? (section.counts.yes / expected) * 100 : 0}%"></span>
 							<span class="maybe" style:width="{expected ? (section.counts.maybe / expected) * 100 : 0}%"></span>
@@ -301,7 +303,15 @@
 	}
 
 	.label {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
 		font-weight: 600;
+	}
+
+	.label :global(svg) {
+		flex: none;
+		color: var(--text-muted);
 	}
 
 	.bar {

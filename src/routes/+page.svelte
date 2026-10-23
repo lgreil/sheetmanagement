@@ -49,7 +49,7 @@
 	// Every page by group, so the start page doubles as a map of the app. A workspace is one
 	// entry, its pages named underneath; the tabs on its pages lead on from there.
 	const groups = $derived(
-		navGroups({ auth: data.auth, rights: data.rights, features: data.features }).map((group) =>
+		navGroups({ auth: data.auth, rights: data.rights, features: data.features, polls: data.polls }).map((group) =>
 			group.workspace && group.items.length > 1
 				? {
 						...group,
@@ -71,7 +71,8 @@
 					{ href: '/wuensche', count: data.todo.wishes, text: t.home.todo.wishes },
 					{ href: '/admin', count: data.todo.requests, text: t.home.todo.requests },
 					{ href: '/leihmaterial', count: data.todo.loans, text: t.home.todo.loans },
-					{ href: data.todo.attendanceUrl ?? '/konzerte', count: data.todo.attendance, text: t.home.todo.attendance }
+					{ href: data.todo.attendanceUrl ?? '/konzerte', count: data.todo.attendance, text: t.home.todo.attendance },
+					{ href: data.todo.pollsUrl ?? '/termine', count: data.todo.polls, text: t.home.todo.polls }
 				].filter((item) => item.count > 0)
 			: []
 	);
@@ -115,7 +116,7 @@
 					<span>{card.event.date.time || t.concerts.allDay}{card.note ? ` · ${card.note}` : ''}</span>
 					{#if card.event.location}<span class="venue" title={card.event.location}>{venue(card.event.location)}</span>{/if}
 				</span>
-				<span class="chevron"><Icon name="chevron" size={18} /></span>
+				<span class="chevron"><Icon name="chevron" size={16} /></span>
 			</a>
 			{#if card.pieces.length}
 				<div class="pieces">
@@ -174,7 +175,7 @@
 								<strong>{item.label}</strong>
 								{#if item.description}<span>{item.description}</span>{/if}
 							</span>
-							<span class="chevron"><Icon name="chevron" size={18} /></span>
+							<span class="chevron"><Icon name="chevron" size={16} /></span>
 						</a>
 					</li>
 				{/each}

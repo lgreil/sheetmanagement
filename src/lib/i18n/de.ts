@@ -18,6 +18,7 @@ export const de = {
 		setup: 'Tabelle einrichten',
 		settings: 'Einstellungen',
 		status: 'Status',
+		polls: 'Terminumfragen',
 		more: 'Mehr',
 		profile: 'Profil',
 		details: 'Angaben ergänzen',
@@ -34,7 +35,8 @@ export const de = {
 	},
 	footer: {
 		links: 'Das Orchester im Netz',
-		source: 'Quellcode'
+		source: 'Quellcode',
+		instruments: 'Instrumente: game-icons.net (CC BY 3.0)'
 	},
 	theme: {
 		label: 'Farbschema',
@@ -63,7 +65,8 @@ export const de = {
 			wishes: (n: number) => (n === 1 ? 'offener Wunsch' : 'offene Wünsche'),
 			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen'),
 			loans: (n: number) => (n === 1 ? 'Rückgabe steht an' : 'Rückgaben stehen an'),
-			attendance: (n: number) => (n === 1 ? 'Probe ohne Anwesenheit' : 'Proben ohne Anwesenheit')
+			attendance: (n: number) => (n === 1 ? 'Probe ohne Anwesenheit' : 'Proben ohne Anwesenheit'),
+			polls: (n: number) => (n === 1 ? 'Terminumfrage' : 'Terminumfragen')
 		},
 		/** One line under each page on the start page. */
 		describe: {
@@ -81,7 +84,8 @@ export const de = {
 			'/admin': 'Mitglieder, Rollen und Anfragen.',
 			'/setup': 'Die Repertoire-Tabelle anlegen.',
 			'/einstellungen': 'Name, Logo, Farbe und Funktionen.',
-			'/status': 'Verbindung zu Google prüfen.'
+			'/status': 'Verbindung zu Google prüfen.',
+			'/termine': 'Termine mit dem Orga-Team abstimmen.'
 		} as Record<string, string>
 	},
 	pieces: {
@@ -661,10 +665,95 @@ export const de = {
 	},
 	instruments: {
 		more: 'Mehr Instrumente …',
+		choose: 'Instrument wählen',
+		search: 'Instrument suchen …',
+		common: 'Häufig',
+		none: (query: string) => `Kein Instrument passt zu „${query}“.`,
 		add: 'Weiteres Instrument',
 		remove: 'Instrument entfernen',
 		numbers: 'Stimmen',
 		numbersHint: 'keine Auswahl: alle Stimmen'
+	},
+	quickSearch: {
+		label: 'Schnellsuche',
+		open: 'Suchen',
+		shortcut: 'Strg K',
+		placeholder: 'Stück, Konzert oder Seite …',
+		pages: 'Seiten',
+		pieces: 'Stücke',
+		concerts: 'Konzerte',
+		upcoming: 'Demnächst',
+		recent: 'Zuletzt geöffnet',
+		loading: 'Lädt …',
+		none: (query: string) => `Nichts gefunden für „${query}“.`,
+		keys: '↑↓ wählen · ↵ öffnen · Esc schließen'
+	},
+	currentProgram: {
+		title: 'Aktuelles Programm im Drive',
+		sync: 'Abgleichen',
+		noFolder: (name: string) => `Noch kein Programmordner für ${name} – Abgleichen legt die Verknüpfungen an.`,
+		complete: (count: number, folder: string) => `Alle ${count} Stücke liegen im Programmordner »${folder}«.`,
+		partly: (linked: number, total: number, folder: string) => `${linked} von ${total} Stücken liegen im Programmordner »${folder}«.`,
+		extra: (count: number) => (count === 1 ? '1 anderes Stück liegt noch drin.' : `${count} andere Stücke liegen noch drin.`),
+		notNext: 'Nicht das nächste Konzert dieses Orchesters.',
+		done: (added: number, removed: number) => `Abgeglichen: ${added} ergänzt, ${removed} herausgenommen.`,
+		removedHint: 'Herausgenommene Verknüpfungen liegen im Papierkorb.',
+		open: 'Ordner öffnen',
+		failed: 'Abgleichen hat nicht geklappt. Hat das Dienstkonto Bearbeitungsrechte für den Ordner?',
+		ambiguous: 'Mehrere Programmordner und kein Orchester am Konzert: bitte in der Tabelle das Orchester eintragen.',
+		none: 'Für dieses Orchester gibt es keinen Programmordner, und DRIVE_CURRENT_PROGRAM_FOLDER_ID nennt keinen Ordner, in dem einer entstehen kann.',
+		autoDone: 'Auch im Drive-Ordner »Aktuelles Programm« abgeglichen.',
+		autoFailed: 'Im Drive-Ordner »Aktuelles Programm« konnte das Programm nicht abgeglichen werden.'
+	},
+	polls: {
+		title: 'Terminumfragen',
+		lead: 'Termine abstimmen, bevor sie in den Kalender kommen – nur mit den Gruppen, die es angeht.',
+		notSetUp: 'Terminumfragen brauchen eine Datenbank (D1). Wie sie eingerichtet wird, steht in docs/setup-google.md.',
+		empty: 'Gerade läuft keine Umfrage für dich.',
+		open: 'Offen',
+		closed: 'Abgeschlossen',
+		yourTurn: 'Deine Antwort fehlt',
+		new: 'Neue Umfrage',
+		fields: {
+			title: 'Worum geht es?',
+			titleHint: 'z. B. Probenwochenende im Frühjahr',
+			note: 'Notiz (optional)',
+			dates: 'Termine zur Auswahl',
+			date: 'Datum',
+			start: 'von',
+			end: 'bis',
+			addDate: 'Weiterer Termin',
+			removeDate: 'Termin entfernen',
+			groups: 'Für wen?',
+			deadline: 'Antworten bis (optional)'
+		},
+		create: 'Umfrage starten',
+		errors: {
+			title: 'Bitte angeben, worum es geht.',
+			options: 'Bitte mindestens zwei Termine angeben (höchstens 30).',
+			groups: 'Bitte mindestens eine Gruppe wählen.',
+			time: 'Bitte die Uhrzeiten prüfen: „bis“ kommt nach „von“.'
+		},
+		forGroups: (groups: string) => `Für ${groups}`,
+		by: (name: string) => `von ${name}`,
+		until: (date: string) => `Antworten bis ${date}`,
+		answers: (count: number) => (count === 1 ? '1 Antwort' : `${count} Antworten`),
+		answer: { yes: 'Ja', maybe: 'Vielleicht', no: 'Nein' },
+		you: 'Du',
+		comment: 'Kommentar (optional)',
+		save: 'Antwort speichern',
+		saved: 'Antwort gespeichert.',
+		best: 'Bester Termin',
+		chosen: 'Gewählt',
+		choose: 'Diesen nehmen',
+		closeWithout: 'Ohne Termin abschließen',
+		reopen: 'Wieder öffnen',
+		remove: 'Umfrage löschen',
+		removeConfirm: 'Diese Umfrage mit allen Antworten löschen?',
+		toCalendar: 'In Google Kalender eintragen',
+		waiting: 'Noch keine Antwort von',
+		noAccess: 'Diese Umfrage ist nicht für dich.',
+		failed: 'Speichern hat nicht geklappt. Gleich noch einmal versuchen.'
 	},
 	auth: {
 		title: 'Anmelden',
@@ -808,6 +897,7 @@ export const de = {
 		'archiv.bearbeiten': 'Frühere Konzerte und Stücke eintragen',
 		'anmeldungen.sehen': 'Zu- und Absagen aller sehen',
 		'anwesenheit.erfassen': 'Anwesenheit bei Proben erfassen und sehen',
+		'termine.planen': 'Terminumfragen anlegen, abschließen und alle sehen',
 		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
 	},
 	admin: {

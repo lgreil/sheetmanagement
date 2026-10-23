@@ -4,6 +4,7 @@
 	import { mergedFileName } from '#lib/music/my-parts.ts';
 	import type { PageData } from '../../routes/meine-noten/$types';
 	import Icon from './Icon.svelte';
+	import InstrumentGlyph from './InstrumentGlyph.svelte';
 
 	/** One concert on "Meine Noten": its programme with the member's parts, and the merged PDF. */
 	let {
@@ -264,7 +265,7 @@
 														target={part.status === 'missing' ? undefined : '_blank'}
 														rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
 													>
-														<Icon name="file" size={16} />
+														<InstrumentGlyph glyph={part.glyph} size={18} />
 														<span>{part.label}</span>
 														{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
 														{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
