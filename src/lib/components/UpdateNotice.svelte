@@ -4,26 +4,33 @@
 	import Icon from './Icon.svelte';
 
 	/**
-	 * "Neue Version verfügbar · Neu laden" after a deploy (#140). SvelteKit notices a new
-	 * version (it asks every few minutes, and on coming back to the tab); the service worker
-	 * of the new version waits until someone clicks, so nothing reloads while someone types.
+	 * A new version after a deploy (#140), taken in quietly: deploys come several times a day,
+	 * and a notice each time got in the way. SvelteKit notices a new version (it asks every
+	 * few minutes, and on coming back to the tab); the new service worker takes over in the
+	 * background, and the next link opens as a full page load of the new version. Nothing
+	 * reloads by itself, so nothing typed is lost. Only a page left open for long, like the
+	 * parts on a music stand, gets the notice "Neue Version verfügbar · Neu laden".
 	 */
-	let waiting = $state<ServiceWorker | null>(null);
+	const PATIENCE_MS = 60 * 60 * 1000;
+	let overdue = $state(false);
 	let reloading = $state(false);
 
 	$effect(() => {
 		if (!('serviceWorker' in navigator)) return;
 		let registration: ServiceWorkerRegistration | undefined;
+		// Pages always come fresh from the network, so a waiting worker only holds old app files:
+		// it takes over at once. Pages already open keep working, their files then come from the network.
+		const activate = (worker: ServiceWorker) => worker.postMessage('skip-waiting');
 		const watch = (worker: ServiceWorker | null) => {
 			worker?.addEventListener('statechange', () => {
-				if (worker.state === 'installed' && navigator.serviceWorker.controller) waiting = worker;
+				if (worker.state === 'installed' && navigator.serviceWorker.controller) activate(worker);
 			});
 		};
 		const onfound = () => watch(registration?.installing ?? null);
 		navigator.serviceWorker.getRegistration().then((found) => {
 			registration = found;
 			if (!found) return;
-			if (found.waiting && navigator.serviceWorker.controller) waiting = found.waiting;
+			if (found.waiting && navigator.serviceWorker.controller) activate(found.waiting);
 			watch(found.installing);
 			found.addEventListener('updatefound', onfound);
 		});
@@ -35,19 +42,21 @@
 		if (updated.current && 'serviceWorker' in navigator) navigator.serviceWorker.getRegistration().then((found) => found?.update());
 	});
 
+	// Links open as full page loads from now on (SvelteKit reads the attribute up to <body>).
+	$effect(() => {
+		if (!updated.current) return;
+		document.body.dataset.sveltekitReload = '';
+		const timer = setTimeout(() => (overdue = true), PATIENCE_MS);
+		return () => clearTimeout(timer);
+	});
+
 	function reload() {
 		reloading = true;
-		// Only this tab reloads, once the new service worker has taken over; other tabs keep what's typed.
-		if (waiting) {
-			navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
-			waiting.postMessage('skip-waiting');
-			// If the worker doesn't answer, reload anyway: the page is fetched fresh from the network.
-			setTimeout(() => location.reload(), 3000);
-		} else location.reload();
+		location.reload();
 	}
 </script>
 
-{#if updated.current || waiting}
+{#if overdue}
 	<div class="update no-print" role="status">
 		<Icon name="sparkle" size={16} />
 		<span>{t.pwa.newVersion}</span>
