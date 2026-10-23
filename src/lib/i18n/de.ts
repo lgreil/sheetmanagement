@@ -1239,6 +1239,10 @@ export const de = {
 	editor: {
 		orchestras: 'Programm je Orchester',
 		orchestraTab: (orchestra: string) => `Programm ${orchestra}`,
+		jointTab: (orchestras: string[]) => `Gemeinsam: ${orchestras.join(' + ')}`,
+		jointHint: (orchestras: string[]) =>
+			`Stücke, die ${orchestras.join(' und ')} zusammen spielen. Sie stehen in den Drive-Ordnern aller beteiligten Orchester und in „Meine Noten“ aller Mitglieder.`,
+		addJoint: (orchestras: string[]) => `Stücke hinzufügen, die ${orchestras.join(' und ')} zusammen spielen`,
 		suggestions: 'Vorschläge',
 		wished: 'Gewünscht',
 		longAgo: 'Lange nicht gespielt',

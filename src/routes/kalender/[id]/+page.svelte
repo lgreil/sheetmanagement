@@ -13,6 +13,7 @@
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { concertOrchestras, programLabel } from '#lib/repertoire/orchestras.ts';
 
 	let { data, form } = $props();
 	/** The orchestra whose Drive folder is being synced. */
@@ -312,8 +313,8 @@
 		{#each data.program.groups as group (group.orchestra)}
 			<!-- Several orchestras: each programme under its own heading, edited on its own. -->
 			{#if several}
-				<div class="group-head">
-					<h3>{t.editor.orchestraTab(group.orchestra)}</h3>
+				<div class="group-head" class:joint={group.joint}>
+					<h3>{#if group.joint}<Icon name="link" size={16} />{/if}{programLabel(group.orchestra)}</h3>
 					{#if data.program.canEdit}
 						<a href={group.editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>
 					{/if}
@@ -364,6 +365,10 @@
 				<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
 			{/if}
 		{/each}
+		{#if data.program.canEdit && data.program.jointUrl}
+			<!-- Nothing played together yet: one click to the editor's tab for it. -->
+			<a class="add-joint" href={data.program.jointUrl}><Icon name="link" size={16} />{t.editor.addJoint(concertOrchestras(data.program.jointLabel))}</a>
+		{/if}
 		<!-- Where it's kept only matters to those who keep it. -->
 		{#if data.program.canEdit && data.program.items.length}<p class="hint">{t.concert.programHint}</p>{/if}
 	</section>
@@ -929,7 +934,32 @@
 	}
 
 	.group-head h3 {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
 		font-size: 1rem;
+	}
+
+	/* Played together: set apart in the accent colour, so it reads as its own part of the evening. */
+	.group-head.joint h3 {
+		color: var(--accent);
+	}
+
+	.add-joint {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		margin-top: var(--space-4);
+		padding: var(--space-2) var(--space-3);
+		border: 1px dashed var(--border);
+		border-radius: var(--radius-m);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.add-joint:hover {
+		border-color: var(--accent);
 	}
 
 	.group-head a {

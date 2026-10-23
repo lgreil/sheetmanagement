@@ -124,8 +124,8 @@ describe('setUpSheet', () => {
 			undefined,
 			[{ userEnteredValue: "='Stücke'!$A$2:$A" }],
 			[{ userEnteredValue: "='Konzerte'!$B$2:$B" }],
-			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }],
-			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }]
+			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }, { userEnteredValue: 'EO, A' }],
+			[{ userEnteredValue: 'EO' }, { userEnteredValue: 'A' }, { userEnteredValue: 'EO, A' }]
 		]);
 		expect(fake.tabs[9].values[0]).toEqual(['Stück', 'Stimme', 'Status', 'Datei-ID', 'erledigt']);
 		// "erledigt" is a checkbox column.

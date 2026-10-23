@@ -5,6 +5,7 @@
 	import { flip } from 'svelte/animate';
 	import { t } from '#lib/i18n/index.ts';
 	import { searchText } from '#lib/music/text.ts';
+	import { concertOrchestras, isJoint, programLabel } from '#lib/repertoire/orchestras.ts';
 	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
@@ -99,10 +100,11 @@
 					href="?orchester={encodeURIComponent(orchestra)}"
 					data-sveltekit-reload
 				>
-					{t.editor.orchestraTab(orchestra)}
+					{#if isJoint(orchestra)}<Icon name="link" size={14} />{/if}{programLabel(orchestra)}
 				</a>
 			{/each}
 		</nav>
+		{#if isJoint(data.orchestra)}<p class="joint-hint">{t.editor.jointHint(concertOrchestras(data.orchestra))}</p>{/if}
 	{/if}
 
 	{#if data.sharedFrom}
@@ -563,6 +565,9 @@
 	}
 
 	.tab {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
 		padding: 6px 14px;
 		border: 1px solid var(--border);
 		border-radius: 999px;
@@ -575,6 +580,12 @@
 		border-color: var(--accent);
 		background: var(--accent);
 		color: var(--accent-contrast);
+	}
+
+	.joint-hint {
+		margin: calc(-1 * var(--space-2)) 0 var(--space-4);
+		color: var(--text-muted);
+		font-size: 0.875rem;
 	}
 
 	.shared {
