@@ -700,6 +700,7 @@ export const en: Texts = {
 		notNext: 'Not this orchestra’s next concert.',
 		done: (added: number, removed: number) => `Synced: ${added} added, ${removed} taken out.`,
 		removedHint: 'Shortcuts taken out are in the bin.',
+		stuck: (names: string[]) => `Only whoever made it can take out ${names.map((name) => `“${name}”`).join(', ')}: please delete by hand in Drive.`,
 		open: 'Open folder',
 		failed: 'Syncing didn’t work. Is the service account an editor of the folder?',
 		ambiguous: 'Several programme folders and no orchestra on the concert: please enter the orchestra in the sheet.',

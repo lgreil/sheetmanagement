@@ -46,6 +46,8 @@ export interface FolderEntry {
 	name: string;
 	/** For a shortcut: what it points to. Other entries are never touched. */
 	targetId?: string;
+	/** A programme inside this one ("Programm A-Orchester"): its pieces are in both, so it stays. */
+	program?: boolean;
 }
 
 export interface WantedPiece {
@@ -67,7 +69,7 @@ export function planShortcuts(entries: FolderEntry[], wanted: WantedPiece[]): Sh
 	const linked = new Set<string>();
 	const trash: FolderEntry[] = [];
 	for (const entry of entries) {
-		if (!entry.targetId) continue;
+		if (!entry.targetId || entry.program) continue;
 		// A second shortcut to the same piece goes too.
 		if (!wantedIds.has(entry.targetId) || linked.has(entry.targetId)) trash.push(entry);
 		else linked.add(entry.targetId);

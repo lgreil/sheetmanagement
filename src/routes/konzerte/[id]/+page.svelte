@@ -322,7 +322,7 @@
 						<strong>{t.currentProgram.title}</strong>
 						<span>
 							{#if result}
-								{t.currentProgram.done(result.added.length, result.removed.length)}{#if result.removed.length}{' '}{t.currentProgram.removedHint}{/if}
+								{t.currentProgram.done(result.added.length, result.removed.length)}{#if result.removed.length}{' '}{t.currentProgram.removedHint}{/if}{#if result.stuck.length}{' '}{t.currentProgram.stuck(result.stuck)}{/if}
 							{:else if !drive.program}
 								{t.currentProgram.noFolder(drive.orchestra)}
 							{:else if drive.linked === drive.total && !drive.extra.length}
