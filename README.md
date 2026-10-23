@@ -71,7 +71,7 @@ Everything works, including the editors, but changes stay in memory: they're gon
 4. Connect Google Drive, Calendar and Sheets, and turn on sign-in: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
 5. Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
 
-The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret.
+The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret. It also sets up a Durable Object (`SHEET_LOCK`, free plan) that lets saves to the sheet take turns, so two people saving at once don't end up in each other's rows; it stores nothing. `pnpm build` adds it to the worker (`scripts/wrap-worker.mjs`).
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 

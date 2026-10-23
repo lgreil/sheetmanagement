@@ -134,7 +134,7 @@ async function approve(list: string[]) {
 	);
 	if (!plan.remove.length) return t.admin.requestGone;
 	if (plan.add.length) await appendRecords('members', members, plan.add);
-	await deleteRows('requests', plan.remove);
+	await deleteRows('requests', requests, plan.remove);
 }
 
 async function decline(list: string[]) {
@@ -142,6 +142,7 @@ async function decline(list: string[]) {
 	const requests = await readTab('requests');
 	await deleteRows(
 		'requests',
+		requests,
 		requests.rows.filter((row) => wanted.has(normalizeEmail(row.values.email))).map((row) => row.row)
 	);
 }
@@ -187,6 +188,7 @@ export const actions: Actions = {
 			const members = await readTab('members');
 			await deleteRows(
 				'members',
+				members,
 				members.rows.filter((row) => normalizeEmail(row.values.email) === email).map((row) => row.row)
 			);
 		}),
@@ -230,7 +232,7 @@ export const actions: Actions = {
 			// The row number plus the part name, so a row that moved in the meantime isn't deleted by mistake.
 			const target = table.rows.find((r) => r.row === row && normalize(r.values.part) === normalize(field(data, 'part')));
 			if (!target) return t.admin.groupGone;
-			await deleteRows('instrumentGroups', [target.row]);
+			await deleteRows('instrumentGroups', table, [target.row]);
 		}),
 
 	/**
@@ -281,7 +283,7 @@ export const actions: Actions = {
 				wanted
 			);
 			if (plan.add.length) await appendRecords('rights', rights, plan.add.map((right) => ({ who: group?.values.name ?? name, right })));
-			await deleteRows('rights', plan.remove);
+			await deleteRows('rights', rights, plan.remove);
 		}),
 
 	/** Removes a role and its rights. Members keep the name in "Gruppen" until edited; it grants nothing. */
@@ -294,8 +296,8 @@ export const actions: Actions = {
 				name,
 				[]
 			);
-			await deleteRows('rights', plan.remove);
-			await deleteRows('groups', groups.rows.filter((row) => normalize(row.values.name) === normalize(name)).map((row) => row.row));
+			await deleteRows('rights', rights, plan.remove);
+			await deleteRows('groups', groups, groups.rows.filter((row) => normalize(row.values.name) === normalize(name)).map((row) => row.row));
 		}),
 
 	/** Adds the preset roles that are missing, with their rights. */
@@ -316,6 +318,7 @@ export const actions: Actions = {
 			const rights = await readTab('rights');
 			await deleteRows(
 				'rights',
+				rights,
 				rights.rows.filter((row) => whoKey(row.values.who) === who && row.values.right.trim().toLowerCase() === right).map((row) => row.row)
 			);
 		})

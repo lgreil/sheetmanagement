@@ -968,7 +968,21 @@ export const de = {
 		signInMissing: 'GOOGLE_OAUTH_CLIENT_ID ist nicht gesetzt.',
 		signInMissingHint: 'Bis dahin ist die App für alle offen und nur lesbar. Siehe Anleitung, Schritt 9.',
 		redirectUri: (uri: string) => `Weiterleitungs-URI: ${uri}`,
-		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`
+		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
+		/** Background jobs (#160). */
+		jobs: 'Hintergrundaufgaben',
+		jobNames: { warm: 'Caches füllen' },
+		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatisch' : 'per Knopf'}, ${ms} ms`,
+		jobNever: (name: string) => `${name}: noch nie gelaufen`,
+		jobsNever: 'Noch keine Aufgabe ist von selbst gelaufen.',
+		jobsNeverHint: 'Nach dem Deploy laufen sie alle 10 Minuten von selbst (Cron Trigger). Lokal und in der Demo nur mit dem Knopf unten.',
+		jobFailed: (name: string, message: string) => `${name} ist fehlgeschlagen: ${message}`,
+		jobsStale: (when: string) => `Seit ${when} ist keine Aufgabe mehr von selbst gelaufen.`,
+		jobsStaleHint: 'Prüfe im Cloudflare-Dashboard beim Worker unter „Settings → Triggers“, ob der Cron Trigger da ist.',
+		runJob: (name: string) => `${name} jetzt ausführen`,
+		warmSources: { archive: 'Archiv', calendar: 'Kalender', sheet: 'Tabelle' },
+		warmDone: 'Archiv, Kalender und Tabelle geladen.',
+		warmFailed: (sources: string) => `Nicht geladen: ${sources}.`
 	},
 	setup: {
 		title: 'Repertoire-Tabelle einrichten',
@@ -1374,6 +1388,10 @@ export const de = {
 		loading: 'Seite lädt',
 		saveFailed: 'Speichern hat nicht geklappt. Deine Eingaben sind noch da – bitte versuch es noch einmal.',
 		saveUnavailable: 'Google antwortet nicht, nichts gespeichert. Deine Eingaben sind noch da.',
+		/** A row the save was going to change was changed or deleted in the meantime (#156). */
+		sheetChanged: 'Jemand hat das inzwischen in der Tabelle geändert. Lade die Seite neu und mach deine Änderung noch einmal.',
+		/** Other saves took too long; nothing was saved. */
+		sheetBusy: 'Gerade speichern viele gleichzeitig. Bitte gleich noch einmal versuchen.',
 		unsaved: 'Deine Änderungen sind noch nicht gespeichert. Seite trotzdem verlassen?',
 		share: 'Teilen',
 		copied: 'Kopiert. Jetzt z. B. in WhatsApp einfügen.',

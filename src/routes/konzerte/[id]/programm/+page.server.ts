@@ -130,7 +130,7 @@ export const actions: Actions = {
 			const plan = planProgramSave(table, sheet.title, entries);
 			// New rows first: if deleting the old ones fails, nothing is lost, only doubled.
 			await appendRecords('program', table, plan.append);
-			await deleteRows('program', plan.remove);
+			await deleteRows('program', table, plan.remove);
 			// A concert that played another one's programme now has its own.
 			if (sheet.sameProgramAs) await clearShare(sheet.title);
 			// Wishes taken into the programme become "geplant"; the programme counts even if this fails.
@@ -166,7 +166,7 @@ export const actions: Actions = {
 			if (!row) return fail(409, { message: t.editor.notInSheet });
 			// The column first: if that fails, the old programme is still there.
 			await updateRecord('concerts', concerts, row.row, { sameProgramAs: source.sheet.title });
-			await deleteRows('program', planProgramSave(table, sheet.title, []).remove);
+			await deleteRows('program', table, planProgramSave(table, sheet.title, []).remove);
 			await refreshAfterWrite();
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: t.editor.shareNeedsSetup });

@@ -80,7 +80,7 @@ export const actions: Actions = {
 			const plan = planRehearsalSave(table, edit, Object.fromEntries(rehearsals.map((r) => [r.id, label(r)])));
 			// New rows first: if deleting the old ones fails, nothing is lost, only doubled.
 			await appendRecords('rehearsals', table, plan.append);
-			await deleteRows('rehearsals', plan.remove);
+			await deleteRows('rehearsals', table, plan.remove);
 			await refreshAfterWrite();
 		} catch (cause) {
 			if (cause instanceof SheetLayoutError) return fail(409, { message: t.rehearsalPlan.notSetUp });

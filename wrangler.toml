@@ -14,6 +14,22 @@ keep_vars = true
 [[kv_namespaces]]
 binding = "CACHE"
 
+# The queue for writes to the Repertoire sheet (#156): saves from all Worker instances
+# take turns, so two at once don't land in each other's rows. Free plan (SQLite-backed
+# class); it stores nothing. The class is exported by scripts/wrap-worker.mjs.
+[[durable_objects.bindings]]
+name = "SHEET_LOCK"
+class_name = "SheetWriteLock"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["SheetWriteLock"]
+
+# Background jobs (#160): one trigger that runs whatever is due, see src/lib/server/jobs/.
+# scripts/wrap-worker.mjs adds the handler to the worker.
+[triggers]
+crons = ["*/10 * * * *"]
+
 [assets]
 binding = "ASSETS"
 directory = ".svelte-kit/cloudflare"
@@ -21,7 +37,10 @@ directory = ".svelte-kit/cloudflare"
 # Demo with invented sample data instead of Google, signed in as a demo user (#121).
 # Locally: pnpm dev:demo. Deployed: pnpm build && pnpm wrangler deploy --env demo
 # (a separate Worker, "noten-demo"; it needs no secrets). Bindings aren't inherited, so the
-# demo runs without the KV cache, which it doesn't need.
+# demo runs without the KV cache and the sheet lock, which it doesn't need (Wrangler warns
+# about both; that's expected).
 [env.demo]
 name = "noten-demo"
+# Nothing runs on its own in the demo; /status can start a job by hand.
+triggers = { crons = [] }
 vars = { DEMO = "true", ORCHESTRA_NAME = "Musterorchester", ORCHESTRA_SHORT_NAME = "Muster", ORCHESTRA_LOGO = "/demo/musterorchester.svg", ORCHESTRA_ACCENT = "#2c5d8f" }

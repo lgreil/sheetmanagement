@@ -1,4 +1,6 @@
-import type { PageServerLoad } from './$types';
+import { fail } from '@sveltejs/kit';
+import type { Actions, PageServerLoad } from './$types';
+import { isJobName, JOB_NAMES, JOBS, lastRuns, runJob, type JobName } from '#lib/server/jobs/index.ts';
 import { config } from '#lib/config/index.ts';
 import { contrast } from '#lib/branding.ts';
 import { FEATURES } from '#lib/features.ts';
@@ -223,5 +225,40 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck() } };
+	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck() }, jobs: JOB_NAMES };
 };
+
+export const actions: Actions = {
+	/** Starts a job by hand (#160), e.g. to try it after a deploy or in the demo. */
+	runJob: async ({ request, locals }) => {
+		requireAdminWhenSignInIsOn(locals);
+		const name = String((await request.formData()).get('job') ?? '');
+		if (!isJobName(name)) return fail(400);
+		const run = await runJob(name, false);
+		return { job: name, ok: run.ok, summary: run.summary };
+	}
+};
+
+/** When the jobs last ran; a trigger that stopped firing shows as an error (#160). */
+async function jobsCheck(): Promise<Check> {
+	const runs = await lastRuns();
+	const label = (name: JobName) => t.status.jobNames[name];
+	const failed = JOB_NAMES.filter((name) => runs[name] && !runs[name].ok);
+	const lastAuto = Math.max(0, ...JOB_NAMES.map((name) => (runs[name]?.auto ? runs[name].at : 0)));
+	const longest = Math.max(...JOB_NAMES.map((name) => JOBS[name].everyMinutes));
+	const stale = lastAuto > 0 && Date.now() - lastAuto > 3 * longest * 60 * 1000;
+	return {
+		state: failed.length || stale ? 'error' : lastAuto ? 'ok' : 'missing',
+		details: JOB_NAMES.map((name) => {
+			const run = runs[name];
+			return run ? `${t.status.jobRun(label(name), dateTime.format(new Date(run.at)), run.auto, run.ms)} · ${run.summary}` : t.status.jobNever(label(name));
+		}),
+		problem:
+			[
+				...failed.map((name) => t.status.jobFailed(label(name), runs[name]!.summary)),
+				...(stale ? [t.status.jobsStale(dateTime.format(new Date(lastAuto)))] : []),
+				...(lastAuto ? [] : [t.status.jobsNever])
+			].join(' ') || undefined,
+		hint: stale ? t.status.jobsStaleHint : lastAuto ? undefined : t.status.jobsNeverHint
+	};
+}

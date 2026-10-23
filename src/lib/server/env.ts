@@ -6,6 +6,7 @@ import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/featu
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
 import type { KvStore } from './cache.ts';
 import { t } from '#lib/i18n/index.ts';
+import type { LockNamespace } from './sheet-lock.ts';
 
 /**
  * Deployment settings. Set them with `wrangler secret put <NAME>` in production
@@ -48,6 +49,8 @@ export interface AppEnv {
 	DEMO?: string;
 	/** KV namespace binding from wrangler.toml; optional, memory is used without it. */
 	CACHE?: KvStore;
+	/** Durable Object binding from wrangler.toml: the queue for writes to the sheet (#156). Optional. */
+	SHEET_LOCK?: LockNamespace;
 }
 
 export function appEnv(): AppEnv {

@@ -7,7 +7,7 @@ import { eventDay } from '#lib/repertoire/dates.ts';
 import { runInBackground } from './env.ts';
 import { createComment, createGoogleDoc, getFile, renameFile, replyToComment } from './google/drive.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle } from './services.ts';
-import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord, updateRecords } from './sheet-writes.ts';
+import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord, updateRecords, withSheetLock } from './sheet-writes.ts';
 
 /**
  * Writes for problem reports and wishes. Like the programme editor, every change starts
@@ -192,18 +192,21 @@ export async function addWish(
  * "Wieder spielen" on a piece page: the +1 on the piece's open or planned wish, or a new
  * wish with the user's +1 when there is none. Returns whether the user now wants it.
  */
-export async function playAgain(piece: { id: string; title: string; composer?: string }, user: User): Promise<boolean> {
-	const table = await readTab('wishes');
-	const open = [t.feedbackValues.wishStatus.open, t.feedbackValues.wishStatus.planned].map((label) => label.toLowerCase());
-	const row = table.rows.find((r) => r.values.pieceId === piece.id && open.includes(r.values.status.trim().toLowerCase()));
-	if (!row) {
-		await addWish(user, { kind: 'piece', title: piece.title, composer: piece.composer ?? '', link: '', description: '', pieceId: piece.id }, { vote: true });
-		return true;
-	}
-	const votes = toggleVote(parseVotes(row.values.votes), user.email);
-	await updateRecord('wishes', table, row.row, { votes: votes.join(', ') });
-	await refreshAfterWrite();
-	return votes.includes(normalizeEmail(user.email));
+export function playAgain(piece: { id: string; title: string; composer?: string }, user: User): Promise<boolean> {
+	// Read and write in one turn, so two +1 in the same second don't make two wishes.
+	return withSheetLock(async () => {
+		const table = await readTab('wishes');
+		const open = [t.feedbackValues.wishStatus.open, t.feedbackValues.wishStatus.planned].map((label) => label.toLowerCase());
+		const row = table.rows.find((r) => r.values.pieceId === piece.id && open.includes(r.values.status.trim().toLowerCase()));
+		if (!row) {
+			await addWish(user, { kind: 'piece', title: piece.title, composer: piece.composer ?? '', link: '', description: '', pieceId: piece.id }, { vote: true });
+			return true;
+		}
+		const votes = toggleVote(parseVotes(row.values.votes), user.email);
+		await updateRecord('wishes', table, row.row, { votes: votes.join(', ') });
+		await refreshAfterWrite();
+		return votes.includes(normalizeEmail(user.email));
+	});
 }
 
 /** Taking suggestions into a programme: their wishes become "geplant". Already closed ones stay. */
@@ -219,13 +222,17 @@ export async function planWishes(ids: string[]): Promise<void> {
 
 /** Gives or takes back the user's +1. False when the wish no longer exists. */
 export async function voteOnWish(id: string, user: User): Promise<boolean> {
-	const table = await readTab('wishes');
-	const row = table.rows.find((r) => r.values.id === id);
-	if (!row) return false;
-	const votes = toggleVote(parseVotes(row.values.votes), user.email);
-	await updateRecord('wishes', table, row.row, { votes: votes.join(', ') });
-	await refreshAfterWrite();
-	return true;
+	// Read and write in one turn, so two +1 in the same second both count.
+	const found = await withSheetLock(async () => {
+		const table = await readTab('wishes');
+		const row = table.rows.find((r) => r.values.id === id);
+		if (!row) return false;
+		const votes = toggleVote(parseVotes(row.values.votes), user.email);
+		await updateRecord('wishes', table, row.row, { votes: votes.join(', ') });
+		return true;
+	});
+	if (found) await refreshAfterWrite();
+	return found;
 }
 
 export async function setWishStatus(id: string, status: WishStatus, answer: string): Promise<boolean> {
@@ -244,7 +251,7 @@ export async function deleteWish(id: string, user: User, admin: boolean): Promis
 	if (!row) return false;
 	const wish = { submittedBy: row.values.submittedBy, status: readWishStatus(row.values.status) };
 	if (!mayDeleteWish(wish, user.email, admin)) return 'forbidden';
-	await deleteRows('wishes', [row.row]);
+	await deleteRows('wishes', table, [row.row]);
 	await refreshAfterWrite();
 	return true;
 }

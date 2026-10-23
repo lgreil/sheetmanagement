@@ -4,7 +4,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
 
 	const rows = $derived([
 		{ label: t.status.account, check: data.checks.account },
@@ -12,7 +12,8 @@
 		{ label: t.status.calendar, check: data.checks.calendar },
 		{ label: t.status.sheet, check: data.checks.sheet },
 		{ label: t.status.signIn, check: data.checks.signIn },
-		{ label: t.status.look, check: data.checks.look }
+		{ label: t.status.look, check: data.checks.look },
+		{ label: t.status.jobs, check: data.checks.jobs }
 	]);
 
 	const icons: Record<string, IconName> = { ok: 'check', error: 'alert', missing: 'minus' };
@@ -45,11 +46,23 @@
 			{t.status.refresh}
 		</a>
 	{/if}
+	{#each data.jobs as job (job)}
+		<form method="POST" action="?/runJob">
+			<input type="hidden" name="job" value={job} />
+			<button class="button secondary" type="submit">
+				<Icon name="refresh" size={16} />
+				{t.status.runJob(t.status.jobNames[job])}
+			</button>
+		</form>
+	{/each}
 	{#if data.checks.account.state === 'ok'}
 		<a class="link" href="/setup">{t.status.setupSheet}</a>
 	{/if}
 	<a class="link" href="https://github.com/lgreil/sheetmanagement/blob/main/docs/setup-google.md">{t.status.setupGuide}</a>
 </div>
+{#if form?.job}
+	<p class="result" class:problem={!form.ok} role="status">{t.status.jobNames[form.job]}: {form.summary}</p>
+{/if}
 <p class="version">{t.nav.appName} v{__APP_VERSION__}</p>
 
 <style>
@@ -144,6 +157,19 @@
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font-weight: 600;
+	}
+
+	.button.secondary {
+		border: 1px solid var(--border);
+		background: var(--surface);
+		color: var(--text);
+		font: inherit;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.result {
+		margin-top: var(--space-4);
 	}
 
 	.link {
