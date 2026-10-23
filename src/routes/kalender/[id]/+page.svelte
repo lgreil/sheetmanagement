@@ -538,13 +538,14 @@
 		line-height: 1.1;
 	}
 
-	.head.konzert .tile {
+	.head.konzert:not(.past) .tile {
 		background: var(--accent);
 		color: var(--accent-contrast);
 	}
 
-	.head.past .tile {
-		opacity: 0.6;
+	/* Over: a quieter tile, still readable. */
+	.head.past {
+		--tone: var(--text-muted);
 	}
 
 	.tile .weekday,
