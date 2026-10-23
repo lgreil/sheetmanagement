@@ -4,15 +4,17 @@ import { config } from '#lib/config/index.ts';
 import { coverage, formatInstrument, parseInstruments, playableInstruments, playedParts, programInstruments } from '#lib/music/my-parts.ts';
 import { t } from '#lib/i18n/index.ts';
 import { ANSWERS, coverage as signupCoverage, totals, type Answer } from '#lib/signups/signups.ts';
-import { requireRight } from '#lib/server/auth/index.ts';
 import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
-import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
+import { requireRight } from '#lib/server/auth/index.ts';
+import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
+import { formatDay } from '#lib/events/format.ts';
 import { concertCheck } from '#lib/repertoire/concert-check.ts';
 import { reportGaps } from '#lib/repertoire/music-report.ts';
 import { loansOf } from '#lib/loans/loans.ts';
@@ -234,6 +236,38 @@ async function openWishes(concertTitle: string) {
 	).length;
 }
 
+const isRehearsal = (event: ShownEvent) => event.type === 'probe' || event.type === 'generalprobe';
+/** A rehearsal can get its note once it has begun. */
+const hasBegun = (event: ShownEvent) => event.past || event.daysUntil <= 0;
+
+const shownNote = (note: RehearsalNote) => ({
+	done: note.done,
+	practise: note.practise,
+	next: note.next,
+	by: note.by,
+	at: /^\d{4}-\d{2}-\d{2}$/.test(note.at) ? formatDay(note.at, config.locale) : note.at
+});
+
+/**
+ * What a rehearsal did and what comes next (#145): its own note once it has begun; before
+ * it, the note of the rehearsal before, so members know what to practise for it.
+ */
+async function rehearsalNote(event: ShownEvent, events: ShownEvent[], locals: App.Locals) {
+	if (!isRehearsal(event)) return null;
+	const notes = (await getRehearsalNotes()).byEvent;
+	const own = notes.get(event.id);
+	const canWrite = locals.access.rights.has('programme.bearbeiten') && hasBegun(event);
+	const rehearsals = events.filter(isRehearsal);
+	const before = !own && !hasBegun(event) ? rehearsals[rehearsals.findIndex((e) => e.id === event.id) - 1] : undefined;
+	const previous = before && notes.get(before.id);
+	if (!own && !previous && !canWrite) return null;
+	return {
+		note: own ? shownNote(own) : null,
+		canWrite,
+		previous: before && previous ? { id: before.id, date: before.date.long, note: shownNote(previous) } : null
+	};
+}
+
 const mapUrl = (location: string | undefined) =>
 	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;
 
@@ -310,6 +344,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		signups: await signups(event, orchestra, locals),
 		attendance: await attendance(event, library, plan, locals),
 		attendanceSaved: url.searchParams.has('anwesenheit'),
+		rehearsalNote: await rehearsalNote(event, schedule.ok ? schedule.events : [], locals),
 		event: { ...event, description: plainText(event.description) },
 		rehearsals: event.rehearsalIds
 			.map(lookup)
@@ -385,5 +420,38 @@ export const actions: Actions = {
 			console.error('Syncing the current programme failed:', cause);
 			return fail(503, { currentProgramError: t.currentProgram.failed });
 		}
+	},
+
+	/** Saves the rehearsal's note (#145); all fields empty removes it. One row per rehearsal. */
+	rehearsalNote: async ({ request, locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const library = await getLibrary();
+		const event = library.schedule.ok ? library.schedule.byId.get(params.id) : undefined;
+		if (!event || !isRehearsal(event) || !hasBegun(event)) return fail(404, { rehearsalNoteError: t.rehearsalNotes.gone });
+		const data = await request.formData();
+		const input = { done: formText(data, 'done', 2000), practise: formText(data, 'practise', 2000), next: formText(data, 'next', 2000) };
+		const values = checkRehearsalNote(input);
+		if (!values) return fail(400, { rehearsalNoteError: t.rehearsalNotes.tooLong, rehearsalNoteValues: input });
+		try {
+			await ensureTab('rehearsalNotes');
+			const table = await readTab('rehearsalNotes');
+			const rows = table.rows.filter((row) => row.values.eventId === event.id);
+			const signed = { ...values, by: locals.access.user?.name ?? '', at: today() };
+			if (isEmptyNote(values)) {
+				await deleteRows('rehearsalNotes', rows.map((row) => row.row));
+			} else if (rows.length) {
+				// The last row is the one shown; extra rows entered by hand go.
+				await updateRecord('rehearsalNotes', table, rows.at(-1)!.row, signed);
+				await deleteRows('rehearsalNotes', rows.slice(0, -1).map((row) => row.row));
+			} else {
+				await appendRecords('rehearsalNotes', table, [{ rehearsal: `${event.displayTitle} · ${event.date.long}`, ...signed, eventId: event.id }]);
+			}
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { rehearsalNoteError: t.rehearsalNotes.notSetUp, rehearsalNoteValues: input });
+			console.error('Saving a rehearsal note failed:', cause);
+			return fail(503, { rehearsalNoteError: t.rehearsalNotes.failed, rehearsalNoteValues: input });
+		}
+		return { rehearsalNoteSaved: true };
 	}
 };

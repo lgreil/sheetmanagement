@@ -10,6 +10,7 @@
 	import { partGlyph } from '#lib/music/instrument-glyph.ts';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
 	import PieceArt from '#lib/components/PieceArt.svelte';
+	import PieceNotes from '#lib/components/PieceNotes.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
@@ -209,6 +210,8 @@
 	bind:open={reporting}
 	bind:fileId={reportFile}
 />
+
+<PieceNotes notes={data.notes} result={form} />
 
 {#if data.upcoming.length}
 	<!-- Where the piece is next: the concert it's played at and the rehearsals that plan it. -->

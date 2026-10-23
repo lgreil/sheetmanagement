@@ -8,7 +8,8 @@ import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
 import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
 import { getLibrary, isPastConcert, namedItem, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList, getMusicConfig, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { getAccessList, getMusicConfig, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { appliesTo, forConcert, notesOf } from '#lib/notes/piece-notes.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -58,13 +59,14 @@ async function rehearsalOf(library: Library, id: string | null) {
 		id: event.id,
 		title: event.displayTitle,
 		label: [event.date.long, event.date.time].filter(Boolean).join(' · '),
+		concert: event.concertId ? library.concertsById.get(event.concertId) : undefined,
 		items: planned.length ? plannedInProgramOrder(program, planned) : program,
 		note: planned.length ? undefined : program.length ? t.myParts.wholeProgram : undefined
 	};
 }
 
 export const load: PageServerLoad = async ({ url, cookies, locals }) => {
-	const [library, access, music] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig()]);
+	const [library, access, music, pieceNotes] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig(), getPieceNotes()]);
 	const rehearsal = await rehearsalOf(library, url.searchParams.get('probe'));
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
 
@@ -74,11 +76,21 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const choices = parseInstruments(text, config);
 
 	const { shown: concerts, focus } = pickConcerts(library.concerts, library.today, url.searchParams.get('konzert'), member);
-	const piecesOf = (items: ProgramItem[]) =>
+	// Notes from rehearsals (#125) for the member's instruments and this concert, newest first.
+	const instruments = choices.map((choice) => choice.instrument);
+	const notesFor = (item: ProgramItem, concert: LibraryConcert | undefined) => {
+		const name = (item.pieceId ? library.piecesById.get(item.pieceId)?.sheet?.title : undefined) ?? item.title;
+		const concertTitle = concert?.sheet?.title ?? concert?.title;
+		return notesOf(pieceNotes.notes, name)
+			.filter((note) => forConcert(note, concertTitle) && appliesTo(note, instruments, config))
+			.map((note) => ({ text: note.text, section: note.section }));
+	};
+	const piecesOf = (items: ProgramItem[], concert: LibraryConcert | undefined) =>
 		items.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
 			return {
+				notes: notesFor(item, concert),
 				position: item.position,
 				title: item.title,
 				subtitle: item.subtitle,
@@ -105,13 +117,13 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 		common: commonInstruments(config),
 		concerts: [
 			// A rehearsal asked for in the URL comes first, above the concerts.
-			...(rehearsal ? [{ id: rehearsal.id, title: rehearsal.title, label: rehearsal.label, note: rehearsal.note, pieces: piecesOf(rehearsal.items) }] : []),
+			...(rehearsal ? [{ id: rehearsal.id, title: rehearsal.title, label: rehearsal.label, note: rehearsal.note, pieces: piecesOf(rehearsal.items, rehearsal.concert) }] : []),
 			...concerts.map((concert) => ({
 				id: concert.id,
 				title: concert.title,
 				label: concert.label?.long,
 				note: undefined as string | undefined,
-				pieces: piecesOf(concert.program)
+				pieces: piecesOf(concert.program, concert)
 			}))
 		],
 		focus: rehearsal?.id ?? focus?.id ?? null,

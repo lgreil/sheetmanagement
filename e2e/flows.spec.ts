@@ -51,7 +51,7 @@ test('a YouTube link is saved clean (#133)', async ({ page }) => {
 
 test('several composers, separated by commas', async ({ page }) => {
 	await open(page, '/stuecke/demo-egmont/bearbeiten');
-	await page.getByLabel('Komponist').fill('Beethoven ,Mozart;');
+	await page.getByLabel('Komponist', { exact: true }).fill('Beethoven ,Mozart;');
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page).toHaveURL(/\/stuecke\/demo-egmont(\?|$)/);
 	// Each composer links to their works; the Mozart list now has Egmont too.
@@ -145,4 +145,50 @@ test('a date poll from start to calendar (#95)', async ({ page }) => {
 
 	await page.getByRole('button', { name: /Diesen nehmen \(Samstag, 10\. Juli 2027/ }).click();
 	await expect(page.getByRole('link', { name: 'In Google Kalender eintragen' })).toHaveAttribute('href', /dates=20270710T180000/);
+});
+
+test('a note on a piece reaches the section’s Meine Noten (#125)', async ({ page }) => {
+	await open(page, '/stuecke/demo-morgenstimmung');
+	await page.getByText('Hinweis hinzufügen').click();
+	await page.getByRole('textbox', { name: 'Hinweis' }).fill('Takt 12 bis 20 nur die Hälfte der Geigen');
+	await page.locator('select[name="section"]').selectOption('Streicher');
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Hinweis gespeichert.')).toBeVisible();
+	await expect(page.getByText('Für Streicher').first()).toBeVisible();
+	// Mia plays Geige II: the note shows next to her part.
+	await resetDemo(page, 'mitglied');
+	await open(page, '/meine-noten');
+	await expect(page.getByText('Takt 82–96: Bogen ab Saite, kurz und leicht.').first()).toBeVisible();
+	await open(page, '/meine-noten?instrument=Flöte');
+	await expect(page.getByText('Takt 82–96: Bogen ab Saite, kurz und leicht.')).toHaveCount(0);
+	await expect(page.getByText('Ohne Wiederholung der Exposition').first()).toBeVisible();
+});
+
+test('a rehearsal note shows on the start page until the next rehearsal (#145)', async ({ page }) => {
+	await open(page, '/konzerte/demo-probe-2');
+	await page.getByRole('button', { name: 'Notiz bearbeiten' }).click();
+	await page.getByRole('textbox', { name: 'Zum Üben' }).fill('Egmont ab Buchstabe C langsam');
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Notiz gespeichert.')).toBeVisible();
+	await open(page, '/');
+	await expect(page.getByText(/Aus der Probe am/)).toBeVisible();
+	await expect(page.getByText('Egmont ab Buchstabe C langsam')).toBeVisible();
+	// Before the next rehearsal, its page says what to prepare.
+	await open(page, '/konzerte/demo-probe-3');
+	await expect(page.getByRole('heading', { name: /Aus der letzten Probe/ })).toBeVisible();
+	await expect(page.getByText('Egmont ab Buchstabe C langsam')).toBeVisible();
+});
+
+test('a member downloads their own data (#158)', async ({ page }) => {
+	await resetDemo(page, 'mitglied');
+	await open(page, '/profil');
+	const download = page.waitForEvent('download');
+	await page.getByRole('link', { name: 'Meine Daten herunterladen' }).click();
+	const file = await download;
+	expect(file.suggestedFilename()).toBe('meine-daten-mia-example-org.json');
+	const body = await (await page.request.get('/profil/daten.json')).json();
+	expect(body.email).toBe('mia@example.org');
+	expect(body.data['Mitglieder'][0]['Name']).toBe('Mia Beispiel');
+	// Who else gave a wish a +1 stays out.
+	expect(JSON.stringify(body)).not.toContain('lea@example.org');
 });

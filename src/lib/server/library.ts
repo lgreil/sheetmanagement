@@ -235,6 +235,7 @@ export function reportPieces(library: Library, concert: LibraryConcert): ReportP
 			pieceId: item.pieceId,
 			title: item.title,
 			composer: piece?.composer,
+			composerFull: piece?.sheet?.composerFull,
 			arranger: piece?.sheet?.arranger,
 			publisher: piece?.sheet?.publisher,
 			duration: item.duration

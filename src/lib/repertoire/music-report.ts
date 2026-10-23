@@ -11,7 +11,10 @@ import { formatDuration } from './duration.ts';
 export interface ReportPiece {
 	pieceId?: string;
 	title: string;
+	/** As the archive writes it, often only the surname. */
 	composer?: string;
+	/** "Ludwig van Beethoven" (#146): what the society wants; used instead of the composer when there is one. */
+	composerFull?: string;
 	arranger?: string;
 	publisher?: string;
 	/** Seconds. */
@@ -20,7 +23,8 @@ export interface ReportPiece {
 
 /** What the society needs for every piece; the arranger only exists for arrangements. */
 export const REQUIRED = ['composer', 'publisher', 'duration'] as const;
-export type RequiredField = (typeof REQUIRED)[number];
+/** A known composer without the full name is a gap of its own: the list then has only the surname. */
+export type RequiredField = (typeof REQUIRED)[number] | 'composerFull';
 
 export interface ReportGap {
 	pieceId?: string;
@@ -31,7 +35,13 @@ export interface ReportGap {
 /** Pieces with something missing, in programme order, so it can be filled in before the export. */
 export function reportGaps(pieces: ReportPiece[]): ReportGap[] {
 	return pieces
-		.map((piece) => ({ pieceId: piece.pieceId, title: piece.title, missing: REQUIRED.filter((field) => !piece[field]) }))
+		.map((piece) => ({
+			pieceId: piece.pieceId,
+			title: piece.title,
+			missing: REQUIRED.flatMap((field): RequiredField[] =>
+				field !== 'composer' ? (piece[field] ? [] : [field]) : piece.composerFull ? [] : [piece.composer ? 'composerFull' : 'composer']
+			)
+		}))
 		.filter((gap) => gap.missing.length);
 }
 
@@ -43,7 +53,7 @@ export function reportRows(pieces: ReportPiece[]): string[][] {
 		...pieces.map((piece, i) => [
 			String(i + 1),
 			piece.title,
-			piece.composer ?? '',
+			piece.composerFull ?? piece.composer ?? '',
 			piece.arranger ?? '',
 			piece.publisher ?? '',
 			piece.duration ? formatDuration(piece.duration) : ''

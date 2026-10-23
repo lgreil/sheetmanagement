@@ -284,6 +284,8 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			...PIECES.map((p) => ({
 				title: p.title,
 				composer: p.composer?.split(' ').at(-1) ?? '',
+				// The full name for the GEMA list (#146), filled in for some, so the gaps show.
+				composerFull: ['demo-egmont', 'demo-nachtmusik', 'demo-jesu', 'demo-sleigh'].includes(p.id) ? (p.composer ?? '') : '',
 				arranger: p.arranger ?? '',
 				duration: p.duration ?? '',
 				publisher: p.publisher ?? '',
@@ -293,8 +295,13 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			{ title: 'Ungarischer Tanz Nr. 5', composer: 'Brahms', genre: 'Romantik' }
 		]),
 		tab('concerts', [
+			// The orchestra's history for the Chronik (#61): some only known by year or month.
 			{ date: '1962-12', title: 'Weihnachtskonzert 1962', location: 'Alte Turnhalle', orchestra: 'EO' },
+			{ date: '1975', title: 'Sommerkonzert 1975', location: 'Stadtpark', orchestra: 'EO' },
+			{ date: '1987-10-03', title: 'Jubiläumskonzert 25 Jahre', location: 'Stadthalle Musterstadt', orchestra: 'EO' },
 			{ date: '1998-04', title: 'Frühjahrskonzert 1998', orchestra: 'EO' },
+			{ date: '2004-12-18', title: 'Weihnachtskonzert 2004', location: 'Kirche am Markt', orchestra: 'EO' },
+			{ date: '2012-05', title: 'Frühjahrskonzert 2012', location: 'Aula, Musterschule', orchestra: 'EO' },
 			{ date: at(-60), title: sommer, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-sommerkonzert' },
 			{ date: at(25), title: herbst, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-herbstkonzert' },
 			{ date: at(60), title: weihnacht, location: 'Kirche am Markt', orchestra: 'EO', eventId: 'demo-weihnacht-1' },
@@ -302,7 +309,11 @@ export function demoSheet(now: number): Map<string, string[][]> {
 		]),
 		tab('program', [
 			...program('Weihnachtskonzert 1962', ['Stille Nacht', 'Ungarischer Tanz Nr. 5']),
+			...program('Sommerkonzert 1975', [titles['demo-nachtmusik'], 'Ungarischer Tanz Nr. 5']),
+			...program('Jubiläumskonzert 25 Jahre', [titles['demo-egmont'], titles['demo-nachtmusik'], 'Ungarischer Tanz Nr. 5']),
 			...program('Frühjahrskonzert 1998', [titles['demo-nachtmusik'], titles['demo-morgenstimmung']]),
+			...program('Weihnachtskonzert 2004', [titles['demo-stille-nacht'], titles['demo-jesu'], titles['demo-sleigh']]),
+			...program('Frühjahrskonzert 2012', [titles['demo-cancan'], titles['demo-morgenstimmung']]),
 			...program(sommer, [titles['demo-nachtmusik'], titles['demo-007']]),
 			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']]),
 			...program(weihnacht, [titles['demo-sleigh'], titles['demo-jesu'], titles['demo-stille-nacht']])
@@ -397,6 +408,24 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			{ piece: titles['demo-007'], from: 'Notenverleih Muster', borrowedAt: at(-40), dueAt: at(10), notes: 'Leihgebühr 60 €, Rücksendung per Post' },
 			{ piece: titles['demo-egmont'], from: 'Stadtorchester Musterstadt', borrowedAt: at(-30), dueAt: at(45) },
 			{ piece: titles['demo-sleigh'], from: 'Kreismusikschule', borrowedAt: at(-400), dueAt: at(-300), returned: 'TRUE' }
+		]),
+		// Agreed in rehearsal (#125): for the strings, for the coming concert, and an old one.
+		tab('pieceNotes', [
+			{ piece: titles['demo-egmont'], section: t.piece.groups.streicher, note: 'Takt 82–96: Bogen ab Saite, kurz und leicht.', by: 'David Dirigent', at: at(-10), id: 'demo-note-1' },
+			{ piece: titles['demo-egmont'], concert: herbst, note: 'Ohne Wiederholung der Exposition, Sprung von Takt 117 nach 135.', by: 'David Dirigent', at: at(-3), id: 'demo-note-2' },
+			{ piece: titles['demo-nachtmusik'], concert: sommer, note: 'Menuett ohne Wiederholungen.', by: 'David Dirigent', at: at(-70), id: 'demo-note-3' }
+		]),
+		// What the last rehearsal did (#145), for those who missed it.
+		tab('rehearsalNotes', [
+			{
+				rehearsal: label(-3),
+				done: 'Egmont: Durchführung bis Takt 180. Themes from 007 einmal ganz durch.',
+				practise: 'Egmont Takt 82–96 langsam, Streicher mit Bogen ab Saite.',
+				next: 'Morgenstimmung und Eine kleine Nachtmusik, bitte pünktlich zum Stimmen.',
+				by: 'David Dirigent',
+				at: at(-3),
+				eventId: 'demo-probe-2'
+			}
 		]),
 		// Who came to the past rehearsals; Ida missed both.
 		tab('attendance', [

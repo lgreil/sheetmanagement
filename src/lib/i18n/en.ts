@@ -23,6 +23,7 @@ export const en: Texts = {
 		more: 'More',
 		profile: 'Profile',
 		details: 'Complete details',
+		chronicle: 'History',
 		menu: 'All pages',
 		close: 'Close menu',
 		crumbs: 'Breadcrumbs',
@@ -72,6 +73,7 @@ export const en: Texts = {
 		describe: {
 			'/meine-noten': 'Your parts for the next concert.',
 			'/konzerte': 'Rehearsals and concerts.',
+			'/chronik': 'Every concert since the beginning, in numbers.',
 			'/profil': 'Instrument, orchestra, your own calendar.',
 			'/stuecke': 'Every piece with every part.',
 			'/stuecke/angaben': 'Fill in missing details of pieces.',
@@ -228,6 +230,141 @@ export const en: Texts = {
 		views: { label: 'View', overview: 'Overview', planning: 'Planning' },
 		tools: 'Tools',
 		lastAttendance: 'Attendance at the last rehearsal'
+	},
+	/** Notes after a rehearsal (#145). */
+	rehearsalNotes: {
+		title: 'From the rehearsal',
+		previous: (date: string) => `From the last rehearsal, ${date}`,
+		done: 'Rehearsed',
+		practise: 'To practise',
+		next: 'Next time',
+		doneHint: 'e.g. "Egmont up to bar 120"',
+		practiseHint: 'e.g. "from letter B, slowly"',
+		nextHint: 'e.g. "Morning Mood, from B"',
+		write: 'Write a note',
+		edit: 'Edit the note',
+		lead: 'For everyone who missed it. Clearing every field removes the note.',
+		empty: 'No note for this rehearsal yet.',
+		save: 'Save',
+		cancel: 'Cancel',
+		by: (by: string, at: string) => [by, at].filter(Boolean).join(', '),
+		saved: 'Note saved.',
+		tooLong: 'At most 1000 characters per field, please.',
+		failed: 'The note could not be saved just now. Please try again.',
+		notSetUp: 'The "Rehearsal notes" tab is missing columns. The "Set up sheet" page adds them.',
+		gone: 'Notes are only for rehearsals that have begun.',
+		home: (date: string) => `From the rehearsal on ${date}`
+	},
+	/** Notes on a piece from rehearsals (#125). */
+	pieceNotes: {
+		title: 'Notes from rehearsals',
+		earlier: 'Notes for earlier concerts',
+		none: 'No notes yet, e.g. cuts, repeats or bowings.',
+		add: 'Add a note',
+		text: 'Note',
+		textHint: 'e.g. "jump from bar 40 to 88" or "no repeat"',
+		section: 'For',
+		everyone: 'Everyone',
+		sections: 'Sections',
+		instruments: 'Instruments',
+		concert: 'Applies to',
+		always: 'Every performance',
+		save: 'Save',
+		delete: 'Delete',
+		deleteNamed: (text: string) => `Delete note "${text}"`,
+		forSection: (section: string) => `For ${section}`,
+		forConcert: (concert: string) => `Only ${concert}`,
+		meta: (by: string, at: string) => [by, at].filter(Boolean).join(', '),
+		saved: 'Note saved.',
+		deleted: 'Note deleted.',
+		failed: 'The note could not be saved just now. Please try again.',
+		notSetUp: 'The "Piece notes" tab is missing columns. The "Set up sheet" page adds them.',
+		gone: 'The note no longer exists; perhaps someone deleted it already.',
+		problems: {
+			empty: 'Please enter a note.',
+			'too-long': 'At most 500 characters, please.',
+			section: 'Please choose a section or instrument from the list.',
+			concert: 'Please choose a concert from the list.'
+		},
+		inMyParts: 'Notes'
+	},
+	/** The season report for the annual meeting (#147). */
+	season: {
+		title: 'Season report',
+		lead: 'What happened in a period, to print for the annual general meeting. Attendance only as totals, without names.',
+		back: 'History',
+		from: 'From',
+		to: 'To',
+		show: 'Show',
+		print: 'Print',
+		presets: {
+			twelve: 'Last 12 months',
+			season: (label: string) => `Season ${label}`,
+			lastYear: (year: number) => `${year}`,
+			thisYear: (year: number) => `${year}`
+		},
+		presetsLabel: 'Period',
+		heading: (orchestra: string) => `Season report ${orchestra}`,
+		figures: 'At a glance',
+		concerts: (n: number) => (n === 1 ? 'concert' : 'concerts'),
+		pieces: (n: number) => (n === 1 ? 'piece played' : 'pieces played'),
+		debuts: 'of them for the first time',
+		rehearsals: (n: number) => (n === 1 ? 'rehearsal' : 'rehearsals'),
+		concertsTitle: 'Concerts and programmes',
+		noConcerts: 'There was no concert in this period.',
+		noProgram: 'Programme not entered',
+		firstTime: 'first time',
+		debutsTitle: 'Played for the first time',
+		noDebuts: 'No piece was new to the repertoire.',
+		debutAt: (concert: string) => `at ${concert}`,
+		rehearsalsTitle: 'Rehearsals',
+		rehearsalCount: (n: number) => (n === 1 ? '1 rehearsal took place.' : `${n} rehearsals took place.`),
+		noCalendar: 'The calendar is not connected, so rehearsals are missing.',
+		attendance: (rehearsals: number, average: string, rate: number) =>
+			`Attendance was taken at ${rehearsals === 1 ? '1 rehearsal' : `${rehearsals} rehearsals`}: ${average} people on average, ${rate} % of those listed.`,
+		noAttendance: 'No attendance was taken in this period.',
+		archiveTitle: 'Library and taking part',
+		reports: (made: number, done: number) =>
+			`${made === 1 ? '1 problem with sheet music was' : `${made} problems with sheet music were`} reported, ${done} of them ${done === 1 ? 'is' : 'are'} done.`,
+		wishes: (n: number) => (n === 1 ? '1 wish was submitted.' : `${n} wishes were submitted.`),
+		created: (day: string) => `Created on ${day}. Rehearsals come from the calendar, which reaches back three years.`
+	},
+	/** The orchestra's history (#61). */
+	chronicle: {
+		title: 'History',
+		lead: 'Every concert since the beginning, and what the orchestra likes to play most.',
+		views: { label: 'View', timeline: 'Timeline', numbers: 'In numbers' },
+		concerts: (n: number) => (n === 1 ? 'concert' : 'concerts'),
+		pieces: (n: number) => (n === 1 ? 'piece' : 'pieces'),
+		performances: (n: number) => (n === 1 ? 'performance' : 'performances'),
+		since: 'since',
+		decade: (decade: number) => `${decade}s`,
+		undated: 'No date',
+		yearUnknown: 'Year unknown',
+		debut: 'new',
+		debutHint: 'Played for the first time',
+		noProgram: 'Programme not entered',
+		mostPlayed: 'Played most often',
+		mostPlayedNone: 'No piece has been on more than one programme yet.',
+		times: (n: number) => `${n}×`,
+		lastPlayed: (year: number) => `last ${year}`,
+		playedIn: (first: number, last: number) => (first === last ? `${first}` : `${first}–${last}`),
+		composers: 'Composers played most',
+		composerLine: (count: number, pieces: number) => `played ${count}×, ${pieces === 1 ? '1 piece' : `${pieces} pieces`}`,
+		byDecade: 'By decade',
+		decadeLine: (concerts: number, pieces: number) =>
+			`${concerts === 1 ? '1 concert' : `${concerts} concerts`}, ${pieces === 1 ? '1 piece' : `${pieces} pieces`}`,
+		longAgo: 'Not played for a long time',
+		longAgoLead: (years: number) => `Not on a programme for ${years} years or more. Time for another go?`,
+		plannedAgain: 'planned again',
+		longAgoNone: (years: number) => `Every piece was played within the last ${years} years.`,
+		neverPlayed: 'Never played',
+		neverPlayedLead: (n: number) =>
+			n === 1 ? '1 piece with music in the library has never been on a programme.' : `${n} pieces with music in the library have never been on a programme.`,
+		andMore: (n: number) => `and ${n} more`,
+		empty: 'No past concerts yet. Old concerts go into the "Concerts" tab, their programmes into the "Programme" tab; a year is enough as the date.',
+		noSheet: 'The history is built from the repertoire sheet, which is not connected yet.',
+		seasonReport: 'Season report'
 	},
 	attendance: {
 		title: 'Attendance',
@@ -885,6 +1022,18 @@ export const en: Texts = {
 		unknownStatus: "This status doesn't exist.",
 		badDate: "The date can't be read."
 	},
+	/** Everything the sheet keeps about a member, as one file (#158). */
+	myData: {
+		title: 'My data',
+		lead: 'Everything the app keeps about you in the repertoire sheet: your entry, sign-ups, attendance, reports, wishes and notes.',
+		download: 'Download my data',
+		hint: 'A JSON file that opens in any text editor. To change or delete something, please ask the admins.',
+		fileName: 'my-data',
+		explain: "Your rows from the orchestra's repertoire sheet, by tab, with the sheet's column names.",
+		myVote: 'My +1',
+		yes: 'yes',
+		no: 'no'
+	},
 	print: {
 		link: 'Print',
 		title: (concert: string) => 'Print: ' + concert,
@@ -913,9 +1062,9 @@ export const en: Texts = {
 			duration: 'Duration'
 		},
 		gaps: (n: number) => (n === 1 ? 'Details still missing for 1 piece:' : `Details still missing for ${n} pieces:`),
-		missing: { composer: 'Composer', publisher: 'Publisher', duration: 'Duration' } as Record<string, string>,
+		missing: { composer: 'Composer', composerFull: 'Composer (full name)', publisher: 'Publisher', duration: 'Duration' } as Record<string, string>,
 		complete: 'Every detail is there.',
-		fullNames: 'Collecting societies want composers with their full names, e.g. “Ludwig van Beethoven” rather than “Beethoven”.',
+		fullNames: 'Collecting societies want composers with their full names, e.g. “Ludwig van Beethoven” rather than “Beethoven”. The list takes them from the “Composer (full name)” column; “Look up online” when editing fills it.',
 		fill: 'Fill in',
 		organizer: 'Organiser',
 		date: 'Date',
@@ -962,6 +1111,7 @@ export const en: Texts = {
 		},
 		durationHint: 'e.g. 7:30',
 		composerHint: 'several with commas: Mozart, Haydn',
+		composerFullHint: 'e.g. Ludwig van Beethoven, for the music report',
 		listHint: 'separate several with commas',
 		publisherHint: 'e.g. Bärenreiter – for the music report',
 		missingColumns: (columns: string) => `${columns}: these columns aren't in the sheet yet. Run “Set up sheet” once, then they can be entered here.`
@@ -1104,6 +1254,8 @@ export const en: Texts = {
 			columns: {
 				title: 'Title',
 				composer: 'Composer',
+				/** "Ludwig van Beethoven" where "Composer" says "Beethoven": for the music report (#146). */
+				composerFull: 'Composer (full name)',
 				catalogue: 'Catalogue no.',
 				arranger: 'Arranger',
 				genre: 'Genre',
@@ -1267,6 +1419,34 @@ export const en: Texts = {
 				who: 'Who',
 				name: 'Name',
 				present: 'Present',
+				eventId: 'Date ID'
+			}
+		},
+		/** Notes on a piece from rehearsals (#125): cuts, repeats, bowings; one row per note. */
+		pieceNotes: {
+			tab: 'Piece notes',
+			columns: {
+				piece: 'Piece',
+				/** Empty for everyone, else a section ("Strings") or an instrument ("Violin"). */
+				section: 'For',
+				/** Empty for every performance, else a concert's "Occasion". */
+				concert: 'Concert',
+				note: 'Note',
+				by: 'By',
+				at: 'Date',
+				id: 'Note ID'
+			}
+		},
+		/** What a rehearsal did and what comes next (#145); one row per rehearsal. */
+		rehearsalNotes: {
+			tab: 'Rehearsal notes',
+			columns: {
+				rehearsal: 'Rehearsal',
+				done: 'Rehearsed',
+				practise: 'To practise',
+				next: 'Next time',
+				by: 'By',
+				at: 'Date',
 				eventId: 'Date ID'
 			}
 		},
