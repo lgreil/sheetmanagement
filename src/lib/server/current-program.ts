@@ -3,7 +3,8 @@ import { planShortcuts, programFor, type FolderEntry, type WantedPiece } from '#
 import { folderUrl } from './catalog.ts';
 import { GoogleApiError } from './google/client.ts';
 import { createFolder, createShortcut, getFile, listChildren, trashFile, FOLDER_MIME, SHORTCUT_MIME } from './google/drive.ts';
-import { isPastConcert, type Library, type LibraryConcert } from './library.ts';
+import { sameOrchestra } from '#lib/repertoire/orchestras.ts';
+import { isPastConcert, programOf, type Library, type LibraryConcert } from './library.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle, programFolderIds } from './services.ts';
 
 /**
@@ -25,9 +26,9 @@ export function currentProgramAvailable(): boolean {
 	return driveWriteEnabled() && programFolderIds().length > 0;
 }
 
-/** The programme's pieces that have a folder in the archive, in programme order. */
-function wantedPieces(concert: LibraryConcert, library: Library): WantedPiece[] {
-	return concert.program.flatMap((item) => {
+/** The orchestra's pieces that have a folder in the archive, in programme order. */
+function wantedPieces(concert: LibraryConcert, library: Library, orchestra: string | undefined): WantedPiece[] {
+	return programOf(concert, orchestra).flatMap((item) => {
 		const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 		return piece?.detail ? [{ folderId: piece.id, name: piece.detail.folderName }] : [];
 	});
@@ -44,11 +45,14 @@ export interface CurrentProgramStatus {
 	extra: string[];
 }
 
-/** From the archive index, so the concert page needs no extra Drive request. */
-export function currentProgramStatus(concert: LibraryConcert, library: Library): CurrentProgramStatus {
+/**
+ * From the archive index, so the concert page needs no extra Drive request. One orchestra's
+ * programme of the concert; a concert several orchestras play has one folder for each.
+ */
+export function currentProgramStatus(concert: LibraryConcert, library: Library, orchestra = concert.orchestras[0]): CurrentProgramStatus {
 	const programs = library.catalog.ok ? library.catalog.catalog.programs : [];
-	const program = programFor(programs, concert.orchestra);
-	const wanted = wantedPieces(concert, library);
+	const program = programFor(programs, orchestra);
+	const wanted = wantedPieces(concert, library, orchestra);
 	const ids = new Set(wanted.map((piece) => piece.folderId));
 	const inProgram = program ? library.pieces.filter((piece) => piece.programs.includes(program)) : [];
 	return {
@@ -59,16 +63,20 @@ export function currentProgramStatus(concert: LibraryConcert, library: Library):
 	};
 }
 
-/** Whether the concert's programme is the one to keep in the folder: its orchestra's next concert. */
-export function isCurrentConcert(concert: LibraryConcert, library: Library): boolean {
+/** Whether the concert's programme is the one to keep in the orchestra's folder: its next concert. */
+export function isCurrentConcert(concert: LibraryConcert, library: Library, orchestra = concert.orchestras[0]): boolean {
 	if (isPastConcert(concert, library.today)) return false;
+	const plays = (other: LibraryConcert) =>
+		orchestra ? other.orchestras.some((name) => sameOrchestra(name, orchestra)) : !other.orchestras.length;
 	const next = library.concerts
-		.filter((other) => other.orchestra === concert.orchestra && !isPastConcert(other, library.today) && other.dateKey)
+		.filter((other) => plays(other) && !isPastConcert(other, library.today) && other.dateKey)
 		.sort((a, b) => a.dateKey.localeCompare(b.dateKey))[0];
 	return !next || next.id === concert.id;
 }
 
 export interface CurrentProgramResult {
+	/** Whose programme was synced. */
+	orchestra?: string;
 	folderName: string;
 	folderUrl: string;
 	added: string[];
@@ -77,8 +85,8 @@ export interface CurrentProgramResult {
 	stuck: string[];
 }
 
-/** Makes the folder match the programme: shortcuts in, shortcuts to other pieces out (into the bin). */
-export async function syncCurrentProgram(concert: LibraryConcert, library: Library): Promise<CurrentProgramResult> {
+/** Makes the orchestra's folder match its programme: shortcuts in, shortcuts to other pieces out (into the bin). */
+export async function syncCurrentProgram(concert: LibraryConcert, library: Library, orchestra = concert.orchestras[0]): Promise<CurrentProgramResult> {
 	const { client } = getGoogle();
 	const roots = programFolderIds();
 	const pattern = config.naming.programFolderPattern;
@@ -94,19 +102,19 @@ export async function syncCurrentProgram(concert: LibraryConcert, library: Libra
 		return name ? [{ id: entry.id, folderName: entry.name, name }] : [];
 	});
 
-	let target = folders.find((folder) => folder.name === programFor(folders.map((other) => other.name), concert.orchestra));
+	let target = folders.find((folder) => folder.name === programFor(folders.map((other) => other.name), orchestra));
 	if (!target && !folders.length && containers.length) {
 		// No programme folders at all: the current-programme folder itself is the one programme.
 		target = { id: containers[0].id, folderName: containers[0].name, name: containers[0].name };
-	} else if (!target && !concert.orchestra) {
+	} else if (!target && !orchestra) {
 		// Several programmes and no orchestra to choose by: better nothing than the wrong one.
 		throw new NoProgramFolderError('ambiguous');
 	} else if (!target) {
 		// The orchestra's own folder, next to the others; never inside another orchestra's.
 		if (!containers.length) throw new NoProgramFolderError('none');
-		const folderName = `Programm ${concert.orchestra}`;
+		const folderName = `Programm ${orchestra}`;
 		const made = await createFolder(client, folderName, containers[0].id);
-		target = { id: made.id, folderName, name: concert.orchestra ?? '' };
+		target = { id: made.id, folderName, name: orchestra ?? '' };
 	}
 
 	const entries = (await listChildren(client, [target.id])).map((entry) => ({
@@ -115,7 +123,7 @@ export async function syncCurrentProgram(concert: LibraryConcert, library: Libra
 		targetId: entry.mimeType === SHORTCUT_MIME ? entry.shortcutDetails?.targetId : undefined,
 		program: named(entry.name) !== undefined
 	}));
-	const plan = planShortcuts(entries, wantedPieces(concert, library));
+	const plan = planShortcuts(entries, wantedPieces(concert, library, orchestra));
 	for (const piece of plan.create) await createShortcut(client, piece.name, piece.folderId, target.id);
 	// In "My Drive" only a file's owner may bin it: a shortcut made by hand stays, and is named.
 	const stuck = new Set<FolderEntry>();
@@ -128,6 +136,7 @@ export async function syncCurrentProgram(concert: LibraryConcert, library: Libra
 	// The archive index knows the programmes; read it again so pages show the new state.
 	await getArchiveIndex({ force: true }).catch((cause) => console.error('Refreshing the archive failed:', cause));
 	return {
+		orchestra,
 		folderName: target.folderName,
 		folderUrl: folderUrl(target.id),
 		added: plan.create.map((piece) => piece.name),

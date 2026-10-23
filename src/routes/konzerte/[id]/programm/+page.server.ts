@@ -1,8 +1,9 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { parseEntries, planProgramSave, programVersion } from '#lib/repertoire/program-edit.ts';
+import { parseEntries, planProgramSave, programVersion, type OrchestraScope } from '#lib/repertoire/program-edit.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
-import { getLibrary, type Library } from '#lib/server/library.ts';
+import { getLibrary, type Library, type LibraryConcert } from '#lib/server/library.ts';
+import { pickOrchestra, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { getFeedback, getRepertoire } from '#lib/server/repertoire.ts';
 import { planWishes } from '#lib/server/feedback.ts';
 import { programSuggestions } from '#lib/repertoire/suggestions.ts';
@@ -12,7 +13,12 @@ import { t } from '#lib/i18n/index.ts';
 import { currentProgramAvailable, isCurrentConcert, syncCurrentProgram } from '#lib/server/current-program.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-export const load: PageServerLoad = async ({ params, locals }) => {
+/** The orchestra being edited ("?orchester=A"), for a concert several orchestras play. */
+function scopeOf(concert: LibraryConcert, wanted: string | null): OrchestraScope {
+	return { orchestra: pickOrchestra(concert.orchestras, wanted), orchestras: concert.orchestras };
+}
+
+export const load: PageServerLoad = async ({ params, locals, url }) => {
 	requireRight(locals, 'programme.bearbeiten');
 	const [library, repertoire, feedback] = await Promise.all([getLibrary(), getRepertoire(), getFeedback()]);
 	const concert = library.concertsById.get(params.id);
@@ -22,16 +28,22 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	}
 
 	const sheet = concert.sheet;
+	const scope = scopeOf(concert, url.searchParams.get('orchester'));
+	// Sheet entries and library items are sorted alike, so they line up one by one.
+	const own = sheet.program.flatMap((entry, i) => (sameOrchestra(entry.orchestra, scope.orchestra) ? [{ entry, item: concert.program[i] }] : []));
 	return {
 		state: 'ready' as const,
 		concert: { id: concert.id, title: concert.title },
-		version: programVersion(repertoire.repertoire.tables.program, sheet.title),
-		entries: sheet.program.map((entry, i) => ({
+		// Tabs only when several orchestras play the concert.
+		orchestra: scope.orchestra ?? '',
+		orchestras: concert.orchestras.length > 1 ? concert.orchestras : [],
+		version: programVersion(repertoire.repertoire.tables.program, sheet.title, scope),
+		entries: own.map(({ entry, item }) => ({
 			piece: entry.pieceName,
 			notes: entry.notes ?? '',
-			title: concert.program[i]?.title ?? entry.pieceName,
-			subtitle: concert.program[i]?.subtitle,
-			duration: concert.program[i]?.duration
+			title: item?.title ?? entry.pieceName,
+			subtitle: item?.subtitle,
+			duration: item?.duration
 		})),
 		suggestions: suggestions(library, concert.id, sheet.title, isOn('wishes') ? (feedback?.wishes ?? []) : []),
 		sharedFrom: concert.sharedFrom,
@@ -112,13 +124,13 @@ async function clearShare(title: string) {
 	for (const row of rows) await updateRecord('concerts', concerts, row.row, { sameProgramAs: '' });
 }
 
-/** "ok" or "fehler" after syncing the Drive folder, empty when it isn't this concert's turn. */
-async function syncIfCurrent(id: string): Promise<string> {
+/** "ok" or "fehler" after syncing the orchestra's Drive folder, empty when it isn't this concert's turn. */
+async function syncIfCurrent(id: string, orchestra: string | undefined): Promise<string> {
 	if (!currentProgramAvailable()) return '';
 	const library = await getLibrary();
 	const concert = library.concertsById.get(id);
-	if (!concert || !isCurrentConcert(concert, library)) return '';
-	return syncCurrentProgram(concert, library).then(
+	if (!concert || !isCurrentConcert(concert, library, orchestra)) return '';
+	return syncCurrentProgram(concert, library, orchestra).then(
 		() => 'ok',
 		(cause) => {
 			console.error('Syncing the current programme failed:', cause);
@@ -135,15 +147,17 @@ export const actions: Actions = {
 		if (!entries) return fail(400, { message: t.messages.programUnreadable });
 
 		const library = await getLibrary();
-		const sheet = library.concertsById.get(params.id)?.sheet;
-		if (!sheet) return fail(409, { message: t.editor.notInSheet });
+		const concert = library.concertsById.get(params.id);
+		const sheet = concert?.sheet;
+		if (!concert || !sheet) return fail(409, { message: t.editor.notInSheet });
+		const scope = scopeOf(concert, String(data.get('orchestra') ?? ''));
 
 		try {
 			const table = await readTab('program');
-			if (programVersion(table, sheet.title) !== String(data.get('version'))) {
+			if (programVersion(table, sheet.title, scope) !== String(data.get('version'))) {
 				return fail(409, { message: t.editor.conflict });
 			}
-			const plan = planProgramSave(table, sheet.title, entries);
+			const plan = planProgramSave(table, sheet.title, entries, scope);
 			// New rows first: if deleting the old ones fails, nothing is lost, only doubled.
 			await appendRecords('program', table, plan.append);
 			await deleteRows('program', table, plan.remove);
@@ -160,7 +174,7 @@ export const actions: Actions = {
 		}
 		// The orchestra's next concert: its pieces go into "01 | Aktuelles Programm" too (#60).
 		// The programme is saved either way; the concert page says how Drive went.
-		const drive = await syncIfCurrent(params.id);
+		const drive = await syncIfCurrent(params.id, scope.orchestra);
 		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert${drive ? `&drive=${drive}` : ''}`);
 	},
 
@@ -169,8 +183,9 @@ export const actions: Actions = {
 		requireRight(locals, 'programme.bearbeiten');
 		const data = await request.formData();
 		const library = await getLibrary();
-		const sheet = library.concertsById.get(params.id)?.sheet;
-		if (!sheet) return fail(409, { message: t.editor.notInSheet });
+		const concert = library.concertsById.get(params.id);
+		const sheet = concert?.sheet;
+		if (!concert || !sheet) return fail(409, { message: t.editor.notInSheet });
 		const source = library.concerts.find((other) => other.sheet && normalize(other.sheet.title) === normalize(String(data.get('source') ?? '')));
 		if (!source?.sheet || source.sheet.key === sheet.key || !source.program.length) {
 			return fail(400, { message: t.editor.shareUnknown });
@@ -178,7 +193,8 @@ export const actions: Actions = {
 
 		try {
 			const [table, concerts] = await Promise.all([readTab('program'), readTab('concerts')]);
-			if (programVersion(table, sheet.title) !== String(data.get('version'))) {
+			// The version the editor showed: of the orchestra it had open.
+			if (programVersion(table, sheet.title, scopeOf(concert, String(data.get('orchestra') ?? ''))) !== String(data.get('version'))) {
 				return fail(409, { message: t.editor.conflict });
 			}
 			const row = concerts.rows.find((r) => normalize(r.values.title) === normalize(sheet.title));

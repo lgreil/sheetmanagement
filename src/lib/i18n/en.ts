@@ -1186,6 +1186,8 @@ export const en: Texts = {
 		missingColumns: (columns: string) => `${columns}: these columns aren't in the sheet yet. Run “Set up sheet” once, then they can be entered here.`
 	},
 	editor: {
+		orchestras: 'Programme per orchestra',
+		orchestraTab: (orchestra: string) => `Programme ${orchestra}`,
 		suggestions: 'Suggestions',
 		wished: 'Wished for',
 		longAgo: 'Not played for a long time',
@@ -1448,7 +1450,9 @@ export const en: Texts = {
 				concert: 'Concert',
 				position: 'No.',
 				piece: 'Piece',
-				notes: 'Note'
+				notes: 'Note',
+				/** Which of the concert's orchestras plays it; empty: the first one named. */
+				orchestra: 'Orchestra'
 			}
 		},
 		members: {

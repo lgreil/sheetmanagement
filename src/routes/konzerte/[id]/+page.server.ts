@@ -9,7 +9,8 @@ import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
-import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { getLibrary, isPastConcert, namedItem, programsOf, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { pickOrchestra } from '#lib/repertoire/orchestras.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
@@ -284,8 +285,23 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	}
 
 	const items = concert?.program ?? [];
+	// "01 | Aktuelles Programm" in Drive (#60), for upcoming concerts once Drive may be written to.
+	const showDrive = locals.access.rights.has('programme.bearbeiten') && !!concert && currentProgramAvailable() && !isPastConcert(concert, library.today);
 	const program = {
 		items,
+		// One per orchestra that plays the concert, each with its own programme and Drive folder.
+		groups: (concert ? programsOf(concert) : [{ orchestra: undefined, items }]).map((group) => ({
+			orchestra: group.orchestra ?? '',
+			items: group.items,
+			editUrl: `/konzerte/${encodeURIComponent(params.id)}/programm${group.orchestra && concert!.orchestras.length > 1 ? `?orchester=${encodeURIComponent(group.orchestra)}` : ''}`,
+			drive: showDrive
+				? {
+						...currentProgramStatus(concert!, library, group.orchestra),
+						orchestra: group.orchestra ?? concert!.title,
+						next: isCurrentConcert(concert!, library, group.orchestra)
+					}
+				: null
+		})),
 		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
 		// For whoever plans programmes; it reads every piece's parts.
 		instrumentation: locals.access.rights.has('programme.bearbeiten') && items.length ? await instrumentation(items, library, concert?.orchestra) : null,
@@ -296,11 +312,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		// For planners: open piece wishes for this concert or any time, shown in the editor.
 		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0,
 		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null,
-		// "01 | Aktuelles Programm" in Drive (#60), for upcoming concerts once Drive may be written to.
-		drive:
-			locals.access.rights.has('programme.bearbeiten') && concert && currentProgramAvailable() && !isPastConcert(concert, library.today)
-				? { ...currentProgramStatus(concert, library), orchestra: concert.orchestra ?? concert.title, next: isCurrentConcert(concert, library), auto: url.searchParams.get('drive') }
-				: null
+		// How the Drive sync after saving in the editor went.
+		driveAuto: showDrive ? url.searchParams.get('drive') : null
 	};
 
 	if (!event) {
@@ -407,18 +420,21 @@ export const actions: Actions = {
 	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
 
 	/** Puts the programme's pieces into "01 | Aktuelles Programm" and takes the others out (#60). */
-	currentProgram: async ({ locals, params }) => {
+	currentProgram: async ({ request, locals, params }) => {
 		requireRight(locals, 'programme.bearbeiten');
 		if (!currentProgramAvailable()) error(404, t.messages.noEvent);
 		const library = await getLibrary();
 		const concert = library.concertsById.get(params.id);
 		if (!concert) error(404, t.messages.noEvent);
+		// Which orchestra's programme, for a concert several play; the card shows the answer.
+		const orchestra = pickOrchestra(concert.orchestras, formText(await request.formData(), 'orchestra'));
+		const currentProgramOrchestra = orchestra ?? '';
 		try {
-			return { currentProgram: await syncCurrentProgram(concert, library) };
+			return { currentProgram: await syncCurrentProgram(concert, library, orchestra), currentProgramOrchestra };
 		} catch (cause) {
-			if (cause instanceof NoProgramFolderError) return fail(409, { currentProgramError: t.currentProgram[cause.reason] });
+			if (cause instanceof NoProgramFolderError) return fail(409, { currentProgramError: t.currentProgram[cause.reason], currentProgramOrchestra });
 			console.error('Syncing the current programme failed:', cause);
-			return fail(503, { currentProgramError: t.currentProgram.failed });
+			return fail(503, { currentProgramError: t.currentProgram.failed, currentProgramOrchestra });
 		}
 	},
 

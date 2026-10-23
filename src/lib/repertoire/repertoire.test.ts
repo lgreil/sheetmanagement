@@ -157,6 +157,28 @@ describe('buildRepertoire', () => {
 		expect(result.problems.map((p) => [p.kind, p.row, p.value])).toEqual([['unknown-concert', 6, 'Gibt es nicht']]);
 	});
 
+	it('gives each orchestra of a concert its own programme', () => {
+		const result = buildRepertoire({
+			pieces: [PIECES_HEADER, piece('Fame'), piece('Skyfall'), piece('Bolero')],
+			concerts: [CONCERTS_HEADER, ['2026-11-15', 'Herbstkonzert 2026', '', 'EO, A', 'event-1']],
+			program: [
+				[...PROGRAM_HEADER, 'Orchester'],
+				['Herbstkonzert 2026', '1', 'Skyfall', '', 'a'],
+				['Herbstkonzert 2026', '2', 'Bolero', '', ''],
+				['Herbstkonzert 2026', '1', 'Fame', '', 'EO']
+			]
+		});
+		const concert = result.concertsByEvent.get('event-1')!;
+		expect(concert.orchestras).toEqual(['EO', 'A']);
+		// Rows without an orchestra are the first one's; each programme in its own order.
+		expect(concert.program.map((entry) => [entry.orchestra, entry.pieceName])).toEqual([
+			['EO', 'Fame'],
+			['EO', 'Bolero'],
+			['A', 'Skyfall']
+		]);
+		expect(result.problems).toEqual([]);
+	});
+
 	it('reports missing columns', () => {
 		const result = buildRepertoire({ pieces: [['Titel']], concerts: [CONCERTS_HEADER], program: [PROGRAM_HEADER] });
 		expect(result.problems.filter((p) => p.kind === 'missing-column').map((p) => p.value)).toContain('Drive-Ordner-ID');

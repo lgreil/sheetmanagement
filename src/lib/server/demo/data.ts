@@ -277,7 +277,7 @@ export function demoSheet(now: number): Map<string, string[][]> {
 	const label = (offset: number) => `Probe Herbstkonzert 🎶 · ${day(offset, now)}`;
 	const titles = Object.fromEntries(PIECES.map((p) => [p.id, p.title]));
 	const at = (offset: number) => day(offset, now);
-	const program = (concert: string, pieces: string[]) => pieces.map((piece, i) => ({ concert, position: String(i + 1), piece }));
+	const program = (concert: string, pieces: string[], orchestra = '') => pieces.map((piece, i) => ({ concert, position: String(i + 1), piece, orchestra }));
 
 	return new Map([
 		tab('pieces', [
@@ -303,7 +303,8 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			{ date: '2004-12-18', title: 'Weihnachtskonzert 2004', location: 'Kirche am Markt', orchestra: 'EO' },
 			{ date: '2012-05', title: 'Frühjahrskonzert 2012', location: 'Aula, Musterschule', orchestra: 'EO' },
 			{ date: at(-60), title: sommer, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-sommerkonzert' },
-			{ date: at(25), title: herbst, location: 'Stadthalle Musterstadt', orchestra: 'EO', eventId: 'demo-herbstkonzert' },
+			// Played together: each orchestra with its own programme.
+			{ date: at(25), title: herbst, location: 'Stadthalle Musterstadt', orchestra: 'EO, A', eventId: 'demo-herbstkonzert' },
 			{ date: at(60), title: weihnacht, location: 'Kirche am Markt', orchestra: 'EO', eventId: 'demo-weihnacht-1' },
 			{ date: at(61), title: weihnacht2, location: 'Kirche am Markt', orchestra: 'EO', eventId: 'demo-weihnacht-2', sameProgramAs: weihnacht }
 		]),
@@ -316,6 +317,7 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			...program('Frühjahrskonzert 2012', [titles['demo-cancan'], titles['demo-morgenstimmung']]),
 			...program(sommer, [titles['demo-nachtmusik'], titles['demo-007']]),
 			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']]),
+			...program(herbst, [titles['demo-cancan'], titles['demo-sleigh']], 'A'),
 			...program(weihnacht, [titles['demo-sleigh'], titles['demo-jesu'], titles['demo-stille-nacht']])
 		]),
 		tab('rehearsals', [

@@ -243,9 +243,13 @@ export function currentStatus(member: Pick<Member, 'status' | 'pausedUntil'>, to
 	return member.status === 'pausiert' && member.pausedUntil && member.pausedUntil < today ? 'aktiv' : member.status;
 }
 
-/** Whether a member plays in the orchestra; members without orchestras count for all of them. */
+/**
+ * Whether a member plays in the orchestra, or in one of several ("EO, A" for a concert they
+ * play together); members without orchestras count for all of them.
+ */
 export function playsIn(member: Pick<Member, 'orchestras'>, orchestra: string | undefined): boolean {
-	return !orchestra || !member.orchestras.length || member.orchestras.some((name) => normalize(name) === normalize(orchestra));
+	const wanted = splitGroups(orchestra ?? '');
+	return !wanted.length || !member.orchestras.length || member.orchestras.some((name) => wanted.some((other) => normalize(name) === normalize(other)));
 }
 
 /** Members who count for a concert's instrumentation: active ones in its orchestra. */

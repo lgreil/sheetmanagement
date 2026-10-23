@@ -1187,6 +1187,8 @@ export const de = {
 		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
 	},
 	editor: {
+		orchestras: 'Programm je Orchester',
+		orchestraTab: (orchestra: string) => `Programm ${orchestra}`,
 		suggestions: 'Vorschläge',
 		wished: 'Gewünscht',
 		longAgo: 'Lange nicht gespielt',
@@ -1455,7 +1457,9 @@ export const de = {
 				concert: 'Konzert',
 				position: 'Nr.',
 				piece: 'Stück',
-				notes: 'Notiz'
+				notes: 'Notiz',
+				/** Which of the concert's orchestras plays it; empty: the first one named. */
+				orchestra: 'Orchester'
 			}
 		},
 		members: {

@@ -15,7 +15,9 @@
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
-	let syncing = $state(false);
+	/** The orchestra whose Drive folder is being synced. */
+	let syncing = $state<string | null>(null);
+	const several = $derived(data.program.groups.length > 1);
 	const id = $derived(encodeURIComponent(page.params.id ?? ''));
 	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
 	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
@@ -269,14 +271,14 @@
 				{#if data.program.items.length}
 					<a href="/konzerte/{id}/drucken"><Icon name="print" size={16} />{t.print.link}</a>
 				{/if}
-				{#if data.program.canEdit}
-					<a href="/konzerte/{id}/programm"><Icon name="edit" size={16} />{t.editor.edit}</a>
+				{#if data.program.canEdit && !several}
+					<a href={data.program.groups[0].editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>
 				{/if}
 			</div>
 		</div>
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
-		{#if data.program.drive?.auto === 'ok'}<p class="saved" role="status"><Icon name="folder" size={16} />{t.currentProgram.autoDone}</p>{/if}
-		{#if data.program.drive?.auto === 'fehler'}<p class="saved warn" role="status"><Icon name="alert" size={16} />{t.currentProgram.autoFailed}</p>{/if}
+		{#if data.program.driveAuto === 'ok'}<p class="saved" role="status"><Icon name="folder" size={16} />{t.currentProgram.autoDone}</p>{/if}
+		{#if data.program.driveAuto === 'fehler'}<p class="saved warn" role="status"><Icon name="alert" size={16} />{t.currentProgram.autoFailed}</p>{/if}
 		{#if data.program.sharedFrom}
 			<p class="note">
 				<Icon name="link" size={16} />
@@ -297,50 +299,63 @@
 				<a href="/konzerte/{id}/programm">{t.editor.openSuggestions(data.program.suggestions)}</a>
 			</p>
 		{/if}
-		{#if data.program.items.length}
-			<ProgramList items={data.program.items} total />
-			<!-- Where it's kept only matters to those who keep it. -->
-			{#if data.program.canEdit}<p class="hint">{t.concert.programHint}</p>{/if}
-			{#if data.program.drive}
-				{@const drive = data.program.drive}
-				{@const result = form?.currentProgram}
-				<!-- "01 | Aktuelles Programm" (#60): how far the folder matches, and one button to make it match. -->
-				<form
-					class="ui-card drive"
-					method="POST"
-					action="?/currentProgram"
-					use:enhance={() => {
-						syncing = true;
-						return async ({ update }) => {
-							await update({ reset: false });
-							syncing = false;
-						};
-					}}
-				>
-					<span class="icon" class:done={result || (drive.program && drive.linked === drive.total && !drive.extra.length)}><Icon name="folder" size={18} /></span>
-					<span class="fact-body">
-						<strong>{t.currentProgram.title}</strong>
-						<span>
-							{#if result}
-								{t.currentProgram.done(result.added.length, result.removed.length)}{#if result.removed.length}{' '}{t.currentProgram.removedHint}{/if}{#if result.stuck.length}{' '}{t.currentProgram.stuck(result.stuck)}{/if}
-							{:else if !drive.program}
-								{t.currentProgram.noFolder(drive.orchestra)}
-							{:else if drive.linked === drive.total && !drive.extra.length}
-								{t.currentProgram.complete(drive.total, drive.program)}
-							{:else}
-								{t.currentProgram.partly(drive.linked, drive.total, drive.program)}{#if drive.extra.length}{' '}{t.currentProgram.extra(drive.extra.length)}{/if}
-							{/if}
-							{#if !drive.next}· {t.currentProgram.notNext}{/if}
-						</span>
-						{#if form?.currentProgramError}<span class="drive-error" role="alert">{form.currentProgramError}</span>{/if}
-					</span>
-					{#if result}<a class="open" href={result.folderUrl} target="_blank" rel="noopener noreferrer">{t.currentProgram.open}<Icon name="external" size={14} /></a>{/if}
-					<button class="btn small secondary" disabled={syncing}><Icon name="refresh" size={16} />{t.currentProgram.sync}</button>
-				</form>
+		{#each data.program.groups as group (group.orchestra)}
+			<!-- Several orchestras: each programme under its own heading, edited on its own. -->
+			{#if several}
+				<div class="group-head">
+					<h3>{t.editor.orchestraTab(group.orchestra)}</h3>
+					{#if data.program.canEdit}
+						<a href={group.editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>
+					{/if}
+				</div>
 			{/if}
-		{:else}
-			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
-		{/if}
+			{#if group.items.length}
+				<ProgramList items={group.items} total />
+				{#if group.drive}
+					{@const drive = group.drive}
+					{@const mine = form?.currentProgramOrchestra === group.orchestra}
+					{@const result = mine ? form?.currentProgram : undefined}
+					<!-- "01 | Aktuelles Programm" (#60): how far the folder matches, and one button to make it match. -->
+					<form
+						class="ui-card drive"
+						method="POST"
+						action="?/currentProgram"
+						use:enhance={() => {
+							syncing = group.orchestra;
+							return async ({ update }) => {
+								await update({ reset: false });
+								syncing = null;
+							};
+						}}
+					>
+						<input type="hidden" name="orchestra" value={group.orchestra} />
+						<span class="icon" class:done={result || (drive.program && drive.linked === drive.total && !drive.extra.length)}><Icon name="folder" size={18} /></span>
+						<span class="fact-body">
+							<strong>{t.currentProgram.title}</strong>
+							<span>
+								{#if result}
+									{t.currentProgram.done(result.added.length, result.removed.length)}{#if result.removed.length}{' '}{t.currentProgram.removedHint}{/if}{#if result.stuck.length}{' '}{t.currentProgram.stuck(result.stuck)}{/if}
+								{:else if !drive.program}
+									{t.currentProgram.noFolder(drive.orchestra)}
+								{:else if drive.linked === drive.total && !drive.extra.length}
+									{t.currentProgram.complete(drive.total, drive.program)}
+								{:else}
+									{t.currentProgram.partly(drive.linked, drive.total, drive.program)}{#if drive.extra.length}{' '}{t.currentProgram.extra(drive.extra.length)}{/if}
+								{/if}
+								{#if !drive.next}· {t.currentProgram.notNext}{/if}
+							</span>
+							{#if mine && form?.currentProgramError}<span class="drive-error" role="alert">{form.currentProgramError}</span>{/if}
+						</span>
+						{#if result}<a class="open" href={result.folderUrl} target="_blank" rel="noopener noreferrer">{t.currentProgram.open}<Icon name="external" size={14} /></a>{/if}
+						<button class="btn small secondary" disabled={syncing !== null}><Icon name="refresh" size={16} />{t.currentProgram.sync}</button>
+					</form>
+				{/if}
+			{:else}
+				<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
+			{/if}
+		{/each}
+		<!-- Where it's kept only matters to those who keep it. -->
+		{#if data.program.canEdit && data.program.items.length}<p class="hint">{t.concert.programHint}</p>{/if}
 	</section>
 {/if}
 
@@ -807,6 +822,32 @@
 
 	.saved.warn {
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
+	}
+
+	.group-head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		justify-content: space-between;
+		gap: 0 var(--space-3);
+		margin: var(--space-5) 0 var(--space-2);
+	}
+
+	.group-head:first-of-type {
+		margin-top: var(--space-2);
+	}
+
+	.group-head h3 {
+		font-size: 1rem;
+	}
+
+	.group-head a {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
 	}
 
 	.drive {

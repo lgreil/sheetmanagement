@@ -240,7 +240,9 @@ export async function setUpSheet(
 	];
 	if (orchestras.length) {
 		const values = orchestras.map((name) => ({ userEnteredValue: name }));
+		// Not strict: a concert several orchestras play names them all ("EO, A").
 		dropdowns.push(['concerts', 'orchestra', { type: 'ONE_OF_LIST', values }]);
+		dropdowns.push(['program', 'orchestra', { type: 'ONE_OF_LIST', values }]);
 	}
 	for (const [key, name, condition] of dropdowns) {
 		if (!TAB_KEYS.includes(key)) continue;
