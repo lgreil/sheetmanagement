@@ -4,12 +4,20 @@ import { config } from '#lib/config/index.ts';
 import { newEventFromForm } from '#lib/events/new-event.ts';
 import { t } from '#lib/i18n/index.ts';
 import { isOpen } from '#lib/polls/polls.ts';
-import { addConcert } from '#lib/server/archive.ts';
+import { eventDay } from '#lib/repertoire/dates.ts';
+import { addPastConcert } from '#lib/server/archive.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { pollStore, pollViewer, visiblePolls } from '#lib/server/polls.ts';
-import { addCalendarEvent, getSchedule } from '#lib/server/schedule.ts';
+import { addCalendarEvent, calendarRange, getSchedule } from '#lib/server/schedule.ts';
 import { calendarWriteEnabled } from '#lib/server/services.ts';
 import type { Actions, PageServerLoad } from './$types';
+
+/** The first and last day the site shows from the calendar, in the orchestra's time zone. */
+function shownDays() {
+	const { from, to } = calendarRange(Date.now());
+	const day = (date: Date) => eventDay({ start: date.toISOString(), allDay: false }, config.timeZone);
+	return { first: day(from), last: day(to) };
+}
 
 /** List or calendar, remembered per viewer in a cookie the page sets. */
 const VIEW_COOKIE = 'konzerte-ansicht';
@@ -33,7 +41,6 @@ async function openPolls(locals: App.Locals, today: string) {
 export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const view = cookies.get(VIEW_COOKIE) === 'kalender' ? ('calendar' as const) : ('list' as const);
 	const library = await getLibrary();
-	const archive = { canAdd: locals.access.rights.has('archiv.bearbeiten') && library.sheet === 'ok', orchestras: config.orchestras };
 	const schedule = library.schedule;
 	const polls = await openPolls(locals, library.today).catch((error) => {
 		console.error('Loading the date polls failed:', error);
@@ -43,18 +50,27 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 	// Past concerts: the calendar's recent ones and the history from the sheet, newest first.
 	const past = library.concerts.filter((concert) => isPastConcert(concert, library.today)).map(concertSummary);
 
-	// Adding dates: for those who plan them; the form says when the calendar is read-only.
-	const adding = locals.access.rights.has('termine.planen')
-		? {
-				writable: calendarWriteEnabled(),
-				concerts: schedule.ok
-					? schedule.events.filter((event) => event.type === 'konzert' && !event.past).map((event) => ({ id: event.id, title: event.displayTitle, date: event.date.long }))
-					: []
-			}
-		: null;
+	// Adding dates: upcoming ones into the calendar for those who plan them, past concerts into
+	// the archive (the sheet) for those who keep it. The form says when the calendar is read-only.
+	const calendar = locals.access.rights.has('termine.planen');
+	const archive = locals.access.rights.has('archiv.bearbeiten') && library.sheet === 'ok';
+	const adding =
+		calendar || archive
+			? {
+					calendar,
+					archive,
+					writable: calendarWriteEnabled(),
+					// The date field stops where the site stops showing dates.
+					last: shownDays().last,
+					orchestras: config.orchestras,
+					concerts: schedule.ok
+						? schedule.events.filter((event) => event.type === 'konzert' && !event.past).map((event) => ({ id: event.id, title: event.displayTitle, date: event.date.long }))
+						: []
+				}
+			: null;
 
 	if (!schedule.ok) {
-		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {} as Record<string, string>, subscribeUrl: null, archive, ...polls, adding };
+		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {} as Record<string, string>, subscribeUrl: null, ...polls, adding };
 	}
 
 	const concertTitles: Record<string, string> = {};
@@ -72,25 +88,39 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		past,
 		concertTitles,
 		subscribeUrl: schedule.subscribeUrl,
-		archive,
 		...polls,
 		adding
 	};
 };
 
 export const actions: Actions = {
-	addConcert: ({ locals, request }) => addConcert(locals, request),
-
-	/** A concert or rehearsal into the Google Calendar ("termine.planen", CALENDAR_WRITE). */
+	/**
+	 * A concert or rehearsal into the Google Calendar ("termine.planen", CALENDAR_WRITE); a concert
+	 * that's already over goes into the archive instead ("archiv.bearbeiten"), only the year if
+	 * that's all anyone knows.
+	 */
 	addEvent: async ({ locals, request }) => {
-		requireRight(locals, 'termine.planen');
 		const form = await request.formData();
 		const values = Object.fromEntries([...form].map(([name, value]) => [name, String(value)]));
+		const date = String(form.get('date') ?? '').trim();
+		const today = eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
+		if (values.type === 'konzert' && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today && locals.access.rights.has('archiv.bearbeiten')) {
+			const field = (name: string) => String(form.get(name) ?? '').trim().slice(0, 200);
+			const refused = await addPastConcert(locals, {
+				title: field('title'),
+				date: form.get('yearOnly') ? date.slice(0, 4) : date,
+				location: field('location'),
+				orchestra: field('orchestra')
+			});
+			return fail(refused.status, { eventError: refused.message, eventValues: values });
+		}
+
+		requireRight(locals, 'termine.planen');
 		if (!calendarWriteEnabled()) return fail(503, { eventError: t.calendar.add.readOnly, eventValues: values });
 
 		const schedule = await getSchedule();
 		const concerts = schedule.ok ? schedule.events.filter((event) => event.type === 'konzert' && !event.past) : [];
-		const parsed = newEventFromForm(form, { keywords: config.events, timeZone: config.timeZone, concerts });
+		const parsed = newEventFromForm(form, { keywords: config.events, timeZone: config.timeZone, concerts, range: shownDays() });
 		if ('error' in parsed) return fail(400, { eventError: t.calendar.add.problems[parsed.error], eventValues: values });
 
 		const result = await addCalendarEvent(parsed.event);

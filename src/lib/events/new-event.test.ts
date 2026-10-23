@@ -56,6 +56,10 @@ describe('newEventFromForm', () => {
 		expect(newEventFromForm(form({ type: 'party', date: '2026-11-07' }), context)).toEqual({ error: 'type' });
 		expect(newEventFromForm(form({ type: 'konzert', date: '2026-11-07' }), context)).toEqual({ error: 'title' });
 		expect(newEventFromForm(form({ type: 'probe', date: '7.11.2026' }), context)).toEqual({ error: 'date' });
+		const range = { first: '2023-10-23', last: '2028-04-15' };
+		expect(newEventFromForm(form({ type: 'konzert', title: 'X', date: '2222-02-22' }), { ...context, range })).toEqual({ error: 'too-late' });
+		expect(newEventFromForm(form({ type: 'probe', date: '2019-06-15' }), { ...context, range })).toEqual({ error: 'too-early' });
+		expect(newEventFromForm(form({ type: 'probe', date: '2028-04-15' }), { ...context, range })).toHaveProperty('event');
 		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-07', start: '25:00' }), context)).toEqual({ error: 'time' });
 		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-07', end: '12:00' }), context)).toEqual({ error: 'time' });
 		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-07', start: '12:00', end: '10:00' }), context)).toEqual({ error: 'end' });

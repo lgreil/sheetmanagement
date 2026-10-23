@@ -6,7 +6,6 @@
 	import { pollDatesByMonth, type PollDate } from '#lib/polls/polls.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
 	import AddEventForm from '#lib/components/AddEventForm.svelte';
-	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import CalendarView from '#lib/components/CalendarView.svelte';
 	import ConcertRow from '#lib/components/ConcertRow.svelte';
 	import Nothing from '#lib/components/Nothing.svelte';
@@ -133,8 +132,13 @@
 	{#if data.adding}
 		<div class="add-event" id="termin">
 			<AddEventForm
+				calendar={data.adding.calendar}
+				archive={data.adding.archive}
 				writable={data.adding.writable}
+				orchestras={data.adding.orchestras}
 				concerts={data.adding.concerts}
+				today={data.today}
+				last={data.adding.last}
 				bind:open={adding}
 				result={form}
 				preset={{ type: page.url.searchParams.get('neu') ?? undefined, concert: page.url.searchParams.get('konzert') ?? undefined }}
@@ -201,9 +205,6 @@
 	</div>
 {/if}
 
-{#if data.archive.canAdd}
-	<AddToArchive kind="concert" orchestras={data.archive.orchestras} result={form} />
-{/if}
 
 <style>
 	.waiting {

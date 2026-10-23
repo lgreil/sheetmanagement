@@ -192,7 +192,7 @@
 {/if}
 
 {#if data.canAdd}
-	<AddToArchive kind="piece" result={form} />
+	<AddToArchive result={form} />
 {/if}
 
 <style>

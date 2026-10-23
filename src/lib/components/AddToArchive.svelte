@@ -4,16 +4,8 @@
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
 
-	/** A collapsed form for "archiv.bearbeiten": a past concert or a piece without sheet music. */
-	let {
-		kind,
-		orchestras = [],
-		result
-	}: {
-		kind: 'concert' | 'piece';
-		orchestras?: string[];
-		result?: { archiveError?: string; values?: Record<string, string> } | null;
-	} = $props();
+	/** A collapsed form for "archiv.bearbeiten": a piece without sheet music. Past concerts are entered with the dates on /kalender. */
+	let { result }: { result?: { archiveError?: string; values?: Record<string, string> } | null } = $props();
 
 	// Opens again after a refused entry, with what was typed.
 	let open = $state(false);
@@ -26,38 +18,18 @@
 	{#if shown}
 		<form
 			method="POST"
-			action={kind === 'concert' ? '?/addConcert' : '?/addPiece'}
+			action="?/addPiece"
 			use:enhance={saving.submit()}
 		>
-			<h2>{kind === 'concert' ? t.archive.addConcert : t.archive.addPiece}</h2>
-			<p class="lead">{kind === 'concert' ? t.archive.addConcertLead : t.archive.addPieceLead}</p>
+			<h2>{t.archive.addPiece}</h2>
+			<p class="lead">{t.archive.addPieceLead}</p>
 			{#if result?.archiveError}<p class="msg error" role="alert">{result.archiveError}</p>{/if}
-			{#if kind === 'concert'}
-				<label class="field">
-					{t.archive.title}
-					<input name="title" required maxlength="200" value={values.title ?? ''} placeholder={t.archive.titleHint} autocomplete="off" />
-				</label>
-				<label class="field">
-					{t.archive.date}
-					<input name="date" maxlength="40" value={values.date ?? ''} placeholder={t.archive.dateHint} autocomplete="off" />
-				</label>
-				<label class="field">{t.archive.location}<input name="location" maxlength="200" value={values.location ?? ''} autocomplete="off" /></label>
-				{#if orchestras.length}
-					<label class="field">
-						{t.archive.orchestra}
-						<select name="orchestra" value={values.orchestra ?? orchestras[0]}>
-							{#each orchestras as orchestra (orchestra)}<option value={orchestra}>{orchestra}</option>{/each}
-						</select>
-					</label>
-				{/if}
-			{:else}
-				<label class="field">
-					{t.archive.pieceTitle}
-					<input name="title" required maxlength="200" value={values.title ?? ''} autocomplete="off" />
-				</label>
-				<label class="field">{t.archive.composer}<input name="composer" maxlength="200" value={values.composer ?? ''} autocomplete="off" /></label>
-				<label class="field">{t.archive.catalogue}<input name="catalogue" maxlength="200" value={values.catalogue ?? ''} autocomplete="off" /></label>
-			{/if}
+			<label class="field">
+				{t.archive.pieceTitle}
+				<input name="title" required maxlength="200" value={values.title ?? ''} autocomplete="off" />
+			</label>
+			<label class="field">{t.archive.composer}<input name="composer" maxlength="200" value={values.composer ?? ''} autocomplete="off" /></label>
+			<label class="field">{t.archive.catalogue}<input name="catalogue" maxlength="200" value={values.catalogue ?? ''} autocomplete="off" /></label>
 			<div class="actions">
 				<button class="btn" disabled={saving.busy}><Icon name="plus" size={16} />{t.archive.add}</button>
 				<button class="btn ghost" type="button" onclick={() => (open = false)}>{t.reports.cancel}</button>
@@ -65,7 +37,7 @@
 		</form>
 	{:else}
 		<button class="btn ghost" onclick={() => (open = true)}>
-			<Icon name="plus" size={16} />{kind === 'concert' ? t.archive.addConcert : t.archive.addPiece}
+			<Icon name="plus" size={16} />{t.archive.addPiece}
 		</button>
 	{/if}
 </section>
