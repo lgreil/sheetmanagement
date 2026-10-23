@@ -10,6 +10,7 @@
 	import QuickSearch, { loadIndex } from '#lib/components/QuickSearch.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
+	import Tour from '#lib/components/Tour.svelte';
 	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
 	import WorkspaceTabs from '#lib/components/WorkspaceTabs.svelte';
 	import { currentItem, navGroups, primaryNav, workspaceOf } from '#lib/nav.ts';
@@ -97,6 +98,8 @@
 
 <div class="app">
 	<a class="skip" href="#inhalt">{t.nav.skip}</a>
+	<!-- Early in the page, so the keyboard reaches the tour's card right after the skip link. -->
+	<Tour status={data.tour} account={data.auth === 'on' && !!data.user} name={data.user?.name ?? ''} />
 	{#if loading}
 		<div class="progress" role="progressbar" aria-label={t.common.loading}></div>
 	{/if}
@@ -113,7 +116,7 @@
 
 			<nav class="nav-desktop" aria-label={t.nav.main}>
 				{#each nav as item (item.href)}
-					<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+					<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined} data-tour={item.href}>
 						{item.label}
 					</a>
 				{/each}
@@ -122,6 +125,7 @@
 					class:active={inMore || menuOpen}
 					aria-expanded={menuOpen}
 					aria-controls="nav-menu"
+					data-tour="more"
 					onclick={() => (menuOpen = !menuOpen)}
 				>
 					{t.nav.more}<Icon name="down" size={16} />
@@ -185,12 +189,12 @@
 
 	<nav class="tabbar" aria-label={t.nav.main}>
 		{#each nav as item (item.href)}
-			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined} data-tour={item.href}>
 				<span class="pill"><Icon name={item.icon} size={22} fill={isCurrent(item.href)} /></span>
 				<span class="label">{item.label}</span>
 			</a>
 		{/each}
-		<button class:active={inMore || menuOpen} aria-expanded={menuOpen} aria-controls="nav-menu" onclick={() => (menuOpen = !menuOpen)}>
+		<button class:active={inMore || menuOpen} aria-expanded={menuOpen} aria-controls="nav-menu" data-tour="more" onclick={() => (menuOpen = !menuOpen)}>
 			<span class="pill"><Icon name="menu" size={22} fill={inMore || menuOpen} /></span>
 			<span class="label">{t.nav.more}</span>
 		</button>

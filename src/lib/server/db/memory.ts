@@ -1,4 +1,4 @@
-import { reminderKey, type PushDevice, type Store } from './types.ts';
+import { reminderKey, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -10,6 +10,7 @@ export function memoryStore(now = () => Date.now()): Store {
 	const sent = new Map<string, number>();
 	const state = new Map<string, string>();
 	const optOut = new Set<string>();
+	const tours = new Map<string, TourOutcome>();
 	const hits = new Map<string, { count: number; since: number }>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
@@ -51,6 +52,12 @@ export function memoryStore(now = () => Date.now()): Store {
 		async setMailOptOut(email, off) {
 			if (off) optOut.add(email);
 			else optOut.delete(email);
+		},
+
+		tourOf: async (email) => tours.get(email) ?? null,
+		async setTour(email, outcome) {
+			if (outcome) tours.set(email, outcome);
+			else tours.delete(email);
 		},
 
 		async hit(key, windowMinutes) {

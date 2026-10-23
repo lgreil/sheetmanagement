@@ -1,15 +1,22 @@
 import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
-/** Back to the demo's sample data, signed in as the admin or as a member. */
-export async function resetDemo(page: Page, role: 'verwaltung' | 'mitglied' = 'verwaltung') {
+/**
+ * Back to the demo's sample data, signed in as the admin or as a member. The tour for new
+ * members is skipped, so its card doesn't sit over the page; `tour: true` keeps it.
+ */
+export async function resetDemo(page: Page, role: 'verwaltung' | 'mitglied' = 'verwaltung', { tour = false } = {}) {
+	// Form posts from elsewhere are refused (CSRF): it comes from the app itself.
+	const origin = new URL(test.info().project.use.baseURL!).origin;
 	const response = await page.request.post('/demo', {
 		form: { rolle: role, zuruecksetzen: '1', weiter: '/' },
-		// Form posts from elsewhere are refused (CSRF): it comes from the app itself.
-		headers: { origin: new URL(test.info().project.use.baseURL!).origin },
+		headers: { origin },
 		maxRedirects: 0
 	});
 	expect(response.status()).toBe(303);
+	if (tour) return;
+	const skipped = await page.request.post('/profil?/tour', { form: { outcome: 'skipped' }, headers: { origin, 'x-sveltekit-action': 'true' } });
+	expect(skipped.ok()).toBe(true);
 }
 
 /** Opens a page and waits until it's interactive, so a click isn't lost before the app has started. */
