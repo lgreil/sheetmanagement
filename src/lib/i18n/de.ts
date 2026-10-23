@@ -1025,11 +1025,22 @@ export const de = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'Meine Daten',
-		lead: 'Alles, was die App in der Repertoire-Tabelle über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen.',
+		lead: 'Alles, was die App über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen aus der Repertoire-Tabelle, dazu deine Geräte für Benachrichtigungen und die Erinnerungen, die du bekommen hast.',
 		download: 'Meine Daten herunterladen',
 		hint: 'Eine JSON-Datei, die sich mit jedem Texteditor öffnen lässt. Zum Ändern oder Löschen wende dich an die Verwaltung.',
 		fileName: 'meine-daten',
-		explain: 'Deine Zeilen aus der Repertoire-Tabelle des Orchesters, nach Blatt, mit den Spaltennamen der Tabelle.',
+		explain: 'Deine Zeilen aus der Repertoire-Tabelle des Orchesters, nach Blatt, mit den Spaltennamen der Tabelle; dazu, was die App selbst in ihrer Datenbank (D1) über dich speichert.',
+		/** From D1 (#161): devices with notifications on, and the reminders sent. */
+		devices: 'Geräte für Benachrichtigungen',
+		pushService: 'Zustelldienst',
+		since: 'Angemeldet seit (UTC)',
+		keys: 'Schlüssel zum Verschlüsseln',
+		keysStored: 'gespeichert, hier nicht ausgegeben',
+		reminders: 'Verschickte Erinnerungen',
+		reminderKind: 'Art',
+		reminderAbout: 'Wofür',
+		sentAt: 'Verschickt (UTC)',
+		reminderKinds: { signup: 'Zu- oder Absage fehlt', 'loan-due': 'Leihmaterial bald fällig', 'loan-overdue': 'Leihmaterial überfällig' } as Record<string, string>,
 		myVote: 'Mein +1',
 		yes: 'ja',
 		no: 'nein'

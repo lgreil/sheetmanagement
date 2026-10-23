@@ -1,23 +1,28 @@
 import { redirect } from '@sveltejs/kit';
-import { exportFileName, myData } from '#lib/access/my-data.ts';
+import { exportFileName, myData, storedData } from '#lib/access/my-data.ts';
+import { getStore } from '#lib/server/db/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { orchestra } from '#lib/server/env.ts';
 import { getAccessList, getAttendance, getFeedback, getPieceNotes, getRehearsalNotes, getSignups } from '#lib/server/repertoire.ts';
 import type { RequestHandler } from './$types';
 
-/** "Meine Daten herunterladen" (#158): the member's own rows from the sheet, as a JSON file. */
+/** "Meine Daten herunterladen" (#158): the member's own rows from the sheet and from D1, as a JSON file. */
 export const GET: RequestHandler = async ({ locals }) => {
 	const user = locals.access.user;
 	if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
-	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes] = await Promise.all([
+	const email = user.email.trim().toLowerCase();
+	const store = getStore();
+	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes, devices, reminders] = await Promise.all([
 		getAccessList({ force: true }),
 		getFeedback(),
 		getSignups(),
 		getAttendance(),
 		getPieceNotes(),
-		getRehearsalNotes()
+		getRehearsalNotes(),
+		store.pushOf(email),
+		store.remindersOf(email)
 	]);
-	const member = access?.membersByEmail.get(user.email.trim().toLowerCase());
+	const member = access?.membersByEmail.get(email);
 	const data = myData(
 		{ email: user.email, name: member?.name || user.name },
 		{
@@ -34,7 +39,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		email: user.email,
 		exportedAt: new Date().toISOString(),
 		about: t.myData.explain,
-		data
+		data: { ...data, ...storedData(devices, reminders) }
 	};
 	return new Response(JSON.stringify(body, null, 2), {
 		headers: {

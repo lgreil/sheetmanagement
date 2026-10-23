@@ -7,6 +7,15 @@ export interface PushDevice {
 	/** The device's public key and secret for encrypting messages (base64url). */
 	p256dh: string;
 	auth: string;
+	/** When the device was signed up, "2026-10-23 08:30:00" (UTC); for the member's data export. */
+	createdAt?: string;
+}
+
+export interface SentReminder {
+	kind: string;
+	subject: string;
+	/** "2026-10-23 08:30:00" (UTC). */
+	sentAt: string;
 }
 
 export interface Store {
@@ -25,6 +34,8 @@ export interface Store {
 	/** Which of these reminders already went out, as `${subject}\n${recipient}`. */
 	sentReminders(kind: string, subjects: string[]): Promise<Set<string>>;
 	logReminder(kind: string, subject: string, recipient: string): Promise<void>;
+	/** The reminders one person got, oldest first; for their data export (#158). */
+	remindersOf(recipient: string): Promise<SentReminder[]>;
 	/** Forgets reminders older than this many days. */
 	pruneReminders(days: number): Promise<void>;
 

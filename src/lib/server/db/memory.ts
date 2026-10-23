@@ -1,6 +1,9 @@
 import { reminderKey, type PushDevice, type Store } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
+/** Like SQLite's datetime('now'). */
+const sqlTime = (at: number) => new Date(at).toISOString().slice(0, 19).replace('T', ' ');
+
 /** The store without D1: demo, tests, dev without Wrangler. Gone on restart, like the demo's sheet. */
 export function memoryStore(now = () => Date.now()): Store {
 	const push = new Map<string, PushDevice>();
@@ -14,7 +17,7 @@ export function memoryStore(now = () => Date.now()): Store {
 		migrate: async () => [],
 
 		async savePush(device) {
-			push.set(device.endpoint, { ...device });
+			push.set(device.endpoint, { ...device, createdAt: push.get(device.endpoint)?.createdAt ?? sqlTime(now()) });
 		},
 		async deletePush(endpoint) {
 			push.delete(endpoint);
@@ -31,6 +34,12 @@ export function memoryStore(now = () => Date.now()): Store {
 		async logReminder(kind, subject, recipient) {
 			const key = `${kind}\n${reminderKey(subject, recipient)}`;
 			if (!sent.has(key)) sent.set(key, now());
+		},
+		async remindersOf(recipient) {
+			return [...sent]
+				.map(([key, at]) => ({ parts: key.split('\n'), at }))
+				.filter(({ parts }) => parts[2] === recipient)
+				.map(({ parts, at }) => ({ kind: parts[0], subject: parts[1], sentAt: sqlTime(at) }));
 		},
 		async pruneReminders(days) {
 			for (const [key, at] of sent) if (at < now() - days * 86_400_000) sent.delete(key);

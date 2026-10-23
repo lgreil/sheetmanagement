@@ -1,4 +1,4 @@
-import { reminderKey, type PushDevice, type Store } from './types.ts';
+import { reminderKey, type PushDevice, type SentReminder, type Store } from './types.ts';
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -87,7 +87,8 @@ export function sqlStore(db: D1): Store {
 		async deletePush(endpoint) {
 			await run('DELETE FROM push_subscriptions WHERE endpoint = ?', endpoint);
 		},
-		pushOf: (email) => all<PushDevice>('SELECT endpoint, email, p256dh, auth FROM push_subscriptions WHERE email = ? ORDER BY created_at', email),
+		pushOf: (email) =>
+			all<PushDevice>('SELECT endpoint, email, p256dh, auth, created_at AS createdAt FROM push_subscriptions WHERE email = ? ORDER BY created_at', email),
 		allPush: () => all<PushDevice>('SELECT endpoint, email, p256dh, auth FROM push_subscriptions ORDER BY email, created_at'),
 
 		async sentReminders(kind, subjects) {
@@ -107,6 +108,8 @@ export function sqlStore(db: D1): Store {
 		async logReminder(kind, subject, recipient) {
 			await run('INSERT OR IGNORE INTO reminders_sent (kind, subject, recipient) VALUES (?, ?, ?)', kind, subject, recipient);
 		},
+		remindersOf: (recipient) =>
+			all<SentReminder>('SELECT kind, subject, sent_at AS sentAt FROM reminders_sent WHERE recipient = ? ORDER BY sent_at, kind, subject', recipient),
 		async pruneReminders(days) {
 			await run(`DELETE FROM reminders_sent WHERE sent_at < datetime('now', ?)`, `-${days} days`);
 		},

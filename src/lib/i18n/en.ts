@@ -1025,11 +1025,22 @@ export const en: Texts = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'My data',
-		lead: 'Everything the app keeps about you in the repertoire sheet: your entry, sign-ups, attendance, reports, wishes and notes.',
+		lead: 'Everything the app keeps about you: your entry, sign-ups, attendance, reports, wishes and notes from the repertoire sheet, plus your devices for notifications and the reminders you got.',
 		download: 'Download my data',
 		hint: 'A JSON file that opens in any text editor. To change or delete something, please ask the admins.',
 		fileName: 'my-data',
-		explain: "Your rows from the orchestra's repertoire sheet, by tab, with the sheet's column names.",
+		explain: "Your rows from the orchestra's repertoire sheet, by tab, with the sheet's column names; plus what the app itself keeps about you in its database (D1).",
+		/** From D1 (#161): devices with notifications on, and the reminders sent. */
+		devices: 'Devices for notifications',
+		pushService: 'Delivered by',
+		since: 'Signed up (UTC)',
+		keys: 'Encryption keys',
+		keysStored: 'stored, not included here',
+		reminders: 'Reminders sent',
+		reminderKind: 'Kind',
+		reminderAbout: 'About',
+		sentAt: 'Sent (UTC)',
+		reminderKinds: { signup: 'No answer yet', 'loan-due': 'Rented music due soon', 'loan-overdue': 'Rented music overdue' } as Record<string, string>,
 		myVote: 'My +1',
 		yes: 'yes',
 		no: 'no'

@@ -44,6 +44,7 @@ describe.each([
 		await store.savePush(device('https://push/2', 'b@x.org'));
 		expect((await store.pushOf('a@x.org')).map((d) => d.endpoint)).toEqual(['https://push/1']);
 		expect((await store.allPush()).length).toBe(3);
+		expect((await store.pushOf('b@x.org'))[0].createdAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
 		await store.deletePush('https://push/1');
 		expect(await store.pushOf('a@x.org')).toEqual([]);
 	});
@@ -55,6 +56,11 @@ describe.each([
 		await store.logReminder('loan', 'event-1', 'b@x.org');
 		expect(await store.sentReminders('signup', ['event-1', 'event-2'])).toEqual(new Set(['event-1\na@x.org']));
 		expect(await store.sentReminders('signup', [])).toEqual(new Set());
+		// For the member's data export: their own reminders only, with the time sent.
+		const mine = await store.remindersOf('a@x.org');
+		expect(mine.map(({ kind, subject }) => [kind, subject])).toEqual([['signup', 'event-1']]);
+		expect(mine[0].sentAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
+		expect(await store.remindersOf('nobody@x.org')).toEqual([]);
 	});
 
 	it('keeps values between runs', async () => {
