@@ -72,6 +72,17 @@ describe.each([
 		expect(await store.mailOptOuts()).toEqual(new Set(['a@x.org']));
 	});
 
+	it('remembers how the tour ended, until it is forgotten', async () => {
+		const store = make();
+		expect(await store.tourOf('a@x.org')).toBeNull();
+		await store.setTour('a@x.org', 'skipped');
+		await store.setTour('a@x.org', 'done');
+		await store.setTour('b@x.org', 'skipped');
+		expect(await store.tourOf('a@x.org')).toBe('done');
+		await store.setTour('b@x.org', null);
+		expect(await store.tourOf('b@x.org')).toBeNull();
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

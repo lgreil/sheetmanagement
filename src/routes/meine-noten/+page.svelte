@@ -61,7 +61,7 @@
 	</p>
 {/if}
 
-<div class="controls">
+<div class="controls" data-tour="instrument">
 	{#if showPicker}
 		<form
 			class="picker"

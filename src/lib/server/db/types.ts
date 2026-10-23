@@ -1,5 +1,7 @@
 /** The store's types (#161); see index.ts. */
 
+import type { TourOutcome } from '#lib/tour/tour.ts';
+
 export interface PushDevice {
 	/** The push service's address for this device; also its id. */
 	endpoint: string;
@@ -17,6 +19,8 @@ export interface SentReminder {
 	/** "2026-10-23 08:30:00" (UTC). */
 	sentAt: string;
 }
+
+export type { TourOutcome } from '#lib/tour/tour.ts';
 
 export interface Store {
 	kind: 'd1' | 'memory';
@@ -42,6 +46,11 @@ export interface Store {
 	/** Members who turned email reminders off (#123). */
 	mailOptOuts(): Promise<Set<string>>;
 	setMailOptOut(email: string, off: boolean): Promise<void>;
+
+	/** Whether a member finished or skipped the tour; null while they haven't seen it. */
+	tourOf(email: string): Promise<TourOutcome | null>;
+	/** Remembers how the tour ended; null forgets it, so it's offered again. */
+	setTour(email: string, outcome: TourOutcome | null): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

@@ -1128,6 +1128,33 @@ export const de = {
 		unknownStatus: 'Diesen Status gibt es nicht.',
 		badDate: 'Das Datum ist nicht lesbar.'
 	},
+	/** The tour for new members: the main pages, then their profile; retaken from /profil. */
+	tour: {
+		label: 'Tour durch die App',
+		welcome: (name: string) => (name ? `Willkommen, ${name}!` : 'Willkommen!'),
+		offer: 'Magst du eine kurze Tour machen? In einer Minute siehst du die wichtigsten Seiten und richtest dein Profil ein.',
+		start: 'Tour starten',
+		skip: 'Überspringen',
+		end: 'Tour beenden',
+		back: 'Zurück',
+		next: 'Weiter',
+		finish: 'Fertig',
+		step: (n: number, of: number) => `Schritt ${n} von ${of}`,
+		steps: {
+			home: { title: 'Übersicht', body: 'Die Startseite zeigt, was als Nächstes ansteht: die nächste Probe, das nächste Konzert und was gerade auf dich wartet.' },
+			calendar: { title: 'Kalender', body: 'Alle Proben und Konzerte. Hier sagst du zu oder ab und siehst das Programm; Terminumfragen stehen gleich daneben.' },
+			parts: { title: 'Meine Noten', body: 'Deine Stimmen für die nächsten Konzerte, passend zu deinem Instrument. Stimmt das Instrument hier? Sonst wähl es aus und speichere.' },
+			pieces: { title: 'Archiv', body: 'Alle Stücke des Notenarchivs mit Noten, Hörbeispielen und Hinweisen. Mit der Suche oben findest du jedes Stück schnell.' },
+			more: { title: 'Mehr', body: 'Hier findest du alle weiteren Seiten, zum Beispiel die Chronik. Unten stellst du ein, ob die App hell oder dunkel ist.' },
+			profile: { title: 'Dein Profil', body: 'Trag ein, welche Instrumente du spielst und in welchen Orchestern. Mit „Speichern“ gilt es überall in der App.' },
+			theme: { title: 'Hell oder dunkel', body: 'So sieht die App für dich aus: wie dein Gerät eingestellt ist, immer hell oder immer dunkel. Probier es gleich aus.' },
+			notifications: { title: 'Benachrichtigungen', body: 'Lass dich an Zusagen, Proben und Leihmaterial erinnern: als Benachrichtigung auf diesem Gerät oder per E-Mail.' },
+			done: { title: 'Fertig!', body: 'Viel Spaß beim Spielen. Die Tour kannst du im Profil jederzeit noch einmal machen.' },
+			doneOpen: { title: 'Fertig!', body: 'Viel Spaß beim Spielen.' }
+		},
+		retake: 'Tour noch einmal machen',
+		retakeHint: 'Die wichtigsten Seiten und dein Profil, Schritt für Schritt.'
+	},
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'Meine Daten',
@@ -1146,6 +1173,9 @@ export const de = {
 		mailReminders: 'Erinnerungen per E-Mail',
 		mailState: 'Stand',
 		mailOff: 'abbestellt',
+		tour: 'Tour durch die App',
+		tourDone: 'bis zum Ende angesehen',
+		tourSkipped: 'übersprungen',
 		reminderKind: 'Art',
 		reminderAbout: 'Wofür',
 		sentAt: 'Verschickt (UTC)',

@@ -9,6 +9,7 @@ import { navGroups, workspaceOf } from '#lib/nav.ts';
 import { parseInstruments } from '#lib/music/my-parts.ts';
 import { visiblePolls } from '#lib/server/polls.ts';
 import { getAccessList } from '#lib/server/repertoire.ts';
+import { getStore } from '#lib/server/db/index.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
@@ -30,6 +31,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const instrument = member?.instrument ? parseInstruments(member.instrument, config)[0]?.instrument : undefined;
 
 	const { name, shortName, logo, colours, style, look } = orchestra();
+	// The tour for new members, until they finish or skip it; not on sign-in or legal pages.
+	const tour = isPublicPath(url.pathname) ? ('seen' as const) : await tourState(access.user?.email);
 	return {
 		orchestraName: name,
 		orchestraShortName: shortName,
@@ -42,6 +45,21 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		rights,
 		polls,
 		counts,
+		tour,
 		demo: isDemo() ? { role: cookies.get(DEMO_ROLE_COOKIE) === 'mitglied' ? ('mitglied' as const) : ('verwaltung' as const) } : null
 	};
 };
+
+/**
+ * Whether to offer the tour: from D1 for someone signed in; "local" leaves it to the browser,
+ * for visitors while sign-in is off and when the database doesn't answer.
+ */
+async function tourState(email: string | undefined): Promise<'offer' | 'seen' | 'local'> {
+	if (!email) return 'local';
+	try {
+		return (await getStore().tourOf(normalizeEmail(email))) ? 'seen' : 'offer';
+	} catch (error) {
+		console.error('Reading the tour state failed:', error);
+		return 'local';
+	}
+}

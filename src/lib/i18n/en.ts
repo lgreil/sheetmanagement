@@ -1127,6 +1127,33 @@ export const en: Texts = {
 		unknownStatus: "This status doesn't exist.",
 		badDate: "The date can't be read."
 	},
+	/** The tour for new members: the main pages, then their profile; retaken from /profil. */
+	tour: {
+		label: 'Tour of the app',
+		welcome: (name: string) => (name ? `Welcome, ${name}!` : 'Welcome!'),
+		offer: 'Would you like a short tour? In a minute you’ll see the main pages and set up your profile.',
+		start: 'Start the tour',
+		skip: 'Skip',
+		end: 'End the tour',
+		back: 'Back',
+		next: 'Next',
+		finish: 'Done',
+		step: (n: number, of: number) => `Step ${n} of ${of}`,
+		steps: {
+			home: { title: 'Overview', body: 'The start page shows what’s coming up: the next rehearsal, the next concert and what’s waiting for you right now.' },
+			calendar: { title: 'Calendar', body: 'Every rehearsal and concert. Say whether you’re coming and see the programme; date polls are right next to them.' },
+			parts: { title: 'My parts', body: 'Your parts for the next concerts, matching your instrument. Is the instrument right? If not, pick yours and save.' },
+			pieces: { title: 'Archive', body: 'Every piece in the sheet music archive, with parts, recordings and notes. The search at the top finds any piece quickly.' },
+			more: { title: 'More', body: 'All the other pages, such as the chronicle. At the bottom you choose whether the app is light or dark.' },
+			profile: { title: 'Your profile', body: 'Enter the instruments you play and the orchestras you’re in. Once saved, it counts everywhere in the app.' },
+			theme: { title: 'Light or dark', body: 'How the app looks for you: like your device, always light or always dark. Try it right away.' },
+			notifications: { title: 'Notifications', body: 'Get reminders about replies, rehearsals and borrowed music: as a notification on this device or by email.' },
+			done: { title: 'All set!', body: 'Enjoy playing. You can take the tour again any time from your profile.' },
+			doneOpen: { title: 'All set!', body: 'Enjoy playing.' }
+		},
+		retake: 'Take the tour again',
+		retakeHint: 'The main pages and your profile, step by step.'
+	},
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'My data',
@@ -1145,6 +1172,9 @@ export const en: Texts = {
 		mailReminders: 'Reminders by email',
 		mailState: 'State',
 		mailOff: 'turned off',
+		tour: 'Tour of the app',
+		tourDone: 'taken to the end',
+		tourSkipped: 'skipped',
 		reminderKind: 'Kind',
 		reminderAbout: 'About',
 		sentAt: 'Sent (UTC)',

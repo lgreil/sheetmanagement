@@ -86,4 +86,9 @@ describe('storedData', () => {
 	it('says when reminders by email are turned off (#123)', () => {
 		expect(storedData([], [], true)).toEqual({ 'Erinnerungen per E-Mail': [{ Stand: 'abbestellt' }] });
 	});
+
+	it('says whether the tour was finished or skipped', () => {
+		expect(storedData([], [], false, 'skipped')).toEqual({ 'Tour durch die App': [{ Stand: 'übersprungen' }] });
+		expect(storedData([], [], false, 'done')).toEqual({ 'Tour durch die App': [{ Stand: 'bis zum Ende angesehen' }] });
+	});
 });

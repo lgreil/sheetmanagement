@@ -1,4 +1,4 @@
-import { reminderKey, type PushDevice, type SentReminder, type Store } from './types.ts';
+import { reminderKey, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -120,6 +120,15 @@ export function sqlStore(db: D1): Store {
 		async setMailOptOut(email, off) {
 			if (off) await run('INSERT OR IGNORE INTO email_opt_out (email) VALUES (?)', email);
 			else await run('DELETE FROM email_opt_out WHERE email = ?', email);
+		},
+
+		async tourOf(email) {
+			const [row] = await all<{ outcome: TourOutcome }>('SELECT outcome FROM tour_seen WHERE email = ?', email);
+			return row?.outcome ?? null;
+		},
+		async setTour(email, outcome) {
+			if (outcome) await run(`INSERT INTO tour_seen (email, outcome) VALUES (?, ?) ON CONFLICT (email) DO UPDATE SET outcome = excluded.outcome, created_at = datetime('now')`, email, outcome);
+			else await run('DELETE FROM tour_seen WHERE email = ?', email);
 		},
 
 		async hit(key, windowMinutes) {
