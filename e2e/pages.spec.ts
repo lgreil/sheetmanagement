@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { expectAccessible, open, resetDemo } from './demo.ts';
+import { expect, expectAccessible, open, resetDemo, test } from './demo.ts';
 
 /** The main pages open, show what they're for, and pass the accessibility check (#141, #142). */
 test.beforeEach(async ({ page }) => resetDemo(page));

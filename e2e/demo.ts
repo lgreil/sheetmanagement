@@ -1,12 +1,19 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test as base, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+import { DEMO_PORT } from './ports.ts';
+
+/** Each worker talks to its own demo server (playwright.config.ts), so resets don't hit another worker's test. */
+export const test = base.extend({
+	baseURL: async ({}, use, testInfo) => use(`http://localhost:${DEMO_PORT + testInfo.parallelIndex}`)
+});
+export { expect };
 
 /** Back to the demo's sample data, signed in as the admin or as a member. */
 export async function resetDemo(page: Page, role: 'verwaltung' | 'mitglied' = 'verwaltung') {
 	const response = await page.request.post('/demo', {
 		form: { rolle: role, zuruecksetzen: '1', weiter: '/' },
 		// Form posts from elsewhere are refused (CSRF): it comes from the app itself.
-		headers: { origin: new URL(test.info().project.use.baseURL!).origin },
+		headers: { origin: `http://localhost:${DEMO_PORT + test.info().parallelIndex}` },
 		maxRedirects: 0
 	});
 	expect(response.status()).toBe(303);
