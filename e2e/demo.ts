@@ -27,6 +27,8 @@ export async function open(page: Page, path: string) {
 
 /** No serious or critical accessibility problems (#141), in light and dark. */
 export async function expectAccessible(page: Page) {
+	// The colours change with a transition: without it, the check sees the new colours, not halfway there.
+	await page.addStyleTag({ content: '*, *::before, *::after { transition: none !important; }' });
 	for (const scheme of ['light', 'dark'] as const) {
 		await page.emulateMedia({ colorScheme: scheme, reducedMotion: 'reduce' });
 		const result = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
