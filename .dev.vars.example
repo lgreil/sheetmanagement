@@ -31,6 +31,9 @@ REPERTOIRE_SHEET_ID=""
 # Mirror problem reports into Drive: comments on the files, status words in file names.
 # Needs the service account as Editor of the archive folder. Default: read-only.
 # DRIVE_WRITE="true"
+# Let people with "termine.planen" add concerts and rehearsals to the calendar on /kalender.
+# Needs the calendar shared with the service account with "Make changes to events". Default: read-only.
+# CALENDAR_WRITE="true"
 
 # YouTube Data API key (Google Cloud console → APIs → "YouTube Data API v3" → Credentials).
 # Lets the piece editor suggest a duration from the Hörbeispiel's video. Optional, free.

@@ -44,7 +44,7 @@ export async function addConcert(locals: App.Locals, request: Request) {
 
 	// Sheet-only concerts are keyed by "Anlass"; find the new one to open it.
 	const added = (await getLibrary()).concerts.find((c) => !c.event && searchText(c.title) === searchText(input.title.trim()));
-	redirect(303, added ? `/konzerte/${encodeURIComponent(added.id)}` : '/konzerte');
+	redirect(303, added ? `/kalender/${encodeURIComponent(added.id)}` : '/kalender');
 }
 
 export async function addPiece(locals: App.Locals, request: Request) {

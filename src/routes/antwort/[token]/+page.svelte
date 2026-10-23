@@ -17,7 +17,7 @@
 		<p class="when">{data.found.when}</p>
 		{#if form?.saved}
 			<p class="saved" role="status">{t.email.answerSaved(t.signups.answers[form.saved])}</p>
-			<a class="link" href="/konzerte/{encodeURIComponent(data.found.id)}">{t.email.answerChange}</a>
+			<a class="link" href="/kalender/{encodeURIComponent(data.found.id)}">{t.email.answerChange}</a>
 		{:else}
 			<p>{t.email.answerLead(data.found.firstName)}</p>
 			<form method="POST" class="answers">

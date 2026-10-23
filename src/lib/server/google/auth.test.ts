@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createSignedJwt, createTokenProvider, parseServiceAccountKey, type ServiceAccountKey } from './auth.ts';
+import { createSignedJwt, createTokenProvider, parseServiceAccountKey, scopesFor, type ServiceAccountKey } from './auth.ts';
 
 async function testKey(): Promise<{ key: ServiceAccountKey; publicKey: CryptoKey }> {
 	const pair = (await crypto.subtle.generateKey(
@@ -83,5 +83,21 @@ describe('parseServiceAccountKey', () => {
 	it('rejects invalid or incomplete keys', () => {
 		expect(() => parseServiceAccountKey('not json')).toThrow('neither valid JSON nor base64');
 		expect(() => parseServiceAccountKey('{"client_email":"x"}')).toThrow('missing client_email or private_key');
+	});
+});
+
+describe('scopesFor', () => {
+	it('asks for read access only, unless writing is switched on', () => {
+		expect(scopesFor()).toEqual([
+			'https://www.googleapis.com/auth/drive.readonly',
+			'https://www.googleapis.com/auth/calendar.readonly',
+			'https://www.googleapis.com/auth/spreadsheets'
+		]);
+		expect(scopesFor({ drive: true })).toContain('https://www.googleapis.com/auth/drive');
+		expect(scopesFor({ calendar: true })).toEqual([
+			'https://www.googleapis.com/auth/drive.readonly',
+			'https://www.googleapis.com/auth/calendar.events',
+			'https://www.googleapis.com/auth/spreadsheets'
+		]);
 	});
 });

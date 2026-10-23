@@ -166,3 +166,27 @@ export function optionLabel(option: PollOption, locale: string) {
 		long: time ? `${long}, ${time}` : long
 	};
 }
+
+export interface PollDate {
+	poll: Pick<Poll, 'id' | 'title'>;
+	/** "2026-11-03", one per day even when a poll offers two times that day. */
+	days: string[];
+}
+
+/**
+ * Where open polls' dates fall, for the calendar (#95): per month ("2026-11") the polls with
+ * their proposed days from today on, in date order. A month with no event still gets them.
+ */
+export function pollDatesByMonth(polls: Pick<Poll, 'id' | 'title' | 'options'>[], today: string): Map<string, PollDate[]> {
+	const months = new Map<string, PollDate[]>();
+	for (const poll of polls) {
+		const days = [...new Set(poll.options.map((option) => option.date).filter((date) => date >= today))].sort();
+		for (const day of days) {
+			const month = months.get(day.slice(0, 7)) ?? [];
+			const entry = month.find((item) => item.poll.id === poll.id) ?? month[month.push({ poll: { id: poll.id, title: poll.title }, days: [] }) - 1];
+			entry.days.push(day);
+			months.set(day.slice(0, 7), month);
+		}
+	}
+	return new Map([...months].sort(([a], [b]) => a.localeCompare(b)));
+}

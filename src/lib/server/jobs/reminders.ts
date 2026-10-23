@@ -68,7 +68,7 @@ export async function sendReminders(now = Date.now()): Promise<JobResult> {
 			const when = event.allDay ? allDayDate.format(new Date(event.start)) : eventDate.format(new Date(event.start));
 			pending.push({
 				...reminder,
-				notice: { title: t.reminders.signupTitle(event.displayTitle), body: t.reminders.signupBody(when), url: `/konzerte/${encodeURIComponent(event.id)}`, tag: `signup-${event.id}` },
+				notice: { title: t.reminders.signupTitle(event.displayTitle), body: t.reminders.signupBody(when), url: `/kalender/${encodeURIComponent(event.id)}`, tag: `signup-${event.id}` },
 				answers: { eventId: event.id, until: Date.parse(event.start) + 86_400_000 }
 			});
 		}

@@ -24,13 +24,13 @@ describe('featureOfPath', () => {
 		expect(featureOfPath('/leihmaterial')).toBe('loans');
 		expect(featureOfPath('/wuensche')).toBe('wishes');
 		expect(featureOfPath('/kalender/abc.ics')).toBe('calendarFeed');
-		expect(featureOfPath('/konzerte/abc/anwesenheit')).toBe('attendance');
-		expect(featureOfPath('/konzerte/abc/anwesenheit/__data.json')).toBe('attendance');
-		expect(featureOfPath('/konzerte/abc/musikfolge.csv')).toBe('musicReport');
+		expect(featureOfPath('/kalender/abc/anwesenheit')).toBe('attendance');
+		expect(featureOfPath('/kalender/abc/anwesenheit/__data.json')).toBe('attendance');
+		expect(featureOfPath('/kalender/abc/musikfolge.csv')).toBe('musicReport');
 	});
 
 	it('leaves every other page alone', () => {
-		for (const path of ['/', '/konzerte', '/konzerte/abc', '/konzerte/abc/drucken', '/leihmaterialien', '/stuecke/wuensche']) {
+		for (const path of ['/', '/kalender', '/kalender/abc', '/kalender/abc/drucken', '/leihmaterialien', '/stuecke/wuensche']) {
 			expect(featureOfPath(path)).toBeUndefined();
 		}
 	});

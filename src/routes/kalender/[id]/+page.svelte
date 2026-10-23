@@ -25,9 +25,9 @@
 
 	/** A rehearsal sits below its concert: "Konzerte › Herbstkonzert › Probe". */
 	const crumbs = $derived([
-		{ href: '/konzerte', label: t.concerts.title },
+		{ href: '/kalender', label: t.concerts.title },
 		...(data.kind === 'event' && !isConcert && data.concert
-			? [{ href: `/konzerte/${encodeURIComponent(data.concert.id)}`, label: data.concert.displayTitle }]
+			? [{ href: `/kalender/${encodeURIComponent(data.concert.id)}`, label: data.concert.displayTitle }]
 			: [])
 	]);
 
@@ -87,13 +87,26 @@
 
 <Crumbs items={crumbs} />
 
-<header class="head {data.kind === 'event' ? data.event.type : 'konzert'}">
-	<p class="eyebrow">
-		{data.kind === 'event' ? t.concerts.types[data.event.type] : t.concert.archive}
-		{#if data.kind === 'event' && data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
-		{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
-	</p>
-	<h1>{title}</h1>
+<header class="head {data.kind === 'event' ? data.event.type : 'konzert'}" class:past={data.kind === 'event' && data.event.past}>
+	<!-- When at a glance: the date as a tile, like in the calendar's list. -->
+	{#if data.kind === 'event'}
+		<span class="tile" aria-hidden="true">
+			<span class="weekday">{data.event.date.weekday}</span>
+			<span class="day">{data.event.date.day}</span>
+			<span class="month">{data.event.date.month}</span>
+		</span>
+	{/if}
+	<div class="head-text">
+		<p class="eyebrow">
+			{data.kind === 'event' ? t.concerts.types[data.event.type] : t.concert.archive}
+			{#if data.kind === 'event' && data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
+			{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
+		</p>
+		<h1>{title}</h1>
+		{#if data.kind === 'event'}
+			<p class="when">{data.event.date.long} · {data.event.date.time || t.concerts.allDay}</p>
+		{/if}
+	</div>
 	<div class="head-actions">
 		{#if partsUrl}
 			<a class="btn" href={partsUrl}><Icon name="parts" size={18} />{t.nav.myParts}</a>
@@ -119,19 +132,16 @@
 {#if overview}
 <!-- The facts as one calm list: when, where, what it belongs to. -->
 <ul class="ui-list facts">
-	<li>
-		<div class="fact">
-			<span class="icon"><Icon name="calendar" size={18} /></span>
-			<span class="fact-body">
-				{#if data.kind === 'event'}
-					<strong>{data.event.date.long}</strong>
-					<span>{data.event.date.time || t.concerts.allDay}</span>
-				{:else}
+	{#if data.kind === 'archive'}
+		<li>
+			<div class="fact">
+				<span class="icon"><Icon name="calendar" size={18} /></span>
+				<span class="fact-body">
 					<strong>{data.archive.label?.long ?? (data.archive.dateText || t.concert.dateUnknown)}</strong>
-				{/if}
-			</span>
-		</div>
-	</li>
+				</span>
+			</div>
+		</li>
+	{/if}
 	{#if location}
 		<li>
 			<svelte:element
@@ -152,7 +162,7 @@
 	{/if}
 	{#if data.kind === 'event' && !isConcert && data.concert}
 		<li>
-			<a class="fact" href="/konzerte/{encodeURIComponent(data.concert.id)}">
+			<a class="fact" href="/kalender/{encodeURIComponent(data.concert.id)}">
 				<span class="icon concert"><Icon name="link" size={18} /></span>
 				<span class="fact-body">
 					<span class="over">{t.concert.preparesFor}</span>
@@ -221,7 +231,7 @@
 		<h2 class="ui-label">{t.concert.tools}</h2>
 		<ul class="ui-list tools">
 			{#if data.program.canEdit}
-				<li><a href="/konzerte/{id}/programm"><Icon name="edit" size={18} /><span>{t.editor.edit}</span><Icon name="chevron" size={18} /></a></li>
+				<li><a href="/kalender/{id}/programm"><Icon name="edit" size={18} /><span>{t.editor.edit}</span><Icon name="chevron" size={18} /></a></li>
 			{/if}
 			{#if data.kind === 'event' && data.rehearsalPlan.editUrl}
 				<li><a href={data.rehearsalPlan.editUrl}><Icon name="calendar" size={18} /><span>{t.rehearsalPlan.edit}</span><Icon name="chevron" size={18} /></a></li>
@@ -269,7 +279,7 @@
 			<h2 class="ui-label">{t.concert.program}</h2>
 			<div class="ui-actions">
 				{#if data.program.items.length}
-					<a href="/konzerte/{id}/drucken"><Icon name="print" size={16} />{t.print.link}</a>
+					<a href="/kalender/{id}/drucken"><Icon name="print" size={16} />{t.print.link}</a>
 				{/if}
 				{#if data.program.canEdit && !several}
 					<a href={data.program.groups[0].editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>
@@ -282,21 +292,21 @@
 		{#if data.program.sharedFrom}
 			<p class="note">
 				<Icon name="link" size={16} />
-				<span>{t.concert.sharedFrom} <a href="/konzerte/{encodeURIComponent(data.program.sharedFrom.id)}">{data.program.sharedFrom.title}</a></span>
+				<span>{t.concert.sharedFrom} <a href="/kalender/{encodeURIComponent(data.program.sharedFrom.id)}">{data.program.sharedFrom.title}</a></span>
 			</p>
 		{:else if data.program.sharedWith.length}
 			<p class="note">
 				<Icon name="link" size={16} />
 				<span>
 					{t.concert.sharedWith}
-					{#each data.program.sharedWith as other, i (other.id)}{i ? ', ' : ' '}<a href="/konzerte/{encodeURIComponent(other.id)}">{other.title}</a>{/each}
+					{#each data.program.sharedWith as other, i (other.id)}{i ? ', ' : ' '}<a href="/kalender/{encodeURIComponent(other.id)}">{other.title}</a>{/each}
 				</span>
 			</p>
 		{/if}
 		{#if data.program.canEdit && data.program.suggestions}
 			<p class="note">
 				<Icon name="bulb" size={16} />
-				<a href="/konzerte/{id}/programm">{t.editor.openSuggestions(data.program.suggestions)}</a>
+				<a href="/kalender/{id}/programm">{t.editor.openSuggestions(data.program.suggestions)}</a>
 			</p>
 		{/if}
 		{#each data.program.groups as group (group.orchestra)}
@@ -363,9 +373,10 @@
 	<section class="block">
 		<div class="block-head">
 			<h2 class="ui-label">{t.concert.rehearsals}</h2>
-			{#if data.rehearsalPlan.editUrl}
+			{#if data.rehearsalPlan.editUrl || data.addRehearsalUrl}
 				<div class="ui-actions">
-					<a href={data.rehearsalPlan.editUrl}><Icon name="edit" size={16} />{t.rehearsalPlan.edit}</a>
+					{#if data.addRehearsalUrl}<a href={data.addRehearsalUrl}><Icon name="plus" size={16} />{t.concert.addRehearsal}</a>{/if}
+					{#if data.rehearsalPlan.editUrl}<a href={data.rehearsalPlan.editUrl}><Icon name="edit" size={16} />{t.rehearsalPlan.edit}</a>{/if}
 				</div>
 			{/if}
 		</div>
@@ -475,10 +486,88 @@
 
 <style>
 	.head {
+		--tone: color-mix(in oklab, var(--ok) 80%, var(--text));
+		display: grid;
+		grid-template-columns: auto 1fr;
+		grid-template-areas: 'tile text' 'actions actions';
+		align-items: center;
+		gap: var(--space-2) var(--space-4);
+		margin-bottom: var(--space-5);
+	}
+
+	.head.konzert {
+		--tone: var(--accent);
+	}
+
+	.head.generalprobe {
+		--tone: var(--warn);
+	}
+
+	.head-text {
+		grid-area: text;
 		display: grid;
 		justify-items: start;
-		gap: var(--space-2);
-		margin-bottom: var(--space-5);
+		gap: var(--space-1);
+		min-width: 0;
+	}
+
+	/* An archive concert has no tile: its text takes the whole row. */
+	.head-text:first-child {
+		grid-column: 1 / -1;
+	}
+
+	.head h1 {
+		overflow-wrap: anywhere;
+	}
+
+	.when {
+		color: var(--text-muted);
+		font-size: 0.9375rem;
+	}
+
+	.tile {
+		grid-area: tile;
+		display: grid;
+		justify-items: center;
+		align-self: start;
+		width: 68px;
+		padding: var(--space-2) 0;
+		border-radius: 16px;
+		background: color-mix(in oklab, var(--tone) 12%, transparent);
+		color: var(--tone);
+		line-height: 1.1;
+	}
+
+	.head.konzert .tile {
+		background: var(--accent);
+		color: var(--accent-contrast);
+	}
+
+	.head.past .tile {
+		opacity: 0.6;
+	}
+
+	.tile .weekday,
+	.tile .month {
+		font-size: 0.75rem;
+		font-weight: 650;
+		text-transform: uppercase;
+	}
+
+	.tile .day {
+		font-family: var(--font-display);
+		font-size: 1.875rem;
+		font-weight: 600;
+	}
+
+	@media (max-width: 480px) {
+		.tile {
+			width: 56px;
+		}
+
+		.tile .day {
+			font-size: 1.5rem;
+		}
 	}
 
 	.eyebrow {
@@ -559,11 +648,12 @@
 	}
 
 	.head-actions {
+		grid-area: actions;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-3) var(--space-5);
-		margin-top: var(--space-3);
+		margin-top: var(--space-2);
 	}
 
 	.check {

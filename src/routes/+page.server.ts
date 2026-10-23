@@ -35,7 +35,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	);
 	const lastNote =
 		last && (last.note.practise || last.note.next)
-			? { url: `/konzerte/${encodeURIComponent(last.event.id)}`, date: last.event.date.long, practise: last.note.practise, next: last.note.next }
+			? { url: `/kalender/${encodeURIComponent(last.event.id)}`, date: last.event.date.long, practise: last.note.practise, next: last.note.next }
 			: null;
 	return {
 		calendar: 'ok' as const,

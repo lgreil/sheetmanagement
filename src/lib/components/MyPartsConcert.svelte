@@ -176,7 +176,7 @@
 	<div class="concert-head">
 		<div>
 			<!-- The concert's page (programme, rehearsals, sign-up) is one tap away. -->
-			<h2><a class="concert-title" href="/konzerte/{encodeURIComponent(concert.id)}">{concert.title}<Icon name="chevron" size={18} /></a></h2>
+			<h2><a class="concert-title" href="/kalender/{encodeURIComponent(concert.id)}">{concert.title}<Icon name="chevron" size={18} /></a></h2>
 			{#if concert.label}<p class="muted">{concert.label}</p>{/if}
 		</div>
 		{#if label && concert.pieces.length}

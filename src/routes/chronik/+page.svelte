@@ -76,7 +76,7 @@
 						<ol class="concerts">
 							{#each year.concerts as concert (concert.id)}
 								<li class="concert">
-									<a class="concert-title" href="/konzerte/{encodeURIComponent(concert.id)}">{concert.title}</a>
+									<a class="concert-title" href="/kalender/{encodeURIComponent(concert.id)}">{concert.title}</a>
 									<span class="muted">{[concert.label, concert.location].filter(Boolean).join(' · ')}</span>
 									{#if concert.program.length}
 										<ul class="program">

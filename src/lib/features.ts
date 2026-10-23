@@ -50,8 +50,9 @@ export const FEATURE_TABS: Partial<Record<TabKey, Feature>> = { loans: 'loans', 
 export function featureOfPath(path: string): Feature | undefined {
 	if (path === '/leihmaterial' || path.startsWith('/leihmaterial/')) return 'loans';
 	if (path === '/wuensche' || path.startsWith('/wuensche/')) return 'wishes';
-	if (path.startsWith('/kalender/')) return 'calendarFeed';
-	if (/^\/konzerte\/[^/]+\/anwesenheit(\/|$)/.test(path)) return 'attendance';
-	if (/^\/konzerte\/[^/]+\/musikfolge\.csv$/.test(path)) return 'musicReport';
+	// The feed sits next to the calendar's pages: only the .ics file itself.
+	if (/^\/kalender\/[^/]+\.ics$/.test(path)) return 'calendarFeed';
+	if (/^\/kalender\/[^/]+\/anwesenheit(\/|$)/.test(path)) return 'attendance';
+	if (/^\/kalender\/[^/]+\/musikfolge\.csv$/.test(path)) return 'musicReport';
 	return undefined;
 }

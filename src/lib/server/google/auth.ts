@@ -15,10 +15,20 @@ export const SCOPES = [
 	'https://www.googleapis.com/auth/spreadsheets'
 ];
 
-/** With DRIVE_WRITE the app may comment on and rename files; Drive's sharing still limits it to what the account can edit. */
-export const WRITE_SCOPES = SCOPES.map((scope) =>
-	scope.endsWith('/drive.readonly') ? 'https://www.googleapis.com/auth/drive' : scope
-);
+/**
+ * The scopes for what this deployment may change. With DRIVE_WRITE the app may comment on and
+ * rename files; with CALENDAR_WRITE it may add events to the calendar. Drive's and Calendar's
+ * sharing still limit it to what the service account may edit.
+ */
+export function scopesFor({ drive = false, calendar = false }: { drive?: boolean; calendar?: boolean } = {}): string[] {
+	return SCOPES.map((scope) =>
+		drive && scope.endsWith('/drive.readonly')
+			? 'https://www.googleapis.com/auth/drive'
+			: calendar && scope.endsWith('/calendar.readonly')
+				? 'https://www.googleapis.com/auth/calendar.events'
+				: scope
+	);
+}
 
 const DEFAULT_TOKEN_URI = 'https://oauth2.googleapis.com/token';
 /** Renew a little before Google's expiry so in-flight requests don't fail. */

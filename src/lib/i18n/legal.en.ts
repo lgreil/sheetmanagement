@@ -103,7 +103,7 @@ export const legal = {
 					'“session”: keeps you signed in. Contains your name and email address, is protected against changes and expires after 30 days, or at once when you sign out.',
 					'“oauth_state”: protects sign-in against misuse and is deleted after 10 minutes at most.',
 					'“instrument”: remembers on “My parts” which instrument you play when you aren’t signed in. Expires after a year.',
-					'“konzerte-ansicht”: remembers whether you want to see the concerts as a list or a calendar. Expires after a year.',
+					'“konzerte-ansicht”: remembers whether you want to see the calendar as a list or a month. Expires after a year.',
 					'Your browser’s storage (localStorage) remembers whether you chose the light or dark colour scheme, and which pieces and concerts you last opened from the quick search. This never leaves your browser.'
 				]
 			},

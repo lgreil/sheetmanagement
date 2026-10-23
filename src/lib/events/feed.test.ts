@@ -47,7 +47,7 @@ describe('feedEvents', () => {
 				'Geprobt: Egmont, Morgenstimmung',
 				'Deine Antwort: Zusage',
 				'',
-				'Details: https://noten.example.org/konzerte/probe',
+				'Details: https://noten.example.org/kalender/probe',
 				'Deine Noten: https://noten.example.org/meine-noten?probe=probe'
 			].join('\n')
 		);

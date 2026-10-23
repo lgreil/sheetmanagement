@@ -6,7 +6,7 @@
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import { ANSWERS } from '#lib/signups/signups.ts';
-	import type { PageData } from '../../routes/konzerte/[id]/$types';
+	import type { PageData } from '../../routes/kalender/[id]/$types';
 	import Icon from './Icon.svelte';
 
 	/** "Bist du dabei?" on an upcoming event, and how well each section is covered (#94). */

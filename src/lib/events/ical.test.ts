@@ -42,7 +42,7 @@ describe('buildCalendar', () => {
 					allDay: false,
 					location: 'Aula, Musterschule',
 					description: 'Geprobt: Egmont',
-					url: 'https://noten.example.org/konzerte/abc'
+					url: 'https://noten.example.org/kalender/abc'
 				},
 				{ uid: 'wochenende@noten', title: 'Probenwochenende', start: '2026-11-28', end: '2026-11-30', allDay: true, tentative: true }
 			],

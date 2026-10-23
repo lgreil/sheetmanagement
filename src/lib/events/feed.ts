@@ -30,7 +30,7 @@ export function feedEvents({ events, includes, pieces, answer, origin, since }: 
 		.map((event) => {
 			const own = answer(event);
 			const titles = pieces(event);
-			const page = `${origin}/konzerte/${encodeURIComponent(event.id)}`;
+			const page = `${origin}/kalender/${encodeURIComponent(event.id)}`;
 			const isConcert = event.type === 'konzert';
 			const parts =
 				titles.length && !event.past

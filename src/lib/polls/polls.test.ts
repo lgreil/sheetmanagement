@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestOption, calendarLink, canSeePoll, choicesFromForm, isOpen, pollFromForm, scoreOptions, type Poll, type PollResponse } from './polls.ts';
+import { bestOption, calendarLink, canSeePoll, choicesFromForm, isOpen, pollDatesByMonth, pollFromForm, scoreOptions, type Poll, type PollResponse } from './polls.ts';
 
 const poll: Poll = {
 	id: 'p1',
@@ -102,5 +102,27 @@ describe('date polls', () => {
 		expect(allDay.searchParams.get('dates')).toBe('20270306/20270307');
 		const noEnd = new URL(calendarLink('Probe', { id: 'x', date: '2027-03-13', start: '19:30' }, 'Europe/Berlin'));
 		expect(noEnd.searchParams.get('dates')).toBe('20270313T193000/20270313T213000');
+	});
+});
+
+describe('pollDatesByMonth', () => {
+	it('puts each poll’s coming days under their months, once per day', () => {
+		const weekend = { id: 'p1', title: 'Probenwochenende', options: [
+			{ id: 'a', date: '2026-11-28', start: '10:00' },
+			{ id: 'b', date: '2026-11-28', start: '14:00' },
+			{ id: 'c', date: '2026-12-05' },
+			{ id: 'd', date: '2026-10-01' }
+		] };
+		const meeting = { id: 'p2', title: 'Vorstandssitzung', options: [{ id: 'a', date: '2026-11-03' }] };
+		expect([...pollDatesByMonth([weekend, meeting], '2026-10-23')]).toEqual([
+			[
+				'2026-11',
+				[
+					{ poll: { id: 'p1', title: 'Probenwochenende' }, days: ['2026-11-28'] },
+					{ poll: { id: 'p2', title: 'Vorstandssitzung' }, days: ['2026-11-03'] }
+				]
+			],
+			['2026-12', [{ poll: { id: 'p1', title: 'Probenwochenende' }, days: ['2026-12-05'] }]]
+		]);
 	});
 });

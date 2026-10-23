@@ -25,7 +25,7 @@ export const GET: RequestHandler = () => {
 		],
 		shortcuts: [
 			{ name: t.nav.myParts, url: '/meine-noten' },
-			{ name: t.nav.concerts, url: '/konzerte' }
+			{ name: t.nav.concerts, url: '/kalender' }
 		]
 	};
 	return new Response(JSON.stringify(manifest), {

@@ -114,7 +114,7 @@
 	});
 
 	const hits = $derived(sections.flatMap((section) => section.hits));
-	const concertHref = (id: string) => `/konzerte/${encodeURIComponent(id)}`;
+	const concertHref = (id: string) => `/kalender/${encodeURIComponent(id)}`;
 
 	// A new search starts at the top.
 	$effect(() => {

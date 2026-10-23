@@ -11,7 +11,7 @@
 	}: { event: ShownEvent; concertTitle?: string; showRelative?: boolean; badge?: string } = $props();
 </script>
 
-<a class="row {event.type}" class:past={event.past && showRelative} href="/konzerte/{encodeURIComponent(event.id)}">
+<a class="row {event.type}" class:past={event.past && showRelative} href="/kalender/{encodeURIComponent(event.id)}">
 	<span class="date" aria-hidden="true">
 		<span class="weekday">{event.date.weekday}</span>
 		<span class="day">{event.date.day}</span>

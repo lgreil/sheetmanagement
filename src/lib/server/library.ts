@@ -34,7 +34,7 @@ export interface ProgramItem {
 }
 
 export interface LibraryConcert {
-	/** The calendar event id when there is one, so /konzerte/[id] stays the same. */
+	/** The calendar event id when there is one, so /kalender/[id] stays the same. */
 	id: string;
 	title: string;
 	date: FuzzyDate | null;

@@ -37,7 +37,7 @@ export function classify(title: string, keywords: EventKeywords): EventType {
 }
 
 /** Distinctive words of a title, e.g. "Probe Herbstkonzert 🎶🍂" → ["herbstkonzert"]. */
-function significantWords(title: string, keywords: EventKeywords): Set<string> {
+export function significantWords(title: string, keywords: EventKeywords): Set<string> {
 	const ignore = new Set(
 		[...keywords.generalprobe, ...keywords.probe, ...keywords.konzert].map((word) => searchText(word))
 	);
