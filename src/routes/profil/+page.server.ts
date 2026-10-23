@@ -12,6 +12,7 @@ import { getStore } from '#lib/server/db/index.ts';
 import { vapidKeys } from '#lib/server/push/index.ts';
 import { mailReady } from '#lib/server/mail/index.ts';
 import { nextLinkVersion, revokedLinkVersion } from '#lib/server/auth/links.ts';
+import { readOutcome } from '#lib/tour/tour.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
@@ -108,6 +109,21 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error('Changing email reminders failed:', error);
 			return fail(503, { mailMessage: t.email.profileFailed });
+		}
+	},
+
+	/** How the tour ended (finished or skipped), so it isn't offered again; kept in the store, like the opt-out. */
+	tour: async ({ locals, request }) => {
+		const user = locals.access.user;
+		if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+		const outcome = readOutcome((await request.formData()).get('outcome'));
+		if (!outcome) return fail(400, { tourSaved: false });
+		try {
+			await getStore().setTour(normalizeEmail(user.email), outcome);
+			return { tourSaved: true };
+		} catch (error) {
+			console.error('Saving the tour state failed:', error);
+			return fail(503, { tourSaved: false });
 		}
 	},
 

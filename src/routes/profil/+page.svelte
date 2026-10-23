@@ -9,6 +9,7 @@
 	import PushSettings from '#lib/components/PushSettings.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { startTour } from '#lib/tour/state.svelte.ts';
 
 	let { data, form } = $props();
 	const saving = new FormState();
@@ -63,7 +64,7 @@
 	{#if !data.member}
 		<p class="msg info">{t.profile.notMember}</p>
 	{:else}
-		<form class="ui-card card" method="POST" action="?/save" use:enhance={saving.submit()}>
+		<form class="ui-card card" method="POST" action="?/save" use:enhance={saving.submit()} data-tour="profile">
 			<!-- Rebuilt after saving, so the form shows what's in the sheet now. -->
 			{#key JSON.stringify(data.member)}
 				<MemberFields member={data.member} instruments={data.instruments} common={data.common} orchestras={data.orchestras} />
@@ -149,9 +150,14 @@
 	<section>
 		<h2 class="ui-label">{t.profile.settings}</h2>
 		<div class="ui-list settings">
-			<div class="setting">
+			<div class="setting" data-tour="theme">
 				<span>{t.theme.label}</span>
 				<ThemeToggle />
+			</div>
+			<!-- The tour for new members, once more from the start. -->
+			<div class="setting" data-tour="retake">
+				<span>{t.tour.label}<small class="muted">{t.tour.retakeHint}</small></span>
+				<button class="btn small secondary" onclick={startTour}><Icon name="sparkle" size={14} />{t.tour.retake}</button>
 			</div>
 			<!-- On the home screen it opens like an app and works offline in the rehearsal hall (#62). -->
 			{#if !installed}
@@ -248,7 +254,8 @@
 		font-size: 0.875rem;
 	}
 
-	.small {
+	/* Hints, not the small buttons in the settings. */
+	.muted.small {
 		flex-basis: 100%;
 		font-size: 0.8125rem;
 	}
@@ -303,7 +310,6 @@
 	}
 
 	.setting span {
-		min-width: 0;
 		overflow-wrap: anywhere;
 	}
 

@@ -2,7 +2,7 @@ import { normalizeEmail } from '#lib/access/access.ts';
 import { parseVotes, submitterEmail } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
-import type { PushDevice, SentReminder } from '#lib/server/db/types.ts';
+import type { PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
 
 /**
  * "Meine Daten herunterladen" (#158): everything the sheet keeps about one member, row by
@@ -69,7 +69,12 @@ export function myData(who: { email: string; name: string }, tables: Partial<Rec
  * What the app keeps about the member in D1 (#161): their devices for notifications and the
  * reminders they got. A device's keys only encrypt messages to it; they're named, not given.
  */
-export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[], reminders: SentReminder[], mailOff = false): MyData {
+export function storedData(
+	devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[],
+	reminders: SentReminder[],
+	mailOff = false,
+	tour: TourOutcome | null = null
+): MyData {
 	const data: MyData = {};
 	if (devices.length) {
 		data[t.myData.devices] = devices.map((device) => ({
@@ -88,6 +93,8 @@ export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[]
 	}
 	// Turned off on /profil (#123); "on" is the default and nothing is stored for it.
 	if (mailOff) data[t.myData.mailReminders] = [{ [t.myData.mailState]: t.myData.mailOff }];
+	// So the tour isn't offered again; nothing is stored before it's finished or skipped.
+	if (tour) data[t.myData.tour] = [{ [t.myData.mailState]: tour === 'done' ? t.myData.tourDone : t.myData.tourSkipped }];
 	return data;
 }
 
