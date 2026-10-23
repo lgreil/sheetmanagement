@@ -11,6 +11,8 @@ interface AliasEntry {
 /** Instrument names and aliases as token lists, longest first, so "bass clarinet" wins over "bass". */
 export interface InstrumentMatcher {
 	aliases: AliasEntry[];
+	/** The same aliases by their first word, so a word is checked against a few, not all. */
+	byFirstToken: Map<string, AliasEntry[]>;
 	order: Map<Instrument, number>;
 }
 
@@ -22,11 +24,18 @@ export function createInstrumentMatcher(instruments: Instrument[]): InstrumentMa
 		}
 	});
 	aliases.sort((a, b) => b.tokens.length - a.tokens.length);
-	return { aliases, order: new Map(instruments.map((instrument, index) => [instrument, index])) };
+	const byFirstToken = new Map<string, AliasEntry[]>();
+	for (const alias of aliases) {
+		const first = alias.tokens[0];
+		byFirstToken.set(first, [...(byFirstToken.get(first) ?? []), alias]);
+	}
+	return { aliases, byFirstToken, order: new Map(instruments.map((instrument, index) => [instrument, index])) };
 }
 
 function matchAt(tokens: string[], start: number, matcher: InstrumentMatcher): AliasEntry | undefined {
-	return matcher.aliases.find((alias) => alias.tokens.every((token, i) => tokens[start + i] === token));
+	return matcher.byFirstToken
+		.get(tokens[start])
+		?.find((alias) => alias.tokens.every((token, i) => tokens[start + i] === token));
 }
 
 interface Item {
@@ -64,6 +73,41 @@ export interface Voice {
 
 const JOINERS = new Set(['+', '&', '/', ',', 'und', 'and', '–']);
 
+interface NamingWords {
+	statusWords: Record<string, PartStatus>;
+	transpositionKeys: string[][];
+	noteKeys: { tokens: string[]; text: string }[];
+}
+
+const wordsByNaming = new WeakMap<NamingRules, NamingWords>();
+
+/**
+ * The convention's words, tokenized once per naming rules rather than once per file: a
+ * catalog parses ~2000 file names, and doing this each time cost ~40 ms of CPU (#69).
+ */
+function wordsOf(naming: NamingRules): NamingWords {
+	let words = wordsByNaming.get(naming);
+	if (!words) {
+		words = {
+			statusWords: {
+				...naming.statusAliases,
+				[naming.status.missing.toLowerCase()]: 'missing',
+				[naming.status.empty.toLowerCase()]: 'empty',
+				[naming.status.incomplete.toLowerCase()]: 'incomplete'
+			},
+			transpositionKeys: Object.keys(naming.transpositions)
+				.map((key) => key.split(' '))
+				.sort((a, b) => b.length - a.length),
+			// Notes can span several words ("mit Notizen"), so they are matched like instruments.
+			noteKeys: Object.keys(naming.partNotes)
+				.map((key) => ({ tokens: tokenize(key), text: naming.partNotes[key] }))
+				.sort((a, b) => b.tokens.length - a.tokens.length)
+		};
+		wordsByNaming.set(naming, words);
+	}
+	return words;
+}
+
 /**
  * Reads a part file name in the orchestra's convention ("BWV 147 - Geige II - LEER.pdf")
  * or in older styles ("Best_of_Bach-ViolinII.pdf", "1. Violine.pdf", "Horn in F 2.pdf").
@@ -97,20 +141,7 @@ export function parsePartName(
 	}
 
 	const tokens = tokenize(name);
-	const statusWords: Record<string, PartStatus> = {
-		...naming.statusAliases,
-		[naming.status.missing.toLowerCase()]: 'missing',
-		[naming.status.empty.toLowerCase()]: 'empty',
-		[naming.status.incomplete.toLowerCase()]: 'incomplete'
-	};
-	const transpositionKeys = Object.keys(naming.transpositions)
-		.map((key) => key.split(' '))
-		.sort((a, b) => b.length - a.length);
-
-	// Notes can span several words ("mit Notizen"), so they are matched like instruments.
-	const noteKeys = Object.keys(naming.partNotes)
-		.map((key) => ({ tokens: tokenize(key), text: naming.partNotes[key] }))
-		.sort((a, b) => b.tokens.length - a.tokens.length);
+	const { statusWords, transpositionKeys, noteKeys } = wordsOf(naming);
 	const noteAt = (at: number) => noteKeys.find((note) => note.tokens.every((t, k) => tokens[at + k] === t));
 
 	const voice = matcher.aliases.find((alias) => alias.instrument.voice)?.instrument;
