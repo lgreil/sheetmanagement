@@ -1,5 +1,4 @@
-import { expect, test } from '@playwright/test';
-import { open, resetDemo } from './demo.ts';
+import { expect, open, resetDemo, test } from './demo.ts';
 
 /** What members and the orga team do every week; a change that breaks one fails its pull request (#142). */
 test.beforeEach(async ({ page }) => resetDemo(page));

@@ -1,5 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-import { expectAccessible, open, resetDemo } from './demo.ts';
+import type { Page } from '@playwright/test';
+import { expect, expectAccessible, open, resetDemo, test } from './demo.ts';
 
 /** The tour for new members: offered once, step by step through the main pages and the profile. */
 test.beforeEach(async ({ page }) => resetDemo(page, 'mitglied', { tour: true }));
