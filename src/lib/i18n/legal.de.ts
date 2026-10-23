@@ -70,6 +70,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Benachrichtigungen',
+				paragraphs: [
+					'Im Profil kannst du Benachrichtigungen für ein Gerät erlauben. Die App erinnert dich dann an Proben und Konzerte der nächsten Tage, auf die du noch nicht geantwortet hast; wer Leihmaterial betreut, an Rückgabetermine, und wer die App verwaltet, an Störungen der Verbindung zu Google. Nachts wird nichts verschickt.',
+					'Dafür speichert die App die Adresse, die dein Browser für die Benachrichtigungen vergibt, zwei Schlüssel zum Verschlüsseln und deine E-Mail-Adresse; dazu, welche Erinnerung an wen ging, damit niemand eine doppelt bekommt. Das liegt in einer Datenbank bei Cloudflare (D1), nicht in der Google-Tabelle. Zugestellt werden die Nachrichten verschlüsselt über den Dienst deines Browsers (bei Chrome und Android Google, bei Safari und iPhone Apple, bei Firefox Mozilla); er sieht nicht, was darin steht.',
+					'Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Mit „Ausschalten“ oder beim Abmelden wird das Gerät sofort gelöscht; Einträge über verschickte Erinnerungen nach einem Jahr.'
+				]
+			},
+			{
 				heading: 'Anwesenheit bei Proben',
 				paragraphs: [
 					'Nach einer Probe können Personen mit dem Recht „Anwesenheit erfassen“ (z. B. Dirigat und Organisation) eintragen, wer da war. Gespeichert werden nur Termin, Name, E-Mail-Adresse und ob du anwesend warst, im Blatt „Anwesenheit“ der Google-Tabelle des Orchesters. Daraus zeigt die App, bei wie vielen Proben vor einem Konzert du dabei warst.',
@@ -100,7 +108,7 @@ export const legal = {
 			{
 				heading: 'Hosting bei Cloudflare',
 				paragraphs: [
-					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.'
+					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). In der Cloudflare-Datenbank D1 liegen nur die Angaben zu Benachrichtigungen (siehe oben). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.'
 				]
 			},
 			{

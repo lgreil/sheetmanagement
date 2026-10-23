@@ -13,7 +13,9 @@
 		{ label: t.status.sheet, check: data.checks.sheet },
 		{ label: t.status.signIn, check: data.checks.signIn },
 		{ label: t.status.look, check: data.checks.look },
-		{ label: t.status.jobs, check: data.checks.jobs }
+		{ label: t.status.jobs, check: data.checks.jobs },
+		{ label: t.status.store, check: data.checks.store },
+		{ label: t.status.push, check: data.checks.push }
 	]);
 
 	const icons: Record<string, IconName> = { ok: 'check', error: 'alert', missing: 'minus' };

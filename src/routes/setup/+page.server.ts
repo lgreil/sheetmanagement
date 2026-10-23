@@ -4,6 +4,7 @@ import { requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { FEATURE_TABS } from '#lib/features.ts';
 import { LAYOUT, REPERTOIRE_TABS, type TabKey } from '#lib/repertoire/sheet.ts';
 import { features } from '#lib/server/env.ts';
+import { getStore } from '#lib/server/db/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
 import { getAccessList, getRepertoire } from '#lib/server/repertoire.ts';
@@ -73,7 +74,9 @@ export const actions: Actions = {
 			});
 			// Read the new tabs right away, which also adds the pieces and concerts.
 			await getRepertoire({ force: true });
-			return { result };
+			// The database's tables too (#161), if there is one; normally the deploy did that already.
+			const migrations = await getStore().migrate();
+			return { result, migrations };
 		} catch (error) {
 			console.error('Setting up the sheet failed:', error);
 			return fail(500, { problem: describe(error) });

@@ -5,7 +5,9 @@ import { config } from '#lib/config/index.ts';
 import { contrast } from '#lib/branding.ts';
 import { FEATURES } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
-import { appEnv, features, orchestra, unknownFeatures } from '#lib/server/env.ts';
+import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
+import { getStore } from '#lib/server/db/index.ts';
+import { pushReady } from '#lib/server/push/index.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
 import { listEvents } from '#lib/server/google/calendar.ts';
@@ -225,7 +227,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 					problem: auth.problems.join(' ') || undefined
 				};
 
-	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck() }, jobs: JOB_NAMES };
+	return { checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck() }, jobs: JOB_NAMES };
 };
 
 export const actions: Actions = {
@@ -238,6 +240,32 @@ export const actions: Actions = {
 		return { job: name, ok: run.ok, summary: run.summary };
 	}
 };
+
+/** Where the app keeps what it writes itself (#161), and its schema version. */
+async function storeCheck(): Promise<Check> {
+	const store = getStore();
+	if (store.kind === 'memory') {
+		return isDemo()
+			? { state: 'ok', details: [t.status.storeDemo] }
+			: { state: 'missing', details: [], problem: t.status.storeMemory, hint: t.status.storeMemoryHint };
+	}
+	try {
+		const version = await store.schemaVersion();
+		if (!version) return { state: 'missing', details: [], problem: t.status.storeNoSchema, hint: t.status.storeNoSchemaHint };
+		return { state: 'ok', details: [t.status.storeD1(version)] };
+	} catch (error) {
+		return { state: 'error', details: [], problem: t.status.storeFailed(error instanceof Error ? error.message : String(error)) };
+	}
+}
+
+/** Whether notifications can be sent (#157), and to how many devices. */
+async function pushCheck(): Promise<Check> {
+	if (!pushReady()) return { state: 'missing', details: [], problem: t.status.pushMissing, hint: t.status.pushMissingHint };
+	const devices = await getStore()
+		.allPush()
+		.catch(() => []);
+	return { state: 'ok', details: [t.status.pushOn(devices.length)] };
+}
 
 /** When the jobs last ran; a trigger that stopped firing shows as an error (#160). */
 async function jobsCheck(): Promise<Check> {

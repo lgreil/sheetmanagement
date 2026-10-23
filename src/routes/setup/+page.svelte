@@ -65,6 +65,7 @@
 			{#if form.result.createdTabs.length}<p>{t.setup.created(form.result.createdTabs.join(', '))}</p>{/if}
 			{#if form.result.addedColumns.length}<p>{t.setup.addedColumns(form.result.addedColumns.join(', '))}</p>{/if}
 			{#if form.result.removedTab}<p>{t.setup.removed(form.result.removedTab)}</p>{/if}
+			{#if form.migrations?.length}<p>{t.setup.database(form.migrations.join(', '))}</p>{/if}
 		</div>
 	{:else if form?.problem}
 		<div class="card error" role="alert"><p>{form.problem}</p></div>

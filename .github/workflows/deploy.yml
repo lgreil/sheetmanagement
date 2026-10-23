@@ -47,5 +47,14 @@ jobs:
           # Uses the wrangler version from package.json.
           command: deploy
 
+      # The database's tables (#161). After the deploy, which creates the database on the first
+      # run; the app applies the same files on first use, so the order doesn't matter much.
+      - name: Database schema
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: d1 migrations apply DB --remote
+
       - name: Smoke test
         run: bash .github/scripts/smoke-test.sh "${{ vars.APP_URL }}"
