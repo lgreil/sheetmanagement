@@ -20,6 +20,14 @@ export type ScheduleResult =
 	  }
 	| { ok: false; reason: 'not-configured' | 'failed' };
 
+/**
+ * The dates the app loads from the calendar: three years back covers recent history (older
+ * concerts come from the sheet), a year and a half ahead the planning. Dates outside never show.
+ */
+export function calendarRange(now: number) {
+	return { from: new Date(now - 3 * 365 * DAY_MS), to: new Date(now + 18 * 30 * DAY_MS) };
+}
+
 const built = new WeakMap<CalendarEvent[], (ScheduleEvent & { date: DateParts })[]>();
 
 /** The calendar's events, cached; forced after the app added one, so it shows at once. */
@@ -29,12 +37,7 @@ function calendarEvents(now: number, force = false) {
 	return cached({
 		key: `calendar:v1:${calendarId}`,
 		maxAgeMs: CALENDAR_MAX_AGE_MS,
-		// Three years back covers recent history; older concerts will come from the sheet.
-		build: () =>
-			listEvents(client, calendarId, {
-				from: new Date(now - 3 * 365 * DAY_MS),
-				to: new Date(now + 18 * 30 * DAY_MS)
-			}),
+		build: () => listEvents(client, calendarId, calendarRange(now)),
 		kv: appEnv().CACHE,
 		waitUntil: runInBackground,
 		force

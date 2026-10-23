@@ -11,7 +11,7 @@ import { buildSchedule, classify, significantWords } from './schedule.ts';
 export const NEW_EVENT_TYPES = ['konzert', 'probe', 'generalprobe'] as const;
 export type NewEventType = (typeof NEW_EVENT_TYPES)[number];
 
-export type NewEventProblem = 'type' | 'title' | 'date' | 'time' | 'end' | 'concert' | 'too-long';
+export type NewEventProblem = 'type' | 'title' | 'date' | 'too-early' | 'too-late' | 'time' | 'end' | 'concert' | 'too-long';
 
 /** The request body for events.insert: all-day with dates, otherwise local times in the orchestra's zone. */
 export interface NewEventBody {
@@ -27,6 +27,8 @@ export interface NewEventContext {
 	timeZone: string;
 	/** Concerts a rehearsal may prepare for: the upcoming ones from the calendar. */
 	concerts: Pick<CalendarEvent, 'id' | 'title' | 'start' | 'end' | 'allDay'>[];
+	/** The first and last day the app loads from the calendar: a date outside would never show. */
+	range?: { first: string; last: string };
 }
 
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
@@ -80,6 +82,8 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 	if (type === 'konzert' && !title) return { error: 'title' };
 	if (title.length > 120 || location.length > 200 || description.length > 2000) return { error: 'too-long' };
 	if (!DATE.test(date) || Number.isNaN(Date.parse(`${date}T00:00:00Z`))) return { error: 'date' };
+	if (context.range && date < context.range.first) return { error: 'too-early' };
+	if (context.range && date > context.range.last) return { error: 'too-late' };
 	if ((start && !TIME.test(start)) || (end && !TIME.test(end)) || (end && !start)) return { error: 'time' };
 	if (start && end && minutes(end) <= minutes(start)) return { error: 'end' };
 
