@@ -82,7 +82,7 @@ export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[]
 		data[t.myData.reminders] = reminders.map((reminder) => ({
 			[t.myData.reminderKind]: t.myData.reminderKinds[reminder.kind] ?? reminder.kind,
 			// Loans are "piece|return date".
-			[t.myData.reminderAbout]: reminder.subject.replace('|', ', '),
+			[t.myData.reminderAbout]: reminder.subject.replaceAll('|', ', '),
 			[t.myData.sentAt]: reminder.sentAt
 		}));
 	}
