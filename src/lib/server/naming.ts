@@ -1,6 +1,8 @@
 import { config } from '#lib/config/index.ts';
+import type { Catalog } from '#lib/music/catalog.ts';
 import { checkSection, guessShortTitle, type NameCheck, type NamingFile } from '#lib/music/naming.ts';
 import { createInstrumentMatcher, type InstrumentMatcher } from '#lib/music/part-name.ts';
+import type { PieceDetail } from '#lib/music/types.ts';
 import { folderUrl } from './catalog.ts';
 import type { Library } from './library.ts';
 
@@ -30,25 +32,34 @@ function matcher(): InstrumentMatcher {
 
 /** Every section of the archive with its files, in archive order. */
 export function namingSections(library: Library): NamingSection[] {
-	return library.pieces.flatMap((piece) => {
-		const detail = piece.detail;
-		if (!detail) return [];
-		return detail.sections.map((section): NamingSection => {
-			const files = detail.parts
-				.filter((part) => part.section === section.key)
-				.map(({ id, fileName, mimeType }) => ({ id, name: fileName, mimeType }));
-			return {
-				key: `${detail.id}:${section.key}`,
-				pieceId: detail.id,
-				folderName: detail.folderName,
-				section: section.label,
-				folderUrl: folderUrl(section.folderId),
-				files,
-				shortTitle: guessShortTitle(files, detail.title, config.naming, detail),
-				movement: Number(/^(\d+)\. Satz/.exec(section.label)?.[1]) || undefined,
-				titles: [detail.folderName, detail.title]
-			};
-		});
+	return library.pieces.flatMap((piece) => (piece.detail ? sectionsOf(piece.detail) : []));
+}
+
+/**
+ * Just the one section a rename is for. Working out every folder's short title on each
+ * small rename batch costs a Worker's whole CPU allowance on a large archive.
+ */
+export function namingSection(catalog: Catalog, key: string): NamingSection | undefined {
+	const detail = catalog.byId.get(key.slice(0, key.indexOf(':')));
+	return detail && sectionsOf(detail).find((section) => section.key === key);
+}
+
+function sectionsOf(detail: PieceDetail): NamingSection[] {
+	return detail.sections.map((section): NamingSection => {
+		const files = detail.parts
+			.filter((part) => part.section === section.key)
+			.map(({ id, fileName, mimeType }) => ({ id, name: fileName, mimeType }));
+		return {
+			key: `${detail.id}:${section.key}`,
+			pieceId: detail.id,
+			folderName: detail.folderName,
+			section: section.label,
+			folderUrl: folderUrl(section.folderId),
+			files,
+			shortTitle: guessShortTitle(files, detail.title, config.naming, detail),
+			movement: Number(/^(\d+)\. Satz/.exec(section.label)?.[1]) || undefined,
+			titles: [detail.folderName, detail.title]
+		};
 	});
 }
 

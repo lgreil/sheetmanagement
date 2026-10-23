@@ -126,3 +126,25 @@ export function clearMemoryCache() {
 	inflight.clear();
 	persisted.clear();
 }
+
+/**
+ * Changes a cached value in place after a small write (e.g. renamed files), so it shows at
+ * once without rebuilding the whole thing. Keeps its age, so the usual refresh still comes.
+ * Does nothing when nothing is cached; the next visitor builds it anyway.
+ */
+export async function patchCached<T>(options: { key: string; kv?: KvStore; timeoutMs?: number; update: (value: T) => T }): Promise<boolean> {
+	const { key, kv, update, timeoutMs = DEFAULT_TIMEOUT_MS } = options;
+	// A refresh that started before the write would bring the old value back: patch after it.
+	const running = inflight.get(key);
+	if (running) await withTimeout(running.promise, key, timeoutMs).catch(() => {});
+	const entry = (memory.get(key) ?? (await kv?.get(key, 'json').catch(() => null))) as Entry<T> | null | undefined;
+	if (!entry || typeof entry.storedAt !== 'number') return false;
+	const patched: Entry<T> = { storedAt: entry.storedAt, value: update(entry.value) };
+	memory.set(key, patched);
+	if (kv) {
+		const json = JSON.stringify(patched.value);
+		await kv.put(key, `{"storedAt":${patched.storedAt},"value":${json}}`);
+		persisted.set(key, json);
+	}
+	return true;
+}

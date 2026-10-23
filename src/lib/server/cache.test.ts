@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { cached, CacheTimeoutError, clearMemoryCache, type KvStore } from './cache.ts';
+import { cached, CacheTimeoutError, clearMemoryCache, patchCached, type KvStore } from './cache.ts';
 
 function memoryKv(): KvStore & { data: Map<string, string> } {
 	const data = new Map<string, string>();
@@ -97,5 +97,36 @@ describe('cached', () => {
 		await cached({ ...options, force: true });
 		await cached({ ...options, build: async () => 'changed', force: true });
 		expect(put).toHaveBeenCalledTimes(2);
+	});
+});
+
+describe('patchCached', () => {
+	beforeEach(() => clearMemoryCache());
+
+	it('changes the cached value in memory and KV, keeping its age', async () => {
+		const kv = memoryKv();
+		const build = vi.fn(async () => ['a', 'b']);
+		const options = { key: 'k', maxAgeMs: 1000, build, kv, now: () => 5 };
+		await cached(options);
+
+		expect(await patchCached<string[]>({ key: 'k', kv, update: (value) => value.map((v) => v.toUpperCase()) })).toBe(true);
+		expect(await cached(options)).toMatchObject({ value: ['A', 'B'], storedAt: 5, source: 'memory' });
+		expect(JSON.parse(kv.data.get('k')!)).toEqual({ storedAt: 5, value: ['A', 'B'] });
+		expect(build).toHaveBeenCalledTimes(1);
+	});
+
+	it('does nothing when nothing is cached', async () => {
+		expect(await patchCached<string>({ key: 'k', update: () => 'x' })).toBe(false);
+	});
+
+	it('waits for a refresh that is running, so it does not bring the old value back', async () => {
+		let release!: (value: string) => void;
+		const running = cached({ key: 'k', maxAgeMs: 1000, build: () => new Promise<string>((r) => (release = r)) });
+		await new Promise((r) => setTimeout(r, 0));
+		const patch = patchCached<string>({ key: 'k', update: (value) => `${value} patched` });
+		release('old');
+		await running;
+		await patch;
+		expect(await cached({ key: 'k', maxAgeMs: 1000, build: async () => 'rebuilt' })).toMatchObject({ value: 'old patched' });
 	});
 });
