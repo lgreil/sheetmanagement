@@ -8,9 +8,13 @@ import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
-import { SheetLayoutError } from '#lib/server/sheet-writes.ts';
+import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
 import { getLibrary, isPastConcert, namedItem, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
-import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
+import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
+import { requireRight } from '#lib/server/auth/index.ts';
+import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord, withSheetLock } from '#lib/server/sheet-writes.ts';
+import { formatDay } from '#lib/events/format.ts';
 import { concertCheck } from '#lib/repertoire/concert-check.ts';
 import { reportGaps } from '#lib/repertoire/music-report.ts';
 import { loansOf } from '#lib/loans/loans.ts';
@@ -232,6 +236,38 @@ async function openWishes(concertTitle: string) {
 	).length;
 }
 
+const isRehearsal = (event: ShownEvent) => event.type === 'probe' || event.type === 'generalprobe';
+/** A rehearsal can get its note once it has begun. */
+const hasBegun = (event: ShownEvent) => event.past || event.daysUntil <= 0;
+
+const shownNote = (note: RehearsalNote) => ({
+	done: note.done,
+	practise: note.practise,
+	next: note.next,
+	by: note.by,
+	at: /^\d{4}-\d{2}-\d{2}$/.test(note.at) ? formatDay(note.at, config.locale) : note.at
+});
+
+/**
+ * What a rehearsal did and what comes next (#145): its own note once it has begun; before
+ * it, the note of the rehearsal before, so members know what to practise for it.
+ */
+async function rehearsalNote(event: ShownEvent, events: ShownEvent[], locals: App.Locals) {
+	if (!isRehearsal(event)) return null;
+	const notes = (await getRehearsalNotes()).byEvent;
+	const own = notes.get(event.id);
+	const canWrite = locals.access.rights.has('programme.bearbeiten') && hasBegun(event);
+	const rehearsals = events.filter(isRehearsal);
+	const before = !own && !hasBegun(event) ? rehearsals[rehearsals.findIndex((e) => e.id === event.id) - 1] : undefined;
+	const previous = before && notes.get(before.id);
+	if (!own && !previous && !canWrite) return null;
+	return {
+		note: own ? shownNote(own) : null,
+		canWrite,
+		previous: before && previous ? { id: before.id, date: before.date.long, note: shownNote(previous) } : null
+	};
+}
+
 const mapUrl = (location: string | undefined) =>
 	location ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}` : undefined;
 
@@ -259,7 +295,12 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		sharedWith: concert?.sharedWith ?? [],
 		// For planners: open piece wishes for this concert or any time, shown in the editor.
 		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0,
-		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null
+		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null,
+		// "01 | Aktuelles Programm" in Drive (#60), for upcoming concerts once Drive may be written to.
+		drive:
+			locals.access.rights.has('programme.bearbeiten') && concert && currentProgramAvailable() && !isPastConcert(concert, library.today)
+				? { ...currentProgramStatus(concert, library), orchestra: concert.orchestra ?? concert.title, next: isCurrentConcert(concert, library), auto: url.searchParams.get('drive') }
+				: null
 	};
 
 	if (!event) {
@@ -303,6 +344,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		signups: await signups(event, orchestra, locals),
 		attendance: await attendance(event, library, plan, locals),
 		attendanceSaved: url.searchParams.has('anwesenheit'),
+		rehearsalNote: await rehearsalNote(event, schedule.ok ? schedule.events : [], locals),
 		event: { ...event, description: plainText(event.description) },
 		rehearsals: event.rehearsalIds
 			.map(lookup)
@@ -362,5 +404,57 @@ export const actions: Actions = {
 		return signupChange(locals, params.id, (event, user) => saveSignup(event, user, { answer, ...details }));
 	},
 
-	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user))
+	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
+
+	/** Puts the programme's pieces into "01 | Aktuelles Programm" and takes the others out (#60). */
+	currentProgram: async ({ locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		if (!currentProgramAvailable()) error(404, t.messages.noEvent);
+		const library = await getLibrary();
+		const concert = library.concertsById.get(params.id);
+		if (!concert) error(404, t.messages.noEvent);
+		try {
+			return { currentProgram: await syncCurrentProgram(concert, library) };
+		} catch (cause) {
+			if (cause instanceof NoProgramFolderError) return fail(409, { currentProgramError: t.currentProgram[cause.reason] });
+			console.error('Syncing the current programme failed:', cause);
+			return fail(503, { currentProgramError: t.currentProgram.failed });
+		}
+	},
+
+	/** Saves the rehearsal's note (#145); all fields empty removes it. One row per rehearsal. */
+	rehearsalNote: async ({ request, locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const library = await getLibrary();
+		const event = library.schedule.ok ? library.schedule.byId.get(params.id) : undefined;
+		if (!event || !isRehearsal(event) || !hasBegun(event)) return fail(404, { rehearsalNoteError: t.rehearsalNotes.gone });
+		const data = await request.formData();
+		const input = { done: formText(data, 'done', 2000), practise: formText(data, 'practise', 2000), next: formText(data, 'next', 2000) };
+		const values = checkRehearsalNote(input);
+		if (!values) return fail(400, { rehearsalNoteError: t.rehearsalNotes.tooLong, rehearsalNoteValues: input });
+		try {
+			await ensureTab('rehearsalNotes');
+			const signed = { ...values, by: locals.access.user?.name ?? '', at: today() };
+			// Read and write in one turn (#156): two saves at once each find the other's row.
+			await withSheetLock(async () => {
+				const table = await readTab('rehearsalNotes');
+				const rows = table.rows.filter((row) => row.values.eventId === event.id);
+				if (isEmptyNote(values)) {
+					await deleteRows('rehearsalNotes', table, rows.map((row) => row.row));
+				} else if (rows.length) {
+					// The last row is the one shown; extra rows entered by hand go.
+					await updateRecord('rehearsalNotes', table, rows.at(-1)!.row, signed);
+					await deleteRows('rehearsalNotes', table, rows.slice(0, -1).map((row) => row.row));
+				} else {
+					await appendRecords('rehearsalNotes', table, [{ rehearsal: `${event.displayTitle} · ${event.date.long}`, ...signed, eventId: event.id }]);
+				}
+			});
+			await refreshAfterWrite();
+		} catch (cause) {
+			if (cause instanceof SheetLayoutError) return fail(409, { rehearsalNoteError: t.rehearsalNotes.notSetUp, rehearsalNoteValues: input });
+			console.error('Saving a rehearsal note failed:', cause);
+			return fail(503, { rehearsalNoteError: t.rehearsalNotes.failed, rehearsalNoteValues: input });
+		}
+		return { rehearsalNoteSaved: true };
+	}
 };

@@ -73,6 +73,12 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Notes on pieces and rehearsals',
+				paragraphs: [
+					"People who plan programmes can add notes from rehearsals to pieces (e.g. cuts or bowings) and, after a rehearsal, a note on what was rehearsed. The text, the name of the person who wrote it and the date are saved in the “Piece notes” and “Rehearsal notes” tabs of the orchestra's Google sheet. Every member sees them. The legal basis is Art. 6(1)(b) GDPR (the club’s rehearsals)."
+				]
+			},
+			{
 				heading: 'Looking up details of pieces',
 				paragraphs: [
 					'Whoever keeps details of pieces can search for the work on Wikidata (Wikimedia Foundation, USA) at the press of a button. Your browser then sends the title of the piece and the composer entered to Wikidata; as with every page visit, Wikimedia learns your IP address. No data about you or other members is sent. The Wikimedia Foundation’s privacy policy applies (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
@@ -90,13 +96,14 @@ export const legal = {
 					'“oauth_state”: protects sign-in against misuse and is deleted after 10 minutes at most.',
 					'“instrument”: remembers on “My parts” which instrument you play when you aren’t signed in. Expires after a year.',
 					'“konzerte-ansicht”: remembers whether you want to see the concerts as a list or a calendar. Expires after a year.',
-					'Your browser’s storage (localStorage) remembers whether you chose the light or dark colour scheme. This never leaves your browser.'
+					'Your browser’s storage (localStorage) remembers whether you chose the light or dark colour scheme, and which pieces and concerts you last opened from the quick search. This never leaves your browser.'
 				]
 			},
 			{
 				heading: 'Hosting at Cloudflare',
 				paragraphs: [
-					'The app runs at Cloudflare (Cloudflare, Inc., USA, with data centres worldwide). For every visit, your IP address, the time and the address visited are processed to deliver the page and protect it from attacks (Art. 6(1)(f) GDPR). The D1 database at Cloudflare only holds the notification details described above. Cloudflare is certified under the EU-US Data Privacy Framework.'
+					'The app runs at Cloudflare (Cloudflare, Inc., USA, with data centres worldwide). For every visit, your IP address, the time and the address visited are processed to deliver the page and protect it from attacks (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.',
+					'Date polls (if the orchestra uses them): polls and answers – your name, email address, answers and comment – are stored by the app in a database at Cloudflare (D1). Only the groups a poll is meant for see them, and they’re gone when the poll is deleted.'
 				]
 			},
 			{
@@ -109,6 +116,7 @@ export const legal = {
 				heading: 'Your rights',
 				paragraphs: [
 					'You have the right of access, rectification, erasure, restriction of processing and data portability, and the right to object to processing (Art. 15 to 21 GDPR). Please write to the contact address above.',
+					'What the app keeps about you in the Google sheet you can download yourself at any time, under “Download my data” in your profile.',
 					'You can also complain to a data protection supervisory authority (Art. 77 GDPR).'
 				]
 			}

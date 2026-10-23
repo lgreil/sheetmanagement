@@ -9,6 +9,8 @@ import { buildSignups, type Signups } from '#lib/signups/signups.ts';
 import { buildRehearsalPlan, type RehearsalPlan } from '#lib/rehearsals/plan.ts';
 import { buildLoans, type Loans } from '#lib/loans/loans.ts';
 import { buildAttendance, type Attendance } from '#lib/attendance/attendance.ts';
+import { buildPieceNotes, type PieceNotes } from '#lib/notes/piece-notes.ts';
+import { buildRehearsalNotes, type RehearsalNotes } from '#lib/notes/rehearsal-notes.ts';
 import { buildRepertoire, LAYOUT, readTable, REPERTOIRE_TABS, type Repertoire, type SheetValues, type TabKey } from '#lib/repertoire/sheet.ts';
 import { readInstrumentOverrides, readSettings, type StoredSettings } from '#lib/settings.ts';
 import { cached } from './cache.ts';
@@ -50,18 +52,20 @@ export async function readSheet(
 	attendance?: string[][];
 	settings?: string[][];
 	instruments?: string[][];
+	pieceNotes?: string[][];
+	rehearsalNotes?: string[][];
 }> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings', 'instruments'] as const).filter((key) =>
+	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings', 'instruments', 'pieceNotes', 'rehearsalNotes'] as const).filter((key) =>
 		info.tabs.includes(LAYOUT[key].tab)
 	);
 	const keys = [...REPERTOIRE_TABS, ...optional];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
 	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, instruments, ...access } = all;
+	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, instruments, pieceNotes, rehearsalNotes, ...access } = all;
 	return {
 		values: { pieces, concerts, program },
 		access,
@@ -73,7 +77,9 @@ export async function readSheet(
 		loans,
 		attendance,
 		settings,
-		instruments
+		instruments,
+		pieceNotes,
+		rehearsalNotes
 	};
 }
 
@@ -158,6 +164,10 @@ interface SheetSnapshot {
 	settings: StoredSettings;
 	/** From "Instrumente" (#143); empty when the tab is missing. */
 	instruments: Record<string, InstrumentOverride>;
+	/** From "Hinweise" (#125); empty when the tab is missing. */
+	pieceNotes: PieceNotes;
+	/** From "Probennotizen" (#145); empty when the tab is missing. */
+	rehearsalNotes: RehearsalNotes;
 }
 
 /**
@@ -202,7 +212,9 @@ async function loadSheet(force: boolean): Promise<{ value: SheetSnapshot; sheet:
 			instruments: readInstrumentOverrides(
 				readTable(sheet.instruments ?? [], LAYOUT.instruments.columns).rows,
 				PRESET_INSTRUMENTS.map((instrument) => instrument.name)
-			)
+			),
+			pieceNotes: buildPieceNotes(sheet.pieceNotes ?? []),
+			rehearsalNotes: buildRehearsalNotes(sheet.rehearsalNotes ?? [])
 		};
 		snapshots.set(sheet, snapshot);
 	}
@@ -354,6 +366,26 @@ export async function getAttendance({ force = false } = {}): Promise<Attendance 
 	} catch {
 		// getLibrary already logs why the sheet failed.
 		return null;
+	}
+}
+
+/** Notes on pieces (#125); empty when the tab is missing or the sheet can't be read. */
+export async function getPieceNotes({ force = false } = {}): Promise<PieceNotes> {
+	try {
+		return (await loadSheet(force)).value.pieceNotes;
+	} catch {
+		// getLibrary already logs why the sheet failed.
+		return buildPieceNotes([]);
+	}
+}
+
+/** Notes after rehearsals (#145); empty when the tab is missing or the sheet can't be read. */
+export async function getRehearsalNotes({ force = false } = {}): Promise<RehearsalNotes> {
+	try {
+		return (await loadSheet(force)).value.rehearsalNotes;
+	} catch {
+		// getLibrary already logs why the sheet failed.
+		return buildRehearsalNotes([]);
 	}
 }
 

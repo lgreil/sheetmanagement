@@ -13,7 +13,7 @@
 	 * Suggestions for a piece's details, each from a source someone asks for: the text on the
 	 * score (read in the browser) or Wikidata. Nothing is saved until the form is.
 	 */
-	type Field = 'composer' | 'arranger' | 'catalogue' | 'genre' | 'recording' | 'duration';
+	type Field = 'composer' | 'composerFull' | 'arranger' | 'catalogue' | 'genre' | 'recording' | 'duration';
 	let {
 		values,
 		apply,
@@ -87,6 +87,8 @@
 			if (found.composer) {
 				list.push({ field: 'composer', value: composerAsUsual(found.composer, knownComposers), source: 'score' });
 				list.push({ field: 'composer', value: found.composer, source: 'score' });
+				// The full name for the GEMA list (#146), when the score gives more than a surname.
+				if (/\s/.test(found.composer.trim())) list.push({ field: 'composerFull', value: found.composer, source: 'score' });
 			}
 			if (found.arranger) list.push({ field: 'arranger', value: found.arranger, source: 'score' });
 			if (found.catalogue) list.push({ field: 'catalogue', value: found.catalogue, source: 'score' });
@@ -136,6 +138,8 @@
 				list.push({ field: 'composer', value: composerAsUsual(composer, knownComposers), source: 'wikidata' });
 				list.push({ field: 'composer', value: composer, source: 'wikidata' });
 			}
+			// Wikidata names composers in full: what the GEMA list wants (#146).
+			if (work.composers.length) list.push({ field: 'composerFull', value: joinList(work.composers), source: 'wikidata' });
 			if (work.catalogue) list.push({ field: 'catalogue', value: work.catalogue, source: 'wikidata' });
 			// Only what Wikidata knows about the work itself; the archive's folder is its own suggestion.
 			const genre = suggestGenre({ kinds: work.kinds, year: work.year }, genres);

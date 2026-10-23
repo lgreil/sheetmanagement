@@ -135,7 +135,8 @@ sw.addEventListener('fetch', (event) => {
 			const key = data ? url.origin + url.pathname : request.url;
 			try {
 				const response = await fetch(request);
-				if (response.ok && !response.redirected) {
+				// Files sent with "no-store" (a member's data export, the music list) are never kept.
+				if (response.ok && !response.redirected && !/no-store/i.test(response.headers.get('cache-control') ?? '')) {
 					await cache.put(key, response.clone());
 					event.waitUntil(trim(cache));
 				}

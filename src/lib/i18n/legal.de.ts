@@ -85,6 +85,12 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Hinweise und Probennotizen',
+				paragraphs: [
+					'Wer Programme plant, kann zu Stücken Hinweise aus den Proben (z. B. Sprünge oder Striche) und nach einer Probe eine Notiz eintragen, was geprobt wurde. Gespeichert werden der Text, der Name der Person, die ihn geschrieben hat, und das Datum, in den Blättern „Hinweise“ und „Probennotizen“ der Google-Tabelle des Orchesters. Alle Mitglieder sehen sie. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Probenbetrieb des Vereins).'
+				]
+			},
+			{
 				heading: 'Angaben zu Stücken nachschlagen',
 				paragraphs: [
 					'Wer Angaben zu Stücken pflegt, kann auf Knopfdruck bei Wikidata (Wikimedia Foundation, USA) nach dem Werk suchen. Dabei schickt dein Browser den Titel des Stücks und den eingetragenen Komponisten an Wikidata; wie bei jedem Seitenaufruf erfährt Wikimedia dabei deine IP-Adresse. Daten über dich oder andere Mitglieder werden nicht übertragen. Es gilt die Datenschutzerklärung der Wikimedia Foundation (foundation.wikimedia.org/wiki/Policy:Privacy_policy).',
@@ -102,13 +108,14 @@ export const legal = {
 					'„oauth_state“: schützt die Anmeldung vor Missbrauch und wird nach höchstens 10 Minuten gelöscht.',
 					'„instrument“: merkt sich auf „Meine Noten“, welches Instrument du spielst, wenn du nicht angemeldet bist. Läuft nach einem Jahr ab.',
 					'„konzerte-ansicht“: merkt sich, ob du die Konzerte als Liste oder Kalender sehen willst. Läuft nach einem Jahr ab.',
-					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast. Diese Angabe verlässt deinen Browser nicht.'
+					'Im Speicher deines Browsers (localStorage) merkt sich die App, ob du das helle oder dunkle Farbschema gewählt hast, und welche Stücke und Konzerte du zuletzt über die Schnellsuche geöffnet hast. Diese Angaben verlassen deinen Browser nicht.'
 				]
 			},
 			{
 				heading: 'Hosting bei Cloudflare',
 				paragraphs: [
-					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). In der Cloudflare-Datenbank D1 liegen nur die Angaben zu Benachrichtigungen (siehe oben). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.'
+					'Die App läuft bei Cloudflare (Cloudflare, Inc., USA, mit Rechenzentren weltweit). Bei jedem Aufruf werden technisch deine IP-Adresse, der Zeitpunkt und die aufgerufene Adresse verarbeitet, um die Seite auszuliefern und vor Angriffen zu schützen (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.',
+					'Terminumfragen (falls das Orchester sie nutzt): Umfragen und Antworten – dein Name, deine E-Mail-Adresse, deine Antworten und dein Kommentar – speichert die App in einer Datenbank bei Cloudflare (D1). Sie sind nur für die Gruppen sichtbar, an die sich die Umfrage richtet, und verschwinden, wenn die Umfrage gelöscht wird.'
 				]
 			},
 			{
@@ -121,6 +128,7 @@ export const legal = {
 				heading: 'Deine Rechte',
 				paragraphs: [
 					'Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung und Datenübertragbarkeit sowie das Recht, der Verarbeitung zu widersprechen (Art. 15 bis 21 DSGVO). Wende dich dafür an die oben genannte Kontaktadresse.',
+					'Was die App in der Google-Tabelle über dich speichert, kannst du jederzeit selbst im Profil unter „Meine Daten herunterladen“ als Datei laden.',
 					'Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren (Art. 77 DSGVO), zum Beispiel bei der deines Bundeslandes.'
 				]
 			}

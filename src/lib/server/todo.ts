@@ -3,6 +3,7 @@ import { urgentLoans } from '#lib/loans/loans.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans } from './repertoire.ts';
 import { features } from './env.ts';
+import { unansweredPolls } from './polls.ts';
 import { getSchedule } from './schedule.ts';
 
 /** Rehearsals this many days back still ask for their attendance to be taken. */
@@ -17,6 +18,9 @@ export interface OpenWork {
 	attendance: number;
 	/** The oldest rehearsal without attendance. */
 	attendanceUrl?: string;
+	/** Date polls you haven't answered yet (#95); the only line here that isn't about a right. */
+	polls: number;
+	pollsUrl?: string;
 }
 
 /**
@@ -30,7 +34,9 @@ export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 	const reports = rights.has('stuecke.bearbeiten');
 	const admin = rights.has('mitglieder.verwalten') && locals.auth === 'on';
 	const attendance = on.attendance && rights.has('anwesenheit.erfassen') && locals.auth === 'on';
-	if (!reports && !admin && !attendance) return null;
+	const today = eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
+	const polls = locals.auth === 'on' ? await unansweredPolls(locals, today).catch(() => []) : [];
+	if (!reports && !admin && !attendance && !polls.length) return null;
 	const [feedback, access, loans, taken, schedule] = await Promise.all([
 		getFeedback(),
 		admin ? getAccessList() : null,
@@ -38,7 +44,6 @@ export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 		attendance ? getAttendance() : null,
 		attendance ? getSchedule() : null
 	]).catch(() => [null, null, null, null, null] as const);
-	const today = eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
 	// Recent rehearsals nobody has taken attendance for yet (#120); the oldest is the link.
 	const untaken =
 		taken && schedule?.ok
@@ -56,7 +61,9 @@ export async function openWork(locals: App.Locals): Promise<OpenWork | null> {
 		requests: admin ? (access?.requests.length ?? 0) : 0,
 		loans: loans ? urgentLoans(loans.loans, today).length : 0,
 		attendance: untaken.length,
-		attendanceUrl: untaken[0] ? `/konzerte/${encodeURIComponent(untaken[0].id)}/anwesenheit` : undefined
+		attendanceUrl: untaken[0] ? `/konzerte/${encodeURIComponent(untaken[0].id)}/anwesenheit` : undefined,
+		polls: polls.length,
+		pollsUrl: polls.length === 1 ? `/termine/${polls[0].id}` : '/termine'
 	};
 }
 

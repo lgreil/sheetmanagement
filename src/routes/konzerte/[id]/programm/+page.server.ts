@@ -9,6 +9,7 @@ import { programSuggestions } from '#lib/repertoire/suggestions.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { t } from '#lib/i18n/index.ts';
+import { currentProgramAvailable, isCurrentConcert, syncCurrentProgram } from '#lib/server/current-program.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
@@ -111,6 +112,21 @@ async function clearShare(title: string) {
 	for (const row of rows) await updateRecord('concerts', concerts, row.row, { sameProgramAs: '' });
 }
 
+/** "ok" or "fehler" after syncing the Drive folder, empty when it isn't this concert's turn. */
+async function syncIfCurrent(id: string): Promise<string> {
+	if (!currentProgramAvailable()) return '';
+	const library = await getLibrary();
+	const concert = library.concertsById.get(id);
+	if (!concert || !isCurrentConcert(concert, library)) return '';
+	return syncCurrentProgram(concert, library).then(
+		() => 'ok',
+		(cause) => {
+			console.error('Syncing the current programme failed:', cause);
+			return 'fehler';
+		}
+	);
+}
+
 export const actions: Actions = {
 	save: async ({ params, request, locals }) => {
 		requireRight(locals, 'programme.bearbeiten');
@@ -142,7 +158,10 @@ export const actions: Actions = {
 			console.error('Saving a programme failed:', cause);
 			return fail(503, { message: t.messages.sheetFailed });
 		}
-		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert`);
+		// The orchestra's next concert: its pieces go into "01 | Aktuelles Programm" too (#60).
+		// The programme is saved either way; the concert page says how Drive went.
+		const drive = await syncIfCurrent(params.id);
+		redirect(303, `/konzerte/${encodeURIComponent(params.id)}?gespeichert${drive ? `&drive=${drive}` : ''}`);
 	},
 
 	/** Plays another concert's programme from now on; this concert's own rows go. */

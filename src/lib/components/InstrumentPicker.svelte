@@ -2,7 +2,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import { PART_NUMBERS } from '#lib/music/my-parts.ts';
 	import Icon from './Icon.svelte';
-	import InstrumentSelect from './InstrumentSelect.svelte';
+	import InstrumentChooser from './InstrumentChooser.svelte';
 
 	/**
 	 * Several instruments, each with none, one or several part numbers ("Geige I & II, Viola").
@@ -21,6 +21,7 @@
 		required?: boolean;
 	} = $props();
 
+	const uid = $props.id();
 	const ROMAN = ['', 'I', 'II', 'III', 'IV'];
 	// The form's own copy: rows are added and removed here until it's saved.
 	// svelte-ignore state_referenced_locally
@@ -30,17 +31,18 @@
 <div class="picker">
 	{#each rows as row, i (i)}
 		<div class="row">
-			<label class="field">
-				{i === 0 ? t.myParts.instrument : ''}
-				<InstrumentSelect
+			<div class="field">
+				<span id="{uid}-{i}" class:sr-only={i > 0}>{t.myParts.instrument}</span>
+				<InstrumentChooser
 					name="instrument"
 					bind:value={row.instrument}
-					groups={[{ names: instruments }]}
+					{instruments}
 					{common}
 					required={required && i === 0}
 					label={t.myParts.instrument}
+					labelledby="{uid}-{i}"
 				/>
-			</label>
+			</div>
 			<fieldset class="numbers" title={t.instruments.numbersHint}>
 				<legend>{i === 0 ? t.instruments.numbers : ''}</legend>
 				{#each PART_NUMBERS as n (n)}

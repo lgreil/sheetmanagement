@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { enhance } from '$app/forms';
 	import { replaceState } from '$app/navigation';
 	import { t } from '#lib/i18n/index.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
@@ -7,12 +8,14 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import InstrumentationMatrix from '#lib/components/InstrumentationMatrix.svelte';
 	import ProgramList from '#lib/components/ProgramList.svelte';
+	import RehearsalNote from '#lib/components/RehearsalNote.svelte';
 	import Segmented from '#lib/components/Segmented.svelte';
 	import ShareButton from '#lib/components/ShareButton.svelte';
 	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
 
 	let { data, form } = $props();
+	let syncing = $state(false);
 	const id = $derived(encodeURIComponent(page.params.id ?? ''));
 	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
 	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
@@ -154,7 +157,7 @@
 					<strong>{data.concert.displayTitle}</strong>
 					<span>{data.concert.date.long} · {t.concerts.relative(data.concert.daysUntil)}</span>
 				</span>
-				<span class="trail"><Icon name="chevron" size={18} /></span>
+				<span class="trail"><Icon name="chevron" size={16} /></span>
 			</a>
 		</li>
 	{/if}
@@ -252,7 +255,7 @@
 					<strong>{data.attendance.of ? t.attendance.present(data.attendance.present, data.attendance.of) : t.attendance.notTaken}</strong>
 					<span>{data.attendance.of ? t.attendance.edit : t.attendance.take}</span>
 				</span>
-				<span class="trail"><Icon name="chevron" size={18} /></span>
+				<span class="trail"><Icon name="chevron" size={16} /></span>
 			</a>
 		{/if}
 	</section>
@@ -272,6 +275,8 @@
 			</div>
 		</div>
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
+		{#if data.program.drive?.auto === 'ok'}<p class="saved" role="status"><Icon name="folder" size={16} />{t.currentProgram.autoDone}</p>{/if}
+		{#if data.program.drive?.auto === 'fehler'}<p class="saved warn" role="status"><Icon name="alert" size={16} />{t.currentProgram.autoFailed}</p>{/if}
 		{#if data.program.sharedFrom}
 			<p class="note">
 				<Icon name="link" size={16} />
@@ -296,6 +301,43 @@
 			<ProgramList items={data.program.items} total />
 			<!-- Where it's kept only matters to those who keep it. -->
 			{#if data.program.canEdit}<p class="hint">{t.concert.programHint}</p>{/if}
+			{#if data.program.drive}
+				{@const drive = data.program.drive}
+				{@const result = form?.currentProgram}
+				<!-- "01 | Aktuelles Programm" (#60): how far the folder matches, and one button to make it match. -->
+				<form
+					class="ui-card drive"
+					method="POST"
+					action="?/currentProgram"
+					use:enhance={() => {
+						syncing = true;
+						return async ({ update }) => {
+							await update({ reset: false });
+							syncing = false;
+						};
+					}}
+				>
+					<span class="icon" class:done={result || (drive.program && drive.linked === drive.total && !drive.extra.length)}><Icon name="folder" size={18} /></span>
+					<span class="fact-body">
+						<strong>{t.currentProgram.title}</strong>
+						<span>
+							{#if result}
+								{t.currentProgram.done(result.added.length, result.removed.length)}{#if result.removed.length}{' '}{t.currentProgram.removedHint}{/if}
+							{:else if !drive.program}
+								{t.currentProgram.noFolder(drive.orchestra)}
+							{:else if drive.linked === drive.total && !drive.extra.length}
+								{t.currentProgram.complete(drive.total, drive.program)}
+							{:else}
+								{t.currentProgram.partly(drive.linked, drive.total, drive.program)}{#if drive.extra.length}{' '}{t.currentProgram.extra(drive.extra.length)}{/if}
+							{/if}
+							{#if !drive.next}· {t.currentProgram.notNext}{/if}
+						</span>
+						{#if form?.currentProgramError}<span class="drive-error" role="alert">{form.currentProgramError}</span>{/if}
+					</span>
+					{#if result}<a class="open" href={result.folderUrl} target="_blank" rel="noopener noreferrer">{t.currentProgram.open}<Icon name="external" size={14} /></a>{/if}
+					<button class="btn small secondary" disabled={syncing}><Icon name="refresh" size={16} />{t.currentProgram.sync}</button>
+				</form>
+			{/if}
 		{:else}
 			<p class="placeholder">{data.program.sheet === 'ok' ? t.concert.programEmpty : t.concert.programNoSheet}</p>
 		{/if}
@@ -370,6 +412,10 @@
 			<p class="placeholder">{t.rehearsalPlan.empty}</p>
 		{/if}
 	</section>
+{/if}
+
+{#if data.kind === 'event' && data.rehearsalNote}
+	<RehearsalNote data={data.rehearsalNote} result={form} />
 {/if}
 
 {/if}
@@ -757,6 +803,37 @@
 		margin: var(--space-2) var(--space-1) 0;
 		color: var(--text-muted);
 		font-size: 0.8125rem;
+	}
+
+	.saved.warn {
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+	}
+
+	.drive {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-3);
+		margin-top: var(--space-3);
+		padding: var(--space-3) var(--space-4);
+	}
+
+	.drive .icon.done {
+		background: color-mix(in oklab, var(--ok) 14%, transparent);
+		color: var(--ok);
+	}
+
+	.drive .open {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--accent);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.fact-body .drive-error {
+		color: var(--danger);
 	}
 
 	.saved {

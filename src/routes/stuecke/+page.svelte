@@ -7,6 +7,7 @@
 	import AddToArchive from '#lib/components/AddToArchive.svelte';
 	import EmptyState from '#lib/components/EmptyState.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import Nothing from '#lib/components/Nothing.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -150,7 +151,9 @@
 	</p>
 
 	{#if visible.length === 0}
-		<p class="none">{t.pieces.noResults}</p>
+		<Nothing text={t.pieces.noResults} glyphs={['violin', 'clarinet', 'trumpet']}>
+			{#if query || filter}<button class="btn secondary" onclick={() => ((query = ''), (filter = ''))}>{t.pieces.clearSearch}</button>{/if}
+		</Nothing>
 	{:else}
 		{#each groups as group (group.letter)}
 			<section class="group">
@@ -177,7 +180,7 @@
 										<span class="status {piece.status}">{t.pieces.status[piece.status]}</span>
 									{/if}
 									{#if piece.status !== 'none'}<span class="parts">{t.pieces.parts(piece.partCount)}</span>{/if}
-									<span class="chevron"><Icon name="chevron" size={18} /></span>
+									<span class="chevron"><Icon name="chevron" size={16} /></span>
 								</span>
 							</a>
 						</li>

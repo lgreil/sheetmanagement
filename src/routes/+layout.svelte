@@ -5,7 +5,9 @@
 	import { config, useInstrumentOverrides } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
+	import Avatar from '#lib/components/Avatar.svelte';
 	import Icon from '#lib/components/Icon.svelte';
+	import QuickSearch, { loadIndex } from '#lib/components/QuickSearch.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
 	import Toast from '#lib/components/Toast.svelte';
 	import UpdateNotice from '#lib/components/UpdateNotice.svelte';
@@ -20,7 +22,7 @@
 	useInstrumentOverrides(data.instruments);
 	$effect.pre(() => useInstrumentOverrides(data.instruments));
 
-	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features }));
+	const groups = $derived(navGroups({ auth: data.auth, rights: data.rights, features: data.features, polls: data.polls }));
 	const nav = $derived(primaryNav(groups));
 	const path = $derived(page.url.pathname);
 	// The most specific entry counts: "Angaben ergänzen" lights up "Mehr", not "Archiv".
@@ -30,6 +32,12 @@
 	const inMore = $derived(!!current && !nav.some((item) => item.href === current));
 	const workspace = $derived(workspaceOf(groups, path));
 	let menuOpen = $state(false);
+	let searching = $state(false);
+	// The shortcut as the keyboard says it: ⌘K on a Mac, Strg K elsewhere.
+	let mac = $state(false);
+	$effect(() => {
+		mac = /Mac|iPhone|iPad/.test(navigator.platform);
+	});
 
 	const links = orchestraLinks(config.links);
 	const sourceUrl = safeLink(config.sourceUrl ?? '');
@@ -120,6 +128,12 @@
 				</button>
 			</nav>
 
+			{#if groups.length}
+				<button class="search" onclick={() => (searching = true)} onpointerenter={loadIndex} onfocus={loadIndex} data-shortcut={mac ? '⌘K' : t.quickSearch.shortcut}>
+					<Icon name="search" size={18} /><span class="search-label">{t.quickSearch.open}</span>
+				</button>
+			{/if}
+
 			<!-- Signing out and the colour scheme live in "Mehr" and on the profile. -->
 			{#if data.user}
 				<a
@@ -129,7 +143,7 @@
 					title="{t.profile.title} · {t.auth.signedInAs(data.user.email)}"
 					aria-label={t.profile.title}
 				>
-					{data.user.name.charAt(0).toUpperCase()}
+					<Avatar name={data.user.name} instrument={data.user.instrument} size={34} />
 				</a>
 			{/if}
 		</div>
@@ -164,23 +178,26 @@
 					{t.nav.appName} v{__APP_VERSION__} · <a href={sourceUrl} target="_blank" rel="noopener noreferrer">{t.footer.source}</a>
 				</p>
 			{/if}
+			<!-- The instrument drawings are CC BY: credited where everyone sees them. -->
+			<p class="source"><a href="/licenses/game-icons-CC-BY-3.0.txt">{t.footer.instruments}</a></p>
 		</footer>
 	</main>
 
 	<nav class="tabbar" aria-label={t.nav.main}>
 		{#each nav as item (item.href)}
 			<a href={item.href} class:active={isCurrent(item.href)} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-				<span class="pill"><Icon name={item.icon} size={22} /></span>
+				<span class="pill"><Icon name={item.icon} size={22} fill={isCurrent(item.href)} /></span>
 				<span class="label">{item.label}</span>
 			</a>
 		{/each}
 		<button class:active={inMore || menuOpen} aria-expanded={menuOpen} aria-controls="nav-menu" onclick={() => (menuOpen = !menuOpen)}>
-			<span class="pill"><Icon name="menu" size={22} /></span>
+			<span class="pill"><Icon name="menu" size={22} fill={inMore || menuOpen} /></span>
 			<span class="label">{t.nav.more}</span>
 		</button>
 	</nav>
 
 	<NavMenu {groups} {current} user={data.user ?? null} bind:open={menuOpen} />
+	{#if groups.length}<QuickSearch {groups} bind:open={searching} />{/if}
 	<Toast />
 	<UpdateNotice />
 </div>
@@ -347,6 +364,43 @@
 		background: var(--accent-soft);
 	}
 
+	/* Looks like a field on wide screens, so it's clear you can type; an icon on narrow ones. */
+	.search {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		flex: none;
+		height: 36px;
+		margin-left: var(--space-2);
+		padding: 0 6px 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 999px;
+		background: var(--surface);
+		color: var(--text-muted);
+		font: inherit;
+		font-size: 0.875rem;
+		cursor: pointer;
+		transition:
+			border-color var(--fast) var(--ease),
+			color var(--fast) var(--ease);
+	}
+
+	.search:hover {
+		border-color: color-mix(in oklab, var(--accent) 50%, var(--border));
+		color: var(--text);
+	}
+
+	/* Decoration only: the button is called "Suchen", the shortcut isn't part of its name. */
+	.search::after {
+		content: attr(data-shortcut) / '';
+		padding: 1px 6px;
+		border-radius: 999px;
+		background: var(--bg);
+		font: inherit;
+		font-size: 0.6875rem;
+		font-weight: 600;
+	}
+
 	main {
 		flex: 1;
 		width: 100%;
@@ -388,11 +442,35 @@
 		.nav-desktop .more {
 			padding: var(--space-2) 10px;
 		}
+
+		.search {
+			justify-content: center;
+			width: 36px;
+			padding: 0;
+		}
+
+		.search::after {
+			display: none;
+		}
+
+		/* Still the button's name, only not shown. */
+		.search-label {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			overflow: hidden;
+			clip-path: inset(50%);
+			white-space: nowrap;
+		}
 	}
 
 	@media (max-width: 720px) {
 		.nav-desktop {
 			display: none;
+		}
+
+		.search {
+			margin-left: auto;
 		}
 
 		.topbar-inner {
@@ -424,7 +502,7 @@
 			grid-auto-columns: 1fr;
 			height: calc(var(--tabbar-height) + env(safe-area-inset-bottom));
 			padding-bottom: env(safe-area-inset-bottom);
-			background: color-mix(in oklab, var(--bg) 80%, transparent);
+			background: color-mix(in oklab, var(--bg) 94%, transparent);
 			backdrop-filter: saturate(1.6) blur(20px);
 			-webkit-backdrop-filter: saturate(1.6) blur(20px);
 			border-top: 1px solid var(--hairline);
@@ -547,16 +625,9 @@
 
 	.avatar {
 		display: grid;
-		place-items: center;
 		flex: none;
-		width: 34px;
-		height: 34px;
 		margin-left: var(--space-1);
 		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-size: 0.875rem;
-		font-weight: 700;
 		transition: box-shadow var(--fast) var(--ease);
 	}
 

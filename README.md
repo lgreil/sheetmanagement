@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** in use, version 0.10. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
+> **Status:** in use, version 0.10. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. New: the Chronik with the orchestra's history in numbers and a printable season report, notes from rehearsals on pieces and after each rehearsal, full composer names for the GEMA list, and a download of one's own data on /profil. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 
@@ -62,6 +62,16 @@ Everything works, including the editors, but changes stay in memory: they're gon
 - **Offline:** a service worker (`src/service-worker/`) keeps the pages a member opened, and "Offline speichern" on "Meine Noten" keeps their parts, for rehearsal halls without reception. Signing out deletes both.
 - **Updates:** after a deploy, an open app shows "Neue Version verfügbar · Neu laden" within a few minutes; nothing reloads by itself.
 - **Own calendar:** each member can create a personal calendar link on `/profil` (`/kalender/<token>.ics`) with their orchestra's dates, their own answer and what's rehearsed. It's signed with `SESSION_SECRET` and can be renewed or revoked; the version sits in the "Kalender-Version" column of "Mitglieder".
+
+### Rehearsal notes and the orchestra's history
+
+- **Notes on pieces** ("Hinweise" tab): cuts, repeats and bowings agreed in rehearsal, written on the piece's page by whoever plans programmes. A note can be for one section or instrument and for one concert; members see the ones for their instrument next to their part in "Meine Noten", and notes for concerts that are over are folded away.
+- **Notes after a rehearsal** ("Probennotizen" tab): what was rehearsed, what to practise and what comes next. They show on the rehearsal's page, on the next rehearsal's page and on the start page until the next rehearsal is over.
+- **Chronik** (`/chronik`): every past concert by decade with its programme, pieces played for the first time marked, and the numbers: most played pieces and composers, pieces not played for ten years, pieces never played, the repertoire per decade. Old concerts only need a year in the sheet.
+- **Season report** (`/chronik/saison`, for `mitglieder.verwalten`): a printable summary of a period for the annual meeting: concerts and programmes, new pieces, rehearsals and attendance as totals, reports and wishes.
+- **My data** (`/profil`): every member can download what the sheet keeps about them as a JSON file (Art. 15 GDPR), without other people's names or +1s.
+
+The new tabs are optional: the first note creates its tab, and /setup adds them with dropdowns. "Komponist (voll)" in "Stücke" holds the full name for the GEMA list; "Online nachschlagen" on a piece's edit page fills it from Wikidata.
 
 ## Deploying (free)
 
