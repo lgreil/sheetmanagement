@@ -1,5 +1,5 @@
 import { config } from '#lib/config/index.ts';
-import { cached, type CachedResult } from './cache.ts';
+import { cached, patchCached, type CachedResult } from './cache.ts';
 import { buildDriveIndex, INDEX_VERSION, type DriveIndex } from './drive-index.ts';
 import { demoClient } from './demo/backend.ts';
 import { DEMO_IDS } from './demo/data.ts';
@@ -80,7 +80,7 @@ export function getArchiveIndex({ force = false } = {}): Promise<CachedResult<Dr
 	const programs = programFolderIds();
 	const { client } = getGoogle();
 	return cached({
-		key: `drive-index:v${INDEX_VERSION}:${[archiveFolderId, ...programs].join(',')}`,
+		key: archiveIndexKey(archiveFolderId, programs),
 		maxAgeMs: INDEX_MAX_AGE_MS,
 		build: () =>
 			buildDriveIndex(client, {
@@ -92,5 +92,28 @@ export function getArchiveIndex({ force = false } = {}): Promise<CachedResult<Dr
 		kv: appEnv().CACHE,
 		waitUntil: runInBackground,
 		force
+	});
+}
+
+const archiveIndexKey = (archiveFolderId: string, programs: string[]) => `drive-index:v${INDEX_VERSION}:${[archiveFolderId, ...programs].join(',')}`;
+
+/**
+ * Writes new file names into the cached archive index, by file id. Much faster than
+ * crawling the whole archive again after a rename; the regular refresh still follows.
+ */
+export async function renameInArchiveIndex(names: Map<string, string>): Promise<boolean> {
+	if (!names.size) return true;
+	const rename = <F extends { id: string; name: string }>(file: F): F => {
+		const name = names.get(file.id);
+		return name === undefined ? file : { ...file, name };
+	};
+	return patchCached<DriveIndex>({
+		key: archiveIndexKey(requireSetting('DRIVE_ARCHIVE_FOLDER_ID'), programFolderIds()),
+		kv: appEnv().CACHE,
+		update: (index) => ({
+			...index,
+			pieces: index.pieces.map((piece) => ({ ...piece, files: piece.files.map(rename) })),
+			categoryFiles: index.categoryFiles.map((group) => ({ ...group, files: group.files.map(rename) }))
+		})
 	});
 }
