@@ -17,6 +17,8 @@ export type ScheduleResult =
 			byId: Map<string, ShownEvent>;
 			/** Link to subscribe to the calendar in Google Calendar. */
 			subscribeUrl: string;
+			/** The calendar snapshot these events come from, for caching what's built from them. */
+			snapshot: object;
 	  }
 	| { ok: false; reason: 'not-configured' | 'failed' };
 
@@ -69,7 +71,8 @@ export async function getSchedule(now = Date.now()): Promise<ScheduleResult> {
 			ok: true,
 			events,
 			byId: new Map(events.map((event) => [event.id, event])),
-			subscribeUrl: `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`
+			subscribeUrl: `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`,
+			snapshot: schedule
 		};
 	} catch (error) {
 		if (error instanceof NotConfiguredError) return { ok: false, reason: 'not-configured' };

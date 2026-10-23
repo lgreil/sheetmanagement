@@ -89,7 +89,7 @@ export interface Sources {
 }
 
 /** Drive pieces and calendar concerts as far as they load; a failing source is just empty. */
-async function loadSources(): Promise<Sources & { complete: boolean; archive: PieceDetail[] | null }> {
+async function loadSources(): Promise<Sources & { complete: boolean; archive: PieceDetail[] | null; snapshot: object | null }> {
 	const [catalog, schedule] = await Promise.all([getCatalog(), getSchedule()]);
 	return {
 		complete: catalog.ok && schedule.ok,
@@ -97,8 +97,20 @@ async function loadSources(): Promise<Sources & { complete: boolean; archive: Pi
 		drivePieces: catalog.ok
 			? catalog.catalog.pieces.map(({ id, title, composer, catalogue, folderName }) => ({ id, title, composer, catalogue, folderName }))
 			: [],
-		calendarConcerts: schedule.ok ? schedule.events.filter((event) => event.type === 'konzert') : []
+		calendarConcerts: schedule.ok ? schedule.events.filter((event) => event.type === 'konzert') : [],
+		snapshot: schedule.ok ? schedule.snapshot : null
 	};
+}
+
+/** Links per sheet, archive and calendar snapshot: the same objects for the same sources. */
+const linked = new WeakMap<Repertoire, { archive: unknown; snapshot: unknown; links: Links }>();
+
+function linksOf(repertoire: Repertoire, sources: Awaited<ReturnType<typeof loadSources>>): Links {
+	const hit = linked.get(repertoire);
+	if (hit && hit.archive === sources.archive && hit.snapshot === sources.snapshot) return hit.links;
+	const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
+	linked.set(repertoire, { archive: sources.archive, snapshot: sources.snapshot, links });
+	return links;
 }
 
 /**
@@ -265,7 +277,7 @@ export async function getRepertoire({ force = false } = {}): Promise<RepertoireR
 	try {
 		const [{ value, storedAt }, sources] = await Promise.all([loadSheet(force), loadSources()]);
 		syncInBackground();
-		const links = linkSources(value.repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
+		const links = linksOf(value.repertoire, sources);
 		return { ok: true, repertoire: value.repertoire, links, storedAt };
 	} catch (error) {
 		if (error instanceof NotConfiguredError) return { ok: false, reason: 'not-configured' };
