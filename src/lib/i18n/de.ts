@@ -698,6 +698,7 @@ export const de = {
 		notNext: 'Nicht das nächste Konzert dieses Orchesters.',
 		done: (added: number, removed: number) => `Abgeglichen: ${added} ergänzt, ${removed} herausgenommen.`,
 		removedHint: 'Herausgenommene Verknüpfungen liegen im Papierkorb.',
+		stuck: (names: string[]) => `${names.map((name) => `»${name}«`).join(', ')} kann nur herausnehmen, wer die Verknüpfung angelegt hat: bitte von Hand im Drive löschen.`,
 		open: 'Ordner öffnen',
 		failed: 'Abgleichen hat nicht geklappt. Hat das Dienstkonto Bearbeitungsrechte für den Ordner?',
 		ambiguous: 'Mehrere Programmordner und kein Orchester am Konzert: bitte in der Tabelle das Orchester eintragen.',

@@ -52,6 +52,12 @@ describe('planShortcuts', () => {
 		expect(plan.create).toEqual([egmont]);
 	});
 
+	it('leaves a programme linked inside the programme alone', () => {
+		const plan = planShortcuts([{ id: 's1', name: 'Programm A-Orchester', targetId: 'a-orchester', program: true }], [egmont]);
+		expect(plan.trash).toEqual([]);
+		expect(plan.create).toEqual([egmont]);
+	});
+
 	it('links a piece once, even when it is twice in the programme or twice in the folder', () => {
 		const plan = planShortcuts(
 			[

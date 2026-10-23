@@ -1,6 +1,7 @@
 import { config } from '#lib/config/index.ts';
-import { planShortcuts, programFor, type WantedPiece } from '#lib/repertoire/current-program.ts';
+import { planShortcuts, programFor, type FolderEntry, type WantedPiece } from '#lib/repertoire/current-program.ts';
 import { folderUrl } from './catalog.ts';
+import { GoogleApiError } from './google/client.ts';
 import { createFolder, createShortcut, getFile, listChildren, trashFile, FOLDER_MIME, SHORTCUT_MIME } from './google/drive.ts';
 import { isPastConcert, type Library, type LibraryConcert } from './library.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle, programFolderIds } from './services.ts';
@@ -72,6 +73,8 @@ export interface CurrentProgramResult {
 	folderUrl: string;
 	added: string[];
 	removed: string[];
+	/** To be taken out, but the service account may not: someone else's shortcut. */
+	stuck: string[];
 }
 
 /** Makes the folder match the programme: shortcuts in, shortcuts to other pieces out (into the bin). */
@@ -109,17 +112,26 @@ export async function syncCurrentProgram(concert: LibraryConcert, library: Libra
 	const entries = (await listChildren(client, [target.id])).map((entry) => ({
 		id: entry.id,
 		name: entry.name,
-		targetId: entry.mimeType === SHORTCUT_MIME ? entry.shortcutDetails?.targetId : undefined
+		targetId: entry.mimeType === SHORTCUT_MIME ? entry.shortcutDetails?.targetId : undefined,
+		program: named(entry.name) !== undefined
 	}));
 	const plan = planShortcuts(entries, wantedPieces(concert, library));
 	for (const piece of plan.create) await createShortcut(client, piece.name, piece.folderId, target.id);
-	for (const entry of plan.trash) await trashFile(client, entry.id);
+	// In "My Drive" only a file's owner may bin it: a shortcut made by hand stays, and is named.
+	const stuck = new Set<FolderEntry>();
+	for (const entry of plan.trash) {
+		await trashFile(client, entry.id).catch((cause) => {
+			if (!(cause instanceof GoogleApiError && cause.status === 403)) throw cause;
+			stuck.add(entry);
+		});
+	}
 	// The archive index knows the programmes; read it again so pages show the new state.
 	await getArchiveIndex({ force: true }).catch((cause) => console.error('Refreshing the archive failed:', cause));
 	return {
 		folderName: target.folderName,
 		folderUrl: folderUrl(target.id),
 		added: plan.create.map((piece) => piece.name),
-		removed: plan.trash.map((entry) => entry.name)
+		removed: plan.trash.filter((entry) => !stuck.has(entry)).map((entry) => entry.name),
+		stuck: [...stuck].map((entry) => entry.name)
 	};
 }
