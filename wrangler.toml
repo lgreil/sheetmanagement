@@ -33,6 +33,7 @@ new_sqlite_classes = ["SheetWriteLock"]
 [[d1_databases]]
 binding = "DB"
 database_name = "noten"
+database_id = "300a8605-82c4-4209-aabd-9d93bfb59730"
 migrations_dir = "migrations"
 
 # Background jobs (#160): one trigger that runs whatever is due, see src/lib/server/jobs/.
