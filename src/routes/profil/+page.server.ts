@@ -10,6 +10,7 @@ import { feedToken } from '#lib/server/auth/feed.ts';
 import { isOn } from '#lib/server/env.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { vapidKeys } from '#lib/server/push/index.ts';
+import { mailReady } from '#lib/server/mail/index.ts';
 import { nextLinkVersion, revokedLinkVersion } from '#lib/server/auth/links.ts';
 import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -34,6 +35,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		},
 		feed: await feed(member.email, member.feedVersion, !!list?.tables.members?.missing.includes('feedVersion'), url.origin),
 		push: await push(member.email),
+		mail: await mail(member.email),
 		instruments: playableInstruments(config),
 		common: commonInstruments(config),
 		orchestras: config.orchestras
@@ -60,6 +62,16 @@ async function push(email: string) {
 	return { publicKey: keys.publicKey, endpoints: devices.map((device) => device.endpoint) };
 }
 
+/** Reminders by email (#123): whether they're on for this member; null while no account sends mail. */
+async function mail(email: string) {
+	if (!(await mailReady())) return null;
+	const off = await getStore()
+		.mailOptOuts()
+		.then((optOut) => optOut.has(email))
+		.catch(() => false);
+	return { off };
+}
+
 /** A new link (a higher version) or revoking (the version made negative), on the member's own row. */
 async function changeFeed(locals: App.Locals, next: (current: number) => number) {
 	const user = locals.access.user;
@@ -84,6 +96,20 @@ async function changeFeed(locals: App.Locals, next: (current: number) => number)
 export const actions: Actions = {
 	feed: ({ locals }) => changeFeed(locals, nextLinkVersion),
 	feedRevoke: ({ locals }) => changeFeed(locals, revokedLinkVersion),
+
+	/** Turns reminders by email off or on again; kept in the store, not the sheet. */
+	mail: async ({ locals, request }) => {
+		const user = locals.access.user;
+		if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+		const off = (await request.formData()).get('off') === 'true';
+		try {
+			await getStore().setMailOptOut(normalizeEmail(user.email), off);
+			return { mailSaved: true };
+		} catch (error) {
+			console.error('Changing email reminders failed:', error);
+			return fail(503, { mailMessage: t.email.profileFailed });
+		}
+	},
 
 	save: async ({ locals, request }) => {
 		const user = locals.access.user;

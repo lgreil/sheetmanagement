@@ -78,6 +78,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'E-Mail',
+				paragraphs: [
+					'Wenn das Orchester ein E-Mail-Konto verbunden hat, kannst du dir auf der Anmeldeseite einen Anmeldelink schicken lassen; er gilt 15 Minuten und geht nur an Adressen, die in der Mitgliederliste stehen. Wer auf keinem Gerät Benachrichtigungen erlaubt hat, bekommt dieselben Erinnerungen per E-Mail, mit Links, über die du direkt zu- oder absagen kannst.',
+					'Verschickt werden die E-Mails über Gmail vom Google-Konto des Orchesters (Google Ireland Ltd.); Google verarbeitet dabei deine E-Mail-Adresse und den Inhalt der Nachricht. Die App speichert dafür keine weiteren Daten: Links sind signiert und werden nirgends abgelegt. Damit die Anmeldeseite nicht missbraucht wird, zählt die App für eine Stunde, wie oft ein Link für eine Adresse und von einer IP-Adresse angefordert wurde (in der Datenbank bei Cloudflare).',
+					'Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO (Probenbetrieb des Vereins). Erinnerungen per E-Mail kannst du im Profil jederzeit abbestellen; das speichert die App, bis du sie wieder einschaltest.'
+				]
+			},
+			{
 				heading: 'Anwesenheit bei Proben',
 				paragraphs: [
 					'Nach einer Probe können Personen mit dem Recht „Anwesenheit erfassen“ (z. B. Dirigat und Organisation) eintragen, wer da war. Gespeichert werden nur Termin, Name, E-Mail-Adresse und ob du anwesend warst, im Blatt „Anwesenheit“ der Google-Tabelle des Orchesters. Daraus zeigt die App, bei wie vielen Proben vor einem Konzert du dabei warst.',

@@ -99,6 +99,8 @@ export function isPublicPath(path: string): boolean {
 		path === '/datenschutz' ||
 		path === '/nutzungsbedingungen' ||
 		path.startsWith('/auth/') ||
+		// Answering a sign-up from a reminder email (#123): the signed link is the proof.
+		path.startsWith('/antwort/') ||
 		path === '/api/health'
 	);
 }

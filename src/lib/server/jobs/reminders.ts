@@ -3,19 +3,23 @@ import { dateFormat } from '#lib/events/format.ts';
 import { t } from '#lib/i18n/index.ts';
 import { loanReminders, peopleWithRight, signupReminders, type Reminder, type ReminderKind } from '#lib/reminders/reminders.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
+import { ANSWERS } from '#lib/signups/signups.ts';
 import { authConfig } from '../auth/index.ts';
+import { answerToken } from '../auth/mail-links.ts';
 import { getStore, reminderKey } from '../db/index.ts';
 import { features } from '../env.ts';
 import { getLibrary } from '../library.ts';
-import { notify, pushReady, type Notice } from '../push/index.ts';
+import type { Notice } from '../push/index.ts';
 import { getAccessList, getLoans, getSignups } from '../repertoire.ts';
+import { channels, channelsSetUp, deliver, reachable } from './deliver.ts';
 import type { JobResult } from './index.ts';
 
 /**
- * Reminders on members' devices (#157, #144): a rehearsal or concert in the next days that
- * someone hasn't answered, and rented music that is due or overdue. Each reminder goes out
- * once (logged in the store); a few per run, the rest on the next one, so a run stays small.
- * Nobody is woken up: nothing is sent at night.
+ * Reminders on members' devices or by email (#157, #144, #123): a rehearsal or concert in the
+ * next days that someone hasn't answered, and rented music that is due or overdue. Each
+ * reminder goes out once (logged in the store), whichever way reaches the person (see
+ * deliver.ts); a few per run, the rest on the next one, so a run stays small. Nobody is woken
+ * up: nothing is sent at night.
  */
 
 /** Messages per run; the job runs every half hour. */
@@ -35,15 +39,15 @@ export function isQuietTime(now: number): boolean {
 	return hour < QUIET_UNTIL || hour >= QUIET_FROM;
 }
 
-type Pending = Reminder<unknown> & { notice: Notice };
+/** A sign-up reminder by email links to one-click answers, valid until a day after the start. */
+type Pending = Reminder<unknown> & { notice: Notice; answers?: { eventId: string; until: number } };
 
 export async function sendReminders(now = Date.now()): Promise<JobResult> {
-	if (!pushReady()) return { ok: true, summary: t.reminders.pushOff };
+	const ways = await channels();
+	if (!channelsSetUp(ways)) return { ok: true, summary: t.reminders.pushOff };
 	if (isQuietTime(now)) return { ok: true, summary: t.reminders.quiet };
+	if (!ways.devices.length && !ways.mail) return { ok: true, summary: t.reminders.noDevices };
 	const store = getStore();
-	const devices = await store.allPush();
-	const reachable = new Set(devices.map((device) => device.email));
-	if (!reachable.size) return { ok: true, summary: t.reminders.noDevices };
 
 	const on = features();
 	const today = eventDay({ start: new Date(now).toISOString(), allDay: false }, config.timeZone);
@@ -64,12 +68,13 @@ export async function sendReminders(now = Date.now()): Promise<JobResult> {
 			const when = event.allDay ? allDayDate.format(new Date(event.start)) : eventDate.format(new Date(event.start));
 			pending.push({
 				...reminder,
-				notice: { title: t.reminders.signupTitle(event.displayTitle), body: t.reminders.signupBody(when), url: `/konzerte/${encodeURIComponent(event.id)}`, tag: `signup-${event.id}` }
+				notice: { title: t.reminders.signupTitle(event.displayTitle), body: t.reminders.signupBody(when), url: `/konzerte/${encodeURIComponent(event.id)}`, tag: `signup-${event.id}` },
+				answers: { eventId: event.id, until: Date.parse(event.start) + 86_400_000 }
 			});
 		}
 	}
+	const auth = authConfig();
 	if (loans) {
-		const auth = authConfig();
 		const people = peopleWithRight(access, auth.mode === 'on' ? auth.bootstrapAdmins : [], 'stuecke.bearbeiten');
 		for (const reminder of loanReminders(loans.loans, people, today)) {
 			const loan = reminder.about;
@@ -87,8 +92,8 @@ export async function sendReminders(now = Date.now()): Promise<JobResult> {
 		}
 	}
 
-	// Only people with a device, and only what hasn't gone out yet.
-	const candidates = pending.filter((reminder) => reachable.has(reminder.recipient));
+	// Only people who can be reached, and only what hasn't gone out yet.
+	const candidates = pending.filter((reminder) => reachable(reminder.recipient, ways));
 	const sent = new Map<ReminderKind, Set<string>>();
 	for (const kind of new Set(candidates.map((reminder) => reminder.kind))) {
 		const subjects = [...new Set(candidates.filter((reminder) => reminder.kind === kind).map((reminder) => reminder.subject))];
@@ -97,20 +102,36 @@ export async function sendReminders(now = Date.now()): Promise<JobResult> {
 	const due = candidates.filter((reminder) => !sent.get(reminder.kind)?.has(reminderKey(reminder.subject, reminder.recipient)));
 
 	let delivered = 0;
+	let mailed = 0;
+	const names = new Map((access?.members ?? []).map((member) => [member.email, member.name]));
 	const batch = due.slice(0, PER_RUN);
 	for (const reminder of batch) {
-		const reached = await notify([reminder.recipient], reminder.notice, devices);
-		// Not reached (push service down): it stays due and is tried on the next run.
-		if (!reached.size) continue;
+		const lines =
+			reminder.answers && ways.mail && auth.mode === 'on'
+				? [t.email.answerLinks, ...(await answerLinks(reminder.recipient, reminder.answers, ways.mail.origin, auth.sessionSecret))]
+				: [];
+		const way = await deliver(reminder.recipient, reminder.notice, ways, { name: names.get(reminder.recipient), lines });
+		// Not reached (push service or mail down): it stays due and is tried on the next run.
+		if (!way) continue;
 		await store.logReminder(reminder.kind, reminder.subject, reminder.recipient);
 		delivered++;
+		if (way === 'mail') mailed++;
 	}
 	await store.pruneReminders(KEEP_DAYS);
 	if (!due.length) return { ok: true, summary: t.reminders.nothing };
 	const missed = batch.length - delivered;
 	return {
-		// Nothing got through at all: the push services or the keys are worth a look.
+		// Nothing got through at all: the push services, the keys or the mail account are worth a look.
 		ok: delivered > 0 || !missed,
-		summary: t.reminders.sent(delivered, due.length - batch.length) + (missed ? ` ${t.reminders.notReached(missed)}` : '')
+		summary:
+			t.reminders.sent(delivered, due.length - batch.length) +
+			(mailed ? ` ${t.reminders.byMail(mailed)}` : '') +
+			(missed ? ` ${t.reminders.notReached(missed)}` : '')
 	};
+}
+
+/** "Ich komme: https://…/antwort/…?a=yes", one line per answer. */
+async function answerLinks(email: string, about: { eventId: string; until: number }, origin: string, secret: string): Promise<string[]> {
+	const token = await answerToken(email, about.eventId, about.until, secret);
+	return ANSWERS.map((answer) => `${t.signups.answers[answer]}: ${origin}/antwort/${token}?a=${answer}`);
 }

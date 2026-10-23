@@ -14,6 +14,7 @@
 	const saving = new FormState();
 	const name = $derived(data.member?.name || data.user?.name || '');
 	const feeds = new FormState();
+	const mails = new FormState();
 
 	// Chrome and Android offer installing through an event; Safari only through its share menu.
 	type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
@@ -119,6 +120,20 @@
 
 	{#if data.member && data.push}
 		<PushSettings publicKey={data.push.publicKey} endpoints={data.push.endpoints} />
+	{/if}
+
+	<!-- Reminders by email (#123), for members without notifications; the link in every reminder leads here. -->
+	{#if data.member && data.mail}
+		<section class="ui-card feed" id="email">
+			<h2><Icon name="mail" size={18} />{t.email.profileTitle}</h2>
+			<p class="muted">{t.email.profileLead(data.email)}</p>
+			<p>{data.mail.off ? t.email.profileOff : t.email.profileOn}</p>
+			<form method="POST" action="?/mail" use:enhance={mails.submit()}>
+				<input type="hidden" name="off" value={data.mail.off ? 'false' : 'true'} />
+				<button class="btn secondary" disabled={mails.busy}>{data.mail.off ? t.email.turnOn : t.email.turnOff}</button>
+			</form>
+			{#if form && 'mailMessage' in form && form.mailMessage}<p class="msg error" role="alert">{form.mailMessage}</p>{/if}
+		</section>
 	{/if}
 
 	<!-- What the app keeps about the member, as one file (#158, Art. 15 GDPR). -->

@@ -87,6 +87,8 @@ What the app writes itself and nobody edits by hand (push subscriptions, which r
 
 Reminders need a key pair for Web Push: `node scripts/vapid-keys.mjs`, then store both values with `pnpm wrangler secret put VAPID_PUBLIC_KEY` and `… VAPID_PRIVATE_KEY`. Members turn notifications on per device under **Profil**. A Cron Trigger runs the background jobs: filling the caches, reminders about unanswered rehearsals and rented music that is due, and a daily check of the Google connection that notifies the admins when it breaks. `/status` shows when each last ran and can start one by hand.
 
+Email is optional: an admin connects the orchestra's Google account on `/status` (Gmail, scope `gmail.send` only). Members without a Google account then get a sign-in link by email, and members without notifications get their reminders by email, with one-click answers. See "Email" in [docs/setup-google.md](docs/setup-google.md#email).
+
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 
 ### Automatic deploys from GitHub

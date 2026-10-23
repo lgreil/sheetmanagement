@@ -239,7 +239,17 @@ The binding `DB` in `wrangler.toml`: where notifications, the reminder log and d
 
 ### Email
 
-Not in the app yet: sign-in links and reminders by email ([#123](https://github.com/lgreil/sheetmanagement/issues/123)) need the orchestra's Google account to allow sending. Until then, reminders go out as notifications (above).
+Sign-in links for members without a Google account, and reminders by email for members without notifications ([#123](https://github.com/lgreil/sheetmanagement/issues/123)). The mails go out through Gmail from the orchestra's own Google account: free, and they don't land in spam. Needs sign-in (step 9) and the database (above).
+
+1. In the Cloud project of step 1, turn on the **Gmail API** (APIs & Services → Library).
+2. On the **OAuth consent screen**, add the scope `https://www.googleapis.com/auth/gmail.send` and set the publishing status to **In production**. Google then shows a warning that the app isn't verified; that's fine for an orchestra (fewer than 100 accounts ever connect it). In "Testing", the permission ends after 7 days.
+3. Open `/status` as an admin and click **E-Mail-Konto verbinden**. Sign in with the Google account that should send, and allow "Send email on your behalf". No new redirect URI is needed: it uses `/auth/callback` from step 9.
+
+The app keeps the permission (a refresh token) in the database, encrypted with `SESSION_SECRET`; a new secret means connecting again. `/status` shows the sending address, where links in mails lead (the address you connected from), and the last error. **Trennen** forgets the account; to take the permission back on Google's side too, remove the app under myaccount.google.com → Security → Third-party connections.
+
+- Sign-in links are only sent to addresses in **Mitglieder** (and `BOOTSTRAP_ADMINS`); the page answers the same either way. At most 3 per address and 10 per IP address in an hour.
+- Reminders go by push where a member has a device, else by email. A signup reminder has one-click answers (the answer is saved by a button on the page, so mail scanners answer nothing). Members turn email off under **Profil**.
+- A Gmail account may send about 500 mails a day, Workspace 2,000; the app sends at most 20 every half hour.
 
 ## Troubleshooting
 

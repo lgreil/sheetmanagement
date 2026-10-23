@@ -1,6 +1,7 @@
 import { getStore } from './db/index.ts';
 import { appEnv, isDemo } from './env.ts';
 import { legalContact } from './legal.ts';
+import { mailReady } from './mail/index.ts';
 import { pushReady } from './push/index.ts';
 import { driveWriteEnabled } from './services.ts';
 
@@ -27,7 +28,7 @@ export const EXTRA_GUIDES: Record<Extra, string> = {
 };
 
 /** Not in the app yet, whatever the settings say. */
-const PLANNED = new Set<Extra>(['email']);
+const PLANNED = new Set<Extra>();
 
 export interface ExtraState {
 	key: Extra;
@@ -35,7 +36,7 @@ export interface ExtraState {
 	guide: string;
 }
 
-export function extras(): ExtraState[] {
+export async function extras(): Promise<ExtraState[]> {
 	const env = appEnv();
 	const legal = legalContact();
 	const on: Record<Extra, boolean> = {
@@ -45,7 +46,7 @@ export function extras(): ExtraState[] {
 		push: pushReady(),
 		database: !isDemo() && getStore().kind === 'd1',
 		legal: !!legal.email && !!legal.address,
-		email: false
+		email: await mailReady()
 	};
 	return EXTRAS.map((key) => ({ key, state: PLANNED.has(key) ? 'planned' : on[key] ? 'on' : 'off', guide: EXTRA_GUIDES[key] }));
 }

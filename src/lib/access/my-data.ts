@@ -69,7 +69,7 @@ export function myData(who: { email: string; name: string }, tables: Partial<Rec
  * What the app keeps about the member in D1 (#161): their devices for notifications and the
  * reminders they got. A device's keys only encrypt messages to it; they're named, not given.
  */
-export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[], reminders: SentReminder[]): MyData {
+export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[], reminders: SentReminder[], mailOff = false): MyData {
 	const data: MyData = {};
 	if (devices.length) {
 		data[t.myData.devices] = devices.map((device) => ({
@@ -86,6 +86,8 @@ export function storedData(devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[]
 			[t.myData.sentAt]: reminder.sentAt
 		}));
 	}
+	// Turned off on /profil (#123); "on" is the default and nothing is stored for it.
+	if (mailOff) data[t.myData.mailReminders] = [{ [t.myData.mailState]: t.myData.mailOff }];
 	return data;
 }
 

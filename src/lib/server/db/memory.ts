@@ -9,6 +9,8 @@ export function memoryStore(now = () => Date.now()): Store {
 	const push = new Map<string, PushDevice>();
 	const sent = new Map<string, number>();
 	const state = new Map<string, string>();
+	const optOut = new Set<string>();
+	const hits = new Map<string, { count: number; since: number }>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
 	return {
@@ -43,6 +45,19 @@ export function memoryStore(now = () => Date.now()): Store {
 		},
 		async pruneReminders(days) {
 			for (const [key, at] of sent) if (at < now() - days * 86_400_000) sent.delete(key);
+		},
+
+		mailOptOuts: async () => new Set(optOut),
+		async setMailOptOut(email, off) {
+			if (off) optOut.add(email);
+			else optOut.delete(email);
+		},
+
+		async hit(key, windowMinutes) {
+			const last = hits.get(key);
+			const next = last && last.since >= now() - windowMinutes * 60_000 ? { ...last, count: last.count + 1 } : { count: 1, since: now() };
+			hits.set(key, next);
+			return next.count;
 		},
 
 		getState: async (key) => state.get(key) ?? null,
