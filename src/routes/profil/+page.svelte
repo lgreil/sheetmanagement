@@ -21,8 +21,11 @@
 	type InstallPrompt = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 	let installPrompt = $state<InstallPrompt | null>(null);
 	let installed = $state(false);
+	// Samsung Internet builds its own package for Android, which Android warns is outdated; Chrome's isn't.
+	let samsung = $state(false);
 	$effect(() => {
 		installed = matchMedia('(display-mode: standalone)').matches;
+		samsung = navigator.userAgent.includes('SamsungBrowser');
 		const offer = (event: Event) => {
 			event.preventDefault();
 			installPrompt = event as InstallPrompt;
@@ -162,8 +165,8 @@
 			<!-- On the home screen it opens like an app and works offline in the rehearsal hall (#62). -->
 			{#if !installed}
 				<div class="setting">
-					<span>{t.pwa.install}<small class="muted">{installPrompt ? t.pwa.installHint : t.pwa.installManual}</small></span>
-					{#if installPrompt}<button class="btn small secondary" onclick={install}><Icon name="download" size={14} />{t.pwa.installButton}</button>{/if}
+					<span>{t.pwa.install}<small class="muted">{samsung ? t.pwa.installSamsung : installPrompt ? t.pwa.installHint : t.pwa.installManual}</small></span>
+					{#if installPrompt && !samsung}<button class="btn small secondary" onclick={install}><Icon name="download" size={14} />{t.pwa.installButton}</button>{/if}
 				</div>
 			{/if}
 			<form class="setting" method="POST" action="/auth/logout">
