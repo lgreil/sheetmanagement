@@ -1343,7 +1343,7 @@ export const en: Texts = {
 			done: 'Done',
 			saving: 'Saving …',
 			saved: 'Saved',
-			failed: 'Not saved. Please check the connection.',
+			failed: (status: string) => (status ? `Not saved (error ${status}).` : 'Not saved. Please check the connection.'),
 			private: 'Only you can see your notes.',
 			profileTitle: 'Notes in your parts',
 			count: (parts: number) => (parts === 1 ? 'In one part.' : `In ${parts} parts.`),

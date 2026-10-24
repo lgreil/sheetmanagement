@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { OpenScore } from '#lib/music/score-reader.ts';
-	import { MARK_COLORS, strokePath, thinPoints, type MarkColor, type Stroke } from '#lib/practice/marks.ts';
+	import { MARK_COLORS, onPage, strokePath, thinPoints, type MarkColor, type Stroke } from '#lib/practice/marks.ts';
 	import Icon from './Icon.svelte';
 
 	/**
@@ -188,6 +188,8 @@
 	let color = $state<MarkColor | 'eraser'>('graphite');
 	let drawing = $state<Stroke | null>(null);
 	let saving = $state<'idle' | 'saving' | 'saved' | 'failed'>('idle');
+	/** Why the last save failed: the HTTP status, or none when the device was offline. */
+	let failure = $state('');
 	const history = new Map<number, Stroke[][]>();
 	const timers = new Map<number, ReturnType<typeof setTimeout>>();
 	const current = $derived(marks[page] ?? []);
@@ -203,6 +205,7 @@
 	function saveSoon(number: number) {
 		clearTimeout(timers.get(number));
 		saving = 'saving';
+		failure = '';
 		timers.set(number, setTimeout(() => save(number), 1200));
 	}
 
@@ -215,8 +218,12 @@
 				body: JSON.stringify({ file, page: number, strokes: marks[number] ?? [] }),
 				keepalive
 			});
-			if (!timers.size) saving = response.ok ? 'saved' : 'failed';
+			if (!response.ok) {
+				failure = String(response.status);
+				saving = 'failed';
+			} else if (!timers.size && saving !== 'failed') saving = 'saved';
 		} catch {
+			failure = '';
 			saving = 'failed';
 		}
 	}
@@ -231,7 +238,7 @@
 
 	function point(event: PointerEvent, element: Element): [number, number] {
 		const rect = element.getBoundingClientRect();
-		return [(event.clientX - rect.left) / rect.width, (event.clientY - rect.top) / rect.height];
+		return [onPage((event.clientX - rect.left) / rect.width), onPage((event.clientY - rect.top) / rect.height)];
 	}
 
 	let erasing = false;
@@ -253,7 +260,12 @@
 		if (!pen) return;
 		event.preventDefault();
 		const element = event.currentTarget as Element;
-		element.setPointerCapture(event.pointerId);
+		// Keeps the line going past the page's edge; a browser that won't still draws on the page.
+		try {
+			element.setPointerCapture(event.pointerId);
+		} catch {
+			// Drawn without capture.
+		}
 		if (color === 'eraser') {
 			erasing = false;
 			erase(point(event, element));
@@ -290,13 +302,35 @@
 		change(page, []);
 	}
 
+	// In full screen the controls fade after a few seconds without a touch, so they cover less music.
+	let awake = $state(true);
+	let sleepy: ReturnType<typeof setTimeout> | undefined;
+	function wake() {
+		awake = true;
+		clearTimeout(sleepy);
+		sleepy = setTimeout(() => (awake = false), 3000);
+	}
+	$effect(() => {
+		const element = root;
+		if (!element) return;
+		element.addEventListener('pointermove', wake, { passive: true });
+		element.addEventListener('pointerdown', wake, { passive: true });
+		return () => {
+			clearTimeout(sleepy);
+			element.removeEventListener('pointermove', wake);
+			element.removeEventListener('pointerdown', wake);
+		};
+	});
+
 	const STROKE: Record<MarkColor, string> = { graphite: 'var(--mark-graphite)', red: 'var(--mark-red)', blue: 'var(--mark-blue)' };
 	const strokeWidth = $derived(Math.max(1.5, (size?.width ?? 600) * 0.0032));
 </script>
 
 <svelte:window {onkeydown} />
 
+<!-- In full screen the page takes the whole height; the controls float over its corner, faded until touched. -->
 <div class="score" class:full bind:this={root}>
+	<div class="controls" class:awake>
 	<div class="bar">
 		<div class="group">
 			<button type="button" class="tool" onclick={back} disabled={page <= 1 && fit === 'page'} aria-label={t.viewer.previous}><Icon name="back" size={16} /></button>
@@ -330,11 +364,12 @@
 				<button type="button" class="tool text" onclick={undo}>{t.practice.marks.undo}</button>
 				<button type="button" class="tool text" onclick={clear} disabled={!current.length}>{t.practice.marks.clear}</button>
 				<span class="state" class:failed={saving === 'failed'} role="status">
-					{saving === 'saving' ? t.practice.marks.saving : saving === 'saved' ? t.practice.marks.saved : saving === 'failed' ? t.practice.marks.failed : t.practice.marks.private}
+					{saving === 'saving' ? t.practice.marks.saving : saving === 'saved' ? t.practice.marks.saved : saving === 'failed' ? t.practice.marks.failed(failure) : t.practice.marks.private}
 				</span>
 			</div>
 		</div>
 	{/if}
+	</div>
 
 	<!-- Taps on the page turn it; the keys and pedals work anywhere on the page. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -378,13 +413,40 @@
 		gap: var(--space-2);
 	}
 
+	.controls {
+		display: grid;
+		gap: var(--space-2);
+	}
+
 	.score.full {
 		position: fixed;
 		inset: 0;
 		z-index: 1000;
-		grid-template-rows: auto auto 1fr;
-		padding: var(--space-2);
+		display: block;
 		background: var(--bg);
+	}
+
+	.full .controls {
+		position: absolute;
+		top: var(--space-2);
+		right: var(--space-2);
+		z-index: 2;
+		max-width: calc(100% - 2 * var(--space-2));
+		padding: var(--space-1);
+		border-radius: var(--radius-m);
+		background: color-mix(in oklab, var(--surface) 88%, transparent);
+		box-shadow: var(--shadow-raised);
+		opacity: 0.3;
+		transition: opacity 0.3s var(--ease);
+	}
+
+	.full .controls.awake,
+	.full .controls:focus-within {
+		opacity: 1;
+	}
+
+	.full .bar {
+		justify-content: flex-end;
 	}
 
 	.bar {
@@ -477,7 +539,10 @@
 		-webkit-user-select: none;
 	}
 
+	/* The page as tall as the screen. */
 	.full .stage {
+		position: absolute;
+		inset: 0;
 		height: auto;
 		min-height: 0;
 	}
@@ -486,10 +551,15 @@
 		overflow-y: auto;
 	}
 
+	/* An outline, not a border: the page keeps exactly the size it was fitted to. */
 	.sheet {
 		position: relative;
-		border: 1px solid var(--hairline);
 		background: #fff;
+		box-shadow: 0 0 0 1px var(--hairline);
+	}
+
+	.full .sheet {
+		box-shadow: none;
 	}
 
 	.slot :global(canvas) {

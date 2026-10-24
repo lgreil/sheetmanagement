@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAX_STROKES, parseStrokes, strokePath, thinPoints } from './marks.ts';
+import { MAX_POINTS, MAX_STROKES, parseStrokes, strokePath, thinPoints } from './marks.ts';
 
 describe('parseStrokes', () => {
 	it('takes strokes as the viewer sends them, rounded', () => {
@@ -12,11 +12,25 @@ describe('parseStrokes', () => {
 		expect(parseStrokes('x')).toBeNull();
 		expect(parseStrokes([{ color: 'green', points: [0, 0] }])).toBeNull();
 		expect(parseStrokes([{ color: 'red', points: [0, 0, 0.5] }])).toBeNull();
-		expect(parseStrokes([{ color: 'red', points: [0, 3] }])).toBeNull();
 		expect(parseStrokes([{ color: 'red', points: ['0', 0] }])).toBeNull();
 		expect(parseStrokes(Array.from({ length: MAX_STROKES + 1 }, () => ({ color: 'red', points: [0, 0] })))).toBeNull();
+		expect(parseStrokes([{ color: 'red', points: [0, Number.NaN] }])).toBeNull();
 		// Other fields don't come along.
 		expect(parseStrokes([{ color: 'blue', points: [0, 0], script: 'x' }])).toEqual([{ color: 'blue', points: [0, 0] }]);
+	});
+});
+
+describe('parseStrokes, lenient where a pen is', () => {
+	it('keeps a line drawn past the page’s edge, ending at the edge', () => {
+		expect(parseStrokes([{ color: 'red', points: [0.9, 0.5, 1.3, 0.5, -0.2, 1.7] }])).toEqual([{ color: 'red', points: [0.9, 0.5, 1, 0.5, 0, 1] }]);
+	});
+
+	it('keeps a very long line, with fewer points', () => {
+		const long = Array.from({ length: MAX_POINTS * 3 }, (_, i) => [i / (MAX_POINTS * 3), 0.5]).flat();
+		const [stroke] = parseStrokes([{ color: 'blue', points: long }])!;
+		expect(stroke.points.length).toBe(MAX_POINTS * 2);
+		expect(stroke.points.slice(0, 2)).toEqual([0, 0.5]);
+		expect(stroke.points.at(-2)).toBeCloseTo(1, 3);
 	});
 });
 

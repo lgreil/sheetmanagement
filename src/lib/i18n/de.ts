@@ -1347,7 +1347,7 @@ export const de = {
 			done: 'Fertig',
 			saving: 'Speichert …',
 			saved: 'Gespeichert',
-			failed: 'Nicht gespeichert. Bitte die Verbindung prüfen.',
+			failed: (status: string) => (status ? `Nicht gespeichert (Fehler ${status}).` : 'Nicht gespeichert. Bitte die Verbindung prüfen.'),
 			private: 'Nur du siehst deine Notizen.',
 			/** On /profil. */
 			profileTitle: 'Notizen in deinen Noten',
