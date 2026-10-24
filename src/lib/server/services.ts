@@ -133,3 +133,29 @@ export async function putInArchiveIndex(piece: IndexedPiece): Promise<boolean> {
 		})
 	});
 }
+
+/**
+ * Writes a programme sync into the cached archive index (#60): the programme added to the
+ * pieces just linked, taken from those just unlinked. A new crawl would cost about as many
+ * Google requests as the sync itself, and with two orchestras synced at once the free
+ * plan's 50 per call ran out half-way through the second one.
+ */
+export async function programInArchiveIndex(program: string, linked: string[], unlinked: string[]): Promise<boolean> {
+	if (!linked.length && !unlinked.length) return true;
+	const added = new Set(linked);
+	const removed = new Set(unlinked.filter((id) => !added.has(id)));
+	return patchCached<DriveIndex>({
+		key: archiveIndexKey(requireSetting('DRIVE_ARCHIVE_FOLDER_ID'), programFolderIds()),
+		kv: appEnv().CACHE,
+		update: (index) => ({
+			...index,
+			programs: index.programs.includes(program) || !added.size ? index.programs : [...index.programs, program],
+			pieces: index.pieces.map((piece) => {
+				const programs = piece.programs ?? [];
+				if (added.has(piece.folderId) && !programs.includes(program)) return { ...piece, programs: [...programs, program] };
+				if (removed.has(piece.folderId) && programs.includes(program)) return { ...piece, programs: programs.filter((name) => name !== program) };
+				return piece;
+			})
+		})
+	});
+}
