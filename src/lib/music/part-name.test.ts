@@ -108,3 +108,21 @@ describe('parsePartName', () => {
 		expect(order).toEqual(['Partitur', 'Flöte I', 'Flöte II', 'Geige I', 'Notizen']);
 	});
 });
+
+describe('versions of a string part', () => {
+	it.each([
+		// By difficulty, not by key: strings don't transpose (Russian Sailors Dance).
+		['Russian Sailors Dance - Geige I A.pdf', 'Geige I', ['A']],
+		['Russian Sailors Dance - Geige I B.pdf', 'Geige I', ['B']],
+		['Russian Sailors Dance - Geige I Fortgeschritten.pdf', 'Geige I', ['Fortgeschritten']],
+		['Geige I advanced.pdf', 'Geige I', ['Fortgeschritten']],
+		// A written-out key still counts, for strings too.
+		['Last-Christmas_Bass-Es.pdf', 'Kontrabass in Es', []],
+		['Geige in D.pdf', 'Geige in D', []],
+		// Wind instruments keep their keys.
+		['Klarinette I B.pdf', 'Klarinette I in B', []]
+	])('%s', (name, label, notes) => {
+		const part = parse(name, /^(Russian Sailors Dance - |Last-Christmas_)/.exec(name)?.[0]);
+		expect({ label: part.label, notes: part.notes, unrecognized: part.unrecognized }).toEqual({ label, notes, unrecognized: [] });
+	});
+});
