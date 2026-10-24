@@ -35,7 +35,8 @@ const HIGHEST = 4200;
 export function detectPitch(samples: Float32Array, sampleRate: number): number | null {
 	let energy = 0;
 	for (const sample of samples) energy += sample * sample;
-	if (Math.sqrt(energy / samples.length) < 0.01) return null;
+	// Phone microphones without automatic gain are quiet: a soft note a metre away is about 0.005.
+	if (Math.sqrt(energy / samples.length) < 0.002) return null;
 
 	const maxLag = Math.min(Math.floor(sampleRate / LOWEST), Math.floor(samples.length / 2));
 	const minLag = Math.max(2, Math.floor(sampleRate / HIGHEST));
@@ -65,6 +66,13 @@ export function detectPitch(samples: Float32Array, sampleRate: number): number |
 			break;
 		}
 	}
+	// A noisy room: no lag that clear, but a clear enough lowest one is still the tone.
+	if (best < 0) {
+		let lowest = minLag;
+		for (let lag = minLag; lag <= maxLag; lag++) if (norm[lag] < norm[lowest]) lowest = lag;
+		// White noise stays near 0.9, a tone in a noisy room well under 0.2.
+		if (norm[lowest] < 0.2) best = lowest;
+	}
 	if (best < 0) return null;
 	const [a, b, c] = [norm[best - 1], norm[best], norm[best + 1] ?? norm[best]];
 	const shift = a + c - 2 * b ? (a - c) / (2 * (a + c - 2 * b)) : 0;
@@ -87,4 +95,61 @@ export function nearestNote(frequency: number, a4 = 440): Note {
 	// MIDI numbering: A4 is 69, C4 is 60.
 	const midi = 69 + nearest;
 	return { pitchClass: ((midi % 12) + 12) % 12, octave: Math.floor(midi / 12) - 1, cents: Math.round((semitones - nearest) * 100) };
+}
+
+/**
+ * The tempo markings of a metronome's scale (as on a Wittner), with the tempo each one jumps
+ * to; the name shown is the one whose range holds the beats per minute.
+ */
+export const TEMPI = [
+	{ name: 'Grave', from: MIN_BPM, typical: 35 },
+	{ name: 'Largo', from: 40, typical: 50 },
+	{ name: 'Larghetto', from: 60, typical: 63 },
+	{ name: 'Adagio', from: 66, typical: 70 },
+	{ name: 'Andante', from: 76, typical: 92 },
+	{ name: 'Moderato', from: 108, typical: 112 },
+	{ name: 'Allegro', from: 120, typical: 138 },
+	{ name: 'Presto', from: 168, typical: 184 },
+	{ name: 'Prestissimo', from: 200, typical: 208 }
+] as const;
+
+export function tempoName(bpm: number): string {
+	return TEMPI.findLast((tempo) => bpm >= tempo.from)?.name ?? TEMPI[0].name;
+}
+
+/** 2 the bar's first beat, 1 a beat the bar falls into (4/4's third), 0 the others. */
+export type Accent = 0 | 1 | 2;
+
+export interface Meter {
+	/** "3/4"; "" for clicks without bars. */
+	id: string;
+	/** The note a click stands for: a quarter, an eighth, a half (alla breve). */
+	unit: 'quarter' | 'eighth' | 'half';
+	accents: Accent[];
+}
+
+export const METERS: Meter[] = [
+	{ id: '2/4', unit: 'quarter', accents: [2, 0] },
+	{ id: '3/4', unit: 'quarter', accents: [2, 0, 0] },
+	{ id: '4/4', unit: 'quarter', accents: [2, 0, 1, 0] },
+	{ id: '5/4', unit: 'quarter', accents: [2, 0, 0, 1, 0] },
+	{ id: '2/2', unit: 'half', accents: [2, 0] },
+	{ id: '3/8', unit: 'eighth', accents: [2, 0, 0] },
+	{ id: '6/8', unit: 'eighth', accents: [2, 0, 0, 1, 0, 0] },
+	{ id: '9/8', unit: 'eighth', accents: [2, 0, 0, 1, 0, 0, 1, 0, 0] },
+	{ id: '12/8', unit: 'eighth', accents: [2, 0, 0, 1, 0, 0, 1, 0, 0, 1, 0, 0] },
+	// 2 + 2 + 3, as in most Balkan dances.
+	{ id: '7/8', unit: 'eighth', accents: [2, 0, 1, 0, 1, 0, 0] },
+	{ id: '', unit: 'quarter', accents: [0] }
+];
+
+export const meterById = (id: string) => METERS.find((meter) => meter.id === id) ?? METERS[2];
+
+/** 6/8, 9/8 and 12/8 are felt in dotted quarters: those can be the clicks instead of the eighths. */
+export const isCompound = (meter: Meter) => meter.unit === 'eighth' && meter.accents.length % 3 === 0 && meter.accents.length > 3;
+
+/** The clicks of one bar: every note of the meter, or for a compound one counted in dotted quarters, one per group of three. */
+export function clicksOf(meter: Meter, dotted = false): { unit: Meter['unit'] | 'dotted'; accents: Accent[] } {
+	if (!dotted || !isCompound(meter)) return { unit: meter.unit, accents: meter.accents };
+	return { unit: 'dotted', accents: meter.accents.filter((_, i) => i % 3 === 0).map((accent, i) => (i === 0 ? 2 : accent ? 1 : 0)) };
 }

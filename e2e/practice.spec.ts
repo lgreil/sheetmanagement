@@ -89,6 +89,35 @@ test('a pen mark is saved and still there after reloading, only for its member',
 	expect(refused.status()).toBe(404);
 });
 
+test('the tuner names a soft note and how far off it is', async ({ page }) => {
+	// Instead of the microphone, an A at 440 Hz, as soft as a phone picks up a violin a metre away.
+	await page.addInitScript(() => {
+		navigator.mediaDevices.getUserMedia = async () => {
+			const context = new AudioContext();
+			const tone = context.createOscillator();
+			tone.frequency.value = 440;
+			const gain = context.createGain();
+			gain.gain.value = 0.01;
+			const out = context.createMediaStreamDestination();
+			tone.connect(gain).connect(out);
+			tone.start();
+			return out.stream;
+		};
+	});
+	await open(page, PART);
+	await page.getByRole('button', { name: 'Stimmgerät' }).click();
+	await page.getByRole('button', { name: 'Mikrofon einschalten' }).click();
+	const reading = page.locator('.tuner .reading');
+	await expect(reading).toContainText('A4');
+	await expect(reading).toContainText('Stimmt');
+	await expect(reading).toContainText('440,0 Hz');
+	// Tuned to 442 Hz, the same A is 8 cents flat.
+	await page.getByRole('spinbutton', { name: 'Kammerton a′' }).fill('442');
+	await expect(reading).toContainText('−8 Cent · zu tief');
+	await page.getByRole('button', { name: 'Beenden' }).click();
+	await expect(reading).toHaveCount(0);
+});
+
 test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await open(page, PART);
 	await expect(page.locator('.slot canvas')).toHaveCount(1);
@@ -98,8 +127,21 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await expect(page.getByText('Seite 1 von 1')).toBeVisible();
 
 	await page.getByRole('button', { name: 'Metronom' }).click();
+	const bpm = page.getByRole('spinbutton', { name: 'Schläge pro Minute' });
+	await expect(bpm).toHaveValue('92');
+	await expect(page.locator('.metronome .name')).toHaveText('Andante');
 	await page.getByRole('button', { name: 'Schneller' }).click();
-	await expect(page.getByRole('spinbutton', { name: 'Schläge pro Minute' })).toHaveValue('81');
+	await expect(bpm).toHaveValue('93');
+	// A tempo marking jumps to its tempo; a time signature gives the bar its beats.
+	await page.getByRole('button', { name: 'Allegro', exact: true }).click();
+	await expect(bpm).toHaveValue('138');
+	await page.getByRole('button', { name: '3/4' }).click();
+	await expect(page.locator('.metronome .beat')).toHaveCount(3);
+	await page.getByRole('button', { name: '6/8' }).click();
+	await expect(page.locator('.metronome .beat')).toHaveCount(6);
+	await page.getByRole('button', { name: /Punktierte Viertel/ }).click();
+	await expect(page.locator('.metronome .beat')).toHaveCount(2);
+	await expect(page.locator('.metronome .unit')).toHaveText('♩. =');
 	await page.getByRole('button', { name: 'Start' }).click();
 	await expect(page.getByRole('button', { name: 'Stopp' })).toBeVisible();
 	await page.getByRole('button', { name: 'Stopp' }).click();
