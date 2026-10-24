@@ -345,8 +345,22 @@ export const de = {
 		nameTaken: (name: string) => `Im Notenarchiv gibt es schon „${name}“.`,
 		tooLarge: 'Die Datei ist leer oder zu groß.',
 		placeholderExists: (name: string) => `„${name}“ liegt schon im Ordner.`,
-		noQuota: 'Google lässt die App neue Dateien nur in einer geteilten Ablage (Shared Drive) anlegen. Bitte die Datei in Drive hochladen; Ersetzen geht weiterhin hier.',
+		noQuota: 'Drive hat die Datei abgelehnt: Das Dienstkonto der App hat keinen eigenen Speicher. Unter „Status“ das Drive-Konto des Notenarchivs verbinden, dann gehen neue Dateien.',
+		needsAccount: 'Neue Dateien brauchen ein verbundenes Drive-Konto (unter „Status“); bis dahin lassen sich nur vorhandene Dateien ersetzen.',
+		owner: (email: string) => `Neue Dateien gehören ${email}.`,
 		failed: 'Drive hat nicht geantwortet oder die Änderung abgelehnt. Bitte später noch einmal versuchen.'
+	},
+	driveAccount: {
+		connect: 'Drive-Konto für Uploads verbinden',
+		disconnect: 'Drive-Konto trennen',
+		confirmDisconnect: 'Drive-Konto trennen? Neue Stimmen lassen sich dann nicht mehr hochladen.',
+		connected: (email: string) => `Neue Stimmen werden als ${email} hochgeladen.`,
+		lead: 'Neue Stimmen werden als das Konto hochgeladen, dem das Notenarchiv gehört, denn das Dienstkonto der App hat keinen eigenen Speicher. Google fragt dabei nach Zugriff auf Drive.',
+		connectedNow: 'Drive-Konto verbunden.',
+		noScope: 'Google hat den Zugriff auf Drive nicht erteilt. Bitte noch einmal verbinden und den Haken bei Drive setzen.',
+		wrongUser: 'Nur wer Mitglieder verwalten darf, kann das Drive-Konto verbinden.',
+		connectFailed: 'Das Verbinden hat nicht geklappt. Bitte noch einmal versuchen.',
+		disconnectedNow: 'Drive-Konto getrennt.'
 	},
 	pieceNotes: {
 		title: 'Hinweise aus den Proben',
@@ -1579,7 +1593,7 @@ export const de = {
 				position: 'Nr.',
 				piece: 'Stück',
 				notes: 'Notiz',
-				/** Which of the concert's orchestras plays it; empty: the first one named. */
+				/** Which of the concert's orchestras plays it; empty: all of them together. */
 				orchestra: 'Orchester'
 			}
 		},

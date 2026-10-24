@@ -48,6 +48,15 @@ describe('Google sign-in', () => {
 		expect(url.searchParams.get('redirect_uri')).toBe('https://app.example/auth/callback');
 	});
 
+	it('asks one account for Drive or Gmail, with a refresh token', () => {
+		const client = { clientId: 'client-1', redirectUri: 'https://app.example/auth/callback' };
+		const drive = new URL(authorizationUrl(client, 'st', { purpose: 'drive' })).searchParams;
+		expect(drive.get('scope')).toBe('openid email https://www.googleapis.com/auth/drive');
+		expect(drive.get('access_type')).toBe('offline');
+		expect(drive.get('prompt')).toBe('select_account consent');
+		expect(new URL(authorizationUrl(client, 'st', { purpose: 'mail' })).searchParams.get('scope')).toBe('openid email https://www.googleapis.com/auth/gmail.send');
+	});
+
 	// SvelteKit 3 refuses external redirects unless allowed; that once broke sign-in with a 500.
 	it('redirects to Google with the allowed origin', () => {
 		const target = authorizationUrl({ clientId: 'client-1', redirectUri: 'https://app.example/auth/callback' }, 'st');

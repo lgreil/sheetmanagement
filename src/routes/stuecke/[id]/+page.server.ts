@@ -139,7 +139,7 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		moreByComposer: byComposer.filter((other) => !work || workKey(other.title) !== work).map(summary),
 		sheet: library.sheet,
 		// New sheet music from the app (#193): the folder to create, or uploads into it.
-		folder: folderTools(locals, piece),
+		folder: await folderTools(locals, piece),
 		folderCreated: url.searchParams.has('ordner'),
 		notes: notesFor(library, piece, pieceNotes.notes, locals)
 	};

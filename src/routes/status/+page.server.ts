@@ -9,6 +9,7 @@ import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/serve
 import { getStore } from '#lib/server/db/index.ts';
 import { pushReady } from '#lib/server/push/index.ts';
 import { disconnectMail, mailAccount, mailError } from '#lib/server/mail/index.ts';
+import { canConnectDrive, disconnectDrive, driveAccount } from '#lib/server/drive-account.ts';
 import { extras } from '#lib/server/extras.ts';
 import { authConfig, requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { GoogleApiError } from '#lib/server/google/client.ts';
@@ -233,6 +234,8 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	return {
 		checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck(), mail: mail.check },
 		mail: { connected: mail.connected, canConnect: mail.canConnect, result: url.searchParams.get('mail') },
+		// The account new uploads belong to (#193); only with DRIVE_WRITE, where uploading exists.
+		drive: driveWriteEnabled() && canConnectDrive() ? { account: await driveAccount(), result: url.searchParams.get('drive') } : null,
 		jobs: JOB_NAMES,
 		extras: await extras()
 	};
@@ -244,6 +247,13 @@ export const actions: Actions = {
 		requireAdminWhenSignInIsOn(locals);
 		await disconnectMail();
 		return { mailDisconnected: true };
+	},
+
+	/** Forgets the account new uploads belong to (#193). */
+	disconnectDrive: async ({ locals }) => {
+		requireAdminWhenSignInIsOn(locals);
+		await disconnectDrive();
+		return { driveDisconnected: true };
 	},
 
 	/** Starts a job by hand (#160), e.g. to try it after a deploy or in the demo. */

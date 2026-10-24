@@ -1,3 +1,4 @@
+import { DRIVE_SCOPE } from '../drive-account.ts';
 import { GMAIL_SEND_SCOPE } from '../mail/gmail.ts';
 import { fromBase64url } from './session.ts';
 
@@ -18,20 +19,22 @@ export interface OAuthClient {
 }
 
 /**
- * Google's consent page. With `sendMail` (#123) it asks the orchestra's account for permission
- * to send email, and for a refresh token, so the app can send later without anyone signed in.
+ * Google's consent page. With `purpose` it asks one account for a permission and for a refresh
+ * token, so the app can use it later without anyone signed in: "mail" to send email from the
+ * orchestra's account (#123), "drive" to upload new parts as the archive's owner (#193).
  */
-export function authorizationUrl(client: Pick<OAuthClient, 'clientId' | 'redirectUri'>, state: string, { sendMail = false } = {}): string {
+export function authorizationUrl(client: Pick<OAuthClient, 'clientId' | 'redirectUri'>, state: string, { purpose }: { purpose?: 'mail' | 'drive' } = {}): string {
 	const url = new URL(AUTHORIZE_URL);
+	const scope = purpose === 'mail' ? GMAIL_SEND_SCOPE : purpose === 'drive' ? DRIVE_SCOPE : '';
 	url.search = new URLSearchParams({
 		client_id: client.clientId,
 		redirect_uri: client.redirectUri,
 		response_type: 'code',
-		scope: sendMail ? `openid email ${GMAIL_SEND_SCOPE}` : 'openid email profile',
+		scope: scope ? `openid email ${scope}` : 'openid email profile',
 		state,
 		// Lets people with several Google accounts pick the right one; "consent" makes Google send a refresh token again.
-		prompt: sendMail ? 'select_account consent' : 'select_account',
-		...(sendMail ? { access_type: 'offline' } : {})
+		prompt: scope ? 'select_account consent' : 'select_account',
+		...(scope ? { access_type: 'offline' } : {})
 	}).toString();
 	return url.toString();
 }

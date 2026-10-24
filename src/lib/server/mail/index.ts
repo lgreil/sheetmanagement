@@ -34,18 +34,19 @@ async function cryptoKey(secret: string) {
 	return crypto.subtle.importKey('raw', digest, 'AES-GCM', false, ['encrypt', 'decrypt']);
 }
 
-async function seal(value: Stored, secret: string): Promise<string> {
+/** Encrypts an account's refresh token for the store; also used for the Drive account (#193). */
+export async function seal<T>(value: T, secret: string): Promise<string> {
 	const iv = crypto.getRandomValues(new Uint8Array(12));
 	const data = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await cryptoKey(secret), encoder.encode(JSON.stringify(value)));
 	return `${base64url(iv)}.${base64url(data)}`;
 }
 
-async function open(sealed: string, secret: string): Promise<Stored | null> {
+export async function open<T = Stored>(sealed: string, secret: string): Promise<T | null> {
 	const [iv, data] = sealed.split('.');
 	if (!iv || !data) return null;
 	try {
 		const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: fromBase64url(iv) }, await cryptoKey(secret), fromBase64url(data));
-		return JSON.parse(new TextDecoder().decode(plain)) as Stored;
+		return JSON.parse(new TextDecoder().decode(plain)) as T;
 	} catch {
 		// A new SESSION_SECRET: the account has to be connected again.
 		return null;

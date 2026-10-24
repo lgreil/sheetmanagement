@@ -5,6 +5,7 @@ import { placeholderName } from '#lib/music/naming.ts';
 import { pieceFolderName } from '#lib/music/piece-name.ts';
 import { findPieceRow } from '#lib/repertoire/piece-edit.ts';
 import { requireRight } from './auth/index.ts';
+import { canConnectDrive, driveAccount, driveAccountClient } from './drive-account.ts';
 import type { IndexedFile } from './drive-index.ts';
 import { createFolder, createGoogleDoc, isFolderLike, listChildren, startUpload, trashFile } from './google/drive.ts';
 import { getLibrary, type LibraryPiece } from './library.ts';
@@ -34,10 +35,12 @@ export class FolderError extends Error {
 }
 
 /** What the piece page offers: a folder to create, or uploads into the one there is. */
-export function folderTools(locals: App.Locals, piece: LibraryPiece) {
+export async function folderTools(locals: App.Locals, piece: LibraryPiece) {
 	if (!locals.access.rights.has(RIGHT) || !driveWriteEnabled()) return null;
 	if (!piece.detail) return piece.sheet ? { mode: 'create' as const, name: pieceFolderName(piece, config.naming) } : null;
-	return { mode: 'upload' as const, maxBytes: MAX_UPLOAD_BYTES };
+	// Without a connected account only files already there can be replaced (see drive-account.ts).
+	const account = canConnectDrive() ? await driveAccount() : null;
+	return { mode: 'upload' as const, maxBytes: MAX_UPLOAD_BYTES, owner: account?.email, needsAccount: canConnectDrive() && !account };
 }
 
 async function pieceFor(locals: App.Locals, id: string): Promise<LibraryPiece> {
@@ -111,7 +114,10 @@ export async function beginUpload(locals: App.Locals, pieceId: string, file: { n
 	if (!name) throw new FolderError(400, t.pieceFolder.nameMissing);
 	if (!(file.size > 0) || file.size > MAX_UPLOAD_BYTES) throw new FolderError(400, t.pieceFolder.tooLarge);
 	const same = piece.detail.parts.find((part) => part.section === '' && part.mimeType === PDF && part.fileName.toLowerCase() === name.toLowerCase());
-	const url = await startUpload(getGoogle().client, { name, mimeType: PDF, size: file.size, folderId: piece.detail.id, replaceId: same?.id }, origin);
+	// A new file belongs to whoever uploads it, and the service account has no storage: the
+	// connected account (the archive's owner) uploads it. Replacing keeps the file's owner.
+	const client = (!same && (await driveAccountClient())) || getGoogle().client;
+	const url = await startUpload(client, { name, mimeType: PDF, size: file.size, folderId: piece.detail.id, replaceId: same?.id }, origin);
 	return { url, name, replaces: !!same };
 }
 

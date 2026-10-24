@@ -21,7 +21,7 @@
 		result
 	}: {
 		pieceId: string;
-		tools: { mode: 'create'; name: string } | { mode: 'upload'; maxBytes: number };
+		tools: { mode: 'create'; name: string } | { mode: 'upload'; maxBytes: number; owner?: string; needsAccount: boolean };
 		/** File names already in the folder, to say which upload replaces one. */
 		existing: string[];
 		instruments: string[];
@@ -43,7 +43,7 @@
 	let pending = $state<Pending[]>([]);
 	let skipped = $state<string[]>([]);
 	let progress = $state<{ done: number; total: number } | null>(null);
-	let outcome = $state<{ uploaded: number; failed: string[] } | null>(null);
+	let outcome = $state<{ uploaded: number; failed: string[]; reasons: string[] } | null>(null);
 	let problem = $state('');
 	let dragging = $state(false);
 	let shortTitle = $state('');
@@ -83,6 +83,7 @@
 		const files = pending;
 		progress = { done: 0, total: files.length };
 		const failed: string[] = [];
+		const reasons = new Set<string>();
 		// Three at a time: a phone on a slow line still finishes, and Drive isn't flooded.
 		let next = 0;
 		const worker = async () => {
@@ -91,17 +92,23 @@
 				try {
 					const { url } = await post<{ url: string }>({ step: 'start', name: item.name, size: item.file.size });
 					const sent = await fetch(url, { method: 'PUT', headers: { 'content-type': 'application/pdf' }, body: item.file });
-					if (!sent.ok) throw new Error(String(sent.status));
+					if (!sent.ok) {
+						// Drive says why, e.g. "storageQuotaExceeded" for a service account without storage.
+						const answer = (await sent.json().catch(() => null)) as { error?: { message?: string; errors?: { reason?: string }[] } } | null;
+						const quota = answer?.error?.errors?.some((e) => /quota/i.test(e.reason ?? '')) || /quota/i.test(answer?.error?.message ?? '');
+						throw new Error(quota ? t.pieceFolder.noQuota : (answer?.error?.message ?? `Drive ${sent.status}`));
+					}
 				} catch (error) {
 					console.error('Upload failed:', error);
 					failed.push(item.file.name);
+					reasons.add((error as Error).message || t.pieceFolder.failed);
 				}
 				progress = { done: progress!.done + 1, total: files.length };
 			}
 		};
 		await Promise.all([worker(), worker(), worker()]);
 		await post({ step: 'done' }).catch((error) => console.error(error));
-		outcome = { uploaded: files.length - failed.length, failed };
+		outcome = { uploaded: files.length - failed.length, failed, reasons: [...reasons] };
 		pending = files.filter((item) => failed.includes(item.file.name));
 		progress = null;
 		await invalidateAll();
@@ -129,6 +136,7 @@
 		</form>
 	{:else}
 		{#if created}<p class="msg ok" role="status"><Icon name="check" size={16} />{t.pieceFolder.created}</p>{/if}
+		{#if tools.needsAccount}<p class="msg info">{t.pieceFolder.needsAccount}</p>{/if}
 
 		<div
 			class="drop"
@@ -142,7 +150,7 @@
 			ondragleave={() => (dragging = false)}
 			ondrop={drop}
 		>
-			<p class="muted">{t.pieceFolder.uploadLead}</p>
+			<p class="muted">{t.pieceFolder.uploadLead}{#if tools.owner}{' '}{t.pieceFolder.owner(tools.owner)}{/if}</p>
 			<label class="btn">
 				<Icon name="up" size={16} />{t.pieceFolder.choose}
 				<input
@@ -162,7 +170,12 @@
 		{#if problem}<p class="msg error" role="alert">{problem}</p>{/if}
 		{#if skipped.length}<p class="msg info">{t.pieceFolder.notPdf(skipped.join(', '))}</p>{/if}
 		{#if outcome?.uploaded}<p class="msg ok" role="status"><Icon name="check" size={16} />{t.pieceFolder.uploaded(outcome.uploaded)}</p>{/if}
-		{#if outcome?.failed.length}<p class="msg error" role="alert">{t.pieceFolder.notUploaded(outcome.failed.join(', '))}</p>{/if}
+		{#if outcome?.failed.length}
+			<p class="msg error" role="alert">
+				{t.pieceFolder.notUploaded(outcome.failed.join(', '))}
+				{#each outcome.reasons as reason (reason)}<br />{reason}{/each}
+			</p>
+		{/if}
 
 		{#if pending.length}
 			{#if shortTitle}<p class="muted">{t.pieceFolder.shortTitle(shortTitle)}</p>{/if}

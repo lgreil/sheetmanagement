@@ -28,6 +28,17 @@
 		abgelaufen: t.email.connectFailed,
 		fehler: t.email.connectFailed
 	};
+	const driveResults: Record<string, string> = {
+		verbunden: t.driveAccount.connectedNow,
+		erlaubnis: t.driveAccount.noScope,
+		recht: t.driveAccount.wrongUser,
+		abgebrochen: t.driveAccount.connectFailed,
+		abgelaufen: t.driveAccount.connectFailed,
+		fehler: t.driveAccount.connectFailed
+	};
+	const driveResult = $derived(
+		form && 'driveDisconnected' in form ? t.driveAccount.disconnectedNow : data.drive?.result ? driveResults[data.drive.result] : ''
+	);
 	const mailResult = $derived(form && 'mailDisconnected' in form ? t.email.disconnectedNow : data.mail.result ? mailResults[data.mail.result] : '');
 
 	const icons: Record<string, IconName> = { ok: 'check', error: 'alert', missing: 'minus' };
@@ -71,6 +82,27 @@
 {/if}
 {#if mailResult}
 	<p class="result" class:problem={data.mail.result !== null && data.mail.result !== 'verbunden' && !(form && 'mailDisconnected' in form)} role="status">{mailResult}</p>
+{/if}
+
+{#if data.drive}
+	<!-- The account new uploads belong to (#193): the service account has no storage of its own. -->
+	<section class="drive-account">
+		<p class="hint">{data.drive.account ? t.driveAccount.connected(data.drive.account.email) : t.driveAccount.lead}</p>
+		<div class="actions mail">
+			<a class="button" class:secondary={!!data.drive.account} href="/auth/login?zweck=drive" data-sveltekit-reload>
+				<Icon name="folder" size={16} />
+				{t.driveAccount.connect}
+			</a>
+			{#if data.drive.account}
+				<form method="POST" action="?/disconnectDrive" onsubmit={(event) => confirm(t.driveAccount.confirmDisconnect) || event.preventDefault()}>
+					<button class="button secondary" type="submit">{t.driveAccount.disconnect}</button>
+				</form>
+			{/if}
+		</div>
+		{#if driveResult}
+			<p class="result" class:problem={data.drive.result !== null && data.drive.result !== 'verbunden' && !(form && 'driveDisconnected' in form)} role="status">{driveResult}</p>
+		{/if}
+	</section>
 {/if}
 
 <!-- Optional services this deployment doesn't have yet, each with its part of the guide. -->
