@@ -316,7 +316,8 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			...program('Weihnachtskonzert 2004', [titles['demo-stille-nacht'], titles['demo-jesu'], titles['demo-sleigh']]),
 			...program('Frühjahrskonzert 2012', [titles['demo-cancan'], titles['demo-morgenstimmung']]),
 			...program(sommer, [titles['demo-nachtmusik'], titles['demo-007']]),
-			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']]),
+			// Each orchestra's own pieces name it: a row without an orchestra is played by both.
+			...program(herbst, [titles['demo-egmont'], titles['demo-morgenstimmung'], titles['demo-007'], titles['demo-nachtmusik']], 'EO'),
 			...program(herbst, [titles['demo-cancan'], titles['demo-sleigh']], 'A'),
 			// The finale both play together.
 			...program(herbst, [titles['demo-jesu']], 'EO, A'),
