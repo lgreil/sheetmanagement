@@ -110,7 +110,8 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 	const reading = page.locator('.tuner .reading');
 	await expect(reading).toContainText('A4');
 	await expect(reading).toContainText('Stimmt');
-	await expect(reading).toContainText('440,0 Hz');
+	// Within 0.2 Hz (under a cent): audio stacks differ a little in what an oscillator gives.
+	await expect(reading).toContainText(/(439,[89]|440,[012]) Hz/);
 	// Tuned to 442 Hz, the same A is 8 cents flat.
 	await page.getByRole('spinbutton', { name: 'Kammerton a′' }).fill('442');
 	await expect(reading).toContainText('−8 Cent · zu tief');
