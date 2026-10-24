@@ -1,4 +1,4 @@
-import { reminderKey, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type PageMarks, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -152,6 +152,28 @@ export function sqlStore(db: D1): Store {
 		practiceOf: (email) => all<PracticeDay>('SELECT day, seconds FROM practice_days WHERE email = ? ORDER BY day', email),
 		async deletePractice(email) {
 			await run('DELETE FROM practice_days WHERE email = ?', email);
+		},
+		async marksOf(email, file) {
+			const rows = await all<{ file: string; page: number; strokes: string }>(
+				`SELECT file, page, strokes FROM practice_marks WHERE email = ?${file === undefined ? '' : ' AND file = ?'} ORDER BY file, page`,
+				...(file === undefined ? [email] : [email, file])
+			);
+			return rows.map((row): PageMarks => ({ file: row.file, page: row.page, strokes: JSON.parse(row.strokes) }));
+		},
+		async saveMarks(email, file, page, strokes) {
+			if (!strokes.length) await run('DELETE FROM practice_marks WHERE email = ? AND file = ? AND page = ?', email, file, page);
+			else
+				await run(
+					`INSERT INTO practice_marks (email, file, page, strokes) VALUES (?, ?, ?, ?)
+					 ON CONFLICT (email, file, page) DO UPDATE SET strokes = excluded.strokes, updated_at = datetime('now')`,
+					email,
+					file,
+					page,
+					JSON.stringify(strokes)
+				);
+		},
+		async deleteMarks(email) {
+			await run('DELETE FROM practice_marks WHERE email = ?', email);
 		},
 
 		async hit(key, windowMinutes) {

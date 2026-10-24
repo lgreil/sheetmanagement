@@ -9,7 +9,13 @@
 	import Segmented from './Segmented.svelte';
 
 	/** Practice time on /profil: the opt-in, the week and month overview, and the tree. Only ever the member's own. */
-	let { on, days, today, message }: { on: boolean; days: PracticeDay[]; today: string; message?: string } = $props();
+	let {
+		on,
+		days,
+		today,
+		markedParts = 0,
+		message
+	}: { on: boolean; days: PracticeDay[]; today: string; markedParts?: number; message?: string } = $props();
 
 	const saving = new FormState();
 	let view = $state<'week' | 'month'>('week');
@@ -106,6 +112,16 @@
 				<button class="delete" disabled={saving.busy}>{t.practice.delete}</button>
 			</form>
 		{/if}
+	{/if}
+
+	<!-- Notes drawn in the practice viewer: theirs alone, whether practice time is on or not. -->
+	{#if markedParts}
+		<div class="marks">
+			<p><strong>{t.practice.marks.profileTitle}</strong> <span class="muted">{t.practice.marks.count(markedParts)} {t.practice.marks.private}</span></p>
+			<form method="POST" action="?/marksDelete" use:enhance={saving.submit()} onsubmit={(event) => confirm(t.practice.marks.confirmDeleteAll) || event.preventDefault()}>
+				<button class="delete" disabled={saving.busy}>{t.practice.marks.deleteAll}</button>
+			</form>
+		</div>
 	{/if}
 </section>
 
@@ -280,7 +296,15 @@
 		font-weight: 600;
 	}
 
+	.marks {
+		display: grid;
+		gap: var(--space-2);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--hairline);
+	}
+
 	.delete {
+		justify-self: start;
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;

@@ -113,6 +113,31 @@ describe.each([
 		expect((await store.practiceOf('b@x.org')).length).toBe(1);
 	});
 
+	it('keeps a member’s own marks per part and page, for that member only', async () => {
+		const store = make();
+		const line = (color: 'red' | 'blue') => [{ color, points: [0.1, 0.2, 0.3, 0.4] }];
+		await store.saveMarks('a@x.org', 'file-1', 2, line('red'));
+		await store.saveMarks('a@x.org', 'file-1', 1, line('blue'));
+		await store.saveMarks('a@x.org', 'file-2', 1, line('red'));
+		await store.saveMarks('b@x.org', 'file-1', 1, line('red'));
+		// Saving a page again replaces it.
+		await store.saveMarks('a@x.org', 'file-1', 2, line('blue'));
+		expect(await store.marksOf('a@x.org', 'file-1')).toEqual([
+			{ file: 'file-1', page: 1, strokes: line('blue') },
+			{ file: 'file-1', page: 2, strokes: line('blue') }
+		]);
+		expect((await store.marksOf('a@x.org')).map((page) => `${page.file}:${page.page}`)).toEqual(['file-1:1', 'file-1:2', 'file-2:1']);
+		// Another member's marks in the same part are theirs.
+		expect(await store.marksOf('b@x.org', 'file-1')).toEqual([{ file: 'file-1', page: 1, strokes: line('red') }]);
+
+		// No strokes forget the page; deleting forgets only the member's own.
+		await store.saveMarks('a@x.org', 'file-1', 2, []);
+		expect((await store.marksOf('a@x.org', 'file-1')).length).toBe(1);
+		await store.deleteMarks('a@x.org');
+		expect(await store.marksOf('a@x.org')).toEqual([]);
+		expect((await store.marksOf('b@x.org')).length).toBe(1);
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

@@ -5,7 +5,9 @@
  * small CPU budget. Scans without a text layer give no lines.
  */
 
-import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+// The legacy build: pdf.js 6's modern one uses JavaScript Safari doesn't have yet
+// (Math.sumPrecise, Map.getOrInsert, Promise.try), so iPhones, iPads and Macs showed no pages.
+import workerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url';
 
 export class ScoreReadError extends Error {
 	constructor(readonly reason: 'download' | 'unreadable') {
@@ -48,7 +50,7 @@ export async function openScore(fileId: string) {
 		throw new ScoreReadError('download');
 	}
 	try {
-		const pdfjs = await import('pdfjs-dist');
+		const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs');
 		pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
 		// Copy-protected publisher PDFs open with the empty password, like for merging (#80).
 		// Scans are often JBIG2 images, which need pdf.js's WebAssembly decoders (vite.config.ts).
@@ -78,6 +80,14 @@ export async function readScoreLines(fileId: string, pages = 2): Promise<string[
 	}
 }
 
+const MAX_PIXELS = 8_000_000;
+
+/** A page's size at scale 1 (PDF points), for fitting it to the screen. */
+export async function pageSize({ doc }: OpenScore, number: number): Promise<{ width: number; height: number }> {
+	const { width, height } = (await doc.getPage(number)).getViewport({ scale: 1 });
+	return { width, height };
+}
+
 /**
  * Draws one page into a canvas, scaled to the given CSS width and sharp on high-density
  * screens. For looking at scans the reader can't read (#manual entry).
@@ -85,7 +95,10 @@ export async function readScoreLines(fileId: string, pages = 2): Promise<string[
 export async function renderPage({ doc }: OpenScore, number: number, canvas: HTMLCanvasElement, width: number): Promise<void> {
 	const page = await doc.getPage(number);
 	const base = page.getViewport({ scale: 1 });
-	const ratio = window.devicePixelRatio || 1;
+	// Sharp on high-density screens, but not past what phones draw: iOS leaves a canvas over
+	// about 16 million pixels (or too many large ones together) blank.
+	const height = (width * base.height) / base.width;
+	const ratio = Math.min(window.devicePixelRatio || 1, Math.sqrt(MAX_PIXELS / (width * height)));
 	const viewport = page.getViewport({ scale: (width / base.width) * ratio });
 	canvas.width = Math.floor(viewport.width);
 	canvas.height = Math.floor(viewport.height);

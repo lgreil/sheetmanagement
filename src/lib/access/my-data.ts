@@ -2,7 +2,7 @@ import { normalizeEmail } from '#lib/access/access.ts';
 import { parseVotes, submitterEmail } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
-import type { PracticeDay, PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
+import type { PageMarks, PracticeDay, PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
 
 /**
  * "Meine Daten herunterladen" (#158): everything the sheet keeps about one member, row by
@@ -74,7 +74,8 @@ export function storedData(
 	reminders: SentReminder[],
 	mailOff = false,
 	tour: TourOutcome | null = null,
-	practice: { on: boolean; days: PracticeDay[] } = { on: false, days: [] }
+	practice: { on: boolean; days: PracticeDay[] } = { on: false, days: [] },
+	marks: PageMarks[] = []
 ): MyData {
 	const data: MyData = {};
 	if (devices.length) {
@@ -102,6 +103,14 @@ export function storedData(
 			{ [t.practice.dataOn]: practice.on ? t.myData.yes : t.myData.no },
 			...practice.days.map((day) => ({ [t.practice.dataDay]: day.day, [t.practice.dataMinutes]: String(Math.round(day.seconds / 60)) }))
 		];
+	}
+	// Pen marks in the practice viewer, per page, with the strokes themselves.
+	if (marks.length) {
+		data[t.practice.dataMarks] = marks.map((page) => ({
+			[t.practice.dataFile]: page.file,
+			[t.practice.dataPage]: String(page.page),
+			[t.practice.dataStrokes]: JSON.stringify(page.strokes)
+		}));
 	}
 	return data;
 }

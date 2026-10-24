@@ -1251,7 +1251,7 @@ export const de = {
 		question: 'Möchtest du deine Probenzeit aufzeichnen?',
 		turnOn: 'Probenzeit aufzeichnen',
 		turnOff: 'Aufzeichnen ausschalten',
-		on: 'Wird aufgezeichnet. Deine Stimmen in „Meine Noten“ öffnen jetzt im Übe-Modus der App.',
+		on: 'Wird aufgezeichnet, solange eine Stimme aus „Meine Noten“ in der Probenansicht offen ist.',
 		off: 'Ausgeschaltet. Deine bisherige Zeit bleibt, bis du sie löschst.',
 		delete: 'Aufgezeichnete Zeit löschen',
 		confirmDelete: 'Deine ganze aufgezeichnete Probenzeit löschen? Das lässt sich nicht rückgängig machen; der Baum fängt wieder als Samen an.',
@@ -1290,15 +1290,80 @@ export const de = {
 			idle: 'Pausiert: tippe auf die Noten, um weiterzuzählen.',
 			full: 'Dieses Öffnen hat 3 Stunden gezählt. Öffne die Stimme neu, um weiterzuzählen.',
 			stopped: 'Probenzeit ist ausgeschaltet; hier zählt nichts mehr.',
+			notCounting: 'Probenzeit ist aus.',
+			turnOn: 'Im Profil einschalten',
 			elsewhere: 'In Drive öffnen (zählt nicht)',
 			failed: 'Die Noten ließen sich nicht laden.',
-			title: (part: string, piece: string) => `${part} · ${piece}`
+			title: (part: string, piece: string) => `${part} · ${piece}`,
+			fitPage: 'Ganze Seite',
+			fitWidth: 'Seitenbreite',
+			fullscreen: 'Vollbild',
+			exitFullscreen: 'Vollbild beenden',
+			turnHint: 'Blättern: an den linken oder rechten Rand tippen, mit den Pfeiltasten oder einem Blätterpedal.',
+			tools: 'Werkzeuge'
+		},
+		recording: {
+			title: 'Hörbeispiel',
+			play: 'Hier abspielen',
+			open: 'Aufnahme öffnen',
+			hint: 'Lädt das Video von YouTube erst beim Abspielen.'
+		},
+		metronome: {
+			title: 'Metronom',
+			bpm: 'Schläge pro Minute',
+			slower: 'Langsamer',
+			faster: 'Schneller',
+			tap: 'Tippen',
+			tapHint: 'Im Tempo tippen, um es zu übernehmen.',
+			beats: 'Betonung',
+			beatsOf: (beats: number) => (beats === 1 ? 'keine' : `jeder ${beats}.`),
+			start: 'Start',
+			stop: 'Stopp'
+		},
+		tuner: {
+			title: 'Stimmgerät',
+			start: 'Mikrofon einschalten',
+			stop: 'Beenden',
+			listening: 'Spiel einen Ton …',
+			noMic: 'Kein Zugriff aufs Mikrofon. Erlaube es in den Einstellungen des Browsers.',
+			reference: 'Kammerton a′',
+			/** From C, German names: B is B flat, H is B. */
+			notes: ['C', 'Cis', 'D', 'Es', 'E', 'F', 'Fis', 'G', 'Gis', 'A', 'B', 'H'] as string[],
+			cents: (cents: number) => `${cents > 0 ? '+' : cents < 0 ? '−' : '±'}${Math.abs(cents)} Cent`,
+			inTune: 'Stimmt',
+			low: 'zu tief',
+			high: 'zu hoch'
+		},
+		marks: {
+			title: 'Notizen',
+			pen: 'Stift',
+			graphite: 'Bleistift',
+			red: 'Rot',
+			blue: 'Blau',
+			eraser: 'Radierer',
+			undo: 'Rückgängig',
+			clear: 'Seite leeren',
+			confirmClear: 'Alle Notizen auf dieser Seite löschen?',
+			done: 'Fertig',
+			saving: 'Speichert …',
+			saved: 'Gespeichert',
+			failed: 'Nicht gespeichert. Bitte die Verbindung prüfen.',
+			private: 'Nur du siehst deine Notizen.',
+			/** On /profil. */
+			profileTitle: 'Notizen in deinen Noten',
+			count: (parts: number) => (parts === 1 ? 'In einer Stimme.' : `In ${parts} Stimmen.`),
+			deleteAll: 'Alle Notizen löschen',
+			confirmDeleteAll: 'Alle deine Notizen in allen Stimmen löschen? Das lässt sich nicht rückgängig machen.'
 		},
 		/** In "Meine Daten herunterladen". */
 		data: 'Probenzeit',
 		dataOn: 'Aufzeichnen',
 		dataDay: 'Tag',
-		dataMinutes: 'Minuten'
+		dataMinutes: 'Minuten',
+		dataMarks: 'Notizen in den Noten',
+		dataFile: 'Datei',
+		dataPage: 'Seite',
+		dataStrokes: 'Striche'
 	},
 	print: {
 		link: 'Drucken',

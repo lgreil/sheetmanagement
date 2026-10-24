@@ -6,7 +6,6 @@ import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments
 import { partGlyph } from '#lib/music/instrument-glyph.ts';
 import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
-import { getStore } from '#lib/server/db/index.ts';
 import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
 import { getLibrary, isPastConcert, namedItem, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { getAccessList, getMusicConfig, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
@@ -22,13 +21,13 @@ const YEAR = 365 * 24 * 60 * 60;
 const CHOICES = playableInstruments(config);
 
 const PDF = 'application/pdf';
-/** With practice time on (/profil), PDFs open in the app's practice viewer, where the time they're open counts. */
-const shown = (part: Part, viaLink?: boolean, practice = false) => ({
+/** For signed-in members, PDFs open in the app's practice viewer (/ueben); Drive stays a link from there. */
+const shown = (part: Part, viaLink?: boolean, viewer = false) => ({
 	id: part.id,
 	label: part.label,
 	notes: part.notes,
 	status: part.status,
-	url: practice && part.mimeType === PDF ? `/ueben/${encodeURIComponent(part.id)}` : partUrl(part.id, part.mimeType, viaLink),
+	url: viewer && part.mimeType === PDF ? `/ueben/${encodeURIComponent(part.id)}` : partUrl(part.id, part.mimeType, viaLink),
 	pdf: part.mimeType === PDF,
 	glyph: partGlyph(part)
 });
@@ -77,7 +76,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 	const [library, access, music, pieceNotes] = await Promise.all([getLibrary(), getAccessList(), getMusicConfig(), getPieceNotes()]);
 	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
 	const rehearsal = await rehearsalOf(library, url.searchParams.get('probe'), member);
-	const practice = locals.auth === 'on' && !!member && (await getStore().practiceOn(normalizeEmail(member.email)).catch(() => false));
+	const viewer = locals.auth === 'on' && !!member;
 
 	// What to show: asked for in the URL, else from "Mitglieder" (it follows members to every
 	// device and the profile page edits it), else remembered in this browser.
@@ -109,7 +108,7 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 				// One block per instrument the member plays.
 				matches: choices.map((choice) => {
 					const match = parts.length ? matchParts(parts, choice, music) : { own: [], shared: [] };
-					const show = (part: Part) => shown(part, locals.access.viaLink, practice);
+					const show = (part: Part) => shown(part, locals.access.viaLink, viewer);
 					return { label: formatInstrument(choice), own: match.own.map(show), shared: match.shared.map(show) };
 				})
 			};
