@@ -65,10 +65,10 @@
 				<span class="ui-label">{t.practice.tree.title}</span>
 				<strong>{stageName(stage)}</strong>
 				<span class="muted">{t.practice.tree.all(t.practice.duration(total))}</span>
-				<div class="progress" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(stage.progress * 100)}>
+				<div class="progress" role="progressbar" aria-labelledby="practice-next" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(stage.progress * 100)}>
 					<span style:width="{stage.progress * 100}%"></span>
 				</div>
-				<span class="muted small">{t.practice.tree.next(t.practice.duration(stage.next - total), stageName(nextStage))}</span>
+				<span class="muted small" id="practice-next">{t.practice.tree.next(t.practice.duration(stage.next - total), stageName(nextStage))}</span>
 			</div>
 		</div>
 		<p class="muted small">{t.practice.tree.hint}</p>
