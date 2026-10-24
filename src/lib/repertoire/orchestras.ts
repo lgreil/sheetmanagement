@@ -4,8 +4,9 @@ import { joinList, splitList } from './lists.ts';
 
 /**
  * Several orchestras can play one concert ("EO, A" under "Orchester"), each with its own
- * programme: a row in "Programm" names its orchestra, or belongs to the first one named.
- * A row naming several ("EO, A") is a piece they play together: it's in each one's music.
+ * programme: a row in "Programm" names its orchestra. A row naming several ("EO, A") is a
+ * piece they play together: it's in each one's music. Playing together is the usual case,
+ * so a row naming none belongs to all of the concert's orchestras.
  */
 
 /** "EO, A" → ["EO", "A"]. */
@@ -14,12 +15,12 @@ export const concertOrchestras = (text: string | undefined): string[] => splitLi
 export const sameOrchestra = (a: string | undefined, b: string | undefined) => searchText((a ?? '').trim()) === searchText((b ?? '').trim());
 
 /**
- * The orchestra a programme row belongs to: the one it names, else the concert's first.
+ * The orchestra a programme row belongs to: the one it names, else all of the concert's.
  * Several named ("a, eo") become one way of writing them, in the concert's order ("EO, A").
  */
 export function rowOrchestra(entered: string | undefined, orchestras: string[]): string | undefined {
 	const named = splitList(entered).map((name) => orchestras.find((orchestra) => sameOrchestra(orchestra, name)) ?? name);
-	if (!named.length) return orchestras[0];
+	if (!named.length) return orchestras.length ? joinList(orchestras) : undefined;
 	const rank = (name: string) => {
 		const index = orchestras.indexOf(name);
 		return index === -1 ? orchestras.length : index;

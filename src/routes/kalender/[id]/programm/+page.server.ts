@@ -9,13 +9,14 @@ import { planWishes } from '#lib/server/feedback.ts';
 import { programSuggestions } from '#lib/repertoire/suggestions.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
+import { joinList } from '#lib/repertoire/lists.ts';
 import { t } from '#lib/i18n/index.ts';
 import { currentProgramAvailable, isCurrentConcert, syncCurrentProgram } from '#lib/server/current-program.ts';
 import type { Actions, PageServerLoad } from './$types';
 
-/** The orchestra being edited ("?orchester=A"), for a concert several orchestras play. */
+/** The orchestra being edited ("?orchester=A"), for a concert several orchestras play; what they play together first. */
 function scopeOf(concert: LibraryConcert, wanted: string | null): OrchestraScope {
-	return { orchestra: pickOrchestra(concert.orchestras, wanted), orchestras: concert.orchestras };
+	return { orchestra: pickOrchestra(concert.orchestras, wanted || joinList(concert.orchestras)), orchestras: concert.orchestras };
 }
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {

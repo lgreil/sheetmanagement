@@ -4,8 +4,9 @@ import { isJoint, orchestraChoices, pickOrchestra, playedBy, programLabel, progr
 describe('orchestras of a programme row', () => {
 	const concert = ['EO', 'A'];
 
-	it('belongs to the first orchestra unless it names one', () => {
-		expect(rowOrchestra('', concert)).toBe('EO');
+	it('belongs to all of the concert’s orchestras unless it names one', () => {
+		expect(rowOrchestra('', concert)).toBe('EO, A');
+		expect(rowOrchestra('', ['EO'])).toBe('EO');
 		expect(rowOrchestra('a', concert)).toBe('A');
 		expect(rowOrchestra('', [])).toBeUndefined();
 	});

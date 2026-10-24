@@ -121,11 +121,12 @@ describe('programme editor', () => {
 		]);
 	});
 
-	it('replaces only one orchestra\'s rows; rows without one belong to the first', () => {
+	it('replaces only one orchestra\'s rows; rows without one are played together', () => {
 		const plan = planProgramSave(table, 'Herbstkonzert 2026', [{ piece: 'Skyfall', notes: '' }], a);
 		expect(plan.remove).toEqual([5]);
 		expect(plan.append).toEqual([{ concert: 'Herbstkonzert 2026', position: '1', piece: 'Skyfall', notes: '', orchestra: 'A' }]);
-		expect(planProgramSave(table, 'Herbstkonzert 2026', [], eo).remove).toEqual([2, 4]);
+		expect(planProgramSave(table, 'Herbstkonzert 2026', [], eo).remove).toEqual([]);
+		expect(planProgramSave(table, 'Herbstkonzert 2026', [], { orchestra: 'EO, A', orchestras: ['EO', 'A'] }).remove).toEqual([2, 4]);
 	});
 
 	it('notices changes only in the orchestra being edited', () => {
@@ -144,9 +145,10 @@ describe('programme editor', () => {
 			{ concert: 'Konzert', position: 'Nr.', piece: 'Stück', notes: 'Notiz', orchestra: 'Orchester' }
 		);
 		const together = { orchestra: 'EO, A', orchestras: ['EO', 'A'] };
-		expect(planProgramSave(joint, 'Herbstkonzert 2026', [], eo).remove).toEqual([2]);
+		// The row naming no orchestra is played together too, so EO's own programme is empty.
+		expect(planProgramSave(joint, 'Herbstkonzert 2026', [], eo).remove).toEqual([]);
 		const plan = planProgramSave(joint, 'Herbstkonzert 2026', [{ piece: 'Radetzky', notes: '' }], together);
-		expect(plan.remove).toEqual([3]);
+		expect(plan.remove).toEqual([2, 3]);
 		expect(plan.append[0]).toMatchObject({ piece: 'Radetzky', orchestra: 'EO, A' });
 	});
 

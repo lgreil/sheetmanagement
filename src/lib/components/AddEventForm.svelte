@@ -2,6 +2,8 @@
 	import { enhance } from '$app/forms';
 	import { config } from '#lib/config/index.ts';
 	import { NEW_EVENT_TYPES, type NewEventType } from '#lib/events/new-event.ts';
+	import { joinList, splitList } from '#lib/repertoire/lists.ts';
+	import { orchestraChoices } from '#lib/repertoire/orchestras.ts';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
@@ -108,8 +110,11 @@
 		{#if past && orchestras.length}
 			<label class="field">
 				{t.archive.orchestra}
-				<select name="orchestra" value={values.orchestra ?? orchestras[0]}>
-					{#each orchestras as orchestra (orchestra)}<option value={orchestra}>{orchestra}</option>{/each}
+				<!-- Playing together is the usual case: all orchestras first, then each alone or in pairs. -->
+				<select name="orchestra" value={values.orchestra ?? joinList(orchestras)}>
+					{#each [joinList(orchestras), ...orchestraChoices(orchestras).filter((choice) => choice !== joinList(orchestras))] as choice (choice)}
+						<option value={choice}>{splitList(choice).length > 1 ? t.editor.jointTab(splitList(choice)) : choice}</option>
+					{/each}
 				</select>
 			</label>
 		{/if}
