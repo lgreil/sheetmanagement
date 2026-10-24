@@ -147,6 +147,7 @@
 			on={data.practice.on}
 			days={data.practice.days}
 			today={data.practice.today}
+			markedParts={data.practice.markedParts}
 			message={form && 'practiceMessage' in form ? form.practiceMessage : undefined}
 		/>
 	{/if}

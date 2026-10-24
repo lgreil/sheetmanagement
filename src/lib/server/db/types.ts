@@ -1,5 +1,6 @@
 /** The store's types (#161); see index.ts. */
 
+import type { Stroke } from '#lib/practice/marks.ts';
 import type { PracticeDay } from '#lib/practice/practice.ts';
 import type { TourOutcome } from '#lib/tour/tour.ts';
 
@@ -23,6 +24,14 @@ export interface SentReminder {
 
 export type { TourOutcome } from '#lib/tour/tour.ts';
 export type { PracticeDay } from '#lib/practice/practice.ts';
+export type { Stroke } from '#lib/practice/marks.ts';
+
+/** One page's marks in a part. */
+export interface PageMarks {
+	file: string;
+	page: number;
+	strokes: Stroke[];
+}
 
 export interface Store {
 	kind: 'd1' | 'memory';
@@ -63,6 +72,13 @@ export interface Store {
 	practiceOf(email: string): Promise<PracticeDay[]>;
 	/** Forgets all of a member's practice time. */
 	deletePractice(email: string): Promise<void>;
+
+	/** A member's own marks in one part, or in all parts without `file`; by page. */
+	marksOf(email: string, file?: string): Promise<PageMarks[]>;
+	/** Replaces one page's marks; no strokes forget the page. */
+	saveMarks(email: string, file: string, page: number, strokes: Stroke[]): Promise<void>;
+	/** Forgets all of a member's marks. */
+	deleteMarks(email: string): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

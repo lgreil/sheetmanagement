@@ -1,4 +1,4 @@
-import { reminderKey, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type PageMarks, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -14,6 +14,8 @@ export function memoryStore(now = () => Date.now()): Store {
 	const practiceOptIn = new Set<string>();
 	/** Seconds by member, then by day. */
 	const practice = new Map<string, Map<string, number>>();
+	/** Marks by member, then by `${page} ${file}`. */
+	const marks = new Map<string, Map<string, PageMarks>>();
 	const hits = new Map<string, { count: number; since: number }>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
@@ -77,6 +79,19 @@ export function memoryStore(now = () => Date.now()): Store {
 			[...(practice.get(email) ?? [])].map(([day, seconds]) => ({ day, seconds })).sort((a, b) => a.day.localeCompare(b.day)),
 		async deletePractice(email) {
 			practice.delete(email);
+		},
+		marksOf: async (email, file) =>
+			[...(marks.get(email)?.values() ?? [])]
+				.filter((page) => file === undefined || page.file === file)
+				.sort((a, b) => a.file.localeCompare(b.file) || a.page - b.page),
+		async saveMarks(email, file, page, strokes) {
+			const pages = marks.get(email) ?? new Map<string, PageMarks>();
+			if (strokes.length) pages.set(`${page} ${file}`, { file, page, strokes });
+			else pages.delete(`${page} ${file}`);
+			marks.set(email, pages);
+		},
+		async deleteMarks(email) {
+			marks.delete(email);
 		},
 
 		async hit(key, windowMinutes) {

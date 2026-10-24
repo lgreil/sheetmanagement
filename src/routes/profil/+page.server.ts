@@ -79,8 +79,9 @@ async function practice(email: string) {
 	const store = getStore();
 	const member = normalizeEmail(email);
 	try {
-		const [on, days] = await Promise.all([store.practiceOn(member), store.practiceOf(member)]);
-		return { on, days, today: today() };
+		const [on, days, marks] = await Promise.all([store.practiceOn(member), store.practiceOf(member), store.marksOf(member)]);
+		// Notes in the parts (practice viewer): in how many parts, for deleting them all.
+		return { on, days, today: today(), markedParts: new Set(marks.map((page) => page.file)).size };
 	} catch (error) {
 		console.error('Loading practice time failed:', error);
 		return null;
@@ -149,6 +150,19 @@ export const actions: Actions = {
 			return { practiceDeleted: true };
 		} catch (error) {
 			console.error('Deleting practice time failed:', error);
+			return fail(503, { practiceMessage: t.practice.failed });
+		}
+	},
+
+	/** Forgets all of the member's own notes in the parts. */
+	marksDelete: async ({ locals }) => {
+		const user = locals.access.user;
+		if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+		try {
+			await getStore().deleteMarks(normalizeEmail(user.email));
+			return { marksDeleted: true };
+		} catch (error) {
+			console.error('Deleting notes failed:', error);
 			return fail(503, { practiceMessage: t.practice.failed });
 		}
 	},
