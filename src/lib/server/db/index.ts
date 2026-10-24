@@ -1,4 +1,6 @@
+import { seedDemoPractice } from '../demo/practice.ts';
 import { appEnv, isDemo } from '../env.ts';
+import { today } from '../members.ts';
 import { memoryStore } from './memory.ts';
 import { sqlStore, type D1 } from './sql.ts';
 import type { Store } from './types.ts';
@@ -17,7 +19,14 @@ let d1: { db: D1; store: Store } | undefined;
 
 export function getStore(): Store {
 	const db = isDemo() ? undefined : appEnv().DB;
-	if (!db) return (memory ??= memoryStore());
+	if (!db) {
+		if (!memory) {
+			memory = memoryStore();
+			// The demo member's practice time, so its overview has something to show.
+			if (isDemo()) seedDemoPractice(memory, today()).catch(() => {});
+		}
+		return memory;
+	}
 	if (d1?.db !== db) d1 = { db, store: sqlStore(db) };
 	return d1.store;
 }

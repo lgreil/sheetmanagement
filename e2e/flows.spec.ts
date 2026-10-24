@@ -14,14 +14,15 @@ test('signing up for a concert', async ({ page }) => {
 });
 
 test('the programme editor saves', async ({ page }) => {
-	await open(page, '/kalender/demo-herbstkonzert/programm');
+	// EO's own programme: the editor opens on what both orchestras play together, the finale alone.
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
 	const remove = page.getByRole('button', { name: 'Entfernen' });
 	const before = await remove.count();
 	expect(before).toBeGreaterThan(1);
 	await remove.last().click();
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page.getByText('Programm gespeichert.')).toBeVisible();
-	await open(page, '/kalender/demo-herbstkonzert/programm');
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
 	await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(before - 1);
 });
 
@@ -119,7 +120,8 @@ test('the current programme in Drive follows the programme (#60)', async ({ page
 	const driveA = page.locator('form.drive').last();
 	await expect(drive).toContainText('4 von 5 Stücken');
 	await expect(driveA).toContainText('Noch kein Programmordner für A');
-	await open(page, '/kalender/demo-herbstkonzert/programm');
+	// Saving EO's own programme syncs EO's folder only; A's is made by its own button.
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
 	await page.getByRole('button', { name: 'Entfernen' }).last().click();
 	await page.getByRole('button', { name: 'Speichern' }).click();
 	await expect(page.getByText('Auch im Drive-Ordner »Aktuelles Programm« abgeglichen.')).toBeVisible();

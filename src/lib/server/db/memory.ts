@@ -11,6 +11,9 @@ export function memoryStore(now = () => Date.now()): Store {
 	const state = new Map<string, string>();
 	const optOut = new Set<string>();
 	const tours = new Map<string, TourOutcome>();
+	const practiceOptIn = new Set<string>();
+	/** Seconds by member, then by day. */
+	const practice = new Map<string, Map<string, number>>();
 	const hits = new Map<string, { count: number; since: number }>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
@@ -58,6 +61,22 @@ export function memoryStore(now = () => Date.now()): Store {
 		async setTour(email, outcome) {
 			if (outcome) tours.set(email, outcome);
 			else tours.delete(email);
+		},
+
+		practiceOn: async (email) => practiceOptIn.has(email),
+		async setPracticeOn(email, on) {
+			if (on) practiceOptIn.add(email);
+			else practiceOptIn.delete(email);
+		},
+		async addPractice(email, day, seconds, cap) {
+			const days = practice.get(email) ?? new Map<string, number>();
+			days.set(day, Math.min(cap, (days.get(day) ?? 0) + seconds));
+			practice.set(email, days);
+		},
+		practiceOf: async (email) =>
+			[...(practice.get(email) ?? [])].map(([day, seconds]) => ({ day, seconds })).sort((a, b) => a.day.localeCompare(b.day)),
+		async deletePractice(email) {
+			practice.delete(email);
 		},
 
 		async hit(key, windowMinutes) {

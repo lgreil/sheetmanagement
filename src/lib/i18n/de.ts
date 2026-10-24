@@ -1242,6 +1242,64 @@ export const de = {
 		yes: 'ja',
 		no: 'nein'
 	},
+	/** Practice time ("Probenzeit"): opt-in on /profil, only visible to the member. */
+	practice: {
+		title: 'Probenzeit',
+		lead: 'Wie lange du die Noten deines Instruments geöffnet hattest, nach Woche und Monat, und ein Baum, der damit wächst.',
+		private: 'Nur du siehst deine Probenzeit: nicht die Verwaltung, nicht andere Mitglieder, in keiner Auswertung.',
+		how: 'Gezählt wird, solange eine Stimme deines Instruments aus „Meine Noten“ in der App offen und die Seite sichtbar ist. Nach 20 Minuten ohne Tippen, Blättern oder Taste pausiert die Zählung; ein Öffnen zählt höchstens 3 Stunden, ein Tag höchstens 12. Noten in Drive oder auf Papier zählen nicht.',
+		question: 'Möchtest du deine Probenzeit aufzeichnen?',
+		turnOn: 'Probenzeit aufzeichnen',
+		turnOff: 'Aufzeichnen ausschalten',
+		on: 'Wird aufgezeichnet. Deine Stimmen in „Meine Noten“ öffnen jetzt im Übe-Modus der App.',
+		off: 'Ausgeschaltet. Deine bisherige Zeit bleibt, bis du sie löschst.',
+		delete: 'Aufgezeichnete Zeit löschen',
+		confirmDelete: 'Deine ganze aufgezeichnete Probenzeit löschen? Das lässt sich nicht rückgängig machen; der Baum fängt wieder als Samen an.',
+		deleted: 'Gelöscht.',
+		failed: 'Das hat nicht geklappt. Bitte gleich noch einmal versuchen.',
+		week: 'Woche',
+		month: 'Monat',
+		view: 'Zeitraum',
+		earlier: 'Früher',
+		later: 'Später',
+		thisWeek: 'Diese Woche',
+		thisMonth: 'Dieser Monat',
+		total: (duration: string) => `Zusammen ${duration}`,
+		perDay: (day: string, duration: string) => `${day}: ${duration}`,
+		nothing: 'In diesem Zeitraum noch keine Probenzeit.',
+		/** "1 Std. 5 Min.", "25 Min.", "0 Min." */
+		duration: (seconds: number) => {
+			const minutes = Math.floor(seconds / 60);
+			const hours = Math.floor(minutes / 60);
+			return hours ? `${hours} Std.${minutes % 60 ? ` ${minutes % 60} Min.` : ''}` : `${minutes} Min.`;
+		},
+		tree: {
+			title: 'Dein Baum',
+			seed: 'Samen',
+			seedling: 'Setzling',
+			sapling: 'Kleiner Baum',
+			tree: (age: number) => (age === 1 ? 'Baum' : `Baum, ${age} Jahresringe`),
+			all: (duration: string) => `Insgesamt ${duration} geübt`,
+			next: (duration: string, stage: string) => `Noch ${duration} bis zur nächsten Stufe: ${stage}`,
+			hint: 'Ab 10 Stunden wird aus dem Samen ein Setzling, nach 15 weiteren ein kleiner Baum, danach alle 20 Stunden ein größerer, älterer Baum.'
+		},
+		viewer: {
+			back: 'Meine Noten',
+			counting: 'Zählt als Probenzeit',
+			today: (duration: string) => `Heute ${duration}`,
+			idle: 'Pausiert: tippe auf die Noten, um weiterzuzählen.',
+			full: 'Dieses Öffnen hat 3 Stunden gezählt. Öffne die Stimme neu, um weiterzuzählen.',
+			stopped: 'Probenzeit ist ausgeschaltet; hier zählt nichts mehr.',
+			elsewhere: 'In Drive öffnen (zählt nicht)',
+			failed: 'Die Noten ließen sich nicht laden.',
+			title: (part: string, piece: string) => `${part} · ${piece}`
+		},
+		/** In "Meine Daten herunterladen". */
+		data: 'Probenzeit',
+		dataOn: 'Aufzeichnen',
+		dataDay: 'Tag',
+		dataMinutes: 'Minuten'
+	},
 	print: {
 		link: 'Drucken',
 		title: (concert: string) => 'Drucken: ' + concert,
