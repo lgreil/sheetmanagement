@@ -21,6 +21,8 @@ interface State {
 	tabs: Map<string, SheetTab>;
 	nextSheetId: number;
 	nextFileId: number;
+	/** Opened uploads (#193): the page sends the file to /demo/hochladen/<id> instead of to Google. */
+	uploads: Map<string, { name: string; parents: string[]; replaceId?: string }>;
 }
 
 let state: State | null = null;
@@ -36,7 +38,8 @@ function load(): State {
 		events: demoEvents(now),
 		tabs,
 		nextSheetId: sheetId,
-		nextFileId: 1
+		nextFileId: 1,
+		uploads: new Map()
 	};
 	return state;
 }
@@ -180,6 +183,31 @@ function drive(url: URL, method: string, body: Record<string, unknown> | undefin
 	return json(metadata);
 }
 
+/** A resumable upload as Drive opens it: the session address in "Location". */
+function upload(url: URL, body: Record<string, unknown> | undefined, origin: string): Response {
+	const current = load();
+	const replaceId = decodeURIComponent(url.pathname.replace(/^\/upload\/drive\/v3\/files\/?/, '')) || undefined;
+	if (replaceId && !current.files.has(replaceId)) return notFound('File not found');
+	const id = crypto.randomUUID();
+	current.uploads.set(id, { name: String(body?.name ?? ''), parents: (body?.parents as string[]) ?? [], replaceId });
+	return new Response(null, { status: 200, headers: { location: `${origin}/demo/hochladen/${id}` } });
+}
+
+/** The upload's content arrived: the file is in the folder, a sample PDF standing in for it. */
+export function finishDemoUpload(sessionId: string): { id: string; name: string } | undefined {
+	const current = load();
+	const session = current.uploads.get(sessionId);
+	if (!session) return undefined;
+	current.uploads.delete(sessionId);
+	const old = session.replaceId ? current.files.get(session.replaceId) : undefined;
+	const file: DemoFile = old ?? { id: `demo-new-${current.nextFileId++}`, name: '', mimeType: 'application/pdf', parents: session.parents, modifiedTime: '' };
+	file.name = session.name || file.name;
+	file.modifiedTime = new Date().toISOString();
+	file.pdf = { title: file.name.replace(/\.pdf$/i, ''), part: '' };
+	current.files.set(file.id, file);
+	return { id: file.id, name: file.name };
+}
+
 function calendar(url: URL, method: string, body: Record<string, unknown> | undefined): Response {
 	if (!decodeURIComponent(url.pathname).includes(DEMO_IDS.calendar)) return notFound('Calendar not found');
 	if (method === 'POST') {
@@ -207,6 +235,7 @@ export const demoFetch: typeof fetch = async (input, init) => {
 	const body = typeof init?.body === 'string' ? (JSON.parse(init.body) as Record<string, unknown>) : undefined;
 	if (url.hostname === 'sheets.googleapis.com') return sheets(url, method, body);
 	if (url.pathname.startsWith('/drive/v3/files')) return drive(url, method, body);
+	if (url.pathname.startsWith('/upload/drive/v3/files')) return upload(url, body, new Headers(init?.headers).get('origin') ?? '');
 	if (url.pathname.startsWith('/calendar/v3/')) return calendar(url, method, body);
 	return notFound();
 };

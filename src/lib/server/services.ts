@@ -1,6 +1,6 @@
 import { config } from '#lib/config/index.ts';
 import { cached, patchCached, type CachedResult } from './cache.ts';
-import { buildDriveIndex, INDEX_VERSION, type DriveIndex } from './drive-index.ts';
+import { buildDriveIndex, INDEX_VERSION, type DriveIndex, type IndexedPiece } from './drive-index.ts';
 import { demoClient } from './demo/backend.ts';
 import { DEMO_IDS } from './demo/data.ts';
 import { appEnv, isDemo, runInBackground } from './env.ts';
@@ -114,6 +114,22 @@ export async function renameInArchiveIndex(names: Map<string, string>): Promise<
 			...index,
 			pieces: index.pieces.map((piece) => ({ ...piece, files: piece.files.map(rename) })),
 			categoryFiles: index.categoryFiles.map((group) => ({ ...group, files: group.files.map(rename) }))
+		})
+	});
+}
+
+/**
+ * Puts one piece folder into the cached archive index as it is now: a folder just made, or
+ * one with new files (#193). Like renameInArchiveIndex, much faster than a new crawl.
+ */
+export async function putInArchiveIndex(piece: IndexedPiece): Promise<boolean> {
+	const collator = new Intl.Collator('de', { sensitivity: 'base', numeric: true });
+	return patchCached<DriveIndex>({
+		key: archiveIndexKey(requireSetting('DRIVE_ARCHIVE_FOLDER_ID'), programFolderIds()),
+		kv: appEnv().CACHE,
+		update: (index) => ({
+			...index,
+			pieces: [...index.pieces.filter((other) => other.folderId !== piece.folderId), piece].sort((a, b) => collator.compare(a.name, b.name))
 		})
 	});
 }

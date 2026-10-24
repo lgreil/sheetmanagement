@@ -10,6 +10,7 @@
 	import { partGlyph } from '#lib/music/instrument-glyph.ts';
 	import ProblemReports from '#lib/components/ProblemReports.svelte';
 	import PieceArt from '#lib/components/PieceArt.svelte';
+	import PieceFolder from '#lib/components/PieceFolder.svelte';
 	import PieceNotes from '#lib/components/PieceNotes.svelte';
 	import Title from '#lib/components/Title.svelte';
 
@@ -323,6 +324,18 @@
 {/if}
 
 {#if piece.parts.length}<p class="hint">{t.piece.driveHint}</p>{/if}
+
+{#if data.folder}
+	<PieceFolder
+		pieceId={piece.id}
+		tools={data.folder}
+		existing={piece.parts.filter((part) => !part.subfolder).map((part) => part.fileName)}
+		instruments={data.reports.instruments}
+		common={data.reports.common}
+		created={data.folderCreated}
+		result={form}
+	/>
+{/if}
 
 <!-- Below the parts: where the piece was played, related pieces. -->
 

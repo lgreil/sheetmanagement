@@ -153,3 +153,28 @@ export function trashFile(client: GoogleClient, fileId: string): Promise<DriveFi
 export function downloadFile(client: GoogleClient, fileId: string): Promise<Response> {
 	return client.fetchRaw(`${FILES_URL}/${encodeURIComponent(fileId)}`, { alt: 'media', supportsAllDrives: true });
 }
+
+const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
+
+/**
+ * Opens a resumable upload (#193) and returns its session address. The browser sends the
+ * file there itself, so it never passes through the Worker; the address is the permission,
+ * and Google lets the page's origin use it. With `replaceId`, the upload is a new revision
+ * of that file (history kept in Drive), else a new file in `folderId`.
+ */
+export async function startUpload(
+	client: GoogleClient,
+	file: { name: string; mimeType: string; size: number; folderId: string; replaceId?: string },
+	origin: string
+): Promise<string> {
+	const replace = file.replaceId ? `/${encodeURIComponent(file.replaceId)}` : '';
+	const response = await client.send(UPLOAD_URL + replace, {
+		method: replace ? 'PATCH' : 'POST',
+		params: { uploadType: 'resumable', supportsAllDrives: true, fields: 'id, name, mimeType' },
+		body: replace ? { name: file.name } : { name: file.name, mimeType: file.mimeType, parents: [file.folderId] },
+		headers: { origin, 'x-upload-content-type': file.mimeType, 'x-upload-content-length': String(file.size) }
+	});
+	const location = response.headers.get('location');
+	if (!location) throw new Error('Drive opened no upload session');
+	return location;
+}
