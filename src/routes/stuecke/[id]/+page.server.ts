@@ -1,4 +1,4 @@
-import { error, fail } from '@sveltejs/kit';
+import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
 import { newId, REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
@@ -16,6 +16,7 @@ import { pieceArt } from '#lib/music/piece-art.ts';
 import { portraitFor, portraitPageUrl } from '#lib/server/portraits.ts';
 import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError } from '#lib/server/sheet-writes.ts';
 import { folderUrl, partUrl } from '#lib/server/catalog.ts';
+import { addPlaceholder, createPieceFolder, folderTools, FolderError } from '#lib/server/piece-folder.ts';
 import { listsOverlap } from '#lib/repertoire/lists.ts';
 import { workKey } from '#lib/music/piece-name.ts';
 import { formatDuration } from '#lib/repertoire/duration.ts';
@@ -137,6 +138,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		otherVersions: byComposer.filter((other) => work && workKey(other.title) === work).map(summary),
 		moreByComposer: byComposer.filter((other) => !work || workKey(other.title) !== work).map(summary),
 		sheet: library.sheet,
+		// New sheet music from the app (#193): the folder to create, or uploads into it.
+		folder: folderTools(locals, piece),
+		folderCreated: url.searchParams.has('ordner'),
 		notes: notesFor(library, piece, pieceNotes.notes, locals)
 	};
 };
@@ -196,6 +200,24 @@ const sameComposer = listsOverlap;
 const summary = ({ id, title, catalogue, status, programs }: LibraryPiece) => ({ id, title, catalogue, status, programs });
 
 export const actions: Actions = {
+	createFolder: async ({ params, request, locals }) => {
+		const name = formText(await request.formData(), 'name', 150);
+		const id = await inDrive(() => createPieceFolder(locals, params.id, name), 'Creating a piece folder');
+		if (typeof id !== 'string') return fail(id.status, { folderError: id.message, folderName: name });
+		redirect(303, `/stuecke/${encodeURIComponent(id)}?ordner`);
+	},
+
+	placeholder: async ({ params, request, locals }) => {
+		const data = await request.formData();
+		const instrument = formText(data, 'instrument');
+		if (!playableInstruments(config).includes(instrument)) return fail(400, { placeholderError: t.reports.unknownPart });
+		const number = Number(formText(data, 'number'));
+		const part = formatInstrument({ instrument, numbers: number >= 1 && number <= 8 ? [number] : [] });
+		const name = await inDrive(() => addPlaceholder(locals, params.id, part), 'Creating a placeholder');
+		if (typeof name !== 'string') return fail(name.status, { placeholderError: name.message });
+		return { placeholderCreated: name };
+	},
+
 	addNote: async ({ params, request, locals }) => {
 		requireRight(locals, 'programme.bearbeiten');
 		const library = await getLibrary();
@@ -302,3 +324,15 @@ export const actions: Actions = {
 		}
 	}
 };
+
+/** A Drive change for the folder tools; what went wrong as a status and message for the form. */
+async function inDrive(work: () => Promise<string>, what: string): Promise<string | { status: number; message: string }> {
+	try {
+		return await work();
+	} catch (cause) {
+		if (cause instanceof FolderError) return { status: cause.status, message: cause.message };
+		if (isHttpError(cause)) throw cause;
+		console.error(`${what} in Drive failed:`, cause);
+		return { status: 503, message: t.pieceFolder.failed };
+	}
+}

@@ -66,3 +66,15 @@ function sectionsOf(detail: PieceDetail): NamingSection[] {
 export function checkNamingSection(section: NamingSection, shortTitle = section.shortTitle): NameCheck[] {
 	return checkSection(section.files, shortTitle, config.naming, matcher(), { movement: section.movement, titles: section.titles });
 }
+
+/**
+ * Convention names for files about to be uploaded into a piece folder (#193), read from
+ * their old names like the batch rename does: the short title the folder's files already
+ * use (else one made from the title). "unclear" ones are named by a person.
+ */
+export function checkUploadNames(detail: PieceDetail, names: string[]): { shortTitle: string; checks: NameCheck[] } {
+	const existing = detail.parts.filter((part) => part.section === '').map(({ id, fileName, mimeType }) => ({ id, name: fileName, mimeType }));
+	const shortTitle = guessShortTitle(existing, detail.title, config.naming, detail);
+	const files = names.map((name, i) => ({ id: String(i), name, mimeType: 'application/pdf' }));
+	return { shortTitle, checks: checkSection(files, shortTitle, config.naming, matcher(), { titles: [detail.folderName, detail.title] }) };
+}

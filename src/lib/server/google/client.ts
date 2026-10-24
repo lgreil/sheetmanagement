@@ -34,8 +34,16 @@ export class GoogleClient {
 
 	async request<T>(
 		url: string,
-		{ params, method = 'GET', body }: { params?: Params; method?: string; body?: unknown } = {}
+		options: { params?: Params; method?: string; body?: unknown; headers?: Record<string, string> } = {}
 	): Promise<T> {
+		return (await (await this.send(url, options)).json()) as T;
+	}
+
+	/** Like request(), but the response itself, for answers that matter by their headers. */
+	async send(
+		url: string,
+		{ params, method = 'GET', body, headers = {} }: { params?: Params; method?: string; body?: unknown; headers?: Record<string, string> } = {}
+	): Promise<Response> {
 		const target = new URL(url);
 		for (const [name, value] of Object.entries(params ?? {})) {
 			if (value !== undefined) target.searchParams.set(name, String(value));
@@ -49,14 +57,15 @@ export class GoogleClient {
 				method,
 				headers: {
 					authorization: `Bearer ${token}`,
-					...(body === undefined ? {} : { 'content-type': 'application/json' })
+					...(body === undefined ? {} : { 'content-type': 'application/json' }),
+					...headers
 				},
 				body: body === undefined ? undefined : JSON.stringify(body),
 				signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 			});
 			lastStatus = response.status;
 
-			if (response.ok) return (await response.json()) as T;
+			if (response.ok) return response;
 
 			const retryable = response.status === 401 || response.status === 429 || response.status >= 500;
 			if (retryable && attempt === 0) {

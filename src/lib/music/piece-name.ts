@@ -82,3 +82,22 @@ export function workKey(title: string): string | undefined {
 	const kind = match[1].replace(/[^a-z]+/g, ' ').trim();
 	return kind ? `${kind} ${match[2]}` : undefined;
 }
+
+/**
+ * The folder name "93 | Namenskonvention" gives a new piece (#193), the reverse of
+ * parsePieceName: "<Komponist> <Verzeichnis> - <Titel>" for classical works (a catalogue
+ * number, or a composer the convention knows), "<Verzeichnis> - <Titel>" without a
+ * composer, else just the title. The composer is their last name, as on the existing folders.
+ */
+export function pieceFolderName(piece: PieceName, naming: NamingRules): string {
+	const clean = (text: string | undefined) => (text ?? '').replace(/[\\/]/g, ' ').replace(/\s+/g, ' ').trim();
+	const title = clean(piece.title);
+	const catalogue = clean(piece.catalogue);
+	const first = clean(piece.composer?.split(/[,;]/)[0]);
+	// "Johann Sebastian Bach" → "Bach", "Andrew Lloyd Webber" stays: the name the convention knows, else the last word.
+	const endsWith = (known: string) => first.toLowerCase() === known.toLowerCase() || first.toLowerCase().endsWith(` ${known.toLowerCase()}`);
+	const knownName = naming.knownComposers.find(endsWith);
+	const composer = knownName ?? first.split(' ').pop() ?? '';
+	const head = catalogue ? [composer, catalogue].filter(Boolean).join(' ') : (knownName ?? '');
+	return head ? `${head}${naming.separator}${title}` : title;
+}

@@ -154,13 +154,14 @@ export function parsePartName(
 	let joiner = '&';
 	let afterUnknownWord = false;
 
-	const readTransposition = (at: number, requireIn: boolean, allowAmbiguous = false): [string | undefined, number] => {
+	const readTransposition = (at: number, requireIn: boolean, allowAmbiguous = false, noLetters = false): [string | undefined, number] => {
 		const hasIn = tokens[at] === 'in';
 		if (requireIn && !hasIn) return [undefined, at];
 		const from = hasIn ? at + 1 : at;
 		for (const key of transpositionKeys) {
-			// Without "in", only unambiguous keys count ("Bb", "Es", "F"), not "a" or "c".
-			if (!hasIn && !allowAmbiguous && key.length === 1 && ['a', 'c', 'd'].includes(key[0])) continue;
+			// Without "in", only unambiguous keys count ("Bb", "Es", "F"), not "a" or "c";
+			// after strings no single letter at all ("Geige I B" is a version, "Bass Es" a key).
+			if (!hasIn && key.length === 1 && key[0].length === 1 && (noLetters || (!allowAmbiguous && ['a', 'c', 'd'].includes(key[0])))) continue;
 			if (key.every((token, i) => tokens[from + i] === token)) {
 				return [naming.transpositions[key.join(' ')], from + key.length];
 			}
@@ -250,7 +251,7 @@ export function parsePartName(
 				}
 				// Singers aren't transposed: "Gesang B" means the bass voice, kept as a note below.
 				if (!item.transposition && item.instrument.family !== 'gesang') {
-					const [transposition, after] = readTransposition(i, false);
+					const [transposition, after] = readTransposition(i, false, false, item.instrument.family === 'streicher');
 					if (transposition) {
 						item.transposition = transposition;
 						i = after;
@@ -298,6 +299,10 @@ export function parsePartName(
 			pendingTransposition = transposition;
 			i = after;
 			continue;
+		} else if (/^[a-d]$/.test(token) && items[items.length - 1]?.instrument.family === 'streicher') {
+			// Versions of one string part, e.g. by difficulty: "Geige I A", "Geige I B".
+			const version = token.toUpperCase();
+			if (!notes.includes(version)) notes.push(version);
 		} else {
 			unknown.push(token);
 			afterUnknownWord = true;

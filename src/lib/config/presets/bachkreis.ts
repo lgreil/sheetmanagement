@@ -160,6 +160,8 @@ export const bachkreis: OrchestraConfig = {
 		partNotes: {
 			vereinfacht: 'vereinfacht',
 			easy: 'vereinfacht',
+			fortgeschritten: 'Fortgeschritten',
+			advanced: 'Fortgeschritten',
 			duplikat: 'Duplikat',
 			solo: 'Solo',
 			notizen: 'mit Notizen',
