@@ -22,6 +22,9 @@
 	let running = $state(false);
 	let problem = $state<string | null>(null);
 	let note = $state<(Note & { frequency: number }) | null>(null);
+	/** The audio didn't start: one more tap starts it. */
+	let suspended = $state(false);
+	const wakeAudio = () => context?.resume().catch(() => {});
 
 	$effect(() => {
 		const value = String(a4);
@@ -40,17 +43,32 @@
 
 	async function start() {
 		problem = null;
+		// The microphone only over https (or on localhost): on the phone through http://192.168… there is none.
+		if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+			problem = t.practice.tuner.insecure;
+			return;
+		}
+		// Made and started on the tap itself: phones keep audio silent unless it starts right on
+		// a tap, and asking for the microphone takes longer than that.
+		context = new AudioContext();
+		const resumed = context.resume().catch(() => {});
 		try {
 			stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
 		} catch {
 			problem = t.practice.tuner.noMic;
+			context.close().catch(() => {});
+			context = null;
 			return;
 		}
-		context = new AudioContext();
-		await context.resume();
+		await resumed;
 		const analyser = context.createAnalyser();
 		analyser.fftSize = 4096;
-		context.createMediaStreamSource(stream).connect(analyser);
+		const source = context.createMediaStreamSource(stream);
+		source.connect(analyser);
+		// Safari only runs a graph that ends in the speakers: through a gain of 0, so nothing is heard.
+		const mute = context.createGain();
+		mute.gain.value = 0;
+		analyser.connect(mute).connect(context.destination);
 		const buffer = new Float32Array(analyser.fftSize);
 		// Every second sample at 44.1 or 48 kHz: enough for the highest notes, a quarter of the work.
 		const step = context.sampleRate > 30_000 ? 2 : 1;
@@ -58,6 +76,9 @@
 		const rate = context.sampleRate / step;
 		running = true;
 		timer = setInterval(() => {
+			// Still not running (a phone that wanted another tap, or back from the background).
+			suspended = context?.state !== 'running';
+			if (suspended) return;
 			analyser.getFloatTimeDomainData(buffer);
 			for (let i = 0; i < samples.length; i++) samples[i] = buffer[i * step];
 			const frequency = detectPitch(samples, rate);
@@ -101,6 +122,8 @@
 				<span class="detail">
 					{t.practice.tuner.cents(note.cents)} · {verdict === 'ok' ? t.practice.tuner.inTune : verdict === 'low' ? t.practice.tuner.low : t.practice.tuner.high} · {frequency(note.frequency)} Hz
 				</span>
+			{:else if suspended}
+				<button type="button" class="btn" onclick={wakeAudio}>{t.practice.tuner.tapToListen}</button>
 			{:else}
 				<span class="detail">{t.practice.tuner.listening}</span>
 			{/if}

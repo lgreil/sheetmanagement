@@ -2,6 +2,8 @@ import { error, redirect } from '@sveltejs/kit';
 import { DEMO_ROLE_COOKIE } from '#lib/server/auth/index.ts';
 import { safeReturnPath } from '#lib/server/auth/redirect.ts';
 import { resetDemo } from '#lib/server/demo/backend.ts';
+import { seedDemoPractice } from '#lib/server/demo/practice.ts';
+import { today } from '#lib/server/members.ts';
 import { DEMO_ADMIN, DEMO_MEMBER } from '#lib/server/demo/data.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { isDemo } from '#lib/server/env.ts';
@@ -21,8 +23,15 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 	if (data.has('zuruecksetzen')) {
 		resetDemo();
 		resetDemoPolls();
-		// Both demo users are new again: the tour is offered once more.
-		await Promise.all([DEMO_ADMIN, DEMO_MEMBER].map((user) => getStore().setTour(user.email, null)));
+		// Both demo users are new again: the tour is offered once more, and their practice time and
+		// notes are the sample ones.
+		const store = getStore();
+		await Promise.all(
+			[DEMO_ADMIN, DEMO_MEMBER].map((user) =>
+				Promise.all([store.setTour(user.email, null), store.setPracticeOn(user.email, false), store.deletePractice(user.email), store.deleteMarks(user.email)])
+			)
+		);
+		await seedDemoPractice(store, today());
 		await refreshAfterWrite();
 		// The Drive changes too (renamed files, programme shortcuts): read it again from the sample data.
 		await getArchiveIndex({ force: true });

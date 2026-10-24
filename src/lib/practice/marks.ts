@@ -18,18 +18,36 @@ export const MAX_POINTS = 2000;
 
 const round = (value: number) => Math.round(value * 10_000) / 10_000;
 
-/** The strokes of one page as the viewer sent them, checked and rounded; null for anything else. */
+/** Kept on the page: a line drawn past its edge ends at the edge. */
+export const onPage = (value: number) => Math.min(1, Math.max(0, value));
+
+/**
+ * The strokes of one page as the viewer sent them, checked, on the page and rounded; null for
+ * anything that isn't strokes. A stroke with too many points keeps an even selection of them.
+ */
 export function parseStrokes(value: unknown): Stroke[] | null {
 	if (!Array.isArray(value) || value.length > MAX_STROKES) return null;
 	const strokes: Stroke[] = [];
 	for (const item of value) {
 		const { color, points } = (item ?? {}) as { color?: unknown; points?: unknown };
 		if (!MARK_COLORS.includes(color as MarkColor) || !Array.isArray(points)) return null;
-		if (points.length < 2 || points.length > MAX_POINTS * 2 || points.length % 2) return null;
-		if (!points.every((n) => typeof n === 'number' && n >= -0.05 && n <= 1.05)) return null;
-		strokes.push({ color: color as MarkColor, points: points.map(round) });
+		if (points.length < 2 || points.length % 2 || points.length > MAX_POINTS * 20) return null;
+		if (!points.every((n) => typeof n === 'number' && Number.isFinite(n))) return null;
+		strokes.push({ color: color as MarkColor, points: fewer(points as number[]).map((n) => round(onPage(n))) });
 	}
 	return strokes;
+}
+
+/** At most MAX_POINTS points, evenly picked, both ends kept. */
+function fewer(points: number[]): number[] {
+	const count = points.length / 2;
+	if (count <= MAX_POINTS) return points;
+	const kept: number[] = [];
+	for (let i = 0; i < MAX_POINTS; i++) {
+		const at = Math.round((i * (count - 1)) / (MAX_POINTS - 1));
+		kept.push(points[at * 2], points[at * 2 + 1]);
+	}
+	return kept;
 }
 
 /** Leaves out points closer than `min` to the last one kept, so a slow line isn't hundreds of them. */

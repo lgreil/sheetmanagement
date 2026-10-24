@@ -1315,8 +1315,12 @@ export const de = {
 			faster: 'Schneller',
 			tap: 'Tippen',
 			tapHint: 'Im Tempo tippen, um es zu übernehmen.',
-			beats: 'Betonung',
-			beatsOf: (beats: number) => (beats === 1 ? 'keine' : `jeder ${beats}.`),
+			tempo: 'Tempo',
+			meter: 'Takt',
+			noMeter: 'ohne Takt',
+			count: 'Zählzeit',
+			eighths: 'Achtel',
+			dotted: 'Punktierte Viertel',
 			start: 'Start',
 			stop: 'Stopp'
 		},
@@ -1326,6 +1330,8 @@ export const de = {
 			stop: 'Beenden',
 			listening: 'Spiel einen Ton …',
 			noMic: 'Kein Zugriff aufs Mikrofon. Erlaube es in den Einstellungen des Browsers.',
+			insecure: 'Das Mikrofon gibt der Browser nur über eine sichere Verbindung (https) frei.',
+			tapToListen: 'Zum Zuhören tippen',
 			reference: 'Kammerton a′',
 			/** From C, German names: B is B flat, H is B. */
 			notes: ['C', 'Cis', 'D', 'Es', 'E', 'F', 'Fis', 'G', 'Gis', 'A', 'B', 'H'] as string[],
@@ -1347,7 +1353,7 @@ export const de = {
 			done: 'Fertig',
 			saving: 'Speichert …',
 			saved: 'Gespeichert',
-			failed: 'Nicht gespeichert. Bitte die Verbindung prüfen.',
+			failed: (status: string) => (status ? `Nicht gespeichert (Fehler ${status}).` : 'Nicht gespeichert. Bitte die Verbindung prüfen.'),
 			private: 'Nur du siehst deine Notizen.',
 			/** On /profil. */
 			profileTitle: 'Notizen in deinen Noten',
