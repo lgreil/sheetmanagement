@@ -1,5 +1,6 @@
 /** The store's types (#161); see index.ts. */
 
+import type { PracticeDay } from '#lib/practice/practice.ts';
 import type { TourOutcome } from '#lib/tour/tour.ts';
 
 export interface PushDevice {
@@ -21,6 +22,7 @@ export interface SentReminder {
 }
 
 export type { TourOutcome } from '#lib/tour/tour.ts';
+export type { PracticeDay } from '#lib/practice/practice.ts';
 
 export interface Store {
 	kind: 'd1' | 'memory';
@@ -51,6 +53,16 @@ export interface Store {
 	tourOf(email: string): Promise<TourOutcome | null>;
 	/** Remembers how the tour ended; null forgets it, so it's offered again. */
 	setTour(email: string, outcome: TourOutcome | null): Promise<void>;
+
+	/** Whether a member turned practice time on; off for everyone else. Only for the member themself. */
+	practiceOn(email: string): Promise<boolean>;
+	setPracticeOn(email: string, on: boolean): Promise<void>;
+	/** Adds seconds to a member's day, up to `cap` for that day. */
+	addPractice(email: string, day: string, seconds: number, cap: number): Promise<void>;
+	/** A member's own days, oldest first. Never all members': there is no such method on purpose. */
+	practiceOf(email: string): Promise<PracticeDay[]>;
+	/** Forgets all of a member's practice time. */
+	deletePractice(email: string): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

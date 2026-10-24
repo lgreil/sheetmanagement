@@ -2,7 +2,7 @@ import { normalizeEmail } from '#lib/access/access.ts';
 import { parseVotes, submitterEmail } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
-import type { PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
+import type { PracticeDay, PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
 
 /**
  * "Meine Daten herunterladen" (#158): everything the sheet keeps about one member, row by
@@ -73,7 +73,8 @@ export function storedData(
 	devices: Pick<PushDevice, 'endpoint' | 'createdAt'>[],
 	reminders: SentReminder[],
 	mailOff = false,
-	tour: TourOutcome | null = null
+	tour: TourOutcome | null = null,
+	practice: { on: boolean; days: PracticeDay[] } = { on: false, days: [] }
 ): MyData {
 	const data: MyData = {};
 	if (devices.length) {
@@ -95,6 +96,13 @@ export function storedData(
 	if (mailOff) data[t.myData.mailReminders] = [{ [t.myData.mailState]: t.myData.mailOff }];
 	// So the tour isn't offered again; nothing is stored before it's finished or skipped.
 	if (tour) data[t.myData.tour] = [{ [t.myData.mailState]: tour === 'done' ? t.myData.tourDone : t.myData.tourSkipped }];
+	// Practice time: off unless the member turned it on, and nothing is stored before.
+	if (practice.on || practice.days.length) {
+		data[t.practice.data] = [
+			{ [t.practice.dataOn]: practice.on ? t.myData.yes : t.myData.no },
+			...practice.days.map((day) => ({ [t.practice.dataDay]: day.day, [t.practice.dataMinutes]: String(Math.round(day.seconds / 60)) }))
+		];
+	}
 	return data;
 }
 

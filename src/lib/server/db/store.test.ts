@@ -83,6 +83,36 @@ describe.each([
 		expect(await store.tourOf('b@x.org')).toBeNull();
 	});
 
+	it('keeps practice time per member and day, capped per day, and only for that member', async () => {
+		const store = make();
+		expect(await store.practiceOn('a@x.org')).toBe(false);
+		await store.setPracticeOn('a@x.org', true);
+		await store.setPracticeOn('a@x.org', true);
+		expect(await store.practiceOn('a@x.org')).toBe(true);
+		expect(await store.practiceOn('b@x.org')).toBe(false);
+
+		await store.addPractice('a@x.org', '2026-10-24', 30, 100);
+		await store.addPractice('a@x.org', '2026-10-24', 60, 100);
+		await store.addPractice('a@x.org', '2026-10-24', 60, 100);
+		await store.addPractice('a@x.org', '2026-10-20', 45, 100);
+		await store.addPractice('b@x.org', '2026-10-24', 500, 100);
+		expect(await store.practiceOf('a@x.org')).toEqual([
+			{ day: '2026-10-20', seconds: 45 },
+			{ day: '2026-10-24', seconds: 100 }
+		]);
+		// One member's time is never part of another's.
+		expect(await store.practiceOf('b@x.org')).toEqual([{ day: '2026-10-24', seconds: 100 }]);
+		expect(await store.practiceOf('c@x.org')).toEqual([]);
+
+		// Off keeps the time; deleting forgets it, only the member's own.
+		await store.setPracticeOn('a@x.org', false);
+		expect(await store.practiceOn('a@x.org')).toBe(false);
+		expect((await store.practiceOf('a@x.org')).length).toBe(2);
+		await store.deletePractice('a@x.org');
+		expect(await store.practiceOf('a@x.org')).toEqual([]);
+		expect((await store.practiceOf('b@x.org')).length).toBe(1);
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

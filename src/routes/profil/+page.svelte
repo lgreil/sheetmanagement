@@ -6,6 +6,7 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import MemberFields from '#lib/components/MemberFields.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
+	import PracticeTime from '#lib/components/PracticeTime.svelte';
 	import PushSettings from '#lib/components/PushSettings.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -138,6 +139,16 @@
 			</form>
 			{#if form && 'mailMessage' in form && form.mailMessage}<p class="msg error" role="alert">{form.mailMessage}</p>{/if}
 		</section>
+	{/if}
+
+	<!-- Practice time: opt-in, only the member's own, never shown to anyone else. -->
+	{#if data.member && data.practice}
+		<PracticeTime
+			on={data.practice.on}
+			days={data.practice.days}
+			today={data.practice.today}
+			message={form && 'practiceMessage' in form ? form.practiceMessage : undefined}
+		/>
 	{/if}
 
 	<!-- What the app keeps about the member, as one file (#158, Art. 15 GDPR). -->

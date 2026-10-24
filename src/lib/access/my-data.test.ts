@@ -91,4 +91,11 @@ describe('storedData', () => {
 		expect(storedData([], [], false, 'skipped')).toEqual({ 'Tour durch die App': [{ Stand: 'übersprungen' }] });
 		expect(storedData([], [], false, 'done')).toEqual({ 'Tour durch die App': [{ Stand: 'bis zum Ende angesehen' }] });
 	});
+
+	it('includes the member’s own practice time, nothing while it was never on', () => {
+		expect(storedData([], [], false, null, { on: false, days: [] })).toEqual({});
+		expect(storedData([], [], false, null, { on: true, days: [{ day: '2026-10-24', seconds: 1830 }] })).toEqual({
+			Probenzeit: [{ Aufzeichnen: 'ja' }, { Tag: '2026-10-24', Minuten: '31' }]
+		});
+	});
 });

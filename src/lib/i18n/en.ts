@@ -1241,6 +1241,61 @@ export const en: Texts = {
 		yes: 'yes',
 		no: 'no'
 	},
+	practice: {
+		title: 'Practice time',
+		lead: 'How long you had your instrument’s parts open, by week and month, and a tree that grows with it.',
+		private: 'Only you can see your practice time: not the admins, not other members, not in any report.',
+		how: 'It counts while a part of your instrument from “My parts” is open in the app and the page is visible. After 20 minutes without a tap, scroll or key it pauses; one opening counts for at most 3 hours, one day for at most 12. Parts opened in Drive or on paper don’t count.',
+		question: 'Would you like to record your practice time?',
+		turnOn: 'Record practice time',
+		turnOff: 'Stop recording',
+		on: 'Recording. Your parts in “My parts” now open in the app’s practice view.',
+		off: 'Off. Your time so far stays until you delete it.',
+		delete: 'Delete recorded time',
+		confirmDelete: 'Delete all your recorded practice time? This can’t be undone; the tree starts again as a seed.',
+		deleted: 'Deleted.',
+		failed: 'That didn’t work. Please try again in a moment.',
+		week: 'Week',
+		month: 'Month',
+		view: 'Period',
+		earlier: 'Earlier',
+		later: 'Later',
+		thisWeek: 'This week',
+		thisMonth: 'This month',
+		total: (duration: string) => `Total ${duration}`,
+		perDay: (day: string, duration: string) => `${day}: ${duration}`,
+		nothing: 'No practice time in this period yet.',
+		duration: (seconds: number) => {
+			const minutes = Math.floor(seconds / 60);
+			const hours = Math.floor(minutes / 60);
+			return hours ? `${hours} h${minutes % 60 ? ` ${minutes % 60} min` : ''}` : `${minutes} min`;
+		},
+		tree: {
+			title: 'Your tree',
+			seed: 'Seed',
+			seedling: 'Seedling',
+			sapling: 'Small tree',
+			tree: (age: number) => (age === 1 ? 'Tree' : `Tree, ${age} rings`),
+			all: (duration: string) => `${duration} practised in all`,
+			next: (duration: string, stage: string) => `${duration} to the next stage: ${stage}`,
+			hint: 'After 10 hours the seed becomes a seedling, after 15 more a small tree, then a bigger, older tree every 20 hours.'
+		},
+		viewer: {
+			back: 'My parts',
+			counting: 'Counts as practice time',
+			today: (duration: string) => `Today ${duration}`,
+			idle: 'Paused: tap the music to keep counting.',
+			full: 'This opening has counted 3 hours. Open the part again to keep counting.',
+			stopped: 'Practice time is off; nothing counts here any more.',
+			elsewhere: 'Open in Drive (doesn’t count)',
+			failed: 'The music couldn’t be loaded.',
+			title: (part: string, piece: string) => `${part} · ${piece}`
+		},
+		data: 'Practice time',
+		dataOn: 'Recording',
+		dataDay: 'Day',
+		dataMinutes: 'Minutes'
+	},
 	print: {
 		link: 'Print',
 		title: (concert: string) => 'Print: ' + concert,

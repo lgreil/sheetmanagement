@@ -1,4 +1,4 @@
-import { reminderKey, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -129,6 +129,29 @@ export function sqlStore(db: D1): Store {
 		async setTour(email, outcome) {
 			if (outcome) await run(`INSERT INTO tour_seen (email, outcome) VALUES (?, ?) ON CONFLICT (email) DO UPDATE SET outcome = excluded.outcome, created_at = datetime('now')`, email, outcome);
 			else await run('DELETE FROM tour_seen WHERE email = ?', email);
+		},
+
+		async practiceOn(email) {
+			return (await all('SELECT 1 FROM practice_opt_in WHERE email = ?', email)).length > 0;
+		},
+		async setPracticeOn(email, on) {
+			if (on) await run('INSERT OR IGNORE INTO practice_opt_in (email) VALUES (?)', email);
+			else await run('DELETE FROM practice_opt_in WHERE email = ?', email);
+		},
+		async addPractice(email, day, seconds, cap) {
+			await run(
+				`INSERT INTO practice_days (email, day, seconds) VALUES (?, ?, MIN(?, ?))
+				 ON CONFLICT (email, day) DO UPDATE SET seconds = MIN(seconds + excluded.seconds, ?)`,
+				email,
+				day,
+				seconds,
+				cap,
+				cap
+			);
+		},
+		practiceOf: (email) => all<PracticeDay>('SELECT day, seconds FROM practice_days WHERE email = ? ORDER BY day', email),
+		async deletePractice(email) {
+			await run('DELETE FROM practice_days WHERE email = ?', email);
 		},
 
 		async hit(key, windowMinutes) {

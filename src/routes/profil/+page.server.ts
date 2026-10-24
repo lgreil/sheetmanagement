@@ -37,6 +37,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		feed: await feed(member.email, member.feedVersion, !!list?.tables.members?.missing.includes('feedVersion'), url.origin),
 		push: await push(member.email),
 		mail: await mail(member.email),
+		practice: await practice(member.email),
 		instruments: playableInstruments(config),
 		common: commonInstruments(config),
 		orchestras: config.orchestras
@@ -71,6 +72,19 @@ async function mail(email: string) {
 		.then((optOut) => optOut.has(email))
 		.catch(() => false);
 	return { off };
+}
+
+/** Practice time: whether it's on and the member's own days; only ever loaded for the signed-in member. */
+async function practice(email: string) {
+	const store = getStore();
+	const member = normalizeEmail(email);
+	try {
+		const [on, days] = await Promise.all([store.practiceOn(member), store.practiceOf(member)]);
+		return { on, days, today: today() };
+	} catch (error) {
+		console.error('Loading practice time failed:', error);
+		return null;
+	}
 }
 
 /** A new link (a higher version) or revoking (the version made negative), on the member's own row. */
@@ -109,6 +123,33 @@ export const actions: Actions = {
 		} catch (error) {
 			console.error('Changing email reminders failed:', error);
 			return fail(503, { mailMessage: t.email.profileFailed });
+		}
+	},
+
+	/** Practice time on or off; turning it off keeps what was recorded until it's deleted. */
+	practice: async ({ locals, request }) => {
+		const user = locals.access.user;
+		if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+		const on = (await request.formData()).get('on') === 'true';
+		try {
+			await getStore().setPracticeOn(normalizeEmail(user.email), on);
+			return { practiceSaved: true };
+		} catch (error) {
+			console.error('Changing practice time failed:', error);
+			return fail(503, { practiceMessage: t.practice.failed });
+		}
+	},
+
+	/** Forgets all of the member's own practice time. */
+	practiceDelete: async ({ locals }) => {
+		const user = locals.access.user;
+		if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
+		try {
+			await getStore().deletePractice(normalizeEmail(user.email));
+			return { practiceDeleted: true };
+		} catch (error) {
+			console.error('Deleting practice time failed:', error);
+			return fail(503, { practiceMessage: t.practice.failed });
 		}
 	},
 

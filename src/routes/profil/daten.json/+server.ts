@@ -12,7 +12,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
 	const email = user.email.trim().toLowerCase();
 	const store = getStore();
-	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes, devices, reminders, optOut, tour] = await Promise.all([
+	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes, devices, reminders, optOut, tour, practiceOn, practiceDays] = await Promise.all([
 		getAccessList({ force: true }),
 		getFeedback(),
 		getSignups(),
@@ -22,7 +22,9 @@ export const GET: RequestHandler = async ({ locals }) => {
 		store.pushOf(email),
 		store.remindersOf(email),
 		store.mailOptOuts(),
-		store.tourOf(email).catch(() => null)
+		store.tourOf(email).catch(() => null),
+		store.practiceOn(email).catch(() => false),
+		store.practiceOf(email).catch(() => [])
 	]);
 	const member = access?.membersByEmail.get(email);
 	const data = myData(
@@ -41,7 +43,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		email: user.email,
 		exportedAt: new Date().toISOString(),
 		about: t.myData.explain,
-		data: { ...data, ...storedData(devices, reminders, optOut.has(email), tour) }
+		data: { ...data, ...storedData(devices, reminders, optOut.has(email), tour, { on: practiceOn, days: practiceDays }) }
 	};
 	return new Response(JSON.stringify(body, null, 2), {
 		headers: {
