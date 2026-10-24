@@ -1,6 +1,7 @@
 import { error, redirect } from '@sveltejs/kit';
 import { authConfig, SESSION_COOKIE, STATE_COOKIE, type AuthConfig } from '#lib/server/auth/index.ts';
 import { readIdToken, signIn, SignInError } from '#lib/server/auth/google.ts';
+import { connectDrive, DRIVE_SCOPE } from '#lib/server/drive-account.ts';
 import { connectMail } from '#lib/server/mail/index.ts';
 import { exchangeMailCode, GMAIL_SEND_SCOPE } from '#lib/server/mail/gmail.ts';
 import { safeReturnPath } from '#lib/server/auth/redirect.ts';
@@ -25,6 +26,10 @@ export const GET: RequestHandler = async ({ url, cookies, locals }) => {
 	if (expected.purpose === 'mail') {
 		if (!expected.state || expected.state !== url.searchParams.get('state')) redirect(303, '/status?mail=abgelaufen');
 		redirect(303, `/status?mail=${await connectMailAccount(auth, code, url.origin, locals)}`);
+	}
+	if (expected.purpose === 'drive') {
+		if (!expected.state || expected.state !== url.searchParams.get('state')) redirect(303, '/status?drive=abgelaufen');
+		redirect(303, `/status?drive=${await connectDriveAccount(auth, code, url.origin, locals)}`);
 	}
 	if (url.searchParams.get('error') || !code) redirect(303, '/anmelden?fehler=abgebrochen');
 	if (!expected.state || expected.state !== url.searchParams.get('state')) redirect(303, '/anmelden?fehler=abgelaufen');
@@ -62,6 +67,22 @@ async function connectMailAccount(auth: Extract<AuthConfig, { mode: 'on' }>, cod
 		return 'verbunden';
 	} catch (cause) {
 		console.error('Connecting the mail account failed:', cause);
+		return 'fehler';
+	}
+}
+
+/** The account new uploads belong to (#193), back from Google's consent page. Like the mail account, only an admin connects it. */
+async function connectDriveAccount(auth: Extract<AuthConfig, { mode: 'on' }>, code: string | null, origin: string, locals: App.Locals): Promise<string> {
+	if (!locals.access.rights.has('mitglieder.verwalten')) return 'recht';
+	if (!code) return 'abgebrochen';
+	try {
+		const tokens = await exchangeMailCode({ clientId: auth.clientId, clientSecret: auth.clientSecret, redirectUri: `${origin}/auth/callback` }, code);
+		if (!tokens.scope.split(' ').includes(DRIVE_SCOPE)) return 'erlaubnis';
+		const { email } = readIdToken(tokens.idToken, auth.clientId);
+		await connectDrive({ email, refreshToken: tokens.refreshToken, connectedAt: new Date().toISOString() });
+		return 'verbunden';
+	} catch (cause) {
+		console.error('Connecting the Drive account failed:', cause);
 		return 'fehler';
 	}
 }

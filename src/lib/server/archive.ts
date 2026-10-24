@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
+import { orchestraChoices, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { checkNewConcert, checkNewPiece, type ArchiveProblem, type NewConcert } from '#lib/repertoire/archive-edit.ts';
 import { requireRight } from './auth/index.ts';
 import { getLibrary } from './library.ts';
@@ -33,7 +34,8 @@ async function save(work: () => Promise<ArchiveProblem | undefined>): Promise<{ 
  */
 export async function addPastConcert(locals: App.Locals, entry: NewConcert) {
 	requireRight(locals, RIGHT);
-	const input = { ...entry, orchestra: config.orchestras.includes(entry.orchestra) ? entry.orchestra : '' };
+	// One orchestra, or several playing together ("EO, A"), as the sheet's dropdown offers them.
+	const input = { ...entry, orchestra: orchestraChoices(config.orchestras).find((choice) => sameOrchestra(choice, entry.orchestra)) ?? '' };
 
 	const refused = await save(async () => {
 		const table = await readTab('concerts');

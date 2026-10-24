@@ -170,11 +170,11 @@ describe('buildRepertoire', () => {
 		});
 		const concert = result.concertsByEvent.get('event-1')!;
 		expect(concert.orchestras).toEqual(['EO', 'A']);
-		// Rows without an orchestra are the first one's; each programme in its own order.
+		// Rows without an orchestra are played together; each programme in its own order.
 		expect(concert.program.map((entry) => [entry.orchestra, entry.pieceName])).toEqual([
 			['EO', 'Fame'],
-			['EO', 'Bolero'],
-			['A', 'Skyfall']
+			['A', 'Skyfall'],
+			['EO, A', 'Bolero']
 		]);
 		expect(result.problems).toEqual([]);
 	});

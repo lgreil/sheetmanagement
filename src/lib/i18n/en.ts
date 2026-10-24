@@ -346,8 +346,22 @@ export const en: Texts = {
 		nameTaken: (name: string) => `The music archive already has “${name}”.`,
 		tooLarge: 'The file is empty or too large.',
 		placeholderExists: (name: string) => `“${name}” is already in the folder.`,
-		noQuota: 'Google lets the app create new files only in a shared drive. Please upload the file in Drive; replacing files still works here.',
+		noQuota: 'Drive refused the file: the app’s service account has no storage of its own. Connect the music archive’s Drive account under “Status”, then new files work.',
+		needsAccount: 'New files need a connected Drive account (under “Status”); until then only existing files can be replaced.',
+		owner: (email: string) => `New files belong to ${email}.`,
 		failed: 'Drive did not answer or refused the change. Please try again later.'
+	},
+	driveAccount: {
+		connect: 'Connect Drive account for uploads',
+		disconnect: 'Disconnect Drive account',
+		confirmDisconnect: 'Disconnect the Drive account? New parts can no longer be uploaded.',
+		connected: (email: string) => `New parts are uploaded as ${email}.`,
+		lead: 'New parts are uploaded as the account that owns the music archive, because the app’s service account has no storage of its own. Google asks for access to Drive.',
+		connectedNow: 'Drive account connected.',
+		noScope: 'Google did not grant access to Drive. Please connect again and tick Drive.',
+		wrongUser: 'Only people who may manage members can connect the Drive account.',
+		connectFailed: 'Connecting did not work. Please try again.',
+		disconnectedNow: 'Drive account disconnected.'
 	},
 	pieceNotes: {
 		title: 'Notes from rehearsals',
@@ -1572,7 +1586,7 @@ export const en: Texts = {
 				position: 'No.',
 				piece: 'Piece',
 				notes: 'Note',
-				/** Which of the concert's orchestras plays it; empty: the first one named. */
+				/** Which of the concert's orchestras plays it; empty: all of them together. */
 				orchestra: 'Orchestra'
 			}
 		},

@@ -1,4 +1,5 @@
 import { config, PRESET_INSTRUMENTS, useInstrumentOverrides, type InstrumentOverride, type OrchestraConfig } from '#lib/config/index.ts';
+import { joinList } from '#lib/repertoire/lists.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
 import { ACCESS_TABS, buildAccessList, type AccessList, type AccessValues } from '#lib/access/access.ts';
 import { buildFeedback, FEEDBACK_TABS, type Feedback, type FeedbackValues } from '#lib/feedback/feedback.ts';
@@ -121,7 +122,8 @@ async function syncSheet(client: GoogleClient, spreadsheetId: string, repertoire
 	const links = linkSources(repertoire, sources.drivePieces, sources.calendarConcerts, config.timeZone);
 	const plan = planSync(repertoire, links, sources.drivePieces, sources.calendarConcerts, {
 		timeZone: config.timeZone,
-		orchestra: config.orchestras[0]
+		// A concert in the calendar is played by all orchestras together unless the sheet says otherwise.
+		orchestra: joinList(config.orchestras) || undefined
 	});
 	const { pieces, concerts } = repertoire.tables;
 	// Without its id column a tab can't be synced: the next run would add everything again.

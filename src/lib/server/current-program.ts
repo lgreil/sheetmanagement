@@ -5,7 +5,7 @@ import { GoogleApiError } from './google/client.ts';
 import { createFolder, createShortcut, getFile, listChildren, trashFile, FOLDER_MIME, SHORTCUT_MIME } from './google/drive.ts';
 import { sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { isPastConcert, programOf, type Library, type LibraryConcert } from './library.ts';
-import { driveWriteEnabled, getArchiveIndex, getGoogle, programFolderIds } from './services.ts';
+import { driveWriteEnabled, getArchiveIndex, getGoogle, programFolderIds, programInArchiveIndex } from './services.ts';
 
 /**
  * "01 | Aktuelles Programm" kept in step with a concert's programme (#60): one shortcut per
@@ -124,23 +124,34 @@ export async function syncCurrentProgram(concert: LibraryConcert, library: Libra
 		program: named(entry.name) !== undefined
 	}));
 	const plan = planShortcuts(entries, wantedPieces(concert, library, orchestra));
-	for (const piece of plan.create) await createShortcut(client, piece.name, piece.folderId, target.id);
+	// All at once: each is its own shortcut, and waiting for one before the next only adds up.
+	const created = await Promise.allSettled(plan.create.map((piece) => createShortcut(client, piece.name, piece.folderId, target.id)));
 	// In "My Drive" only a file's owner may bin it: a shortcut made by hand stays, and is named.
 	const stuck = new Set<FolderEntry>();
-	for (const entry of plan.trash) {
-		await trashFile(client, entry.id).catch((cause) => {
-			if (!(cause instanceof GoogleApiError && cause.status === 403)) throw cause;
-			stuck.add(entry);
-		});
-	}
-	// The archive index knows the programmes; read it again so pages show the new state.
-	await getArchiveIndex({ force: true }).catch((cause) => console.error('Refreshing the archive failed:', cause));
+	const trashed = await Promise.allSettled(
+		plan.trash.map((entry) =>
+			trashFile(client, entry.id).catch((cause) => {
+				if (!(cause instanceof GoogleApiError && cause.status === 403)) throw cause;
+				stuck.add(entry);
+			})
+		)
+	);
+	const added = plan.create.filter((_, i) => created[i].status === 'fulfilled');
+	const removed = plan.trash.filter((entry, i) => trashed[i].status === 'fulfilled' && !stuck.has(entry));
+	// The archive index knows the programmes: the change is written into it, not crawled again.
+	// Only for a "Programm …" folder; the index names a plain current-programme folder its own way.
+	const program = named(target.folderName);
+	const unlinked = removed.flatMap((entry) => (entry.targetId ? [entry.targetId] : []));
+	const patched = !!program && (await programInArchiveIndex(program, added.map((piece) => piece.folderId), unlinked).catch(() => false));
+	if (!patched) await getArchiveIndex({ force: true }).catch((cause) => console.error('Refreshing the archive failed:', cause));
+	const failed = [...created, ...trashed].find((result) => result.status === 'rejected');
+	if (failed) throw failed.reason;
 	return {
 		orchestra,
 		folderName: target.folderName,
 		folderUrl: folderUrl(target.id),
-		added: plan.create.map((piece) => piece.name),
-		removed: plan.trash.filter((entry) => !stuck.has(entry)).map((entry) => entry.name),
+		added: added.map((piece) => piece.name),
+		removed: removed.map((entry) => entry.name),
 		stuck: [...stuck].map((entry) => entry.name)
 	};
 }

@@ -10,20 +10,22 @@ export const GET: RequestHandler = ({ url, cookies, locals }) => {
 	const auth = authConfig();
 	if (auth.mode === 'off') error(404, t.messages.signInOff);
 	if (auth.problems.length) error(503, auth.problems.join(' '));
-	// ?zweck=mail: an admin connects the account that sends email (#123), from /status.
-	const mail = url.searchParams.get('zweck') === 'mail';
-	if (mail) requireRight(locals, 'mitglieder.verwalten');
+	// ?zweck=mail: an admin connects the account that sends email (#123), from /status;
+	// ?zweck=drive: the account new uploads belong to (#193).
+	const zweck = url.searchParams.get('zweck');
+	const purpose = zweck === 'mail' || zweck === 'drive' ? zweck : undefined;
+	if (purpose) requireRight(locals, 'mitglieder.verwalten');
 
 	// The state ties Google's answer to this browser (CSRF protection for the callback).
 	const state = randomToken();
-	const returnTo = mail ? '/status' : safeReturnPath(url.searchParams.get('weiter'));
-	cookies.set(STATE_COOKIE, JSON.stringify({ state, returnTo, ...(mail ? { purpose: 'mail' } : {}) }), {
+	const returnTo = purpose ? '/status' : safeReturnPath(url.searchParams.get('weiter'));
+	cookies.set(STATE_COOKIE, JSON.stringify({ state, returnTo, ...(purpose ? { purpose } : {}) }), {
 		path: '/auth',
 		httpOnly: true,
 		sameSite: 'lax',
 		maxAge: 10 * 60
 	});
-	redirect(303, authorizationUrl({ clientId: auth.clientId, redirectUri: `${url.origin}/auth/callback` }, state, { sendMail: mail }), {
+	redirect(303, authorizationUrl({ clientId: auth.clientId, redirectUri: `${url.origin}/auth/callback` }, state, { purpose }), {
 		// The only external address this app sends anyone to.
 		external: [GOOGLE_SIGN_IN_ORIGIN]
 	});
