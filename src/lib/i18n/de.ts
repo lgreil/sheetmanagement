@@ -254,6 +254,7 @@ export const de = {
 				time: 'Bitte die Uhrzeit als SS:MM angeben; ein Ende nur mit Beginn.',
 				end: 'Das Ende muss nach dem Beginn liegen.',
 				concert: 'Das Konzert gibt es im Kalender nicht (mehr); bitte eines aus der Liste wählen.',
+				orchestra: 'Bitte die Orchester aus der Liste wählen.',
 				'too-long': 'Das ist zu lang: Titel bis 120, Ort bis 200, Notiz bis 2000 Zeichen.'
 			},
 			errors: {

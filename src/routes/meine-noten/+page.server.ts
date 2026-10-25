@@ -1,13 +1,14 @@
 import { fail } from '@sveltejs/kit';
 import { currentStatus, normalizeEmail, playsIn, type Member } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
+import { splitList } from '#lib/repertoire/lists.ts';
 import { t } from '#lib/i18n/index.ts';
 import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import { partGlyph } from '#lib/music/instrument-glyph.ts';
 import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
 import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
-import { getLibrary, isPastConcert, namedItem, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { getLibrary, isPastConcert, namedItem, orchestraOf, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { getAccessList, getMusicConfig, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { appliesTo, forConcert, notesOf } from '#lib/notes/piece-notes.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
@@ -60,13 +61,16 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
 async function rehearsalOf(library: Library, id: string | null, member: Member | undefined) {
 	const event = id && library.schedule.ok ? library.schedule.byId.get(id) : undefined;
 	if (!event || (event.type !== 'probe' && event.type !== 'generalprobe')) return null;
-	const program = programFor(event.concertId ? library.concertsById.get(event.concertId) : undefined, member);
+	const concert = event.concertId ? library.concertsById.get(event.concertId) : undefined;
+	// A rehearsal of one orchestra ("Probe A") rehearses its programme and what it plays together with others.
+	const own = concert && concert.orchestras.length > 1 ? orchestraOf(library, event) : undefined;
+	const program = programFor(concert, member).filter((item) => !own || playsIn({ orchestras: splitList(own) }, item.orchestra));
 	const planned = ((await getRehearsalPlan())?.byEvent.get(event.id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
 	return {
 		id: event.id,
 		title: event.displayTitle,
 		label: [event.date.long, event.date.time].filter(Boolean).join(' · '),
-		concert: event.concertId ? library.concertsById.get(event.concertId) : undefined,
+		concert,
 		items: planned.length ? plannedInProgramOrder(program, planned) : program,
 		note: planned.length ? undefined : program.length ? t.myParts.wholeProgram : undefined
 	};

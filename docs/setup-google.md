@@ -241,7 +241,7 @@ The privacy contact (`LEGAL_EMAIL`) is passed to the push services as the app's 
 
 ### Database (D1)
 
-The binding `DB` in `wrangler.toml`: where notifications, the reminder log and date polls are kept. The deploy creates it on its own; to keep it in the EU, create it first with `pnpm wrangler d1 create noten --jurisdiction eu` and add its `database_id` to `wrangler.toml` (see "Date polls" in step 9). The deploy workflow applies the tables from `migrations/`; `/status` shows the version.
+The binding `DB` in `wrangler.toml`: where notifications, the reminder log, date polls and members' own practice time are kept. The deploy creates it on its own; to keep it in the EU, create it first with `pnpm wrangler d1 create noten --jurisdiction eu` and add its `database_id` to `wrangler.toml` (see "Date polls" in step 9). The deploy workflow applies the tables from `migrations/`; `/status` shows the version.
 
 ### Privacy contact
 

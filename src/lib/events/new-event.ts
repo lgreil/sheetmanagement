@@ -1,17 +1,21 @@
 import type { EventKeywords } from '#lib/config/index.ts';
 import type { CalendarEvent } from '#lib/server/google/calendar.ts';
+import { joinList } from '#lib/repertoire/lists.ts';
+import { orchestraChoices, rowOrchestra, sameOrchestra, titleOrchestra } from '#lib/repertoire/orchestras.ts';
 import { buildSchedule, classify, significantWords } from './schedule.ts';
 
 /**
  * A concert or rehearsal entered on /kalender, as Google Calendar's events.insert expects it.
  * The app knows an event's type and its concert only from the title (see schedule.ts), so the
- * title is made to say both: "Probe Herbstkonzert" prepares for the Herbstkonzert.
+ * title is made to say both: "Probe Herbstkonzert" prepares for the Herbstkonzert. A rehearsal
+ * of only some of the orchestras names them too, "Probe Herbstkonzert (A)", so everyone looking
+ * at the calendar sees it; all of them together, the usual case, needs no name.
  */
 
 export const NEW_EVENT_TYPES = ['konzert', 'probe', 'generalprobe'] as const;
 export type NewEventType = (typeof NEW_EVENT_TYPES)[number];
 
-export type NewEventProblem = 'type' | 'title' | 'date' | 'too-early' | 'too-late' | 'time' | 'end' | 'concert' | 'too-long';
+export type NewEventProblem = 'type' | 'title' | 'date' | 'too-early' | 'too-late' | 'time' | 'end' | 'concert' | 'orchestra' | 'too-long';
 
 /** The request body for events.insert: all-day with dates, otherwise local times in the orchestra's zone. */
 export interface NewEventBody {
@@ -27,6 +31,8 @@ export interface NewEventContext {
 	timeZone: string;
 	/** Concerts a rehearsal may prepare for: the upcoming ones from the calendar. */
 	concerts: Pick<CalendarEvent, 'id' | 'title' | 'start' | 'end' | 'allDay'>[];
+	/** The orchestras sharing the calendar (config.orchestras). */
+	orchestras?: string[];
 	/** The first and last day the app loads from the calendar: a date outside would never show. */
 	range?: { first: string; last: string };
 }
@@ -46,8 +52,9 @@ export function newEventTitle(
 	type: NewEventType,
 	title: string,
 	date: string,
-	{ keywords, concerts }: Pick<NewEventContext, 'keywords' | 'concerts'>,
-	concert?: NewEventContext['concerts'][number]
+	{ keywords, concerts, orchestras = [] }: Pick<NewEventContext, 'keywords' | 'concerts' | 'orchestras'>,
+	concert?: NewEventContext['concerts'][number],
+	orchestra?: string
 ): string {
 	// "Generalprobe" for a Generalprobe, "Probe" rather than "Stimmprobe" for a rehearsal.
 	const word = keywords[type][0] ?? type;
@@ -64,6 +71,9 @@ export function newEventTitle(
 			concert.id;
 		if (!named || !linked) result = `${result} ${concert.title.replace(/\(\s*\?\s*\)/, '').replace(/\s+/g, ' ').trim()}`;
 	}
+	// Some of the orchestras, unless the title already names just them.
+	const some = orchestra && type !== 'konzert' && !sameOrchestra(orchestra, joinList(orchestras));
+	if (some && !sameOrchestra(titleOrchestra(result, orchestras), orchestra)) result = `${result} (${orchestra})`;
 	return result;
 }
 
@@ -78,6 +88,9 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 	const location = text(form, 'location');
 	const description = String(form.get('description') ?? '').trim();
 	const concertId = text(form, 'concert');
+	const orchestras = context.orchestras ?? [];
+	// Empty is all of them together.
+	const orchestra = type === 'konzert' ? undefined : rowOrchestra(text(form, 'orchestra'), orchestras);
 
 	if (type === 'konzert' && !title) return { error: 'title' };
 	if (title.length > 120 || location.length > 200 || description.length > 2000) return { error: 'too-long' };
@@ -89,8 +102,9 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 
 	const concert = concertId ? context.concerts.find((candidate) => candidate.id === concertId) : undefined;
 	if (concertId && (!concert || type === 'konzert')) return { error: 'concert' };
+	if (orchestra && ![...orchestraChoices(orchestras), joinList(orchestras)].some((choice) => sameOrchestra(choice, orchestra))) return { error: 'orchestra' };
 
-	const summary = newEventTitle(type, title, date, context, concert) +(form.get('tentative') ? ' (?)' : '');
+	const summary = newEventTitle(type, title, date, context, concert, orchestra) + (form.get('tentative') ? ' (?)' : '');
 	const until = end || clock(Math.min(minutes(start) + DEFAULT_HOURS[type] * 60, 23 * 60 + 59));
 	return {
 		event: {

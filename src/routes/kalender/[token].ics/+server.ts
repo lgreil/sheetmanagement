@@ -7,7 +7,7 @@ import { buildCalendar } from '#lib/events/ical.ts';
 import { linkValid } from '#lib/server/auth/links.ts';
 import { authConfig } from '#lib/server/auth/index.ts';
 import { readFeedToken } from '#lib/server/auth/feed.ts';
-import { getLibrary, namedItem } from '#lib/server/library.ts';
+import { getLibrary, namedItem, orchestraOf } from '#lib/server/library.ts';
 import { getAccessList, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import type { RequestHandler } from './$types';
 
@@ -30,15 +30,11 @@ export const GET: RequestHandler = async ({ params, url }) => {
 	if (!member || !linkValid(member.feedVersion, token.version)) error(404, t.messages.noCalendar);
 	if (!library.schedule.ok) error(503, t.messages.calendarUnavailable);
 
-	const concertOf = (id: string) => {
-		const event = library.schedule.ok ? library.schedule.byId.get(id) : undefined;
-		return library.concertsById.get(event?.type === 'konzert' ? id : (event?.concertId ?? ''));
-	};
 	const answers = new Map([...(signups?.byEvent ?? [])].map(([id, list]) => [id, list.find((signup) => signup.email === member.email)?.answer]));
 	const events = feedEvents({
 		events: library.schedule.events,
-		// A rehearsal belongs to the orchestra of its concert; dates without one are for everyone.
-		includes: (event) => playsIn(member, concertOf(event.id)?.orchestra),
+		// A rehearsal is for the orchestras its title names, else its concert's; dates without one are for everyone.
+		includes: (event) => playsIn(member, orchestraOf(library, event)),
 		pieces: (event) =>
 			event.type === 'konzert'
 				? (library.concertsById.get(event.id)?.program ?? []).map((item) => item.title)

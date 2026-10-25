@@ -32,6 +32,32 @@ describe('newEventTitle', () => {
 	});
 });
 
+describe('a rehearsal of some of the orchestras', () => {
+	const shared: NewEventContext = { ...context, orchestras: ['EO', 'A', 'B'] };
+
+	it('names them in the title, so the calendar says it too', () => {
+		expect(newEventTitle('probe', '', '2026-11-01', shared, herbst, 'A')).toBe('Probe Herbstkonzert (A)');
+		expect(newEventTitle('generalprobe', '', '2026-11-14', shared, undefined, 'EO, A')).toBe('Generalprobe (EO, A)');
+		expect(newEventTitle('probe', 'Probe A', '2026-11-01', shared, undefined, 'A')).toBe('Probe A');
+	});
+
+	it('names none when all play together', () => {
+		expect(newEventTitle('probe', '', '2026-11-01', shared, herbst, 'EO, A, B')).toBe('Probe Herbstkonzert');
+		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-01', concert: 'h', orchestra: '' }), shared)).toMatchObject({ event: { summary: 'Probe Herbstkonzert' } });
+	});
+
+	it('takes the choice from the form, and refuses an unknown orchestra', () => {
+		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-01', concert: 'h', orchestra: 'a', tentative: 'on' }), shared)).toMatchObject({
+			event: { summary: 'Probe Herbstkonzert (A) (?)' }
+		});
+		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-01', orchestra: 'C' }), shared)).toEqual({ error: 'orchestra' });
+		// A concert's orchestras go into the sheet, not its title.
+		expect(newEventFromForm(form({ type: 'konzert', title: 'Frühlingskonzert', date: '2027-04-18', orchestra: 'A' }), shared)).toMatchObject({
+			event: { summary: 'Frühlingskonzert' }
+		});
+	});
+});
+
 describe('newEventFromForm', () => {
 	it('makes a timed concert in the orchestra’s time zone', () => {
 		expect(newEventFromForm(form({ type: 'konzert', title: 'Frühlingskonzert', date: '2027-04-18', start: '17:00', end: '19:00', location: 'Aula' }), context)).toEqual({

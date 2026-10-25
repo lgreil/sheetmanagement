@@ -8,7 +8,7 @@ import { formatInstrument } from '#lib/music/my-parts.ts';
 import { sectionOf } from '#lib/signups/signups.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { isOn, requireFeature } from '#lib/server/env.ts';
-import { getLibrary, type Library } from '#lib/server/library.ts';
+import { getLibrary, orchestraOf, type Library } from '#lib/server/library.ts';
 import { getAccessList, getAttendance, getSignups } from '#lib/server/repertoire.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, SheetLayoutError, updateRecords, withSheetLock } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
@@ -29,13 +29,13 @@ const isRehearsal = (event: ShownEvent) => event.type === 'probe' || event.type 
 const label = (event: ShownEvent) => `${event.displayTitle} · ${event.date.long}`;
 
 /**
- * Who can be ticked off: active members of the concert's orchestra, plus anyone who answered
+ * Who can be ticked off: active members of the date's orchestra (see orchestraOf), plus anyone who answered
  * or already has a row, so nobody recorded goes unseen. In instrument order, then by name.
  * Nobody ticked yet: the sign-ups' "Zusage" are the starting point.
  */
 async function people(library: Library, event: ShownEvent) {
 	const [access, signups, attendance] = await Promise.all([getAccessList(), isOn('signups') ? getSignups() : null, getAttendance()]);
-	const orchestra = event.concertId ? library.concertsById.get(event.concertId)?.orchestra : undefined;
+	const orchestra = orchestraOf(library, event);
 	const members = access?.members ?? [];
 	const byEmail = new Map(members.map((member) => [member.email, member]));
 	const answers = new Map((signups?.byEvent.get(event.id) ?? []).map((signup) => [signup.email, signup]));

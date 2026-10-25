@@ -74,6 +74,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Practice time',
+				paragraphs: [
+					"On your profile you can turn on “Record practice time”. The app then counts how long a part of your instrument from “My parts” is open and visible in the app, and stores your email address, the date and the seconds per day in the database at Cloudflare (D1), not in the Google Sheet. Which part you had open isn't part of the time.",
+					'What you draw in a part while practising is stored with your email address, the part and the page in the same database, so it is there when you open the part again.',
+					'Only you can see either: not the admins, not other members, not in any report. The legal basis is your consent (Art. 6(1)(a) GDPR). “Stop recording” stops counting; “Delete recorded time” and “Delete all notes” on your profile delete everything at once.'
+				]
+			},
+			{
 				heading: 'Attendance at rehearsals',
 				paragraphs: [
 					"After a rehearsal, people with the right “Take attendance” (e.g. conductor and organisers) can enter who was there. Only the date, name, email address and whether you were present are saved, in the “Attendance” tab of the orchestra's Google sheet. From this the app shows how many rehearsals before a concert you attended.",
