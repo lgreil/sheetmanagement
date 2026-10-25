@@ -10,8 +10,6 @@
 	 * started. The drone holds a note with overtones, at the same concert A. The concert A and
 	 * the drone's note are remembered in this browser (orchestras often tune to 442 or 443 Hz).
 	 */
-	let { compact = false }: { compact?: boolean } = $props();
-
 	const KEY = 'tuner';
 	function remembered(): { a4: number; pitchClass: number; octave: number; fifth: boolean; volume: number } {
 		const fallback = { a4: 440, pitchClass: 9, octave: 3, fifth: false, volume: 0.6 };
@@ -130,6 +128,7 @@
 	let fifth = $state(start.fifth);
 	let volume = $state(start.volume);
 	let droning = $state(false);
+	let droneOpen = $state(false);
 	let drone: { context: AudioContext; master: GainNode; voices: { oscillators: OscillatorNode[]; ratio: number }[] } | null = null;
 	const droneFrequency = $derived(noteFrequency(pitchClass, octave, a4));
 	/** The keyboard: the white keys' pitches, and each black key with the white one it follows. */
@@ -224,7 +223,8 @@
 	});
 </script>
 
-<div class="tuner" class:compact>
+<!-- Narrow beside the page, flat above or below it: laid out by the panel's width. -->
+<div class="tuner">
 	<!-- The device: always there, a dash before the first note, the last one held in a pause. -->
 	<div class="reading" class:ok={verdict === 'ok' && !stale} class:stale class:idle={!note} role="status">
 		<TunerGauge cents={note?.cents ?? null} verdict={stale ? null : verdict} quiet={!note || stale} />
@@ -262,8 +262,9 @@
 		</label>
 	</div>
 
-	<section class="drone" aria-label={t.practice.drone.title}>
-		<h3>{t.practice.drone.title}</h3>
+	<!-- Folded away until wanted. -->
+	<details class="drone" bind:open={droneOpen}>
+		<summary>{t.practice.drone.title}{#if droning}<span class="sounding-dot" aria-hidden="true"></span>{/if}</summary>
 		<!-- One octave of a keyboard, the note to hold pressed down. -->
 		<div class="keyboard" role="group" aria-label={t.practice.drone.note}>
 			{#each WHITE as key (key)}
@@ -304,13 +305,40 @@
 				{droning ? t.practice.drone.stop : t.practice.drone.play(`${t.practice.tuner.notes[pitchClass]}${octave}`)}
 			</button>
 		</div>
-	</section>
+	</details>
 </div>
 
 <style>
 	.tuner {
 		display: grid;
+		grid-template-areas:
+			'device'
+			'controls'
+			'drone';
 		gap: var(--space-3);
+	}
+
+	.reading {
+		grid-area: device;
+	}
+
+	.tuner > .row {
+		grid-area: controls;
+	}
+
+	.drone {
+		grid-area: drone;
+	}
+
+	/* Flat, above or below the page: the device beside its controls. */
+	@container (min-width: 520px) {
+		.tuner {
+			grid-template-columns: minmax(220px, 280px) 1fr;
+			grid-template-areas:
+				'device controls'
+				'device drone';
+			align-items: start;
+		}
 	}
 
 	/* A desk tuner: dark face, light scale, a lit window for the note. */
@@ -318,8 +346,8 @@
 		display: grid;
 		justify-items: center;
 		gap: var(--space-2);
-		padding: var(--space-3) var(--space-3) var(--space-4);
-		border-radius: 22px;
+		padding: var(--space-2) var(--space-2) var(--space-3);
+		border-radius: 18px;
 		background: radial-gradient(120% 90% at 50% 0%, #2f363d, #171b1f 70%);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / 0.08),
@@ -329,12 +357,12 @@
 	}
 
 	.reading :global(.gauge) {
-		max-width: 340px;
+		max-width: 240px;
 	}
 
 	.display {
 		display: grid;
-		grid-template-columns: 16px minmax(5.5rem, auto) 16px;
+		grid-template-columns: 12px minmax(4.5rem, auto) 12px;
 		align-items: center;
 		gap: var(--space-3);
 		margin-top: calc(-1 * var(--space-2));
@@ -347,7 +375,7 @@
 	.name {
 		color: #e9eef2;
 		font-family: var(--font-display);
-		font-size: 2.75rem;
+		font-size: 2rem;
 		line-height: 1.1;
 		text-align: center;
 		transition:
@@ -372,8 +400,8 @@
 	}
 
 	.led {
-		width: 12px;
-		height: 12px;
+		width: 10px;
+		height: 10px;
 		border-radius: 50%;
 		background: #3a2420;
 		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.6);
@@ -390,7 +418,7 @@
 	.detail {
 		min-height: 1.5em;
 		color: #aab3bb;
-		font-size: 0.875rem;
+		font-size: 0.75rem;
 		text-align: center;
 		font-variant-numeric: tabular-nums;
 	}
@@ -432,19 +460,45 @@
 	}
 
 	.a4 input {
-		width: 5.5em;
+		width: 4.5em;
+	}
+
+	.row {
+		gap: var(--space-2);
 	}
 
 	.drone {
-		display: grid;
-		gap: var(--space-3);
-		padding-top: var(--space-3);
+		padding-top: var(--space-2);
 		border-top: 1px solid var(--hairline);
 	}
 
-	.drone h3 {
-		margin: 0;
-		font-size: 0.9375rem;
+	.drone[open] {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	.drone summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 32px;
+		font-size: 0.875rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.sounding-dot {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background: var(--accent);
+		animation: pulse 1.6s ease-in-out infinite;
+	}
+
+	@keyframes pulse {
+		50% {
+			opacity: 0.35;
+		}
 	}
 
 	/* One octave: seven white keys, five black ones over their gaps. */
@@ -452,8 +506,8 @@
 		position: relative;
 		display: grid;
 		grid-template-columns: repeat(7, 1fr);
-		height: 112px;
-		padding: 6px 6px 8px;
+		height: 80px;
+		padding: 5px 5px 6px;
 		border-radius: 10px;
 		background: linear-gradient(#2a1d14, #3b291c);
 		box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5);
@@ -534,22 +588,4 @@
 		accent-color: var(--accent);
 	}
 
-	/* In full screen's small panel. */
-	.compact .reading {
-		gap: var(--space-1);
-		padding: var(--space-2) var(--space-2) var(--space-3);
-	}
-
-	.compact .name {
-		font-size: 2rem;
-	}
-
-	.compact .drone {
-		gap: var(--space-2);
-		padding-top: var(--space-2);
-	}
-
-	.compact .keyboard {
-		height: 84px;
-	}
 </style>

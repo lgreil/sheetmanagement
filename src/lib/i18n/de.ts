@@ -1344,14 +1344,14 @@ export const de = {
 			off: 'Mikrofon ist aus.'
 		},
 		drone: {
-			title: 'Bordunton',
+			title: 'Liegeton',
 			note: 'Ton',
 			octave: 'Oktave',
 			fifth: 'mit Quinte',
 			volume: 'Lautstärke',
 			heard: 'Gehörten Ton nehmen',
 			play: (note: string) => `${note} spielen`,
-			stop: 'Bordun aus'
+			stop: 'Liegeton aus'
 		},
 		marks: {
 			title: 'Notizen',

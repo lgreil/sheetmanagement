@@ -14,14 +14,24 @@
 	let {
 		file,
 		marks: saved,
-		tools
+		tools = [],
+		panel
 	}: {
 		file: string;
 		marks: Record<number, Stroke[]>;
-		/** The recording, metronome and tuner: above the page, in full screen a small panel over it. */
-		tools?: Snippet<[compact: boolean]>;
+		/** The recording, metronome and tuner: one button each in the toolbar. */
+		tools?: { value: string; label: string }[];
+		/** One tool's panel, shown beside the page where there's room (see `dock`). */
+		panel?: Snippet<[tool: string]>;
 	} = $props();
-	let toolsOpen = $state(false);
+
+	/** The tool shown; tools once opened stay mounted, so a metronome or drone keeps going. */
+	let active = $state<string | null>(null);
+	let opened = $state<string[]>([]);
+	function chooseTool(tool: string) {
+		active = active === tool ? null : tool;
+		if (active && !opened.includes(active)) opened = [...opened, active];
+	}
 
 	let score = $state<OpenScore | null>(null);
 	let pages = $state(0);
@@ -333,6 +343,35 @@
 		};
 	});
 
+	/**
+	 * Where the tools go, so they never cover the music and the page never shrinks for them:
+	 * beside the page where its margin has room (moving the page aside, at the same size, when
+	 * only both margins together do), below it where a page narrower than the screen leaves room,
+	 * else above it in the page's flow, and only in full screen with no room at all over its foot.
+	 */
+	const PANEL = 260;
+	const GAP = 12;
+	const dock = $derived.by(() => {
+		const width = size?.width ?? stageWidth;
+		const height = size?.height ?? stageHeight;
+		const free = stageWidth - width;
+		// In full screen the floating controls sit in the top right corner.
+		const top = full ? 64 : 0;
+		if (fit === 'page' && free >= PANEL + GAP) {
+			const left = Math.max(0, Math.min((stageWidth - width) / 2, stageWidth - PANEL - GAP - width));
+			return { place: 'side', page: left, left: `${left + width + GAP}px`, top: `${top}px`, width: `${Math.min(PANEL + 40, stageWidth - left - width - GAP)}px`, height: `calc(100% - ${top}px)` };
+		}
+		const below = stageHeight - height - GAP;
+		if (fit === 'page' && size && below >= 150) {
+			const left = (stageWidth - width) / 2;
+			return { place: 'below', page: left, left: `${left}px`, top: `${height + GAP}px`, width: `${width}px`, height: `${below}px` };
+		}
+		const centred = Math.max(0, (stageWidth - width) / 2);
+		return { place: full ? 'over' : 'above', page: centred, left: undefined, top: undefined, width: undefined, height: undefined };
+	});
+	/** The page's left edge in the stage: centred, or moved aside for the tools. */
+	const pageLeft = $derived(active ? dock.page : Math.max(0, ((size ? stageWidth - size.width : 0) / 2)));
+
 	const STROKE: Record<MarkColor, string> = { graphite: 'var(--mark-graphite)', red: 'var(--mark-red)', blue: 'var(--mark-blue)' };
 	const strokeWidth = $derived(Math.max(1.5, (size?.width ?? 600) * 0.0032));
 </script>
@@ -355,11 +394,11 @@
 			<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
 				<Icon name="edit" size={15} />{t.practice.marks.pen}
 			</button>
-			{#if full && tools}
-				<button type="button" class="tool text" class:on={toolsOpen} aria-expanded={toolsOpen} onclick={() => (toolsOpen = !toolsOpen)}>
-					{t.practice.viewer.tools}
+			{#each tools as each (each.value)}
+				<button type="button" class="tool text" class:on={active === each.value} aria-expanded={active === each.value} onclick={() => chooseTool(each.value)}>
+					{each.label}
 				</button>
-			{/if}
+			{/each}
 			<button type="button" class="tool text" onclick={() => (full ? leaveFull() : enterFull())} aria-pressed={full}>
 				{full ? t.practice.viewer.exitFullscreen : t.practice.viewer.fullscreen}
 			</button>
@@ -387,13 +426,14 @@
 	{/if}
 	</div>
 
-	<!-- Rendered once, so a running metronome or drone carries on into and out of full screen. -->
-	{#if tools}
-		<div class="tools-area" class:open={toolsOpen}>
-			{#if full}
-				<button type="button" class="close" onclick={() => (toolsOpen = false)} aria-label={t.practice.viewer.closeTools}>×</button>
-			{/if}
-			{@render tools(full)}
+	<div class="area" class:docked={!!active}>
+	<!-- The tools: rendered once, so a running metronome or drone carries on when the panel moves or closes. -->
+	{#if panel && opened.length}
+		<div class="dock {dock.place}" hidden={!active} style:top={dock.top} style:left={dock.left} style:width={dock.width} style:max-height={dock.height}>
+			<button type="button" class="close" onclick={() => (active = null)} aria-label={t.practice.viewer.closeTools}>×</button>
+			{#each opened as tool (tool)}
+				<div class="tool-panel" hidden={active !== tool}>{@render panel(tool)}</div>
+			{/each}
 		</div>
 	{/if}
 
@@ -405,7 +445,13 @@
 		{:else if !score}
 			<p class="note">{t.viewer.loading}</p>
 		{/if}
-		<div class="sheet" style:width={size ? `${size.width}px` : undefined} style:height={size ? `${size.height}px` : undefined} hidden={!score || failed}>
+		<div
+			class="sheet"
+			style:width={size ? `${size.width}px` : undefined}
+			style:height={size ? `${size.height}px` : undefined}
+			style:margin-left={size ? `${pageLeft}px` : undefined}
+			hidden={!score || failed}
+		>
 			<div class="slot" bind:this={slot}></div>
 			{#if size}
 				<svg
@@ -426,6 +472,7 @@
 				</svg>
 			{/if}
 		</div>
+	</div>
 	</div>
 	{#if !full}<p class="hint">{t.practice.viewer.turnHint}</p>{/if}
 </div>
@@ -475,38 +522,67 @@
 		justify-content: flex-end;
 	}
 
-	/* In full screen: a small panel in the bottom-left corner, open on request. */
-	.full .tools-area {
-		position: absolute;
-		bottom: var(--space-2);
-		left: var(--space-2);
-		z-index: 3;
-		display: none;
-		width: min(380px, calc(100% - 2 * var(--space-2)));
-		max-height: calc(100% - 96px);
-		overflow-y: auto;
-		padding: var(--space-3);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-		box-shadow: var(--shadow-raised);
+	/* The page's area: the stage, and the tools where there's room for them. */
+	.area {
+		position: relative;
+		display: flex;
+		flex-direction: column;
 	}
 
-	.full .tools-area.open {
-		display: block;
+	.full .area {
+		position: absolute;
+		inset: 0;
+	}
+
+	.dock {
+		position: absolute;
+		z-index: 3;
+		overflow-y: auto;
+		padding: var(--space-3);
+		border: 1px solid var(--hairline);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		container-type: inline-size;
+		overscroll-behavior: contain;
+	}
+
+	.dock[hidden],
+	.tool-panel[hidden] {
+		display: none;
+	}
+
+	/* No room beside or below: above the page, which keeps its size and moves down. */
+	.dock.above {
+		position: static;
+		order: -1;
+		max-width: 720px;
+		margin-bottom: var(--space-2);
+	}
+
+	/* Full screen without room anywhere: over the page's foot, small, closed with ×. */
+	.dock.over {
+		top: auto;
+		right: var(--space-2);
+		bottom: var(--space-2);
+		left: var(--space-2);
+		max-height: 46%;
+		box-shadow: var(--shadow-raised);
 	}
 
 	.close {
 		position: sticky;
 		top: 0;
+		z-index: 1;
 		float: right;
-		width: 32px;
-		height: 32px;
-		margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-1)) 0 var(--space-2);
+		width: 30px;
+		height: 30px;
+		margin: calc(-1 * var(--space-2)) calc(-1 * var(--space-2)) 0 var(--space-1);
 		border: 0;
 		border-radius: 50%;
 		background: color-mix(in oklab, var(--text) 8%, transparent);
-		color: var(--text);
-		font-size: 1.25rem;
+		color: var(--text-muted);
+		font-size: 1.125rem;
 		line-height: 1;
 		cursor: pointer;
 	}
@@ -592,8 +668,7 @@
 	}
 
 	.stage {
-		display: grid;
-		place-items: start center;
+		display: block;
 		height: calc(100dvh - 220px);
 		min-height: 360px;
 		overflow: hidden;
@@ -603,9 +678,7 @@
 
 	/* The page as tall as the screen. */
 	.full .stage {
-		position: absolute;
-		inset: 0;
-		height: auto;
+		height: 100%;
 		min-height: 0;
 	}
 
@@ -656,6 +729,20 @@
 	@media (max-width: 560px) {
 		.swatch .label {
 			display: none;
+		}
+
+		/* A phone: the toolbar's buttons a little smaller, so it stays one or two slim rows. */
+		.tool,
+		.swatch {
+			min-width: 34px;
+			height: 34px;
+			padding: 0 var(--space-2);
+			font-size: 0.8125rem;
+		}
+
+		.pages {
+			min-width: 6em;
+			font-size: 0.8125rem;
 		}
 	}
 </style>

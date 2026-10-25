@@ -127,11 +127,12 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Mikrofon einschalten' })).toBeVisible();
 	await expect(reading).toContainText('zuletzt gehört');
 
-	// The drone, on the note heard last.
+	// The drone, folded away until opened, on the note heard last.
+	await page.getByText('Liegeton', { exact: true }).click();
 	await page.getByRole('button', { name: 'Gehörten Ton nehmen' }).click();
 	await page.getByRole('button', { name: 'A4 spielen' }).click();
-	await expect(page.getByRole('button', { name: 'Bordun aus' })).toBeVisible();
-	await page.getByRole('button', { name: 'Bordun aus' }).click();
+	await expect(page.getByRole('button', { name: 'Liegeton aus' })).toBeVisible();
+	await page.getByRole('button', { name: 'Liegeton aus' }).click();
 	await expect(page.getByRole('button', { name: 'A4 spielen' })).toBeVisible();
 });
 
@@ -150,11 +151,11 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await page.getByRole('button', { name: 'Schneller' }).click();
 	await expect(bpm).toHaveValue('93');
 	// A tempo marking jumps to its tempo; a time signature gives the bar its beats.
-	await page.getByRole('button', { name: 'Allegro', exact: true }).click();
+	await page.getByRole('combobox', { name: 'Tempo' }).selectOption('Allegro');
 	await expect(bpm).toHaveValue('138');
-	await page.getByRole('button', { name: '3/4' }).click();
+	await page.getByRole('combobox', { name: 'Takt' }).selectOption('3/4');
 	await expect(page.locator('.metronome .beat')).toHaveCount(3);
-	await page.getByRole('button', { name: '6/8' }).click();
+	await page.getByRole('combobox', { name: 'Takt' }).selectOption('6/8');
 	await expect(page.locator('.metronome .beat')).toHaveCount(6);
 	await page.getByRole('button', { name: /Punktierte Viertel/ }).click();
 	await expect(page.locator('.metronome .beat')).toHaveCount(2);
@@ -176,16 +177,16 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 			})
 		)
 		.toBe(true);
-	// The tools in full screen: a small panel, and a metronome started there keeps going after.
-	await page.getByRole('button', { name: 'Werkzeuge' }).click();
-	const panel = page.locator('.full .tools-area.open');
+	// The tools in full screen, from the same buttons; a metronome started there keeps going after.
+	await page.getByRole('button', { name: 'Metronom' }).click();
+	const panel = page.locator('.full .dock');
 	await expect(panel).toBeVisible();
-	await panel.getByRole('button', { name: 'Metronom' }).click();
 	await panel.getByRole('button', { name: 'Start' }).click();
 	await panel.getByRole('button', { name: 'Werkzeuge schließen' }).click();
-	await expect(panel).toHaveCount(0);
+	await expect(panel).toBeHidden();
 	await page.keyboard.press('Escape');
 	await expect(page.locator('.score.full')).toHaveCount(0);
+	await page.getByRole('button', { name: 'Metronom' }).click();
 	await expect(page.getByRole('button', { name: 'Stopp' })).toBeVisible();
 	await page.getByRole('button', { name: 'Stopp' }).click();
 });
@@ -217,4 +218,60 @@ test('the member’s notes are in the concert’s merged PDF', async ({ page }) 
 	};
 	expect(merged.getPageCount()).toBeGreaterThan(1);
 	expect(streams(0)).toBeGreaterThan(streams(1));
+});
+
+test('the metronome’s weight sets the tempo when dragged', async ({ page }) => {
+	await open(page, PART);
+	await page.getByRole('button', { name: 'Metronom' }).click();
+	const bpm = page.getByRole('spinbutton', { name: 'Schläge pro Minute' });
+	await expect(bpm).toHaveValue('92');
+	// Up the rod is slower, as on a real one.
+	const weight = page.getByRole('slider', { name: 'Schläge pro Minute' });
+	const box = (await weight.boundingBox())!;
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+	await page.mouse.down();
+	await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 40, { steps: 6 });
+	await page.mouse.up();
+	expect(Number(await bpm.inputValue())).toBeLessThan(80);
+	// And with the keyboard, as a slider.
+	const before = Number(await bpm.inputValue());
+	await weight.focus();
+	await page.keyboard.press('ArrowUp');
+	await page.keyboard.press('PageUp');
+	await expect(bpm).toHaveValue(String(before + 11));
+});
+
+/** The page's box and the tools' box on screen. */
+async function boxes(page: Page) {
+	return page.evaluate(() => {
+		const rect = (selector: string) => {
+			const { left, top, right, bottom, width, height } = document.querySelector(selector)!.getBoundingClientRect();
+			return { left, top, right, bottom, width, height };
+		};
+		return { sheet: rect('.sheet'), dock: rect('.dock'), place: document.querySelector('.dock')!.className };
+	});
+}
+
+test('the tools never cover the music, and the music never shrinks for them', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	for (const mode of ['page', 'full'] as const) {
+		if (mode === 'full') await page.getByRole('button', { name: 'Vollbild' }).click();
+		await page.waitForTimeout(300);
+		const before = await page.locator('.sheet').boundingBox();
+		for (const tool of ['Metronom', 'Stimmgerät']) {
+			await page.getByRole('button', { name: tool, exact: true }).click();
+			await expect(page.locator('.dock')).toBeVisible();
+			await page.waitForTimeout(300);
+			const { sheet, dock, place } = await boxes(page);
+			// The same size as without the tools.
+			expect(Math.round(sheet.width), `${mode} ${tool}`).toBe(Math.round(before!.width));
+			expect(Math.round(sheet.height), `${mode} ${tool}`).toBe(Math.round(before!.height));
+			// Beside, below or above the page, never over it; only in full screen without any room may it lie over its foot.
+			const apart = dock.left >= sheet.right - 1 || dock.right <= sheet.left + 1 || dock.top >= sheet.bottom - 1 || dock.bottom <= sheet.top + 1;
+			if (!place.includes('over')) expect(apart, `${mode} ${tool} ${place}`).toBe(true);
+			await page.getByRole('button', { name: tool, exact: true }).click();
+			await expect(page.locator('.dock')).toBeHidden();
+		}
+	}
 });

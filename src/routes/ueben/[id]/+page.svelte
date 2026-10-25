@@ -15,16 +15,9 @@
 	 */
 	let { data } = $props();
 
-	type Tool = 'recording' | 'metronome' | 'tuner';
-	let tool = $state<Tool | null>(null);
-	/** Tools stay running once opened (a metronome keeps ticking while its panel is closed). */
-	let opened = $state<Set<Tool>>(new Set());
+	/** The tools, each a button in the score's toolbar; PracticeScore places their panel beside the page. */
 	let playing = $state(false);
-	function choose(next: Tool) {
-		tool = tool === next ? null : next;
-		if (tool) opened = new Set([...opened, tool]);
-	}
-	const tools = $derived<{ value: Tool; label: string }[]>([
+	const tools = $derived([
 		...(data.recording ? [{ value: 'recording' as const, label: t.practice.recording.title }] : []),
 		{ value: 'metronome', label: t.practice.metronome.title },
 		{ value: 'tuner', label: t.practice.tuner.title }
@@ -131,44 +124,32 @@
 	{/if}
 </div>
 
-{#snippet toolPanels(compact: boolean)}
-	<div class="tools" role="group" aria-label={t.practice.viewer.tools}>
-		{#each tools as each (each.value)}
-			<button type="button" class="tab" class:on={tool === each.value} aria-expanded={tool === each.value} onclick={() => choose(each.value)}>{each.label}</button>
-		{/each}
-	</div>
-
-	{#if opened.size}
-	<div class="panels" class:compact>
-		{#if data.recording && opened.has('recording')}
-			<section class="ui-card panel" hidden={tool !== 'recording'}>
-				{#if data.recording.youtube && playing}
-					<div class="video">
-						<iframe
-							src="https://www.youtube-nocookie.com/embed/{data.recording.youtube}?autoplay=1&rel=0"
-							title={t.practice.recording.title}
-							allow="autoplay; encrypted-media; picture-in-picture"
-							allowfullscreen
-						></iframe>
-					</div>
-				{:else if data.recording.youtube}
-					<button type="button" class="btn" onclick={() => (playing = true)}><Icon name="music" size={16} />{t.practice.recording.play}</button>
-					<p class="muted">{t.practice.recording.hint}</p>
-				{/if}
-				<a class="external" href={data.recording.url} target="_blank" rel="noopener noreferrer nofollow"><Icon name="external" size={14} />{t.practice.recording.open}</a>
-			</section>
-		{/if}
-		{#if opened.has('metronome')}
-			<section class="ui-card panel" hidden={tool !== 'metronome'}><Metronome {compact} /></section>
-		{/if}
-		{#if opened.has('tuner')}
-			<section class="ui-card panel" hidden={tool !== 'tuner'}><Tuner {compact} /></section>
-		{/if}
-	</div>
+{#snippet toolPanel(tool: string)}
+	{#if tool === 'recording' && data.recording}
+		<section class="recording" aria-label={t.practice.recording.title}>
+			{#if data.recording.youtube && playing}
+				<div class="video">
+					<iframe
+						src="https://www.youtube-nocookie.com/embed/{data.recording.youtube}?autoplay=1&rel=0"
+						title={t.practice.recording.title}
+						allow="autoplay; encrypted-media; picture-in-picture"
+						allowfullscreen
+					></iframe>
+				</div>
+			{:else if data.recording.youtube}
+				<button type="button" class="btn" onclick={() => (playing = true)}><Icon name="music" size={16} />{t.practice.recording.play}</button>
+				<p class="muted">{t.practice.recording.hint}</p>
+			{/if}
+			<a class="external" href={data.recording.url} target="_blank" rel="noopener noreferrer nofollow"><Icon name="external" size={14} />{t.practice.recording.open}</a>
+		</section>
+	{:else if tool === 'metronome'}
+		<Metronome />
+	{:else if tool === 'tuner'}
+		<Tuner />
 	{/if}
 {/snippet}
 
-<PracticeScore file={data.file} marks={data.marks} tools={toolPanels} />
+<PracticeScore file={data.file} marks={data.marks} {tools} panel={toolPanel} />
 
 <p class="elsewhere"><a href={data.elsewhere} target="_blank" rel="noopener noreferrer"><Icon name="external" size={14} />{t.practice.viewer.elsewhere}</a></p>
 
@@ -237,56 +218,10 @@
 		font-weight: 600;
 	}
 
-	.tools {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
-		margin-bottom: var(--space-3);
-	}
-
-	.tab {
-		min-height: 36px;
-		padding: 0 var(--space-3);
-		border: 1px solid var(--hairline);
-		border-radius: 999px;
-		background: var(--surface);
-		color: var(--text);
-		font: inherit;
-		font-size: 0.875rem;
-		cursor: pointer;
-	}
-
-	.tab.on {
-		border-color: var(--accent);
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-weight: 600;
-	}
-
-	.panels {
-		margin-bottom: var(--space-3);
-	}
-
-	/* In full screen's small panel: no card in a card. */
-	.panels.compact {
-		margin-bottom: 0;
-	}
-
-	.panels.compact .panel {
-		padding: 0;
-		border: 0;
-		background: none;
-		box-shadow: none;
-	}
-
-	.panel {
+	.recording {
 		display: grid;
-		gap: var(--space-3);
-		max-width: 560px;
-	}
-
-	.panel[hidden] {
-		display: none;
+		gap: var(--space-2);
+		padding-right: var(--space-5);
 	}
 
 	.video {
