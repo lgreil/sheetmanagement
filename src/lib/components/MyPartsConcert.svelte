@@ -282,7 +282,7 @@
 														rel={part.status === 'missing' ? undefined : 'noopener noreferrer'}
 													>
 														<InstrumentGlyph glyph={part.glyph} size={18} />
-														<span>{part.label}</span>
+														<span>{part.status === 'missing' ? part.label : t.myParts.open(part.label)}</span>
 														{#if part.shared}<span class="tag">{t.myParts.shared}</span>{/if}
 														{#if part.status !== 'ok'}<span class="tag warn">{t.piece.partStatus[part.status]}</span>{/if}
 														{#each part.notes as note (note)}<span class="tag">{note}</span>{/each}

@@ -649,6 +649,7 @@ export const en: Texts = {
 		/** "about 74 min. (2 pieces without duration)" */
 		total: (minutes: number, missing: number) =>
 			`about ${minutes} min.${missing ? ` (${missing === 1 ? '1 piece' : `${missing} pieces`} without duration)` : ''}`,
+		minutes: (minutes: number) => `${minutes} min.`,
 		unknown: 'Duration not known yet',
 		hint: 'The duration is on the piece (“Edit details”) and is added up here.'
 	},
@@ -754,6 +755,7 @@ export const en: Texts = {
 		noConcert: 'There is no concert with a programme coming up right now.',
 		noProgram: 'No programme entered for this concert yet.',
 		shared: 'Shared part',
+		open: (part: string) => `Open ${part}`,
 		noPart: (instrument: string) => `No part for ${instrument}`,
 		noMusic: 'No music in the library',
 		missing: 'missing from the library',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildRehearsalPlan, parsePlanEdit, plannedInProgramOrder, planRehearsalSave, planVersion } from './plan.ts';
+import { buildRehearsalPlan, parsePlanEdit, plannedInProgramOrder, planRehearsalSave, planVersion, programPositions } from './plan.ts';
 
 const HEADER = ['Probe', 'Stück', 'Notiz', 'Termin-ID'];
 
@@ -79,5 +79,23 @@ describe('plannedInProgramOrder', () => {
 			{ title: 'ohne noten' }
 		];
 		expect(plannedInProgramOrder(program, planned).map((item) => item.title)).toEqual(['Ohne Noten', 'Sleigh Ride', 'Einspielstück']);
+	});
+});
+
+describe('programPositions', () => {
+	it('numbers one orchestra’s pieces and those played together straight through', () => {
+		const program = [
+			{ pieceId: 'egmont', title: 'Egmont', position: 1 },
+			{ pieceId: 'grieg', title: 'Morgenstimmung', position: 2 },
+			{ title: 'Ohne Noten', position: 3 },
+			// Played together: its own list in the sheet, starting at 1 again.
+			{ pieceId: 'jesu', title: 'Jesu bleibet', position: 1 }
+		];
+		const position = programPositions(program);
+		expect(program.map(position)).toEqual([1, 2, 3, 4]);
+		// A rehearsal's pieces keep their number in the concert; one from outside has none.
+		expect(position({ pieceId: 'jesu', title: 'Jesu bleibet meine Freude' })).toBe(4);
+		expect(position({ title: 'ohne noten' })).toBe(3);
+		expect(position({ pieceId: 'x', title: 'Einspielstück' })).toBeUndefined();
 	});
 });

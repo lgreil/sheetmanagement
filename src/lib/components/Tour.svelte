@@ -44,7 +44,8 @@
 		mounted = true;
 	});
 
-	const offering = $derived(mounted && !ended && index === null && shouldOffer(status, stored));
+	// Offered on the start page only: elsewhere the card would sit over what the member came for (#219).
+	const offering = $derived(mounted && !ended && index === null && page.url.pathname === '/' && shouldOffer(status, stored));
 	const step = $derived(index === null ? null : steps[index]);
 	const position = $derived(step ? shown.indexOf(step) : -1);
 	const last = $derived(step ? position === shown.length - 1 : false);

@@ -61,6 +61,19 @@ export function formatFuzzyDate(date: FuzzyDate, locale: string): FuzzyDateLabel
 	};
 }
 
+/**
+ * A short date for narrow lists (#223): "19. Nov." for a day of this year, "19. Nov. 2027" for
+ * another; "Nov. 2027" or "2027" when the key ("2026-11-19", see fuzzyDateKey) has no day.
+ */
+export function shortDateLabel(key: string, today: string, locale: string): string {
+	const [year, month, day] = key.split('-').map(Number);
+	if (!year) return '';
+	if (!month) return String(year);
+	const otherYear = year !== Number(today.slice(0, 4));
+	const options: Intl.DateTimeFormatOptions = day ? { day: 'numeric', month: 'short' } : { month: 'short', year: 'numeric' };
+	return dateFormat(locale, { timeZone: 'UTC', ...options, ...(otherYear ? { year: 'numeric' } : {}) }).format(new Date(Date.UTC(year, month - 1, day || 1)));
+}
+
 /** The calendar day of an event in the given time zone, as "2026-11-15". */
 export function eventDay(event: { start: string; allDay: boolean }, timeZone: string): string {
 	if (event.allDay) return event.start.slice(0, 10);
