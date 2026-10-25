@@ -153,3 +153,63 @@ export function clicksOf(meter: Meter, dotted = false): { unit: Meter['unit'] | 
 	if (!dotted || !isCompound(meter)) return { unit: meter.unit, accents: meter.accents };
 	return { unit: 'dotted', accents: meter.accents.filter((_, i) => i % 3 === 0).map((accent, i) => (i === 0 ? 2 : accent ? 1 : 0)) };
 }
+
+/** Cents above or below 440 Hz. */
+const centsOf = (frequency: number) => 1200 * Math.log2(frequency / 440);
+
+/**
+ * Gives the tuner inertia: readings move the shown pitch only part of the way (so it doesn't
+ * wiggle), a different note needs two readings that agree (so one stray octave doesn't jump
+ * it), the note's name holds a little past the half-way line, and silence keeps the last one.
+ */
+export class PitchSmoother {
+	/** The shown pitch in cents from 440 Hz; null before the first reading. */
+	cents: number | null = null;
+	private midi: number | null = null;
+	private candidate: number | null = null;
+
+	constructor(
+		/** How far one reading moves the shown pitch, 0 to 1. */
+		private readonly ease = 0.3,
+		/** Further than this is another note, not a wobble. */
+		private readonly jump = 60
+	) {}
+
+	push(frequency: number | null) {
+		if (!frequency) return;
+		const reading = centsOf(frequency);
+		if (this.cents === null) this.cents = reading;
+		else if (Math.abs(reading - this.cents) < this.jump) {
+			this.cents += (reading - this.cents) * this.ease;
+			this.candidate = null;
+		} else if (this.candidate !== null && Math.abs(reading - this.candidate) < 30) {
+			this.cents = reading;
+			this.candidate = null;
+		} else this.candidate = reading;
+	}
+
+	/** The shown note with A4 at `a4` Hz; null before the first reading. */
+	note(a4 = 440): (Note & { frequency: number }) | null {
+		if (this.cents === null) return null;
+		const semitones = (this.cents - centsOf(a4)) / 100;
+		// The name holds until the pitch is well past the half-way line to the next note.
+		if (this.midi === null || Math.abs(semitones - (this.midi - 69)) > 0.6) this.midi = 69 + Math.round(semitones);
+		const cents = Math.round((semitones - (this.midi - 69)) * 100);
+		return { pitchClass: ((this.midi % 12) + 12) % 12, octave: Math.floor(this.midi / 12) - 1, cents, frequency: 440 * 2 ** (this.cents / 1200) };
+	}
+
+	reset() {
+		this.cents = this.midi = this.candidate = null;
+	}
+}
+
+/** The frequency of a note (0 C … 11 B, scientific octave: A4) with A4 at `a4` Hz. */
+export function noteFrequency(pitchClass: number, octave: number, a4 = 440): number {
+	return a4 * 2 ** (((octave + 1) * 12 + pitchClass - 69) / 12);
+}
+
+/**
+ * The drone's overtones, loudness of each harmonic from the fundamental up: falling off like a
+ * bowed string's, the even ones a little softer, for a warm, round tone.
+ */
+export const DRONE_HARMONICS = [1, 0.55, 0.42, 0.24, 0.2, 0.1, 0.09, 0.05, 0.04, 0.025];

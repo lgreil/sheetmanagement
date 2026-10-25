@@ -1297,7 +1297,8 @@ export const en: Texts = {
 			fullscreen: 'Full screen',
 			exitFullscreen: 'Exit full screen',
 			turnHint: 'Turn pages by tapping the left or right edge, with the arrow keys or a page-turn pedal.',
-			tools: 'Tools'
+			tools: 'Tools',
+			closeTools: 'Close tools'
 		},
 		recording: {
 			title: 'Recording',
@@ -1334,7 +1335,19 @@ export const en: Texts = {
 			cents: (cents: number) => `${cents > 0 ? '+' : cents < 0 ? '−' : '±'}${Math.abs(cents)} cents`,
 			inTune: 'In tune',
 			low: 'flat',
-			high: 'sharp'
+			high: 'sharp',
+			last: 'last heard',
+			off: 'The microphone is off.'
+		},
+		drone: {
+			title: 'Drone',
+			note: 'Note',
+			octave: 'Octave',
+			fifth: 'with the fifth',
+			volume: 'Volume',
+			heard: 'Use the note heard',
+			play: (note: string) => `Play ${note}`,
+			stop: 'Drone off'
 		},
 		marks: {
 			title: 'Notes',

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clampBpm, clicksOf, detectPitch, isCompound, meterById, METERS, nearestNote, tapTempo, tempoName, TEMPI } from './audio.ts';
+import { clampBpm, clicksOf, detectPitch, isCompound, meterById, METERS, nearestNote, noteFrequency, PitchSmoother, tapTempo, tempoName, TEMPI } from './audio.ts';
 
 const RATE = 24_000;
 /** A tone with a few overtones, as instruments have, and some noise; `level` is its loudness. */
@@ -120,5 +120,73 @@ describe('time signatures', () => {
 		expect(clicksOf(meterById('6/8'))).toEqual({ unit: 'eighth', accents: [2, 0, 0, 1, 0, 0] });
 		// Only compound meters: 3/4 stays in quarters.
 		expect(clicksOf(meterById('3/4'), true).unit).toBe('quarter');
+	});
+});
+
+describe('PitchSmoother', () => {
+	const hz = (cents: number, base = 440) => base * 2 ** (cents / 1200);
+
+	it('calms a wobbling reading', () => {
+		const smoother = new PitchSmoother();
+		const readings = [0, 12, -10, 14, -12, 10, -8, 12];
+		const shown: number[] = [];
+		for (const cents of readings) {
+			smoother.push(hz(cents));
+			shown.push(smoother.note()!.cents);
+		}
+		const spread = (list: number[]) => Math.max(...list.slice(2)) - Math.min(...list.slice(2));
+		expect(spread(shown)).toBeLessThan(spread(readings) / 2);
+	});
+
+	it('keeps the last reading through silence', () => {
+		const smoother = new PitchSmoother();
+		expect(smoother.note()).toBeNull();
+		smoother.push(hz(-20));
+		smoother.push(null);
+		smoother.push(null);
+		expect(smoother.note()).toMatchObject({ pitchClass: 9, cents: -20 });
+	});
+
+	it('goes to another note only when two readings agree', () => {
+		const smoother = new PitchSmoother();
+		smoother.push(440);
+		// One stray octave is ignored.
+		smoother.push(880);
+		expect(smoother.note()).toMatchObject({ pitchClass: 9, octave: 4 });
+		smoother.push(440);
+		// A new note, played on.
+		smoother.push(hz(200));
+		smoother.push(hz(201));
+		expect(smoother.note()).toMatchObject({ pitchClass: 11, octave: 4 });
+	});
+
+	it('holds the note’s name a little past the half-way line', () => {
+		const smoother = new PitchSmoother(1);
+		smoother.push(hz(40));
+		expect(smoother.note()).toMatchObject({ pitchClass: 9, cents: 40 });
+		smoother.push(hz(55));
+		expect(smoother.note()).toMatchObject({ pitchClass: 9, cents: 55 });
+		smoother.push(hz(65));
+		smoother.push(hz(65));
+		expect(smoother.note()).toMatchObject({ pitchClass: 10, cents: -35 });
+	});
+
+	it('follows the concert A', () => {
+		const smoother = new PitchSmoother();
+		smoother.push(442);
+		expect(smoother.note(442)).toMatchObject({ pitchClass: 9, cents: 0 });
+		smoother.reset();
+		smoother.push(440);
+		expect(smoother.note(442)!.cents).toBe(-8);
+	});
+});
+
+describe('noteFrequency', () => {
+	it('gives the frequency of a note at the concert A', () => {
+		expect(noteFrequency(9, 4)).toBe(440);
+		expect(noteFrequency(9, 3)).toBe(220);
+		expect(noteFrequency(0, 4)).toBeCloseTo(261.63, 2);
+		expect(noteFrequency(9, 4, 443)).toBe(443);
+		expect(noteFrequency(7, 2, 442)).toBeCloseTo(98.44, 2);
 	});
 });

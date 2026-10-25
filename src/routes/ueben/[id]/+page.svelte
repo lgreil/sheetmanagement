@@ -131,14 +131,15 @@
 	{/if}
 </div>
 
-<div class="tools" role="group" aria-label={t.practice.viewer.tools}>
-	{#each tools as each (each.value)}
-		<button type="button" class="tab" class:on={tool === each.value} aria-expanded={tool === each.value} onclick={() => choose(each.value)}>{each.label}</button>
-	{/each}
-</div>
+{#snippet toolPanels(compact: boolean)}
+	<div class="tools" role="group" aria-label={t.practice.viewer.tools}>
+		{#each tools as each (each.value)}
+			<button type="button" class="tab" class:on={tool === each.value} aria-expanded={tool === each.value} onclick={() => choose(each.value)}>{each.label}</button>
+		{/each}
+	</div>
 
-{#if opened.size}
-	<div class="panels">
+	{#if opened.size}
+	<div class="panels" class:compact>
 		{#if data.recording && opened.has('recording')}
 			<section class="ui-card panel" hidden={tool !== 'recording'}>
 				{#if data.recording.youtube && playing}
@@ -158,15 +159,16 @@
 			</section>
 		{/if}
 		{#if opened.has('metronome')}
-			<section class="ui-card panel" hidden={tool !== 'metronome'}><Metronome /></section>
+			<section class="ui-card panel" hidden={tool !== 'metronome'}><Metronome {compact} /></section>
 		{/if}
 		{#if opened.has('tuner')}
-			<section class="ui-card panel" hidden={tool !== 'tuner'}><Tuner /></section>
+			<section class="ui-card panel" hidden={tool !== 'tuner'}><Tuner {compact} /></section>
 		{/if}
 	</div>
-{/if}
+	{/if}
+{/snippet}
 
-<PracticeScore file={data.file} marks={data.marks} />
+<PracticeScore file={data.file} marks={data.marks} tools={toolPanels} />
 
 <p class="elsewhere"><a href={data.elsewhere} target="_blank" rel="noopener noreferrer"><Icon name="external" size={14} />{t.practice.viewer.elsewhere}</a></p>
 
@@ -263,6 +265,18 @@
 
 	.panels {
 		margin-bottom: var(--space-3);
+	}
+
+	/* In full screen's small panel: no card in a card. */
+	.panels.compact {
+		margin-bottom: 0;
+	}
+
+	.panels.compact .panel {
+		padding: 0;
+		border: 0;
+		background: none;
+		box-shadow: none;
 	}
 
 	.panel {

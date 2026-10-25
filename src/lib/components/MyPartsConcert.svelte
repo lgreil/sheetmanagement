@@ -2,6 +2,7 @@
 	import { page as app } from '$app/state';
 	import { t } from '#lib/i18n/index.ts';
 	import { mergedFileName } from '#lib/music/my-parts.ts';
+	import type { Stroke } from '#lib/practice/marks.ts';
 	import type { PageData } from '../../routes/meine-noten/$types';
 	import Icon from './Icon.svelte';
 	import InstrumentGlyph from './InstrumentGlyph.svelte';
@@ -128,6 +129,16 @@
 	/** Online the usual place (Drive); offline the saved copy, if there is one. */
 	const partHref = (part: { id: string; url: string }) => (!online && saved.has(part.id) ? pdfPath(part.id) : part.url);
 
+	/** The member's notes in these parts, by file and page; none when they can't be loaded. */
+	async function ownMarks(ids: string[]): Promise<Record<string, Record<number, Stroke[]>>> {
+		try {
+			const response = await fetch(`/api/ueben/notizen?dateien=${ids.map(encodeURIComponent).join(',')}`);
+			return response.ok ? await response.json() : {};
+		} catch {
+			return {};
+		}
+	}
+
 	/** Merges the parts in the browser: Workers on the free plan have too little CPU time for it. */
 	async function merge() {
 		if (!label) return;
@@ -135,8 +146,10 @@
 		skipped = [];
 		try {
 			progress = t.myParts.merging(0, files.length);
-			const { PDFDocument } = await import('@cantoo/pdf-lib');
+			const [{ PDFDocument }, { drawMarks }] = await Promise.all([import('@cantoo/pdf-lib'), import('#lib/practice/marks-pdf.ts')]);
 			const merged = await PDFDocument.create();
+			// The member's own notes from the practice viewer go onto their pages; without them, the parts as they are.
+			const marks = await ownMarks(files.map((file) => file.id));
 			// One broken file shouldn't cost the whole PDF: it's left out and named.
 			for (const [i, file] of files.entries()) {
 				progress = t.myParts.merging(i + 1, files.length);
@@ -146,7 +159,10 @@
 					continue;
 				}
 				try {
-					for (const page of await merged.copyPages(part.doc, part.doc.getPageIndices())) merged.addPage(page);
+					for (const [index, page] of (await merged.copyPages(part.doc, part.doc.getPageIndices())).entries()) {
+						merged.addPage(page);
+						await drawMarks(page, marks[file.id]?.[index + 1]);
+					}
 				} catch (error) {
 					console.error(error);
 					skipped.push({ piece: file.piece, label: file.label, reason: t.myParts.skipUnreadable });

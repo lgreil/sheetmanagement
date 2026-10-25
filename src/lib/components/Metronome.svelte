@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import { clampBpm, clicksOf, isCompound, MAX_BPM, meterById, METERS, MIN_BPM, tapTempo, tempoName, TEMPI, type Accent } from '#lib/practice/audio.ts';
+	import MetronomeDevice from './MetronomeDevice.svelte';
 
 	/**
 	 * A metronome with Web Audio: clicks are scheduled a little ahead on the audio clock, so they
 	 * stay even when the page is busy. Tempo by number, marking (Andante …) or tapping; a time
 	 * signature stresses the bar's first beat and where it falls in two. Remembered in this browser.
 	 */
+
+	/** In full screen's small panel: menus instead of rows of buttons. */
+	let { compact = false }: { compact?: boolean } = $props();
 
 	const KEY = 'metronome';
 	function remembered(): { bpm: number; meter: string; dotted: boolean } {
@@ -24,6 +28,9 @@
 	let dotted = $state(start.dotted);
 	let running = $state(false);
 	let beat = $state(-1);
+	/** The pendulum: headed left or right, or at rest. */
+	let side = $state<-1 | 0 | 1>(0);
+	let flash = $state(false);
 	let taps: number[] = [];
 
 	const meter = $derived(meterById(meterId));
@@ -60,7 +67,16 @@
 		tone.connect(gain).connect(context.destination);
 		tone.start(at);
 		tone.stop(at + 0.06);
-		setTimeout(() => running && (beat = index), Math.max(0, (at - context.currentTime) * 1000));
+		setTimeout(
+			() => {
+				if (!running) return;
+				beat = index;
+				// Off to the other side, to arrive there with the next click.
+				side = side === 1 ? -1 : 1;
+				flash = accent === 2;
+			},
+			Math.max(0, (at - context.currentTime) * 1000)
+		);
 	}
 
 	/** Every 25 ms: the clicks of the next 120 ms. */
@@ -89,6 +105,8 @@
 		clearInterval(timer);
 		running = false;
 		beat = -1;
+		side = 0;
+		flash = false;
 	}
 
 	$effect(() => () => {
@@ -113,33 +131,61 @@
 	const step = (by: number) => (bpm = clampBpm(bpm + by));
 </script>
 
-<div class="metronome">
-	<div class="tempo">
-		<button type="button" class="round" onclick={() => step(-1)} aria-label={t.practice.metronome.slower}>−</button>
-		<div class="reading">
-			<label class="bpm">
-				<span class="unit" aria-hidden="true">{UNIT[clicks.unit]} =</span>
-				<input type="number" min={MIN_BPM} max={MAX_BPM} bind:value={bpm} onchange={() => (bpm = clampBpm(bpm || 92))} aria-label={t.practice.metronome.bpm} />
-			</label>
-			<strong class="name">{tempoName(bpm)}</strong>
+<div class="metronome" class:compact class:running>
+	<div class="top">
+		<div class="device"><MetronomeDevice {bpm} {side} accent={flash} /></div>
+		<div class="controls">
+			<div class="reading">
+				<label class="bpm">
+					<span class="unit" aria-hidden="true">{UNIT[clicks.unit]} =</span>
+					<input type="number" min={MIN_BPM} max={MAX_BPM} bind:value={bpm} onchange={() => (bpm = clampBpm(bpm || 92))} aria-label={t.practice.metronome.bpm} />
+				</label>
+				<strong class="name">{tempoName(bpm)}</strong>
+			</div>
+			<div class="steps">
+				<button type="button" class="round" onclick={() => step(-1)} aria-label={t.practice.metronome.slower}>−</button>
+				<button type="button" class="round" onclick={() => step(1)} aria-label={t.practice.metronome.faster}>+</button>
+			</div>
+			<div class="actions">
+				<button type="button" class="btn ghost" onclick={tap} title={t.practice.metronome.tapHint}>{t.practice.metronome.tap}</button>
+				<button type="button" class="btn go" onclick={() => (running ? stop() : play())} aria-pressed={running}>
+					{running ? t.practice.metronome.stop : t.practice.metronome.start}
+				</button>
+			</div>
 		</div>
-		<button type="button" class="round" onclick={() => step(1)} aria-label={t.practice.metronome.faster}>+</button>
 	</div>
 	<input class="slider" type="range" min={MIN_BPM} max={MAX_BPM} bind:value={bpm} aria-label={t.practice.metronome.bpm} />
 
-	<div class="chips" role="group" aria-label={t.practice.metronome.tempo}>
-		{#each TEMPI as tempo (tempo.name)}
-			<button type="button" class="chip" class:on={tempoName(bpm) === tempo.name} onclick={() => (bpm = tempo.typical)}>{tempo.name}</button>
-		{/each}
-	</div>
+	{#if compact}
+		<div class="menus">
+			<label class="field">
+				{t.practice.metronome.tempo}
+				<select value={tempoName(bpm)} onchange={(event) => (bpm = TEMPI.find((tempo) => tempo.name === event.currentTarget.value)?.typical ?? bpm)}>
+					{#each TEMPI as tempo (tempo.name)}<option value={tempo.name}>{tempo.name}</option>{/each}
+				</select>
+			</label>
+			<label class="field">
+				{t.practice.metronome.meter}
+				<select value={meterId} onchange={(event) => chooseMeter(event.currentTarget.value)}>
+					{#each METERS as each (each.id)}<option value={each.id}>{each.id || t.practice.metronome.noMeter}</option>{/each}
+				</select>
+			</label>
+		</div>
+	{:else}
+		<div class="chips" role="group" aria-label={t.practice.metronome.tempo}>
+			{#each TEMPI as tempo (tempo.name)}
+				<button type="button" class="chip" class:on={tempoName(bpm) === tempo.name} onclick={() => (bpm = tempo.typical)}>{tempo.name}</button>
+			{/each}
+		</div>
 
-	<div class="chips" role="group" aria-label={t.practice.metronome.meter}>
-		{#each METERS as each (each.id)}
-			<button type="button" class="chip meter" class:on={meterId === each.id} aria-pressed={meterId === each.id} onclick={() => chooseMeter(each.id)}>
-				{each.id || t.practice.metronome.noMeter}
-			</button>
-		{/each}
-	</div>
+		<div class="chips" role="group" aria-label={t.practice.metronome.meter}>
+			{#each METERS as each (each.id)}
+				<button type="button" class="chip meter" class:on={meterId === each.id} aria-pressed={meterId === each.id} onclick={() => chooseMeter(each.id)}>
+					{each.id || t.practice.metronome.noMeter}
+				</button>
+			{/each}
+		</div>
+	{/if}
 	{#if isCompound(meter)}
 		<div class="chips" role="group" aria-label={t.practice.metronome.count}>
 			<button type="button" class="chip" class:on={!dotted} aria-pressed={!dotted} onclick={() => (dotted = false)}>♪ {t.practice.metronome.eighths}</button>
@@ -153,13 +199,6 @@
 			<span class="beat a{accent}" class:on={beat === i}>{meter.id ? i + 1 : ''}</span>
 		{/each}
 	</div>
-
-	<div class="row">
-		<button type="button" class="btn ghost" onclick={tap} title={t.practice.metronome.tapHint}>{t.practice.metronome.tap}</button>
-		<button type="button" class="btn" onclick={() => (running ? stop() : play())} aria-pressed={running}>
-			{running ? t.practice.metronome.stop : t.practice.metronome.start}
-		</button>
-	</div>
 </div>
 
 <style>
@@ -168,29 +207,22 @@
 		gap: var(--space-3);
 	}
 
-	.tempo {
-		display: flex;
+	.top {
+		display: grid;
+		grid-template-columns: minmax(120px, 170px) 1fr;
 		align-items: center;
-		justify-content: center;
-		gap: var(--space-3);
+		gap: var(--space-4);
 	}
 
-	.round {
-		width: 44px;
-		height: 44px;
-		border: 1px solid var(--hairline);
-		border-radius: 50%;
-		background: var(--surface);
-		color: var(--text);
-		font-size: 1.5rem;
-		line-height: 1;
-		cursor: pointer;
+	.controls {
+		display: grid;
+		justify-items: center;
+		gap: var(--space-3);
 	}
 
 	.reading {
 		display: grid;
 		justify-items: center;
-		min-width: 9rem;
 	}
 
 	.bpm {
@@ -206,14 +238,16 @@
 	}
 
 	.bpm input {
-		width: 3.4ch;
+		width: 3.2ch;
 		border: 0;
 		background: none;
 		color: var(--text);
 		font-family: var(--font-display);
-		font-size: 2.75rem;
+		font-size: 3.25rem;
 		font-weight: 600;
+		line-height: 1;
 		text-align: center;
+		font-variant-numeric: tabular-nums;
 		-moz-appearance: textfield;
 		appearance: textfield;
 	}
@@ -222,12 +256,49 @@
 		display: none;
 	}
 
+	/* The marking as printed on a score: italic, a little spaced. */
 	.name {
 		color: var(--accent);
-		font-family: var(--font-display);
+		font-family: Georgia, 'Times New Roman', serif;
 		font-size: 1.25rem;
 		font-style: italic;
-		letter-spacing: 0.01em;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+
+	.steps,
+	.actions {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: center;
+		gap: var(--space-2);
+	}
+
+	.round {
+		width: 44px;
+		height: 44px;
+		border: 1px solid var(--hairline);
+		border-radius: 50%;
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		color: var(--text);
+		font-size: 1.5rem;
+		line-height: 1;
+		cursor: pointer;
+	}
+
+	.round:active {
+		transform: translateY(1px);
+		box-shadow: none;
+	}
+
+	.go {
+		min-width: 6.5em;
+	}
+
+	.running .go {
+		background: var(--danger);
+		border-color: var(--danger);
 	}
 
 	.slider {
@@ -266,11 +337,14 @@
 		font-weight: 600;
 	}
 
+	/* The bar's beats as little lamps. */
 	.beats {
 		display: flex;
 		flex-wrap: wrap;
+		align-items: center;
 		justify-content: center;
 		gap: var(--space-2);
+		min-height: 32px;
 	}
 
 	.beat {
@@ -279,11 +353,13 @@
 		width: 24px;
 		height: 24px;
 		border-radius: 50%;
-		background: var(--hairline);
+		background: color-mix(in oklab, var(--text) 10%, transparent);
 		color: var(--text-muted);
 		font-size: 0.75rem;
 		font-weight: 600;
-		transition: background 0.05s;
+		transition:
+			background 0.06s,
+			box-shadow 0.06s;
 	}
 
 	.beat.a2 {
@@ -299,13 +375,46 @@
 
 	.beat.on {
 		background: var(--accent);
+		box-shadow: 0 0 0 4px color-mix(in oklab, var(--accent) 25%, transparent);
 		color: var(--accent-contrast);
 	}
 
-	.row {
-		display: flex;
-		flex-wrap: wrap;
-		justify-content: center;
+	.menus {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
 		gap: var(--space-2);
+	}
+
+	.compact {
+		gap: var(--space-2);
+	}
+
+	.compact .top {
+		grid-template-columns: 96px 1fr;
+		gap: var(--space-3);
+	}
+
+	.compact .controls {
+		gap: var(--space-2);
+	}
+
+	.compact .round {
+		width: 38px;
+		height: 38px;
+	}
+
+	.compact .bpm input {
+		font-size: 2.5rem;
+	}
+
+	.compact .name {
+		font-size: 1.0625rem;
+	}
+
+	@media (max-width: 380px) {
+		.top {
+			grid-template-columns: 110px 1fr;
+			gap: var(--space-3);
+		}
 	}
 </style>

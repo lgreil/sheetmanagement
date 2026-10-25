@@ -1,4 +1,5 @@
 import type { Page } from '@playwright/test';
+import { PDFArray, PDFDocument } from '@cantoo/pdf-lib';
 import { expect, expectAccessible, open, resetDemo, test } from './demo.ts';
 
 /** The practice viewer: a member's own part page by page, with their notes, metronome and tuner. */
@@ -98,6 +99,8 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 			tone.frequency.value = 440;
 			const gain = context.createGain();
 			gain.gain.value = 0.01;
+			// The test can stop playing (gain 0) to see the reading held.
+			(window as unknown as { testTone: GainNode }).testTone = gain;
 			const out = context.createMediaStreamDestination();
 			tone.connect(gain).connect(out);
 			tone.start();
@@ -115,8 +118,21 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 	// Tuned to 442 Hz, the same A is 8 cents flat.
 	await page.getByRole('spinbutton', { name: 'Kammerton a′' }).fill('442');
 	await expect(reading).toContainText('−8 Cent · zu tief');
+	// A pause: the last reading stays, marked as such.
+	await page.evaluate(() => ((window as unknown as { testTone: GainNode }).testTone.gain.value = 0));
+	await expect(reading).toContainText('zuletzt gehört');
+	await expect(reading).toContainText('A4');
+	// Stopped, it still shows what it heard last.
 	await page.getByRole('button', { name: 'Beenden' }).click();
-	await expect(reading).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Mikrofon einschalten' })).toBeVisible();
+	await expect(reading).toContainText('zuletzt gehört');
+
+	// The drone, on the note heard last.
+	await page.getByRole('button', { name: 'Gehörten Ton nehmen' }).click();
+	await page.getByRole('button', { name: 'A4 spielen' }).click();
+	await expect(page.getByRole('button', { name: 'Bordun aus' })).toBeVisible();
+	await page.getByRole('button', { name: 'Bordun aus' }).click();
+	await expect(page.getByRole('button', { name: 'A4 spielen' })).toBeVisible();
 });
 
 test('turning keys, the metronome and the tuner panel', async ({ page }) => {
@@ -160,6 +176,45 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 			})
 		)
 		.toBe(true);
+	// The tools in full screen: a small panel, and a metronome started there keeps going after.
+	await page.getByRole('button', { name: 'Werkzeuge' }).click();
+	const panel = page.locator('.full .tools-area.open');
+	await expect(panel).toBeVisible();
+	await panel.getByRole('button', { name: 'Metronom' }).click();
+	await panel.getByRole('button', { name: 'Start' }).click();
+	await panel.getByRole('button', { name: 'Werkzeuge schließen' }).click();
+	await expect(panel).toHaveCount(0);
 	await page.keyboard.press('Escape');
 	await expect(page.locator('.score.full')).toHaveCount(0);
+	await expect(page.getByRole('button', { name: 'Stopp' })).toBeVisible();
+	await page.getByRole('button', { name: 'Stopp' }).click();
+});
+
+test('the member’s notes are in the concert’s merged PDF', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	await page.getByRole('button', { name: 'Stift' }).click();
+	const saved = page.waitForResponse((response) => response.url().endsWith('/api/ueben/notizen') && response.request().method() === 'PUT');
+	await draw(page, [0.2, 0.2], [0.6, 0.3]);
+	expect((await saved).status()).toBe(204);
+
+	// The merged PDF as the page hands it to the browser for saving.
+	await page.addInitScript(() => {
+		const make = URL.createObjectURL.bind(URL);
+		URL.createObjectURL = (blob: Blob) => (((window as unknown as { merged: Blob }).merged = blob), make(blob));
+	});
+	await open(page, '/meine-noten');
+	const concert = page.locator('section.concert').first();
+	const downloading = page.waitForEvent('download');
+	await concert.getByRole('button', { name: 'Als eine PDF' }).click();
+	await downloading;
+	const bytes = await page.evaluate(async () => [...new Uint8Array(await (window as unknown as { merged: Blob }).merged.arrayBuffer())]);
+	const merged = await PDFDocument.load(new Uint8Array(bytes));
+	// The marked part comes first; a page with notes has one content stream more than one without.
+	const streams = (index: number) => {
+		const contents = merged.getPage(index).node.Contents();
+		return contents instanceof PDFArray ? contents.size() : 1;
+	};
+	expect(merged.getPageCount()).toBeGreaterThan(1);
+	expect(streams(0)).toBeGreaterThan(streams(1));
 });

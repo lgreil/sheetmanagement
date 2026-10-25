@@ -1,4 +1,4 @@
-import { error } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import { normalizeEmail } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { parseStrokes } from '#lib/practice/marks.ts';
@@ -7,6 +7,21 @@ import { getStore } from '#lib/server/db/index.ts';
 import { ownPart } from '#lib/server/practice.ts';
 import { getAccessList, getMusicConfig } from '#lib/server/repertoire.ts';
 import type { RequestHandler } from './$types';
+
+/**
+ * The member's own marks in these parts (`?dateien=a,b`), by file and page, for the merged PDF
+ * of a concert's parts. Only ever the signed-in member's.
+ */
+export const GET: RequestHandler = async ({ locals, url }) => {
+	const user = locals.access.user;
+	if (locals.auth !== 'on' || !user || !locals.access.member) error(403, t.messages.signInFirst);
+	const files = new Set((url.searchParams.get('dateien') ?? '').split(',').filter(Boolean).slice(0, 200));
+	const marks: Record<string, Record<number, unknown>> = {};
+	for (const page of await getStore().marksOf(normalizeEmail(user.email))) {
+		if (files.has(page.file)) (marks[page.file] ??= {})[page.page] = page.strokes;
+	}
+	return json(marks, { headers: { 'cache-control': 'private, no-store' } });
+};
 
 /** Saves per member and minute; the viewer saves a page a moment after the pen stops. */
 const PER_MINUTE = 30;

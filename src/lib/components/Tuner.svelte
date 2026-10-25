@@ -1,33 +1,38 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
-	import { detectPitch, nearestNote, type Note } from '#lib/practice/audio.ts';
+	import { detectPitch, DRONE_HARMONICS, noteFrequency, PitchSmoother } from '#lib/practice/audio.ts';
+	import TunerGauge from './TunerGauge.svelte';
 
 	/**
-	 * A tuner: the microphone's pitch ten times a second, the nearest note and how far off it
-	 * is. Nothing is recorded or sent anywhere; the microphone is on only while it's started.
-	 * The concert A is remembered in this browser (orchestras often tune to 442 or 443 Hz).
+	 * A tuner and a drone. The tuner reads the microphone about twelve times a second and shows
+	 * the nearest note and how far off it is, with some inertia; in a pause it keeps the last
+	 * reading. Nothing is recorded or sent anywhere, and the microphone is on only while it's
+	 * started. The drone holds a note with overtones, at the same concert A. The concert A and
+	 * the drone's note are remembered in this browser (orchestras often tune to 442 or 443 Hz).
 	 */
+	let { compact = false }: { compact?: boolean } = $props();
 
-	const KEY = 'tuner-a4';
-	function rememberedA4(): number {
+	const KEY = 'tuner';
+	function remembered(): { a4: number; pitchClass: number; octave: number; fifth: boolean; volume: number } {
+		const fallback = { a4: 440, pitchClass: 9, octave: 3, fifth: false, volume: 0.6 };
 		try {
-			const value = Number(localStorage.getItem(KEY));
-			return value >= 415 && value <= 466 ? value : 440;
+			const value = { ...fallback, ...JSON.parse(localStorage.getItem(KEY) ?? '{}') };
+			return {
+				a4: value.a4 >= 415 && value.a4 <= 466 ? value.a4 : 440,
+				pitchClass: Number.isInteger(value.pitchClass) && value.pitchClass >= 0 && value.pitchClass < 12 ? value.pitchClass : 9,
+				octave: Number.isInteger(value.octave) && value.octave >= 1 && value.octave <= 5 ? value.octave : 3,
+				fifth: !!value.fifth,
+				volume: value.volume >= 0 && value.volume <= 1 ? value.volume : 0.6
+			};
 		} catch {
-			return 440;
+			return fallback;
 		}
 	}
 
-	let a4 = $state(rememberedA4());
-	let running = $state(false);
-	let problem = $state<string | null>(null);
-	let note = $state<(Note & { frequency: number }) | null>(null);
-	/** The audio didn't start: one more tap starts it. */
-	let suspended = $state(false);
-	const wakeAudio = () => context?.resume().catch(() => {});
-
+	const start = remembered();
+	let a4 = $state(start.a4);
 	$effect(() => {
-		const value = String(a4);
+		const value = JSON.stringify({ a4, pitchClass, octave, fifth, volume });
 		try {
 			localStorage.setItem(KEY, value);
 		} catch {
@@ -35,13 +40,29 @@
 		}
 	});
 
+	// The tuner.
+	let running = $state(false);
+	let problem = $state<string | null>(null);
+	/** The audio didn't start: one more tap starts it. */
+	let suspended = $state(false);
+	const smoother = new PitchSmoother();
+	/** Bumped on each reading, so the note is worked out again. */
+	let readings = $state(0);
+	let lastHeard = $state(0);
+	let now = $state(0);
+	const note = $derived.by(() => {
+		void readings;
+		return smoother.note(a4);
+	});
+	/** No tone for a moment: the last reading stays, paler. */
+	const stale = $derived(!!note && now - lastHeard > 700);
+
 	let stream: MediaStream | null = null;
 	let context: AudioContext | null = null;
 	let timer: ReturnType<typeof setInterval> | undefined;
-	/** The last few readings, so the needle doesn't jitter. */
-	let recent: number[] = [];
+	const wakeAudio = () => context?.resume().catch(() => {});
 
-	async function start() {
+	async function listen() {
 		problem = null;
 		// The microphone only over https (or on localhost): on the phone through http://192.168… there is none.
 		if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
@@ -63,8 +84,7 @@
 		await resumed;
 		const analyser = context.createAnalyser();
 		analyser.fftSize = 4096;
-		const source = context.createMediaStreamSource(stream);
-		source.connect(analyser);
+		context.createMediaStreamSource(stream).connect(analyser);
 		// Safari only runs a graph that ends in the speakers: through a gain of 0, so nothing is heard.
 		const mute = context.createGain();
 		mute.gain.value = 0;
@@ -74,75 +94,217 @@
 		const step = context.sampleRate > 30_000 ? 2 : 1;
 		const samples = new Float32Array(buffer.length / step);
 		const rate = context.sampleRate / step;
+		smoother.reset();
+		readings++;
 		running = true;
 		timer = setInterval(() => {
+			now = performance.now();
 			// Still not running (a phone that wanted another tap, or back from the background).
 			suspended = context?.state !== 'running';
 			if (suspended) return;
 			analyser.getFloatTimeDomainData(buffer);
 			for (let i = 0; i < samples.length; i++) samples[i] = buffer[i * step];
 			const frequency = detectPitch(samples, rate);
-			if (!frequency) {
-				recent = [];
-				note = null;
-				return;
-			}
-			recent = [...recent, frequency].slice(-4);
-			const sorted = [...recent].sort((a, b) => a - b);
-			const steady = sorted[Math.floor(sorted.length / 2)];
-			note = { ...nearestNote(steady, a4), frequency: steady };
-		}, 100);
+			if (!frequency) return;
+			smoother.push(frequency);
+			lastHeard = now;
+			readings++;
+		}, 80);
 	}
 
-	function stop() {
+	function stopListening() {
 		clearInterval(timer);
 		stream?.getTracks().forEach((track) => track.stop());
 		context?.close().catch(() => {});
 		stream = null;
 		context = null;
 		running = false;
-		note = null;
 	}
 
-	$effect(() => () => stop());
-
 	const verdict = $derived(!note ? null : Math.abs(note.cents) <= 5 ? 'ok' : note.cents < 0 ? 'low' : 'high');
-	const frequency = (hz: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(hz);
+	const hertz = (hz: number) => new Intl.NumberFormat(undefined, { maximumFractionDigits: 1, minimumFractionDigits: 1 }).format(hz);
+
+	// The drone.
+	let pitchClass = $state(start.pitchClass);
+	let octave = $state(start.octave);
+	let fifth = $state(start.fifth);
+	let volume = $state(start.volume);
+	let droning = $state(false);
+	let drone: { context: AudioContext; master: GainNode; voices: { oscillators: OscillatorNode[]; ratio: number }[] } | null = null;
+	const droneFrequency = $derived(noteFrequency(pitchClass, octave, a4));
+	/** The keyboard: the white keys' pitches, and each black key with the white one it follows. */
+	const WHITE = [0, 2, 4, 5, 7, 9, 11];
+	const BLACK: [key: number, after: number][] = [
+		[1, 0],
+		[3, 1],
+		[6, 3],
+		[8, 4],
+		[10, 5]
+	];
+
+	/** Two slightly detuned voices per note make it breathe; the fifth is a pure one (3:2). */
+	function droneVoice(target: NonNullable<typeof drone>, wave: PeriodicWave, ratio: number, level: number, into: AudioNode) {
+		const gain = target.context.createGain();
+		gain.gain.value = level;
+		gain.connect(into);
+		const oscillators = [-4, 4].map((detune) => {
+			const oscillator = target.context.createOscillator();
+			oscillator.setPeriodicWave(wave);
+			oscillator.frequency.value = droneFrequency * ratio;
+			oscillator.detune.value = detune;
+			oscillator.connect(gain);
+			oscillator.start();
+			return oscillator;
+		});
+		return { oscillators, ratio };
+	}
+
+	function startDrone() {
+		const audio = new AudioContext();
+		audio.resume().catch(() => {});
+		const master = audio.createGain();
+		master.gain.value = 0;
+		// Soft at the top, like a string heard from a little way off.
+		const filter = audio.createBiquadFilter();
+		filter.type = 'lowpass';
+		filter.frequency.value = 3200;
+		filter.Q.value = 0.4;
+		master.connect(filter).connect(audio.destination);
+		// A slow swell, so it doesn't sound like a machine.
+		const swell = audio.createOscillator();
+		const depth = audio.createGain();
+		swell.frequency.value = 0.18;
+		depth.gain.value = 0.035;
+		swell.connect(depth).connect(master.gain);
+		swell.start();
+		const wave = audio.createPeriodicWave(new Float32Array(DRONE_HARMONICS.length + 1), new Float32Array([0, ...DRONE_HARMONICS]));
+		drone = { context: audio, master, voices: [] };
+		drone.voices.push(droneVoice(drone, wave, 1, 0.5, master));
+		if (fifth) drone.voices.push(droneVoice(drone, wave, 1.5, 0.32, master));
+		master.gain.setTargetAtTime(volume * 0.3, audio.currentTime, 0.25);
+		droning = true;
+	}
+
+	function stopDrone() {
+		const ending = drone;
+		drone = null;
+		droning = false;
+		if (!ending) return;
+		ending.master.gain.setTargetAtTime(0, ending.context.currentTime, 0.2);
+		setTimeout(() => ending.context.close().catch(() => {}), 1200);
+	}
+
+	// A new note or concert A glides there; the fifth or the volume change at once.
+	$effect(() => {
+		const frequency = droneFrequency;
+		if (!drone) return;
+		for (const voice of drone.voices) for (const oscillator of voice.oscillators) oscillator.frequency.setTargetAtTime(frequency * voice.ratio, drone.context.currentTime, 0.06);
+	});
+	$effect(() => {
+		const level = volume;
+		drone?.master.gain.setTargetAtTime(level * 0.3, drone.context.currentTime, 0.08);
+	});
+	$effect(() => {
+		const withFifth = fifth;
+		if (!drone || withFifth === drone.voices.length > 1) return;
+		stopDrone();
+		startDrone();
+	});
+
+	/** The drone on the note the tuner heard last. */
+	function droneHeard() {
+		if (!note) return;
+		pitchClass = note.pitchClass;
+		octave = Math.min(5, Math.max(1, note.octave));
+	}
+
+	$effect(() => () => {
+		stopListening();
+		stopDrone();
+	});
 </script>
 
-<div class="tuner">
-	{#if running}
-		<div class="reading" class:ok={verdict === 'ok'} role="status">
-			{#if note}
-				<strong class="name">{t.practice.tuner.notes[note.pitchClass]}<sub>{note.octave}</sub></strong>
-				<div class="meter" aria-hidden="true">
-					<span class="zero"></span>
-					<span class="needle" style:left="{50 + note.cents}%"></span>
-				</div>
-				<span class="detail">
-					{t.practice.tuner.cents(note.cents)} · {verdict === 'ok' ? t.practice.tuner.inTune : verdict === 'low' ? t.practice.tuner.low : t.practice.tuner.high} · {frequency(note.frequency)} Hz
-				</span>
-			{:else if suspended}
-				<button type="button" class="btn" onclick={wakeAudio}>{t.practice.tuner.tapToListen}</button>
-			{:else}
-				<span class="detail">{t.practice.tuner.listening}</span>
-			{/if}
+<div class="tuner" class:compact>
+	<!-- The device: always there, a dash before the first note, the last one held in a pause. -->
+	<div class="reading" class:ok={verdict === 'ok' && !stale} class:stale class:idle={!note} role="status">
+		<TunerGauge cents={note?.cents ?? null} verdict={stale ? null : verdict} quiet={!note || stale} />
+		<div class="display">
+			<span class="led flat" class:on={verdict === 'low' && !stale} aria-hidden="true"></span>
+			<strong class="name">
+				{#if note}{t.practice.tuner.notes[note.pitchClass]}<sub>{note.octave}</sub>{:else}–{/if}
+			</strong>
+			<span class="led sharp" class:on={verdict === 'high' && !stale} aria-hidden="true"></span>
 		</div>
-	{/if}
+		<span class="detail">
+			{#if note}
+				{t.practice.tuner.cents(note.cents)} · {verdict === 'ok' ? t.practice.tuner.inTune : verdict === 'low' ? t.practice.tuner.low : t.practice.tuner.high} · {hertz(note.frequency)} Hz{#if stale}{' '}· {t.practice.tuner.last}{/if}
+			{:else if running && suspended}
+				<button type="button" class="btn small" onclick={wakeAudio}>{t.practice.tuner.tapToListen}</button>
+			{:else if running}
+				{t.practice.tuner.listening}
+			{:else}
+				{t.practice.tuner.off}
+			{/if}
+		</span>
+	</div>
 	{#if problem}<p class="msg error">{problem}</p>{/if}
 
 	<div class="row">
-		<label class="field">
+		<button type="button" class={running ? 'btn ghost' : 'btn'} onclick={() => (running ? stopListening() : listen())}>
+			<span class="mic" class:live={running} aria-hidden="true"></span>{running ? t.practice.tuner.stop : t.practice.tuner.start}
+		</button>
+		<label class="field a4">
 			{t.practice.tuner.reference}
-			<span class="a4">
+			<span>
 				<input type="number" min="415" max="466" bind:value={a4} onchange={() => (a4 = Math.min(466, Math.max(415, Math.round(a4) || 440)))} />
 				Hz
 			</span>
 		</label>
-		<button type="button" class={running ? 'btn ghost' : 'btn'} onclick={() => (running ? stop() : start())}>
-			{running ? t.practice.tuner.stop : t.practice.tuner.start}
-		</button>
 	</div>
+
+	<section class="drone" aria-label={t.practice.drone.title}>
+		<h3>{t.practice.drone.title}</h3>
+		<!-- One octave of a keyboard, the note to hold pressed down. -->
+		<div class="keyboard" role="group" aria-label={t.practice.drone.note}>
+			{#each WHITE as key (key)}
+				<button type="button" class="key white" class:on={pitchClass === key} class:sounding={droning && pitchClass === key} aria-pressed={pitchClass === key} onclick={() => (pitchClass = key)}>
+					<span>{t.practice.tuner.notes[key]}</span>
+				</button>
+			{/each}
+			{#each BLACK as [key, after] (key)}
+				<button
+					type="button"
+					class="key black"
+					class:on={pitchClass === key}
+					class:sounding={droning && pitchClass === key}
+					style:left="{((after + 1) / WHITE.length) * 100}%"
+					aria-pressed={pitchClass === key}
+					onclick={() => (pitchClass = key)}
+				>
+					<span>{t.practice.tuner.notes[key]}</span>
+				</button>
+			{/each}
+		</div>
+		<div class="row">
+			<label class="field">
+				{t.practice.drone.octave}
+				<select bind:value={octave}>
+					{#each [1, 2, 3, 4, 5] as each (each)}<option value={each}>{t.practice.tuner.notes[pitchClass]}{each}</option>{/each}
+				</select>
+			</label>
+			<label class="check"><input type="checkbox" bind:checked={fifth} />{t.practice.drone.fifth}</label>
+			<label class="field volume">
+				{t.practice.drone.volume}
+				<input type="range" min="0" max="1" step="0.05" bind:value={volume} />
+			</label>
+		</div>
+		<div class="row">
+			{#if note}<button type="button" class="btn ghost" onclick={droneHeard}>{t.practice.drone.heard}</button>{/if}
+			<button type="button" class={droning ? 'btn secondary' : 'btn'} aria-pressed={droning} onclick={() => (droning ? stopDrone() : startDrone())}>
+				{droning ? t.practice.drone.stop : t.practice.drone.play(`${t.practice.tuner.notes[pitchClass]}${octave}`)}
+			</button>
+		</div>
+	</section>
 </div>
 
 <style>
@@ -151,61 +313,86 @@
 		gap: var(--space-3);
 	}
 
+	/* A desk tuner: dark face, light scale, a lit window for the note. */
 	.reading {
 		display: grid;
 		justify-items: center;
 		gap: var(--space-2);
-		min-height: 120px;
-		align-content: center;
+		padding: var(--space-3) var(--space-3) var(--space-4);
+		border-radius: 22px;
+		background: radial-gradient(120% 90% at 50% 0%, #2f363d, #171b1f 70%);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.08),
+			inset 0 -2px 6px rgb(0 0 0 / 0.5),
+			0 8px 24px rgb(0 0 0 / 0.18);
+		color: #e9eef2;
+	}
+
+	.reading :global(.gauge) {
+		max-width: 340px;
+	}
+
+	.display {
+		display: grid;
+		grid-template-columns: 16px minmax(5.5rem, auto) 16px;
+		align-items: center;
+		gap: var(--space-3);
+		margin-top: calc(-1 * var(--space-2));
+		padding: var(--space-1) var(--space-4);
+		border-radius: 10px;
+		background: #0c0f11;
+		box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.7);
 	}
 
 	.name {
+		color: #e9eef2;
 		font-family: var(--font-display);
-		font-size: 3rem;
-		line-height: 1;
+		font-size: 2.75rem;
+		line-height: 1.1;
+		text-align: center;
+		transition:
+			color 0.3s,
+			text-shadow 0.3s;
 	}
 
 	.name sub {
 		margin-left: 2px;
-		color: var(--text-muted);
+		color: #9aa3ab;
 		font-size: 1rem;
 	}
 
 	.reading.ok .name {
-		color: var(--ok);
+		color: #6ee79a;
+		text-shadow: 0 0 12px rgb(74 222 128 / 0.55);
 	}
 
-	.meter {
-		position: relative;
-		width: min(100%, 320px);
-		height: 10px;
-		border-radius: 999px;
-		background: linear-gradient(to right, color-mix(in oklab, var(--warn) 40%, transparent), color-mix(in oklab, var(--ok) 50%, transparent) 45% 55%, color-mix(in oklab, var(--warn) 40%, transparent));
+	.reading.stale .name,
+	.reading.idle .name {
+		color: #7d868e;
 	}
 
-	.zero {
-		position: absolute;
-		top: -4px;
-		bottom: -4px;
-		left: 50%;
-		width: 2px;
-		background: var(--text-muted);
+	.led {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: #3a2420;
+		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.6);
+		transition:
+			background 0.15s,
+			box-shadow 0.15s;
 	}
 
-	.needle {
-		position: absolute;
-		top: -6px;
-		width: 4px;
-		height: 22px;
-		margin-left: -2px;
-		border-radius: 2px;
-		background: var(--text);
-		transition: left 0.1s linear;
+	.led.on {
+		background: #ff7a4d;
+		box-shadow: 0 0 10px #ff7a4d;
 	}
 
 	.detail {
-		color: var(--text-muted);
+		min-height: 1.5em;
+		color: #aab3bb;
 		font-size: 0.875rem;
+		text-align: center;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.row {
@@ -216,7 +403,29 @@
 		gap: var(--space-3);
 	}
 
-	.a4 {
+	.mic {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		margin-right: var(--space-2);
+		border-radius: 50%;
+		background: currentColor;
+		opacity: 0.5;
+	}
+
+	.mic.live {
+		background: var(--danger);
+		opacity: 1;
+		animation: live 1.4s ease-in-out infinite;
+	}
+
+	@keyframes live {
+		50% {
+			opacity: 0.35;
+		}
+	}
+
+	.a4 span {
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-1);
@@ -224,5 +433,123 @@
 
 	.a4 input {
 		width: 5.5em;
+	}
+
+	.drone {
+		display: grid;
+		gap: var(--space-3);
+		padding-top: var(--space-3);
+		border-top: 1px solid var(--hairline);
+	}
+
+	.drone h3 {
+		margin: 0;
+		font-size: 0.9375rem;
+	}
+
+	/* One octave: seven white keys, five black ones over their gaps. */
+	.keyboard {
+		position: relative;
+		display: grid;
+		grid-template-columns: repeat(7, 1fr);
+		height: 112px;
+		padding: 6px 6px 8px;
+		border-radius: 10px;
+		background: linear-gradient(#2a1d14, #3b291c);
+		box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5);
+	}
+
+	.key {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		padding: 0 0 6px;
+		border: 0;
+		font: inherit;
+		font-size: 0.75rem;
+		cursor: pointer;
+		transition:
+			background 0.1s,
+			transform 0.05s;
+	}
+
+	.key.white {
+		margin: 0 1px;
+		border-radius: 0 0 6px 6px;
+		background: linear-gradient(#fdfdfb, #ecebe6);
+		box-shadow:
+			inset 0 -4px 0 #d6d4cc,
+			0 1px 2px rgb(0 0 0 / 0.35);
+		color: #5d5850;
+	}
+
+	.key.black {
+		position: absolute;
+		top: 6px;
+		z-index: 1;
+		width: 10%;
+		height: 60%;
+		margin-left: -5%;
+		border-radius: 0 0 5px 5px;
+		background: linear-gradient(#3a3a3a, #111);
+		box-shadow:
+			inset 0 -3px 0 #000,
+			0 2px 3px rgb(0 0 0 / 0.5);
+		color: #cfcfcf;
+		font-size: 0.625rem;
+	}
+
+	.key:active {
+		transform: translateY(1px);
+	}
+
+	.key.white.on {
+		background: linear-gradient(var(--accent-soft), color-mix(in oklab, var(--accent) 35%, #fff));
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.key.black.on {
+		background: linear-gradient(color-mix(in oklab, var(--accent) 70%, #000), var(--accent));
+		color: #fff;
+		font-weight: 700;
+	}
+
+	.key.sounding {
+		box-shadow:
+			0 0 0 2px var(--accent),
+			0 0 14px color-mix(in oklab, var(--accent) 60%, transparent);
+	}
+
+	.check {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		min-height: 40px;
+		font-size: 0.875rem;
+	}
+
+	.volume input {
+		width: 120px;
+		accent-color: var(--accent);
+	}
+
+	/* In full screen's small panel. */
+	.compact .reading {
+		gap: var(--space-1);
+		padding: var(--space-2) var(--space-2) var(--space-3);
+	}
+
+	.compact .name {
+		font-size: 2rem;
+	}
+
+	.compact .drone {
+		gap: var(--space-2);
+		padding-top: var(--space-2);
+	}
+
+	.compact .keyboard {
+		height: 84px;
 	}
 </style>
