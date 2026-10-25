@@ -8,7 +8,7 @@
 <Title title={t.accessLink.title} />
 
 <section class="card">
-	<img class="logo" src="/logo.png" alt="" width="88" height="88" />
+	<img class="logo" src="/logo.svg" alt="" width="88" height="88" />
 	{#if data.valid && !form?.invalid}
 		<h1>{t.accessLink.hello(data.firstName)}</h1>
 		<p>{t.accessLink.lead}</p>
