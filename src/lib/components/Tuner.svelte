@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import { detectPitch, DRONE_HARMONICS, noteFrequency, PitchSmoother } from '#lib/practice/audio.ts';
+	import TunerGauge from './TunerGauge.svelte';
 
 	/**
 	 * A tuner and a drone. The tuner reads the microphone about twelve times a second and shows
@@ -131,6 +132,15 @@
 	let droning = $state(false);
 	let drone: { context: AudioContext; master: GainNode; voices: { oscillators: OscillatorNode[]; ratio: number }[] } | null = null;
 	const droneFrequency = $derived(noteFrequency(pitchClass, octave, a4));
+	/** The keyboard: the white keys' pitches, and each black key with the white one it follows. */
+	const WHITE = [0, 2, 4, 5, 7, 9, 11];
+	const BLACK: [key: number, after: number][] = [
+		[1, 0],
+		[3, 1],
+		[6, 3],
+		[8, 4],
+		[10, 5]
+	];
 
 	/** Two slightly detuned voices per note make it breathe; the fifth is a pure one (3:2). */
 	function droneVoice(target: NonNullable<typeof drone>, wave: PeriodicWave, ratio: number, level: number, into: AudioNode) {
@@ -215,14 +225,15 @@
 </script>
 
 <div class="tuner" class:compact>
-	<!-- Always there: a dash before the first note, the last one held in a pause. -->
+	<!-- The device: always there, a dash before the first note, the last one held in a pause. -->
 	<div class="reading" class:ok={verdict === 'ok' && !stale} class:stale class:idle={!note} role="status">
-		<strong class="name">
-			{#if note}{t.practice.tuner.notes[note.pitchClass]}<sub>{note.octave}</sub>{:else}–{/if}
-		</strong>
-		<div class="meter" aria-hidden="true">
-			<span class="zero"></span>
-			<span class="needle" style:left="{50 + (note?.cents ?? 0)}%"></span>
+		<TunerGauge cents={note?.cents ?? null} verdict={stale ? null : verdict} quiet={!note || stale} />
+		<div class="display">
+			<span class="led flat" class:on={verdict === 'low' && !stale} aria-hidden="true"></span>
+			<strong class="name">
+				{#if note}{t.practice.tuner.notes[note.pitchClass]}<sub>{note.octave}</sub>{:else}–{/if}
+			</strong>
+			<span class="led sharp" class:on={verdict === 'high' && !stale} aria-hidden="true"></span>
 		</div>
 		<span class="detail">
 			{#if note}
@@ -240,7 +251,7 @@
 
 	<div class="row">
 		<button type="button" class={running ? 'btn ghost' : 'btn'} onclick={() => (running ? stopListening() : listen())}>
-			{running ? t.practice.tuner.stop : t.practice.tuner.start}
+			<span class="mic" class:live={running} aria-hidden="true"></span>{running ? t.practice.tuner.stop : t.practice.tuner.start}
 		</button>
 		<label class="field a4">
 			{t.practice.tuner.reference}
@@ -253,9 +264,25 @@
 
 	<section class="drone" aria-label={t.practice.drone.title}>
 		<h3>{t.practice.drone.title}</h3>
-		<div class="notes" role="group" aria-label={t.practice.drone.note}>
-			{#each t.practice.tuner.notes as name, i (name)}
-				<button type="button" class="key" class:black={[1, 3, 6, 8, 10].includes(i)} class:on={pitchClass === i} aria-pressed={pitchClass === i} onclick={() => (pitchClass = i)}>{name}</button>
+		<!-- One octave of a keyboard, the note to hold pressed down. -->
+		<div class="keyboard" role="group" aria-label={t.practice.drone.note}>
+			{#each WHITE as key (key)}
+				<button type="button" class="key white" class:on={pitchClass === key} class:sounding={droning && pitchClass === key} aria-pressed={pitchClass === key} onclick={() => (pitchClass = key)}>
+					<span>{t.practice.tuner.notes[key]}</span>
+				</button>
+			{/each}
+			{#each BLACK as [key, after] (key)}
+				<button
+					type="button"
+					class="key black"
+					class:on={pitchClass === key}
+					class:sounding={droning && pitchClass === key}
+					style:left="{((after + 1) / WHITE.length) * 100}%"
+					aria-pressed={pitchClass === key}
+					onclick={() => (pitchClass = key)}
+				>
+					<span>{t.practice.tuner.notes[key]}</span>
+				</button>
 			{/each}
 		</div>
 		<div class="row">
@@ -286,76 +313,86 @@
 		gap: var(--space-3);
 	}
 
+	/* A desk tuner: dark face, light scale, a lit window for the note. */
 	.reading {
 		display: grid;
 		justify-items: center;
-		align-content: center;
 		gap: var(--space-2);
-		min-height: 130px;
-		transition: opacity 0.4s var(--ease);
+		padding: var(--space-3) var(--space-3) var(--space-4);
+		border-radius: 22px;
+		background: radial-gradient(120% 90% at 50% 0%, #2f363d, #171b1f 70%);
+		box-shadow:
+			inset 0 1px 0 rgb(255 255 255 / 0.08),
+			inset 0 -2px 6px rgb(0 0 0 / 0.5),
+			0 8px 24px rgb(0 0 0 / 0.18);
+		color: #e9eef2;
 	}
 
-	.reading.stale {
-		opacity: 0.55;
+	.reading :global(.gauge) {
+		max-width: 340px;
 	}
 
-	.reading.idle .name,
-	.reading.idle .needle {
-		color: var(--text-muted);
-		opacity: 0.5;
+	.display {
+		display: grid;
+		grid-template-columns: 16px minmax(5.5rem, auto) 16px;
+		align-items: center;
+		gap: var(--space-3);
+		margin-top: calc(-1 * var(--space-2));
+		padding: var(--space-1) var(--space-4);
+		border-radius: 10px;
+		background: #0c0f11;
+		box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.7);
 	}
 
 	.name {
+		color: #e9eef2;
 		font-family: var(--font-display);
-		font-size: 3rem;
-		line-height: 1;
-		transition: color 0.3s var(--ease);
+		font-size: 2.75rem;
+		line-height: 1.1;
+		text-align: center;
+		transition:
+			color 0.3s,
+			text-shadow 0.3s;
 	}
 
 	.name sub {
 		margin-left: 2px;
-		color: var(--text-muted);
+		color: #9aa3ab;
 		font-size: 1rem;
 	}
 
 	.reading.ok .name {
-		color: var(--ok);
+		color: #6ee79a;
+		text-shadow: 0 0 12px rgb(74 222 128 / 0.55);
 	}
 
-	.meter {
-		position: relative;
-		width: min(100%, 320px);
-		height: 10px;
-		border-radius: 999px;
-		background: linear-gradient(to right, color-mix(in oklab, var(--warn) 40%, transparent), color-mix(in oklab, var(--ok) 50%, transparent) 45% 55%, color-mix(in oklab, var(--warn) 40%, transparent));
+	.reading.stale .name,
+	.reading.idle .name {
+		color: #7d868e;
 	}
 
-	.zero {
-		position: absolute;
-		top: -4px;
-		bottom: -4px;
-		left: 50%;
-		width: 2px;
-		background: var(--text-muted);
+	.led {
+		width: 12px;
+		height: 12px;
+		border-radius: 50%;
+		background: #3a2420;
+		box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.6);
+		transition:
+			background 0.15s,
+			box-shadow 0.15s;
 	}
 
-	/* Slow enough to read, quick enough to follow a bow. */
-	.needle {
-		position: absolute;
-		top: -6px;
-		width: 4px;
-		height: 22px;
-		margin-left: -2px;
-		border-radius: 2px;
-		background: var(--text);
-		transition: left 0.35s cubic-bezier(0.25, 0.8, 0.3, 1);
+	.led.on {
+		background: #ff7a4d;
+		box-shadow: 0 0 10px #ff7a4d;
 	}
 
 	.detail {
 		min-height: 1.5em;
-		color: var(--text-muted);
+		color: #aab3bb;
 		font-size: 0.875rem;
 		text-align: center;
+		font-variant-numeric: tabular-nums;
 	}
 
 	.row {
@@ -364,6 +401,28 @@
 		align-items: end;
 		justify-content: center;
 		gap: var(--space-3);
+	}
+
+	.mic {
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		margin-right: var(--space-2);
+		border-radius: 50%;
+		background: currentColor;
+		opacity: 0.5;
+	}
+
+	.mic.live {
+		background: var(--danger);
+		opacity: 1;
+		animation: live 1.4s ease-in-out infinite;
+	}
+
+	@keyframes live {
+		50% {
+			opacity: 0.35;
+		}
 	}
 
 	.a4 span {
@@ -388,34 +447,78 @@
 		font-size: 0.9375rem;
 	}
 
-	.notes {
+	/* One octave: seven white keys, five black ones over their gaps. */
+	.keyboard {
+		position: relative;
 		display: grid;
-		grid-template-columns: repeat(12, 1fr);
-		gap: 3px;
+		grid-template-columns: repeat(7, 1fr);
+		height: 112px;
+		padding: 6px 6px 8px;
+		border-radius: 10px;
+		background: linear-gradient(#2a1d14, #3b291c);
+		box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5);
 	}
 
 	.key {
-		min-width: 0;
-		height: 40px;
-		padding: 0;
-		border: 1px solid var(--hairline);
-		border-radius: 8px;
-		background: var(--surface);
-		color: var(--text);
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		padding: 0 0 6px;
+		border: 0;
 		font: inherit;
 		font-size: 0.75rem;
 		cursor: pointer;
+		transition:
+			background 0.1s,
+			transform 0.05s;
+	}
+
+	.key.white {
+		margin: 0 1px;
+		border-radius: 0 0 6px 6px;
+		background: linear-gradient(#fdfdfb, #ecebe6);
+		box-shadow:
+			inset 0 -4px 0 #d6d4cc,
+			0 1px 2px rgb(0 0 0 / 0.35);
+		color: #5d5850;
 	}
 
 	.key.black {
-		background: color-mix(in oklab, var(--text) 10%, var(--surface));
+		position: absolute;
+		top: 6px;
+		z-index: 1;
+		width: 10%;
+		height: 60%;
+		margin-left: -5%;
+		border-radius: 0 0 5px 5px;
+		background: linear-gradient(#3a3a3a, #111);
+		box-shadow:
+			inset 0 -3px 0 #000,
+			0 2px 3px rgb(0 0 0 / 0.5);
+		color: #cfcfcf;
+		font-size: 0.625rem;
 	}
 
-	.key.on {
-		border-color: var(--accent);
-		background: var(--accent);
-		color: var(--accent-contrast);
-		font-weight: 600;
+	.key:active {
+		transform: translateY(1px);
+	}
+
+	.key.white.on {
+		background: linear-gradient(var(--accent-soft), color-mix(in oklab, var(--accent) 35%, #fff));
+		color: var(--accent);
+		font-weight: 700;
+	}
+
+	.key.black.on {
+		background: linear-gradient(color-mix(in oklab, var(--accent) 70%, #000), var(--accent));
+		color: #fff;
+		font-weight: 700;
+	}
+
+	.key.sounding {
+		box-shadow:
+			0 0 0 2px var(--accent),
+			0 0 14px color-mix(in oklab, var(--accent) 60%, transparent);
 	}
 
 	.check {
@@ -433,12 +536,12 @@
 
 	/* In full screen's small panel. */
 	.compact .reading {
-		min-height: 96px;
 		gap: var(--space-1);
+		padding: var(--space-2) var(--space-2) var(--space-3);
 	}
 
 	.compact .name {
-		font-size: 2.25rem;
+		font-size: 2rem;
 	}
 
 	.compact .drone {
@@ -446,7 +549,7 @@
 		padding-top: var(--space-2);
 	}
 
-	.compact .key {
-		height: 32px;
+	.compact .keyboard {
+		height: 84px;
 	}
 </style>
