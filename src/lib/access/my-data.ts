@@ -2,6 +2,7 @@ import { normalizeEmail } from '#lib/access/access.ts';
 import { parseVotes, submitterEmail } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
+import type { Poll, PollResponse } from '#lib/polls/polls.ts';
 import type { PageMarks, PracticeDay, PushDevice, SentReminder, TourOutcome } from '#lib/server/db/types.ts';
 
 /**
@@ -113,6 +114,22 @@ export function storedData(
 		}));
 	}
 	return data;
+}
+
+/** The member's answers in date polls (#95), one row per date they answered. */
+export function pollData(answers: { poll: Poll; response: PollResponse }[]): MyData {
+	const rows = answers.flatMap(({ poll, response }) =>
+		poll.options
+			.filter((option) => response.choices[option.id])
+			.map((option) => ({
+				[t.myData.poll]: poll.title,
+				[t.myData.pollDate]: [option.date, option.start && `${option.start}${option.end ? `–${option.end}` : ''}`].filter(Boolean).join(' '),
+				[t.myData.pollAnswer]: t.polls.answer[response.choices[option.id]],
+				[t.myData.pollComment]: response.comment ?? '',
+				[t.myData.pollAnsweredAt]: response.updatedAt
+			}))
+	);
+	return rows.length ? { [t.myData.polls]: rows } : {};
 }
 
 /** A file name without characters that trouble file systems: "meine-daten-mia-example-org.json". */

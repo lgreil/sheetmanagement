@@ -15,6 +15,7 @@ import {
 import { t } from '#lib/i18n/index.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
 import { authConfig, requireRight } from '#lib/server/auth/index.ts';
+import { eraseMember, previewErase } from '#lib/server/erase.ts';
 import { config } from '#lib/config/index.ts';
 import { splitNames } from '#lib/music/instrument-groups.ts';
 import { commonInstruments, parseInstruments, playableInstruments } from '#lib/music/my-parts.ts';
@@ -192,6 +193,32 @@ export const actions: Actions = {
 				members.rows.filter((row) => normalizeEmail(row.values.email) === email).map((row) => row.row)
 			);
 		}),
+
+	/** What "Alle Daten löschen" would delete (#158), shown before anything happens. */
+	erasePreview: async ({ request, locals }) => {
+		requireRight(locals, 'mitglieder.verwalten');
+		const email = normalizeEmail(field(await request.formData(), 'email'));
+		try {
+			return { erase: await previewErase(email) };
+		} catch (error) {
+			console.error('Previewing a deletion failed:', error);
+			return fail(503, { message: t.messages.sheetFailed });
+		}
+	},
+
+	/** Deletes a member and everything the app keeps about them, after the preview (#158). */
+	erase: async ({ request, locals }) => {
+		requireRight(locals, 'mitglieder.verwalten');
+		const email = normalizeEmail(field(await request.formData(), 'email'));
+		try {
+			const done = await eraseMember(email);
+			await refreshAfterWrite();
+			return { saved: true, erased: done.name || done.email };
+		} catch (error) {
+			console.error('Deleting a member failed:', error);
+			return fail(503, { message: t.erase.failed });
+		}
+	},
 
 	grant: ({ request, locals }) =>
 		change(locals, async () => {

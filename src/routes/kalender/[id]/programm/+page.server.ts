@@ -1,5 +1,6 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { parseEntries, planProgramSave, programVersion, type OrchestraScope } from '#lib/repertoire/program-edit.ts';
+import { addPieceFromProgram, pickablePieces } from '#lib/server/archive.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { isOn } from '#lib/server/env.ts';
 import { getLibrary, type Library, type LibraryConcert } from '#lib/server/library.ts';
@@ -51,15 +52,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		sharedWith: concert.sharedWith,
 		shareOptions: shareOptions(library, concert.id),
 		// Only pieces with a row in "Stücke" can be picked; that's what the sheet's dropdown allows too.
-		pieces: library.pieces
-			.filter((piece) => piece.sheet?.title)
-			.map((piece) => ({
-				name: piece.sheet!.title,
-				title: piece.title,
-				subtitle: [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined,
-				duration: piece.sheet?.duration,
-				search: piece.search
-			}))
+		pieces: pickablePieces(library),
+		// Pieces not in the archive yet can be added from here (#192).
+		canAddPieces: locals.access.rights.has('archiv.bearbeiten')
 	};
 };
 
@@ -150,6 +145,9 @@ async function syncIfCurrent(id: string, scope: string | undefined): Promise<str
 }
 
 export const actions: Actions = {
+	/** A piece that isn't in the archive yet, created from the search; the editor adds it to the programme. */
+	newPiece: async ({ request, locals }) => addPieceFromProgram(locals, await request.formData()),
+
 	save: async ({ params, request, locals }) => {
 		requireRight(locals, 'programme.bearbeiten');
 		const data = await request.formData();

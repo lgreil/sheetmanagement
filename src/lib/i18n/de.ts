@@ -511,6 +511,11 @@ export const de = {
 		name: 'Name des Orchesters',
 		shortName: 'Kurzname',
 		shortNameHint: 'Für die Kopfzeile auf dem Handy, höchstens 24 Zeichen.',
+		privacy: 'Datenschutz',
+		retention: 'Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)',
+		retentionPlaceholder: 'unbegrenzt',
+		retentionHint:
+			'Ältere Einträge bleiben ohne Namen stehen, damit Chronik und Saisonbericht weiter zählen. Eine Saison läuft von September bis August; die laufende zählt mit. Leer lässt alle Namen stehen.',
 		logo: 'Logo',
 		logoField: 'Link zum Logo',
 		logoHint: 'Ein quadratisches Bild als https-Link, z. B. von der Website des Orchesters, oder eine Datei der App wie /logo.png.',
@@ -569,7 +574,8 @@ export const de = {
 			logo: 'Das Logo muss ein https-Link sein oder mit / beginnen.',
 			accent: 'Die Farbe muss die Form #rrggbb haben.',
 			look: 'Bitte einen der Stile wählen.',
-			featuresOff: ''
+			featuresOff: '',
+			retention: 'Die Aufbewahrung ist eine Zahl von Saisons, 1 bis 20, oder leer.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -709,7 +715,17 @@ export const de = {
 		lead: 'Alle Lücken im Archiv: aus den Dateinamen und den offenen Meldungen.',
 		all: 'Alle',
 		current: 'Aktuelle Programme',
-		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'mit fehlenden Seiten', reports: 'davon nur gemeldet' },
+		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'mit fehlenden Seiten', reports: 'davon nur gemeldet', hints: 'Hinweise aus der Prüfung' },
+		hint: {
+			empty: 'vielleicht leer',
+			incomplete: (pages: number, usual: number) => `vielleicht unvollständig: ${pages} ${pages === 1 ? 'Seite' : 'Seiten'}, die anderen meist ${usual}`
+		},
+		hintTitle: 'Von der App gefunden: die Datei ist leer oder nicht lesbar, oder sie hat viel weniger Seiten als die anderen Stimmen.',
+		hintConfirm: (word: string) => `Als ${word} markieren`,
+		hintDismiss: 'Stimmt so',
+		hintGone: 'Diesen Hinweis gibt es nicht mehr.',
+		hintDriveFailed: 'Die Datei konnte in Drive nicht umbenannt werden. Bitte versuch es noch einmal oder benenn sie von Hand um.',
+		checkProgress: (checked: number, total: number) => `Die App prüft die Seiten der Stimmen nach und nach: ${checked} von ${total} PDFs geprüft.`,
 		reported: 'gemeldet',
 		reportedHint: 'In der App gemeldet. Der Dateiname in Drive sagt es noch nicht.',
 		none: 'Keine Lücken im Archiv.',
@@ -1221,7 +1237,7 @@ export const de = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'Meine Daten',
-		lead: 'Alles, was die App über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen aus der Repertoire-Tabelle, dazu deine Geräte für Benachrichtigungen und die Erinnerungen, die du bekommen hast.',
+		lead: 'Alles, was die App über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen aus der Repertoire-Tabelle, dazu deine Geräte für Benachrichtigungen, die Erinnerungen, die du bekommen hast, und deine Antworten in Terminumfragen.',
 		download: 'Meine Daten herunterladen',
 		hint: 'Eine JSON-Datei, die sich mit jedem Texteditor öffnen lässt. Zum Ändern oder Löschen wende dich an die Verwaltung.',
 		fileName: 'meine-daten',
@@ -1232,6 +1248,12 @@ export const de = {
 		since: 'Angemeldet seit (UTC)',
 		keys: 'Schlüssel zum Verschlüsseln',
 		keysStored: 'gespeichert, hier nicht ausgegeben',
+		polls: 'Terminumfragen',
+		poll: 'Umfrage',
+		pollDate: 'Termin',
+		pollAnswer: 'Antwort',
+		pollComment: 'Kommentar',
+		pollAnsweredAt: 'Geantwortet (UTC)',
 		reminders: 'Verschickte Erinnerungen',
 		mailReminders: 'Erinnerungen per E-Mail',
 		mailState: 'Stand',
@@ -1425,6 +1447,30 @@ export const de = {
 		date: 'Datum',
 		venue: 'Ort'
 	},
+	retention: {
+		anonymous: 'Ohne Namen'
+	},
+	erase: {
+		anonymous: 'Ehemaliges Mitglied',
+		button: 'Alle Daten löschen …',
+		title: (name: string) => `Alle Daten von ${name} löschen`,
+		lead: 'Für eine Bitte um Löschung (Art. 17 DSGVO). Was nur diese Person betrifft, wird gelöscht. Wo eine Zeile auch für andere zählt (Zusagen, Anwesenheit, +1, Hinweise), bleibt sie ohne Namen stehen, damit Zählungen und Saisonbericht stimmen.',
+		nothing: 'Außer der Zeile in „Mitglieder“ gibt es keine Daten zu dieser Person.',
+		remove: (count: number) => (count === 1 ? '1 Eintrag wird gelöscht' : `${count} Einträge werden gelöscht`),
+		anonymise: (count: number) => (count === 1 ? '1 Eintrag bleibt ohne Namen' : `${count} Einträge bleiben ohne Namen`),
+		confirm: 'Endgültig löschen',
+		confirmQuestion: (name: string) => `Alle Daten von ${name} endgültig löschen? Das lässt sich nicht rückgängig machen.`,
+		done: (name: string) => `Die Daten von ${name} sind gelöscht.`,
+		failed: 'Das Löschen hat nicht ganz geklappt. Was erledigt ist, bleibt erledigt; bitte noch einmal versuchen.',
+		stored: {
+			devices: 'Geräte für Benachrichtigungen',
+			reminders: 'Verschickte Erinnerungen',
+			settings: 'Einstellungen (E-Mails, Tour, Übezeit)',
+			practice: 'Übezeit (Tage)',
+			marks: 'Eigene Eintragungen in Noten (Seiten)',
+			polls: 'Terminumfragen'
+		}
+	},
 	archive: {
 		addPiece: 'Stück ohne Noten eintragen',
 		addPieceLead: 'Für gespielte Stücke ohne Noten im Archiv.',
@@ -1465,6 +1511,13 @@ export const de = {
 		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
 	},
 	editor: {
+		newPiece: (title: string) => `„${title}“ als neues Stück anlegen`,
+		newPieceTitle: 'Neues Stück',
+		newPieceLead: 'Kommt ohne Noten ins Archiv und gleich ins Programm. Das Programm wird erst mit „Speichern“ gespeichert.',
+		newPieceSave: 'Anlegen und hinzufügen',
+		newPieceAnyway: 'Trotzdem neu anlegen',
+		similarTitle: 'Gibt es das Stück schon?',
+		similarTake: 'Dieses nehmen',
 		orchestras: 'Programm je Orchester',
 		orchestraTab: (orchestra: string) => `Programm ${orchestra}`,
 		jointTab: (orchestras: string[]) => `Gemeinsam: ${orchestras.join(' + ')}`,
@@ -1565,7 +1618,10 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung' },
+		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
+		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
+		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
 		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatisch' : 'per Knopf'}, ${ms} ms`,
 		jobNever: (name: string) => `${name}: noch nie gelaufen`,
 		jobsNever: 'Noch keine Aufgabe ist von selbst gelaufen.',
@@ -1935,7 +1991,8 @@ export const de = {
 				logo: 'Logo',
 				accent: 'Akzentfarbe',
 				look: 'Stil',
-				featuresOff: 'Ausgeschaltet'
+				featuresOff: 'Ausgeschaltet',
+				retention: 'Aufbewahrung (Saisons)'
 			},
 			/** The words for the look in the "Wert" column (#163). */
 			lookValues: {

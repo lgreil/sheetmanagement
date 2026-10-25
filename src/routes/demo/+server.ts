@@ -31,6 +31,8 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 				Promise.all([store.setTour(user.email, null), store.setPracticeOn(user.email, false), store.deletePractice(user.email), store.deleteMarks(user.email)])
 			)
 		);
+		// The completeness check starts again too, with no hint dismissed (#93).
+		await store.clearPartChecks();
 		await seedDemoPractice(store, today());
 		await refreshAfterWrite();
 		// The Drive changes too (renamed files, programme shortcuts): read it again from the sample data.

@@ -1,5 +1,5 @@
 /**
- * A small one-page PDF for the demo's sample parts: title, composer and part as real text
+ * A small PDF for the demo's sample parts, one page unless asked for more: title, composer and part as real text
  * (so "Aus den Noten lesen" finds them) above a few empty staves. Written by hand: the
  * format needs only a handful of objects and a table of their byte offsets.
  */
@@ -7,7 +7,20 @@
 /** PDF text strings: brackets and backslashes escaped; Latin-1, so umlauts work with WinAnsi. */
 const pdfText = (text: string) => text.replace(/[\\()]/g, (c) => `\\${c}`).replace(/[^\x20-\xff]/g, '?');
 
-export function samplePdf({ title, composer, arranger, part }: { title: string; composer?: string; arranger?: string; part: string }): Uint8Array<ArrayBuffer> {
+export function samplePdf({
+	title,
+	composer,
+	arranger,
+	part,
+	pages = 1
+}: {
+	title: string;
+	composer?: string;
+	arranger?: string;
+	part: string;
+	/** The same page this many times, for the completeness check (#93). */
+	pages?: number;
+}): Uint8Array<ArrayBuffer> {
 	const width = 595;
 	const height = 842;
 	const lines: string[] = [];
@@ -25,13 +38,18 @@ export function samplePdf({ title, composer, arranger, part }: { title: string; 
 	}
 	const content = `0.4 w\n${lines.join('\n')}`;
 
+	// Catalog, page tree, content and fonts first; then one page object per page, all drawing the same content.
+	const kids = Array.from({ length: pages }, (_, i) => `${6 + i} 0 R`).join(' ');
 	const objects = [
 		'<< /Type /Catalog /Pages 2 0 R >>',
-		'<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
-		`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>`,
+		`<< /Type /Pages /Kids [${kids}] /Count ${pages} >>`,
 		`<< /Length ${content.length} >>\nstream\n${content}\nendstream`,
 		'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>',
-		'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'
+		'<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>',
+		...Array.from(
+			{ length: pages },
+			() => `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Contents 3 0 R /Resources << /Font << /F1 4 0 R /F2 5 0 R >> >> >>`
+		)
 	];
 	let out = '%PDF-1.4\n';
 	const offsets: number[] = [];

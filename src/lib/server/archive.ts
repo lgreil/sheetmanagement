@@ -3,7 +3,8 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
 import { orchestraChoices, sameOrchestra } from '#lib/repertoire/orchestras.ts';
-import { checkNewConcert, checkNewPiece, type ArchiveProblem, type NewConcert } from '#lib/repertoire/archive-edit.ts';
+import { checkNewConcert, checkNewPiece, similarPieces, type ArchiveProblem, type NewConcert } from '#lib/repertoire/archive-edit.ts';
+import { normalize } from '#lib/repertoire/sheet.ts';
 import { requireRight } from './auth/index.ts';
 import { getLibrary } from './library.ts';
 import { appendRecords, readTab, refreshAfterWrite, SheetLayoutError } from './sheet-writes.ts';
@@ -67,4 +68,55 @@ export async function addPiece(locals: App.Locals, request: Request) {
 
 	const added = (await getLibrary()).pieces.find((p) => !p.detail && searchText(p.title) === searchText(input.title.trim()));
 	redirect(303, added ? `/stuecke/${encodeURIComponent(added.id)}` : '/stuecke');
+}
+
+/** A piece as the programme editor picks it: its name in the sheet, and what it shows. */
+export interface PickablePiece {
+	name: string;
+	title: string;
+	composer?: string;
+	subtitle?: string;
+	duration?: number;
+}
+
+/** Pieces with a row in "Stücke": the ones a programme can refer to. */
+export function pickablePieces(library: Awaited<ReturnType<typeof getLibrary>>): (PickablePiece & { search: string })[] {
+	return library.pieces
+		.filter((piece) => piece.sheet?.title)
+		.map((piece) => ({
+			name: piece.sheet!.title,
+			title: piece.title,
+			composer: piece.composer,
+			subtitle: [piece.composer, piece.catalogue].filter(Boolean).join(' · ') || undefined,
+			duration: piece.sheet?.duration,
+			search: piece.search
+		}));
+}
+
+/**
+ * A piece typed into a concert's programme that isn't in the archive yet (#192): a row in
+ * "Stücke", returned so the editor puts it into the programme. Close matches come back
+ * instead, unless the editor has shown them and the piece is new all the same.
+ */
+export async function addPieceFromProgram(locals: App.Locals, data: FormData) {
+	requireRight(locals, RIGHT);
+	const input = { title: field(data, 'title'), composer: field(data, 'composer'), catalogue: field(data, 'catalogue') };
+
+	if (data.get('anyway') !== '1') {
+		const similar = similarPieces(input, pickablePieces(await getLibrary()));
+		if (similar.length) return { newPiece: { similar: similar.map(({ search: _, ...piece }) => piece), values: input } };
+	}
+
+	const refused = await save(async () => {
+		const table = await readTab('pieces');
+		const checked = checkNewPiece(input, table);
+		if ('problem' in checked) return checked.problem;
+		await appendRecords('pieces', table, [checked.values]);
+		await refreshAfterWrite();
+	});
+	if (refused) return fail(refused.status, { newPiece: { error: refused.message, values: input } });
+
+	const added = pickablePieces(await getLibrary()).find((piece) => normalize(piece.name) === normalize(input.title));
+	const { search: _, ...piece } = added ?? { name: input.title.trim(), title: input.title.trim(), composer: input.composer.trim(), search: '' };
+	return { newPiece: { piece } };
 }

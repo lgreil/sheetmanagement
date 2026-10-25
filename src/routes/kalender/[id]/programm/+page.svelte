@@ -7,6 +7,7 @@
 	import { searchText } from '#lib/music/text.ts';
 	import { concertOrchestras, isJoint, programLabel } from '#lib/repertoire/orchestras.ts';
 	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
+	import { similarPieces } from '#lib/repertoire/archive-edit.ts';
 	import Crumbs from '#lib/components/Crumbs.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import Title from '#lib/components/Title.svelte';
@@ -68,6 +69,28 @@
 		takenWishes.push(...suggestion.wishIds);
 	}
 	const year = (key?: string) => key?.slice(0, 4);
+
+	// A piece that isn't in the archive yet, typed into the search (#192).
+	type Pickable = { name: string; title: string; composer?: string; subtitle?: string; duration?: number };
+	let creating = $state<{ title: string; composer: string; catalogue: string } | null>(null);
+	let serverSimilar = $state<Pickable[]>([]);
+	const creatingPiece = new FormState();
+	const similar = $derived<Pickable[]>(
+		creating && data.state === 'ready' ? similarPieces(creating, data.pieces).filter((piece) => !inProgram.has(piece.name)) : []
+	);
+	const shownSimilar = $derived(similar.length ? similar : serverSimilar);
+	const composers = $derived(
+		data.state === 'ready' ? [...new Set(data.pieces.flatMap((piece) => piece.composer || []))].sort((a, b) => a.localeCompare(b)) : []
+	);
+	function startCreating() {
+		creating = { title: query.trim(), composer: '', catalogue: '' };
+		serverSimilar = [];
+		query = '';
+	}
+	function takeSimilar(piece: Pickable) {
+		add(piece);
+		creating = null;
+	}
 </script>
 
 <Title title={t.editor.edit} />
@@ -156,9 +179,76 @@
 				{:else}
 					<li class="none">{t.editor.noResults}</li>
 				{/each}
+				{#if data.canAddPieces && query.trim()}
+					<li class="create">
+						<button type="button" onclick={startCreating}>
+							<Icon name="plus" size={16} />
+							<span><strong>{t.editor.newPiece(query.trim())}</strong></span>
+						</button>
+					</li>
+				{/if}
 			</ul>
 		{/if}
 	</div>
+
+	{#if creating}
+		<form
+			class="new-piece"
+			method="POST"
+			action="?orchester={encodeURIComponent(data.orchestra)}&/newPiece"
+			use:enhance={creatingPiece.submit({
+				onSuccess: (result) => {
+					const outcome = result?.newPiece as { piece?: Pickable; similar?: Pickable[] } | undefined;
+					if (outcome?.piece) takeSimilar(outcome.piece);
+					else serverSimilar = outcome?.similar ?? [];
+				}
+			})}
+		>
+			<h2>{t.editor.newPieceTitle}</h2>
+			<p class="muted">{t.editor.newPieceLead}</p>
+			{#if form?.newPiece && 'error' in form.newPiece}<p class="message" role="alert">{form.newPiece.error}</p>{/if}
+			<label class="input">
+				{t.archive.pieceTitle}
+				<input name="title" required maxlength="200" bind:value={creating.title} autocomplete="off" />
+			</label>
+			<label class="input">
+				{t.archive.composer}
+				<input name="composer" maxlength="200" bind:value={creating.composer} list="known-composers" autocomplete="off" />
+			</label>
+			<datalist id="known-composers">
+				{#each composers as composer (composer)}<option value={composer}></option>{/each}
+			</datalist>
+			<label class="input">
+				{t.archive.catalogue}
+				<input name="catalogue" maxlength="200" bind:value={creating.catalogue} autocomplete="off" />
+			</label>
+			{#if shownSimilar.length}
+				<div class="similar" role="status">
+					<h3>{t.editor.similarTitle}</h3>
+					<ul>
+						{#each shownSimilar as piece (piece.name)}
+							<li>
+								<span class="body">
+									<strong>{piece.title}</strong>
+									{#if piece.subtitle}<span class="muted">{piece.subtitle}</span>{/if}
+								</span>
+								<button type="button" class="take" onclick={() => takeSimilar(piece)}>
+									<Icon name="plus" size={16} /><span>{t.editor.similarTake}</span>
+								</button>
+							</li>
+						{/each}
+					</ul>
+				</div>
+				<input type="hidden" name="anyway" value="1" />
+			{/if}
+			<div class="new-actions">
+				<button class="button" class:secondary={shownSimilar.length > 0} disabled={creatingPiece.busy}>
+					<Icon name="plus" size={16} />{shownSimilar.length ? t.editor.newPieceAnyway : t.editor.newPieceSave}
+				</button>
+				<button type="button" class="cancel link" onclick={() => (creating = null)}>{t.reports.cancel}</button>
+			</div>
+		</form>
+	{/if}
 
 	{#if data.suggestions.wished.length || data.suggestions.longAgo.length}
 		<details class="suggestions" open={data.suggestions.wished.length > 0}>
@@ -770,5 +860,101 @@
 		.take span {
 			display: none;
 		}
+	}
+
+	.results .create {
+		border-top: 1px solid var(--border);
+		margin-top: var(--space-1);
+		padding-top: var(--space-1);
+	}
+
+	.results .create button {
+		color: var(--accent);
+	}
+
+	.new-piece {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+		align-items: end;
+		gap: var(--space-3);
+		margin-bottom: var(--space-4);
+		padding: var(--space-4);
+		border: 1px solid var(--accent);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+	}
+
+	.new-piece h2,
+	.new-piece > p,
+	.similar,
+	.new-actions {
+		grid-column: 1 / -1;
+	}
+
+	.new-piece h2 {
+		font-size: 1rem;
+	}
+
+	.new-piece .message {
+		margin: 0;
+	}
+
+	.input {
+		display: grid;
+		gap: var(--space-1);
+		font-size: 0.875rem;
+		font-weight: 600;
+	}
+
+	.input input {
+		height: 40px;
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		background: var(--bg);
+		color: var(--text);
+		font: inherit;
+		font-weight: 400;
+	}
+
+	.similar {
+		padding: var(--space-3);
+		border-radius: var(--radius-m);
+		background: var(--accent-soft);
+	}
+
+	.similar h3 {
+		margin-bottom: var(--space-2);
+		font-size: 0.9375rem;
+	}
+
+	.similar ul {
+		display: grid;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.similar li {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+	}
+
+	.new-actions {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-4);
+	}
+
+	.cancel.link {
+		padding: 0;
+		border: 0;
+		background: none;
+		font: inherit;
+		font-weight: 500;
+		cursor: pointer;
 	}
 </style>

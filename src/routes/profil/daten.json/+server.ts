@@ -1,5 +1,6 @@
 import { redirect } from '@sveltejs/kit';
-import { exportFileName, myData, storedData } from '#lib/access/my-data.ts';
+import { exportFileName, myData, pollData, storedData } from '#lib/access/my-data.ts';
+import { pollStore } from '#lib/server/polls.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { orchestra } from '#lib/server/env.ts';
@@ -12,7 +13,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 	if (locals.auth === 'off' || !user) redirect(303, '/anmelden');
 	const email = user.email.trim().toLowerCase();
 	const store = getStore();
-	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes, devices, reminders, optOut, tour, practiceOn, practiceDays, marks] = await Promise.all([
+	const [access, feedback, signups, attendance, pieceNotes, rehearsalNotes, devices, reminders, optOut, tour, practiceOn, practiceDays, marks, polls] = await Promise.all([
 		getAccessList({ force: true }),
 		getFeedback(),
 		getSignups(),
@@ -25,7 +26,8 @@ export const GET: RequestHandler = async ({ locals }) => {
 		store.tourOf(email).catch(() => null),
 		store.practiceOn(email).catch(() => false),
 		store.practiceOf(email).catch(() => []),
-		store.marksOf(email).catch(() => [])
+		store.marksOf(email).catch(() => []),
+		pollStore()?.answersOf(email).catch(() => []) ?? []
 	]);
 	const member = access?.membersByEmail.get(email);
 	const data = myData(
@@ -44,7 +46,7 @@ export const GET: RequestHandler = async ({ locals }) => {
 		email: user.email,
 		exportedAt: new Date().toISOString(),
 		about: t.myData.explain,
-		data: { ...data, ...storedData(devices, reminders, optOut.has(email), tour, { on: practiceOn, days: practiceDays }, marks) }
+		data: { ...data, ...storedData(devices, reminders, optOut.has(email), tour, { on: practiceOn, days: practiceDays }, marks), ...pollData(polls) }
 	};
 	return new Response(JSON.stringify(body, null, 2), {
 		headers: {

@@ -26,6 +26,77 @@ test('the programme editor saves', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(before - 1);
 });
 
+test('a new piece straight from the programme, with a guard against duplicates (#192)', async ({ page }) => {
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
+	const search = page.getByRole('searchbox', { name: 'Stück suchen und hinzufügen …' });
+	await search.fill('Ungarischer Tanz 5');
+	await page.getByRole('button', { name: '„Ungarischer Tanz 5“ als neues Stück anlegen' }).click();
+	// The piece is in the archive already, written another way.
+	await expect(page.getByRole('heading', { name: 'Gibt es das Stück schon?' })).toBeVisible();
+	await page.getByLabel('Titel').fill('Rosamunde');
+	await page.getByLabel('Komponist').fill('Schubert');
+	await page.getByRole('button', { name: 'Anlegen und hinzufügen' }).click();
+	await expect(page.locator('.entries').getByText('Rosamunde')).toBeVisible();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Programm gespeichert.')).toBeVisible();
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
+	await expect(page.locator('.entries').getByText('Rosamunde')).toBeVisible();
+});
+
+test('the completeness check finds a short part, which can be marked or dismissed (#93)', async ({ page }) => {
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Stimmen prüfen jetzt ausführen' }).click();
+	await expect(page.getByRole('status').filter({ hasText: 'Stimmen geprüft' })).toBeVisible();
+
+	await open(page, '/fehlende-stimmen');
+	const sleigh = page.locator('.piece').filter({ hasText: 'Sleigh Ride' });
+	await expect(sleigh.getByText('vielleicht unvollständig: 1 Seite, die anderen meist 3')).toBeVisible();
+	await sleigh.getByRole('button', { name: 'Stimmt so' }).click();
+	await expect(page.locator('.piece').filter({ hasText: 'Sleigh Ride' })).toHaveCount(0);
+
+	// Back to the sample data: the hint is there again, and confirming it renames the file.
+	await resetDemo(page);
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Stimmen prüfen jetzt ausführen' }).click();
+	await expect(page.getByRole('status').filter({ hasText: 'Stimmen geprüft' })).toBeVisible();
+	await open(page, '/fehlende-stimmen');
+	await page.locator('.piece').filter({ hasText: 'Sleigh Ride' }).getByRole('button', { name: 'Als UNVOLLSTÄNDIG markieren' }).click();
+	await expect(page.locator('.piece').filter({ hasText: 'Sleigh Ride' }).getByText('Seiten fehlen')).toBeVisible();
+	await expect(page.getByText(/vielleicht unvollständig/)).toHaveCount(0);
+});
+
+test('deleting a member with all their data, after a preview (#158)', async ({ page }) => {
+	await open(page, '/admin');
+	await page.getByPlaceholder('Mitglieder suchen …').fill('Mia Beispiel');
+	const row = page.locator('li').filter({ hasText: 'Mia Beispiel' }).first();
+	await row.getByRole('button', { name: 'Bearbeiten' }).click();
+	await page.getByRole('button', { name: 'Alle Daten löschen …' }).click();
+	const preview = page.locator('form.erase');
+	await expect(preview.getByRole('heading', { name: 'Alle Daten von Mia Beispiel löschen' })).toBeVisible();
+	// Her row goes; her +1 on a wish stays, without her name.
+	await expect(preview.getByText('Mitglieder')).toBeVisible();
+	await expect(preview.getByText('Wünsche')).toBeVisible();
+	page.once('dialog', (dialog) => dialog.accept());
+	await preview.getByRole('button', { name: 'Endgültig löschen' }).click();
+	await expect(page.getByText('Die Daten von Mia Beispiel sind gelöscht.')).toBeVisible();
+	await page.getByPlaceholder('Mitglieder suchen …').fill('Mia Beispiel');
+	await expect(page.locator('li').filter({ hasText: 'Mia Beispiel' })).toHaveCount(0);
+});
+
+test('a retention period set on the settings page, applied by its job (#158)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByLabel('Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)').fill('2');
+	await page.getByRole('button', { name: 'Speichern', exact: true }).first().click();
+	await expect(page.getByRole('status').filter({ hasText: 'Gespeichert' }).first()).toBeVisible();
+	await open(page, '/einstellungen');
+	await expect(page.getByLabel('Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)')).toHaveValue('2');
+
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Aufbewahrung jetzt ausführen' }).click();
+	// The demo's rehearsals are from the last weeks: nothing is old enough yet.
+	await expect(page.getByRole('status').filter({ hasText: /0 Einträge von vor dem \d{4}-09-01 ohne Namen/ })).toBeVisible();
+});
+
 test('taking attendance', async ({ page }) => {
 	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');

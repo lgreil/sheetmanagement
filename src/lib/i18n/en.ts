@@ -511,6 +511,11 @@ export const en: Texts = {
 		name: 'Name of the orchestra',
 		shortName: 'Short name',
 		shortNameHint: 'For the header on phones, at most 24 characters.',
+		privacy: 'Privacy',
+		retention: 'Keep names on sign-ups and attendance for (seasons)',
+		retentionPlaceholder: 'no limit',
+		retentionHint:
+			'Older entries stay without names, so the Chronik and the season report still count them. A season runs from September to August; the current one counts. Empty keeps all names.',
 		logo: 'Logo',
 		logoField: 'Link to the logo',
 		logoHint: "A square image as an https link, e.g. from the orchestra's website, or a file of the app such as /logo.png.",
@@ -570,7 +575,8 @@ export const en: Texts = {
 			logo: 'The logo must be an https link or start with /.',
 			accent: 'The colour must look like #rrggbb.',
 			look: 'Please choose one of the looks.',
-			featuresOff: ''
+			featuresOff: '',
+			retention: 'Retention is a number of seasons, 1 to 20, or empty.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -710,7 +716,17 @@ export const en: Texts = {
 		lead: 'Every gap in the library: from the file names and the open reports.',
 		all: 'All',
 		current: 'Current programmes',
-		counts: { missing: 'missing', empty: 'empty', incomplete: 'with missing pages', reports: 'of which only reported' },
+		counts: { missing: 'missing', empty: 'empty', incomplete: 'with missing pages', reports: 'of which only reported', hints: 'hints from the check' },
+		hint: {
+			empty: 'may be empty',
+			incomplete: (pages: number, usual: number) => `may be incomplete: ${pages} ${pages === 1 ? 'page' : 'pages'}, the others mostly ${usual}`
+		},
+		hintTitle: 'Found by the app: the file is empty or unreadable, or it has far fewer pages than the other parts.',
+		hintConfirm: (word: string) => `Mark as ${word}`,
+		hintDismiss: 'It’s fine',
+		hintGone: 'This hint is gone.',
+		hintDriveFailed: "The file couldn't be renamed in Drive. Please try again or rename it by hand.",
+		checkProgress: (checked: number, total: number) => `The app checks the parts’ pages bit by bit: ${checked} of ${total} PDFs checked.`,
 		reported: 'reported',
 		reportedHint: "Reported in the app. The file name in Drive doesn't say so yet.",
 		none: 'No gaps in the library.',
@@ -1218,7 +1234,7 @@ export const en: Texts = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'My data',
-		lead: 'Everything the app keeps about you: your entry, sign-ups, attendance, reports, wishes and notes from the repertoire sheet, plus your devices for notifications and the reminders you got.',
+		lead: 'Everything the app keeps about you: your entry, sign-ups, attendance, reports, wishes and notes from the repertoire sheet, plus your devices for notifications, the reminders you got and your answers in date polls.',
 		download: 'Download my data',
 		hint: 'A JSON file that opens in any text editor. To change or delete something, please ask the admins.',
 		fileName: 'my-data',
@@ -1229,6 +1245,12 @@ export const en: Texts = {
 		since: 'Signed up (UTC)',
 		keys: 'Encryption keys',
 		keysStored: 'stored, not included here',
+		polls: 'Date polls',
+		poll: 'Poll',
+		pollDate: 'Date',
+		pollAnswer: 'Answer',
+		pollComment: 'Comment',
+		pollAnsweredAt: 'Answered (UTC)',
 		reminders: 'Reminders sent',
 		mailReminders: 'Reminders by email',
 		mailState: 'State',
@@ -1417,6 +1439,30 @@ export const en: Texts = {
 		date: 'Date',
 		venue: 'Venue'
 	},
+	retention: {
+		anonymous: 'No name'
+	},
+	erase: {
+		anonymous: 'Former member',
+		button: 'Delete all data …',
+		title: (name: string) => `Delete all data of ${name}`,
+		lead: 'For a request to be deleted (Art. 17 GDPR). What only concerns this person is deleted. Where a row also counts for others (sign-ups, attendance, +1, notes), it stays without the name, so counts and the season report stay right.',
+		nothing: 'Apart from the row in “Members” there is no data about this person.',
+		remove: (count: number) => (count === 1 ? '1 entry is deleted' : `${count} entries are deleted`),
+		anonymise: (count: number) => (count === 1 ? '1 entry stays without the name' : `${count} entries stay without the name`),
+		confirm: 'Delete for good',
+		confirmQuestion: (name: string) => `Delete all data of ${name} for good? This can't be undone.`,
+		done: (name: string) => `The data of ${name} is deleted.`,
+		failed: "The deletion didn't fully work. What's done stays done; please try again.",
+		stored: {
+			devices: 'Devices for notifications',
+			reminders: 'Reminders sent',
+			settings: 'Settings (emails, tour, practice time)',
+			practice: 'Practice time (days)',
+			marks: 'Own marks in parts (pages)',
+			polls: 'Date polls'
+		}
+	},
 	archive: {
 		addPiece: 'Enter a piece without music',
 		addPieceLead: 'For pieces played without music in the library.',
@@ -1457,6 +1503,13 @@ export const en: Texts = {
 		missingColumns: (columns: string) => `${columns}: these columns aren't in the sheet yet. Run “Set up sheet” once, then they can be entered here.`
 	},
 	editor: {
+		newPiece: (title: string) => `Add “${title}” as a new piece`,
+		newPieceTitle: 'New piece',
+		newPieceLead: 'Goes into the library without music and straight into the programme. The programme is saved with “Save”.',
+		newPieceSave: 'Create and add',
+		newPieceAnyway: 'Create it anyway',
+		similarTitle: 'Is the piece there already?',
+		similarTake: 'Take this one',
 		orchestras: 'Programme per orchestra',
 		orchestraTab: (orchestra: string) => `Programme ${orchestra}`,
 		jointTab: (orchestras: string[]) => `Together: ${orchestras.join(' + ')}`,
@@ -1556,7 +1609,10 @@ export const en: Texts = {
 		redirectUri: (uri: string) => `Redirect URI: ${uri}`,
 		bootstrapAdmins: (n: number) => `${n} bootstrap admins`,
 		jobs: 'Background jobs',
-		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection' },
+		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention' },
+		retentionOff: 'No retention set; all names stay.',
+		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'entry' : 'entries'} from before ${cutoff} without names.`,
+		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'part' : 'parts'} checked, ${left ? `${left} to go` : 'all checked'}.`,
 		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatic' : 'by hand'}, ${ms} ms`,
 		jobNever: (name: string) => `${name}: hasn't run yet`,
 		jobsNever: 'No job has run on its own yet.',
@@ -1912,7 +1968,8 @@ export const en: Texts = {
 				logo: 'Logo',
 				accent: 'Accent colour',
 				look: 'Look',
-				featuresOff: 'Turned off'
+				featuresOff: 'Turned off',
+				retention: 'Retention (seasons)'
 			},
 			lookValues: {
 				bold: 'bold',

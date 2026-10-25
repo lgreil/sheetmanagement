@@ -13,6 +13,12 @@ export interface PollStore {
 	close(id: string, chosen: string | undefined): Promise<void>;
 	reopen(id: string): Promise<void>;
 	remove(id: string): Promise<void>;
+	/** One person's answers, with the poll's title and options; for their data export (#158). */
+	answersOf(email: string): Promise<{ poll: Poll; response: PollResponse }[]>;
+	/** How many answers and polls carry this address; for the preview of "Mitglied löschen" (#158). */
+	countBy(email: string): Promise<number>;
+	/** Puts a pseudonym in place of the person, so the answers still count but aren't theirs (#158). */
+	forget(email: string, stand: { email: string; name: string }): Promise<void>;
 }
 
 /** The part of Cloudflare's D1 API used here; node:sqlite is wrapped to look the same in tests. */
@@ -179,6 +185,33 @@ export class SqlPollStore implements PollStore {
 		await this.db.prepare('DELETE FROM poll_responses WHERE poll_id = ?').bind(id).run();
 		await this.db.prepare('DELETE FROM polls WHERE id = ?').bind(id).run();
 	}
+
+	async answersOf(email: string) {
+		await this.ready();
+		const { results } = await this.db
+			.prepare(
+				`SELECT p.*, r.email, r.name, r.choices, r.comment, r.updated_at FROM poll_responses r JOIN polls p ON p.id = r.poll_id
+				WHERE r.email = ? ORDER BY p.created_at`
+			)
+			.bind(email)
+			.all<PollRow & ResponseRow>();
+		return results.map((row) => ({ poll: toPoll(row), response: toResponse(row) }));
+	}
+
+	async countBy(email: string): Promise<number> {
+		await this.ready();
+		const row = await this.db
+			.prepare('SELECT (SELECT COUNT(*) FROM poll_responses WHERE email = ?) + (SELECT COUNT(*) FROM polls WHERE created_by = ?) AS n')
+			.bind(email, email)
+			.first<{ n: number }>();
+		return row?.n ?? 0;
+	}
+
+	async forget(email: string, stand: { email: string; name: string }): Promise<void> {
+		await this.ready();
+		await this.db.prepare('UPDATE poll_responses SET email = ?, name = ?, comment = NULL WHERE email = ?').bind(stand.email, stand.name, email).run();
+		await this.db.prepare('UPDATE polls SET created_by = ?, created_by_name = ? WHERE created_by = ?').bind(stand.email, stand.name, email).run();
+	}
 }
 
 export class MemoryPollStore implements PollStore {
@@ -222,5 +255,30 @@ export class MemoryPollStore implements PollStore {
 	async remove(id: string): Promise<void> {
 		this.polls.delete(id);
 		this.responses.delete(id);
+	}
+
+	async answersOf(email: string) {
+		return [...this.responses]
+			.flatMap(([id, answers]) => {
+				const poll = this.polls.get(id);
+				const response = answers.get(email);
+				return poll && response ? [structuredClone({ poll, response })] : [];
+			})
+			.sort((a, b) => a.poll.createdAt.localeCompare(b.poll.createdAt));
+	}
+
+	async countBy(email: string): Promise<number> {
+		const answers = [...this.responses.values()].filter((answers) => answers.has(email)).length;
+		return answers + [...this.polls.values()].filter((poll) => poll.createdBy === email).length;
+	}
+
+	async forget(email: string, stand: { email: string; name: string }): Promise<void> {
+		for (const answers of this.responses.values()) {
+			const answer = answers.get(email);
+			if (!answer) continue;
+			answers.delete(email);
+			answers.set(stand.email, { ...answer, email: stand.email, name: stand.name, comment: undefined });
+		}
+		for (const poll of this.polls.values()) if (poll.createdBy === email) Object.assign(poll, { createdBy: stand.email, createdByName: stand.name });
 	}
 }

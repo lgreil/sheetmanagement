@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { config } from '#lib/config/index.ts';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
+	const marking = new FormState();
 
 	/** "" = all pieces, "*" = any current programme, else one programme. */
 	let filter = $state('');
@@ -27,14 +31,17 @@
 	<p class="msg error">{t.gaps.failed}</p>
 {:else if !data.pieces.length}
 	<p class="msg ok"><Icon name="check" size={16} />{t.gaps.none}</p>
+	{#if data.check && data.check.checked < data.check.total}<p class="muted">{t.gaps.checkProgress(data.check.checked, data.check.total)}</p>{/if}
 {:else}
+	{#if form?.message}<p class="msg error" role="alert">{form.message}</p>{/if}
 	<ul class="counts">
-		{#each ['missing', 'empty', 'incomplete', 'reports'] as const as kind (kind)}
+		{#each ['missing', 'empty', 'incomplete', 'reports', 'hints'] as const as kind (kind)}
 			{#if data.counts[kind]}
 				<li class={kind}><strong>{data.counts[kind]}</strong> {t.gaps.counts[kind]}</li>
 			{/if}
 		{/each}
 	</ul>
+	{#if data.check && data.check.checked < data.check.total}<p class="muted progress">{t.gaps.checkProgress(data.check.checked, data.check.total)}</p>{/if}
 
 	{#if filters.length > 1}
 		<div class="filters" role="tablist">
@@ -76,6 +83,25 @@
 								{#if report.comment}<span class="muted">{t.common.quote(report.comment)}</span>{/if}
 							</li>
 						{/each}
+						{#each piece.hints as hint (hint.id)}
+							<li class="hint">
+								<a href={hint.url} target="_blank" rel="noopener noreferrer">{hint.label}</a>
+								<span class="status hinted {hint.problem}" title={t.gaps.hintTitle}>
+									<Icon name="search" size={12} />{hint.problem === 'empty' ? t.gaps.hint.empty : t.gaps.hint.incomplete(hint.pages, hint.usual)}
+								</span>
+								{#if data.canMark}
+									<form method="POST" use:enhance={marking.submit()}>
+										<input type="hidden" name="id" value={hint.id} />
+										{#if data.driveWrite}
+											<button class="mini" formaction="?/confirmHint" disabled={marking.busy}>
+												{t.gaps.hintConfirm(config.naming.status[hint.problem])}
+											</button>
+										{/if}
+										<button class="mini ghost" formaction="?/dismissHint" disabled={marking.busy}>{t.gaps.hintDismiss}</button>
+									</form>
+								{/if}
+							</li>
+						{/each}
 					</ul>
 				</li>
 			{/each}
@@ -112,7 +138,8 @@
 	}
 
 	.counts .incomplete,
-	.counts .reports {
+	.counts .reports,
+	.counts .hints {
 		background: color-mix(in oklab, var(--warn) 12%, transparent);
 	}
 
@@ -224,6 +251,46 @@
 	.status.reported {
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
+	}
+
+	.status.hinted {
+		border: 1px dashed currentColor;
+		background: none;
+		color: var(--warn);
+		font-weight: 600;
+	}
+
+	.hint form {
+		display: inline-flex;
+		flex-wrap: wrap;
+		gap: var(--space-1);
+	}
+
+	.mini {
+		padding: 2px 10px;
+		border: 1px solid var(--accent);
+		border-radius: 999px;
+		background: var(--accent);
+		color: var(--accent-contrast);
+		font: inherit;
+		font-size: 0.8125rem;
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.mini.ghost {
+		border-color: var(--border);
+		background: var(--surface);
+		color: var(--text);
+	}
+
+	.mini:disabled {
+		opacity: 0.6;
+		cursor: progress;
+	}
+
+	.progress {
+		margin: calc(-1 * var(--space-2)) 0 var(--space-4);
 	}
 
 	.status.done {

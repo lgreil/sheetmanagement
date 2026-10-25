@@ -1,5 +1,7 @@
 import { appEnv } from '../env.ts';
 import { checkConnections } from './check.ts';
+import { checkParts } from './parts.ts';
+import { applyRetention } from './retention.ts';
 import { sendReminders } from './reminders.ts';
 import { warmCaches } from './warm.ts';
 
@@ -25,7 +27,9 @@ interface Job {
 export const JOBS = {
 	warm: { everyMinutes: 10, run: warmCaches },
 	reminders: { everyMinutes: 30, run: () => sendReminders() },
-	check: { everyMinutes: 24 * 60, run: checkConnections }
+	check: { everyMinutes: 24 * 60, run: checkConnections },
+	parts: { everyMinutes: 10, run: () => checkParts() },
+	retention: { everyMinutes: 24 * 60, run: applyRetention }
 } satisfies Record<string, Job>;
 
 export type JobName = keyof typeof JOBS;

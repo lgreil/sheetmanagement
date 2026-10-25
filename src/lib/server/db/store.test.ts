@@ -49,6 +49,22 @@ describe.each([
 		expect(await store.pushOf('a@x.org')).toEqual([]);
 	});
 
+	it('remembers part checks, and dismissed hints until the file changes', async () => {
+		const store = make();
+		await store.savePartCheck({ fileId: 'f1', modified: '2026-10-01', pages: 4, skipped: false });
+		await store.savePartCheck({ fileId: 'f2', modified: '2026-10-01', pages: null, skipped: false });
+		await store.dismissPartCheck('f2');
+		await store.savePartCheck({ fileId: 'f2', modified: '2026-10-01', pages: null, skipped: false });
+		const byId = async () => new Map((await store.partChecks()).map((check) => [check.fileId, check]));
+		expect((await byId()).get('f1')).toEqual({ fileId: 'f1', modified: '2026-10-01', pages: 4, skipped: false, dismissed: false });
+		expect((await byId()).get('f2')?.dismissed).toBe(true);
+		// A new version of the file is checked afresh.
+		await store.savePartCheck({ fileId: 'f2', modified: '2026-10-20', pages: 3, skipped: false });
+		expect((await byId()).get('f2')).toMatchObject({ pages: 3, dismissed: false });
+		await store.clearPartChecks();
+		expect(await store.partChecks()).toEqual([]);
+	});
+
 	it('logs each reminder once', async () => {
 		const store = make();
 		await store.logReminder('signup', 'event-1', 'a@x.org');
@@ -61,6 +77,9 @@ describe.each([
 		expect(mine.map(({ kind, subject }) => [kind, subject])).toEqual([['signup', 'event-1']]);
 		expect(mine[0].sentAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
 		expect(await store.remindersOf('nobody@x.org')).toEqual([]);
+		await store.deleteRemindersOf('a@x.org');
+		expect(await store.remindersOf('a@x.org')).toEqual([]);
+		expect(await store.remindersOf('b@x.org')).toHaveLength(1);
 	});
 
 	it('remembers who turned email reminders off (#123)', async () => {

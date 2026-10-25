@@ -55,7 +55,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			shortName: stored.shortName ?? '',
 			logo: stored.logo ?? '',
 			accent: stored.accent ?? '',
-			look: stored.look ?? ''
+			look: stored.look ?? '',
+			retention: stored.retention ? String(stored.retention) : ''
 		},
 		defaults: {
 			name: defaults.name,
@@ -92,7 +93,8 @@ export const actions: Actions = {
 			// The colour picker always sends a colour; "default" keeps the field empty.
 			accent: data.has('accentDefault') ? '' : text('accent'),
 			look: text('look'),
-			featuresOff: FEATURES.filter((feature: Feature) => !on.has(feature))
+			featuresOff: FEATURES.filter((feature: Feature) => !on.has(feature)),
+			retention: text('retention')
 		};
 		const check = checkSettings(form);
 		// What was typed comes back, so nothing is lost when the page reloads without JavaScript.
@@ -100,7 +102,7 @@ export const actions: Actions = {
 			return fail(400, {
 				field: check.field,
 				message: t.settings.invalid[check.field],
-				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent, look: form.look }
+				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent, look: form.look, retention: form.retention }
 			});
 		}
 		try {

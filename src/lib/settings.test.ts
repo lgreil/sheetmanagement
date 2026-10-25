@@ -4,7 +4,7 @@ import { checkInstruments, checkSettings, planInstrumentSave, planSettingsSave, 
 
 const columns = { key: 'Einstellung', value: 'Wert' };
 const table = (rows: string[][]) => readTable([['Einstellung', 'Wert'], ...rows], columns);
-const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', look: '', featuresOff: [] };
+const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', look: '', featuresOff: [], retention: '' };
 
 describe('readSettings', () => {
 	it('reads the rows by their German names, in any case', () => {
@@ -60,9 +60,18 @@ describe('checkSettings', () => {
 	});
 });
 
+describe('retention', () => {
+	it('reads and checks a number of seasons from 1 to 20', () => {
+		expect(readSettings(table([['Aufbewahrung (Saisons)', '3']]).rows)).toEqual({ retention: 3 });
+		expect(readSettings(table([['Aufbewahrung (Saisons)', 'immer']]).rows)).toEqual({});
+		expect(checkSettings({ ...form, retention: '0' })).toEqual({ ok: false, field: 'retention' });
+		expect(checkSettings({ ...form, retention: ' 5 ' })).toEqual({ ok: true });
+	});
+});
+
 describe('planSettingsSave', () => {
 	it('adds every setting to an empty tab', () => {
-		const plan = planSettingsSave(table([]), { ...form, name: 'Muster', featuresOff: ['loans'] });
+		const plan = planSettingsSave(table([]), { ...form, name: 'Muster', featuresOff: ['loans'], retention: '3' });
 		expect(plan.updates).toEqual([]);
 		expect(plan.append).toEqual([
 			{ key: 'Name', value: 'Muster' },
@@ -70,7 +79,8 @@ describe('planSettingsSave', () => {
 			{ key: 'Logo', value: '' },
 			{ key: 'Akzentfarbe', value: '' },
 			{ key: 'Stil', value: '' },
-			{ key: 'Ausgeschaltet', value: 'loans' }
+			{ key: 'Ausgeschaltet', value: 'loans' },
+			{ key: 'Aufbewahrung (Saisons)', value: '3' }
 		]);
 	});
 
@@ -81,7 +91,8 @@ describe('planSettingsSave', () => {
 			['Logo', ''],
 			['Akzentfarbe', '#e6b422'],
 			['Stil', ''],
-			['Ausgeschaltet', '']
+			['Ausgeschaltet', ''],
+			['Aufbewahrung (Saisons)', '']
 		]);
 		const plan = planSettingsSave(existing, { ...form, name: 'Muster', accent: '#1D4ED8' });
 		expect(plan).toEqual({ updates: [{ row: 5, values: { value: '#1d4ed8' } }], append: [] });

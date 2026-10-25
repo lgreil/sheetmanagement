@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkNewConcert, checkNewPiece } from './archive-edit.ts';
+import { checkNewConcert, checkNewPiece, similarPieces } from './archive-edit.ts';
 import { LAYOUT, readTable } from './sheet.ts';
 
 const concerts = readTable(
@@ -35,5 +35,36 @@ describe('checkNewPiece', () => {
 		expect(checkNewPiece({ title: 'Ave Maria', composer: 'Schubert', catalogue: 'D 839' }, pieces)).toMatchObject({ values: { title: 'Ave Maria' } });
 		expect(checkNewPiece({ title: 'SLEIGH RIDE', composer: '', catalogue: '' }, pieces)).toEqual({ problem: 'title-taken' });
 		expect(checkNewPiece({ title: '', composer: 'X', catalogue: '' }, pieces)).toEqual({ problem: 'title-missing' });
+	});
+});
+
+describe('similarPieces', () => {
+	const archive = [
+		{ title: 'Ungarischer Tanz Nr. 5', composer: 'Brahms' },
+		{ title: '5. Sinfonie c-Moll', composer: 'Ludwig van Beethoven' },
+		{ title: 'Sleigh Ride', composer: 'Anderson' },
+		{ title: 'Eine kleine Nachtmusik', composer: 'Mozart' }
+	];
+	const titles = (input: { title: string; composer?: string }) => similarPieces(input, archive).map((piece) => piece.title);
+
+	it('finds the same title written another way', () => {
+		expect(titles({ title: 'Ungarischer Tanz 5' })).toEqual(['Ungarischer Tanz Nr. 5']);
+		expect(titles({ title: 'ungarischer tanz no. 5' })).toEqual(['Ungarischer Tanz Nr. 5']);
+	});
+
+	it('finds a title a letter off', () => {
+		expect(titles({ title: 'Eine kleine Nachtmusick' })).toEqual(['Eine kleine Nachtmusik']);
+		expect(titles({ title: 'Kleine Nachtmusik' })).toEqual(['Eine kleine Nachtmusik']);
+	});
+
+	it('finds a similar title by the same composer', () => {
+		expect(titles({ title: 'Sinfonie 5', composer: 'Beethoven' })).toEqual(['5. Sinfonie c-Moll']);
+		expect(titles({ title: 'Sinfonie 5', composer: 'Schubert' })).toEqual([]);
+	});
+
+	it('leaves other pieces alone', () => {
+		expect(titles({ title: 'Ungarischer Tanz 6' })).toEqual([]);
+		expect(titles({ title: 'Ave Maria', composer: 'Schubert' })).toEqual([]);
+		expect(titles({ title: '  ' })).toEqual([]);
 	});
 });

@@ -62,6 +62,24 @@ for (const [name, make] of [
 			]);
 		});
 
+		it('forgets a person: their answers count under a pseudonym, without their comment', async () => {
+			const store = make();
+			const { id } = await store.create(poll, vera);
+			await store.respond(id, { email: 'ben@example.org', name: 'Ben', choices: { o1: 'yes' }, comment: 'Gern', updatedAt: '2027-01-01T10:00:00Z' });
+			expect(await store.countBy('ben@example.org')).toBe(1);
+			expect((await store.answersOf('ben@example.org')).map(({ poll, response }) => [poll.title, response.comment])).toEqual([[poll.title, 'Gern']]);
+			expect(await store.countBy(vera.email)).toBe(1);
+			const stand = { email: 'geloescht-x@geloescht.invalid', name: 'Ehemaliges Mitglied' };
+			await store.forget('ben@example.org', stand);
+			await store.forget(vera.email, stand);
+			const got = (await store.get(id))!;
+			expect(got.responses.map((response) => [response.email, response.name, response.choices, response.comment])).toEqual([
+				[stand.email, stand.name, { o1: 'yes' }, undefined]
+			]);
+			expect(got.poll).toMatchObject({ createdBy: stand.email, createdByName: stand.name });
+			expect(await store.countBy('ben@example.org')).toBe(0);
+		});
+
 		it('closes with the chosen date, reopens, and removes with its answers', async () => {
 			const store = make();
 			const { id } = await store.create(poll, vera);
