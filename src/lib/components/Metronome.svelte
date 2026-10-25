@@ -8,6 +8,9 @@
 	 * signature stresses the bar's first beat and where it falls in two. Remembered in this browser.
 	 */
 
+	/** In full screen's small panel: menus instead of rows of buttons. */
+	let { compact = false }: { compact?: boolean } = $props();
+
 	const KEY = 'metronome';
 	function remembered(): { bpm: number; meter: string; dotted: boolean } {
 		try {
@@ -113,7 +116,7 @@
 	const step = (by: number) => (bpm = clampBpm(bpm + by));
 </script>
 
-<div class="metronome">
+<div class="metronome" class:compact>
 	<div class="tempo">
 		<button type="button" class="round" onclick={() => step(-1)} aria-label={t.practice.metronome.slower}>−</button>
 		<div class="reading">
@@ -127,19 +130,36 @@
 	</div>
 	<input class="slider" type="range" min={MIN_BPM} max={MAX_BPM} bind:value={bpm} aria-label={t.practice.metronome.bpm} />
 
-	<div class="chips" role="group" aria-label={t.practice.metronome.tempo}>
-		{#each TEMPI as tempo (tempo.name)}
-			<button type="button" class="chip" class:on={tempoName(bpm) === tempo.name} onclick={() => (bpm = tempo.typical)}>{tempo.name}</button>
-		{/each}
-	</div>
+	{#if compact}
+		<div class="menus">
+			<label class="field">
+				{t.practice.metronome.tempo}
+				<select value={tempoName(bpm)} onchange={(event) => (bpm = TEMPI.find((tempo) => tempo.name === event.currentTarget.value)?.typical ?? bpm)}>
+					{#each TEMPI as tempo (tempo.name)}<option value={tempo.name}>{tempo.name}</option>{/each}
+				</select>
+			</label>
+			<label class="field">
+				{t.practice.metronome.meter}
+				<select value={meterId} onchange={(event) => chooseMeter(event.currentTarget.value)}>
+					{#each METERS as each (each.id)}<option value={each.id}>{each.id || t.practice.metronome.noMeter}</option>{/each}
+				</select>
+			</label>
+		</div>
+	{:else}
+		<div class="chips" role="group" aria-label={t.practice.metronome.tempo}>
+			{#each TEMPI as tempo (tempo.name)}
+				<button type="button" class="chip" class:on={tempoName(bpm) === tempo.name} onclick={() => (bpm = tempo.typical)}>{tempo.name}</button>
+			{/each}
+		</div>
 
-	<div class="chips" role="group" aria-label={t.practice.metronome.meter}>
-		{#each METERS as each (each.id)}
-			<button type="button" class="chip meter" class:on={meterId === each.id} aria-pressed={meterId === each.id} onclick={() => chooseMeter(each.id)}>
-				{each.id || t.practice.metronome.noMeter}
-			</button>
-		{/each}
-	</div>
+		<div class="chips" role="group" aria-label={t.practice.metronome.meter}>
+			{#each METERS as each (each.id)}
+				<button type="button" class="chip meter" class:on={meterId === each.id} aria-pressed={meterId === each.id} onclick={() => chooseMeter(each.id)}>
+					{each.id || t.practice.metronome.noMeter}
+				</button>
+			{/each}
+		</div>
+	{/if}
 	{#if isCompound(meter)}
 		<div class="chips" role="group" aria-label={t.practice.metronome.count}>
 			<button type="button" class="chip" class:on={!dotted} aria-pressed={!dotted} onclick={() => (dotted = false)}>♪ {t.practice.metronome.eighths}</button>
@@ -269,8 +289,10 @@
 	.beats {
 		display: flex;
 		flex-wrap: wrap;
+		align-items: center;
 		justify-content: center;
 		gap: var(--space-2);
+		min-height: 32px;
 	}
 
 	.beat {
@@ -307,5 +329,28 @@
 		flex-wrap: wrap;
 		justify-content: center;
 		gap: var(--space-2);
+	}
+
+	.menus {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: var(--space-2);
+	}
+
+	.compact {
+		gap: var(--space-2);
+	}
+
+	.compact .round {
+		width: 38px;
+		height: 38px;
+	}
+
+	.compact .bpm input {
+		font-size: 2.25rem;
+	}
+
+	.compact .name {
+		font-size: 1.0625rem;
 	}
 </style>

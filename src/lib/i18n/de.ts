@@ -1300,7 +1300,8 @@ export const de = {
 			fullscreen: 'Vollbild',
 			exitFullscreen: 'Vollbild beenden',
 			turnHint: 'Blättern: an den linken oder rechten Rand tippen, mit den Pfeiltasten oder einem Blätterpedal.',
-			tools: 'Werkzeuge'
+			tools: 'Werkzeuge',
+			closeTools: 'Werkzeuge schließen'
 		},
 		recording: {
 			title: 'Hörbeispiel',
@@ -1338,7 +1339,19 @@ export const de = {
 			cents: (cents: number) => `${cents > 0 ? '+' : cents < 0 ? '−' : '±'}${Math.abs(cents)} Cent`,
 			inTune: 'Stimmt',
 			low: 'zu tief',
-			high: 'zu hoch'
+			high: 'zu hoch',
+			last: 'zuletzt gehört',
+			off: 'Mikrofon ist aus.'
+		},
+		drone: {
+			title: 'Bordunton',
+			note: 'Ton',
+			octave: 'Oktave',
+			fifth: 'mit Quinte',
+			volume: 'Lautstärke',
+			heard: 'Gehörten Ton nehmen',
+			play: (note: string) => `${note} spielen`,
+			stop: 'Bordun aus'
 		},
 		marks: {
 			title: 'Notizen',

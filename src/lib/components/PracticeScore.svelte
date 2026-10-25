@@ -2,6 +2,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import type { OpenScore } from '#lib/music/score-reader.ts';
 	import { MARK_COLORS, onPage, strokePath, thinPoints, type MarkColor, type Stroke } from '#lib/practice/marks.ts';
+	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 
 	/**
@@ -10,7 +11,17 @@
 	 * pedal (they send those keys). Full screen on request. With the pen, the member's own
 	 * marks go on the page; they are saved a moment after the pen stops.
 	 */
-	let { file, marks: saved }: { file: string; marks: Record<number, Stroke[]> } = $props();
+	let {
+		file,
+		marks: saved,
+		tools
+	}: {
+		file: string;
+		marks: Record<number, Stroke[]>;
+		/** The recording, metronome and tuner: above the page, in full screen a small panel over it. */
+		tools?: Snippet<[compact: boolean]>;
+	} = $props();
+	let toolsOpen = $state(false);
 
 	let score = $state<OpenScore | null>(null);
 	let pages = $state(0);
@@ -344,6 +355,11 @@
 			<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
 				<Icon name="edit" size={15} />{t.practice.marks.pen}
 			</button>
+			{#if full && tools}
+				<button type="button" class="tool text" class:on={toolsOpen} aria-expanded={toolsOpen} onclick={() => (toolsOpen = !toolsOpen)}>
+					{t.practice.viewer.tools}
+				</button>
+			{/if}
 			<button type="button" class="tool text" onclick={() => (full ? leaveFull() : enterFull())} aria-pressed={full}>
 				{full ? t.practice.viewer.exitFullscreen : t.practice.viewer.fullscreen}
 			</button>
@@ -370,6 +386,16 @@
 		</div>
 	{/if}
 	</div>
+
+	<!-- Rendered once, so a running metronome or drone carries on into and out of full screen. -->
+	{#if tools}
+		<div class="tools-area" class:open={toolsOpen}>
+			{#if full}
+				<button type="button" class="close" onclick={() => (toolsOpen = false)} aria-label={t.practice.viewer.closeTools}>×</button>
+			{/if}
+			{@render tools(full)}
+		</div>
+	{/if}
 
 	<!-- Taps on the page turn it; the keys and pedals work anywhere on the page. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -447,6 +473,42 @@
 
 	.full .bar {
 		justify-content: flex-end;
+	}
+
+	/* In full screen: a small panel in the bottom-left corner, open on request. */
+	.full .tools-area {
+		position: absolute;
+		bottom: var(--space-2);
+		left: var(--space-2);
+		z-index: 3;
+		display: none;
+		width: min(380px, calc(100% - 2 * var(--space-2)));
+		max-height: calc(100% - 96px);
+		overflow-y: auto;
+		padding: var(--space-3);
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		box-shadow: var(--shadow-raised);
+	}
+
+	.full .tools-area.open {
+		display: block;
+	}
+
+	.close {
+		position: sticky;
+		top: 0;
+		float: right;
+		width: 32px;
+		height: 32px;
+		margin: calc(-1 * var(--space-1)) calc(-1 * var(--space-1)) 0 var(--space-2);
+		border: 0;
+		border-radius: 50%;
+		background: color-mix(in oklab, var(--text) 8%, transparent);
+		color: var(--text);
+		font-size: 1.25rem;
+		line-height: 1;
+		cursor: pointer;
 	}
 
 	.bar {
