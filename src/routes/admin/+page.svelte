@@ -78,6 +78,8 @@
 {:else}
 	{#if form?.message}
 		<p class="message error" role="alert">{form.message}</p>
+	{:else if form?.erased}
+		<p class="message ok" role="status"><Icon name="check" size={16} />{t.erase.done(form.erased)}</p>
 	{:else if form?.saved}
 		<p class="message ok" role="status"><Icon name="check" size={16} />{t.admin.saved}</p>
 	{/if}
@@ -155,7 +157,7 @@
 								use:enhance={saving.submit({
 									// A link stays open, so it can be copied.
 									onSuccess: (result) => {
-										if (!result?.link) editing = null;
+										if (!result?.link && !result?.erase) editing = null;
 									}
 								})}
 							>
@@ -193,8 +195,37 @@
 								<div class="edit-actions">
 									<button class="button" disabled={saving.busy}><Icon name="check" size={16} />{t.admin.save}</button>
 									<button class="ghost" type="button" onclick={() => (editing = null)}>{t.admin.cancel}</button>
+									<button class="ghost danger erase-open" disabled={saving.busy} formaction="?/erasePreview" formnovalidate>{t.erase.button}</button>
 								</div>
 							</form>
+							{#if form?.erase && form.erase.email === member.email}
+								<form
+									class="erase"
+									method="POST"
+									action="?/erase"
+									use:enhance={saving.submit({ onSuccess: () => (editing = null) })}
+									onsubmit={(event) => {
+										if (!confirm(t.erase.confirmQuestion(member.name))) event.preventDefault();
+									}}
+								>
+									<input type="hidden" name="email" value={member.email} />
+									<h3>{t.erase.title(member.name)}</h3>
+									<p class="muted small">{t.erase.lead}</p>
+									{#if form.erase.items.length > 1}
+										<ul>
+											{#each form.erase.items as item (item.where)}
+												<li>
+													<strong>{item.where}</strong>
+													<span class:gone={item.how === 'remove'}>{item.how === 'remove' ? t.erase.remove(item.count) : t.erase.anonymise(item.count)}</span>
+												</li>
+											{/each}
+										</ul>
+									{:else}
+										<p class="small">{t.erase.nothing}</p>
+									{/if}
+									<button class="button danger" disabled={saving.busy}><Icon name="trash" size={16} />{t.erase.confirm}</button>
+								</form>
+							{/if}
 						{:else}
 						<span class="main">
 							<strong>
@@ -757,6 +788,54 @@
 
 	.ghost.danger {
 		color: var(--danger);
+	}
+
+	.erase-open {
+		margin-left: auto;
+	}
+
+	.erase {
+		display: grid;
+		gap: var(--space-2);
+		margin-top: var(--space-3);
+		padding: var(--space-4);
+		border: 1px solid var(--danger);
+		border-radius: var(--radius-m);
+		background: color-mix(in oklab, var(--danger) 6%, var(--surface));
+	}
+
+	.erase h3 {
+		font-size: 1rem;
+	}
+
+	.erase p {
+		margin: 0;
+	}
+
+	.erase ul {
+		display: grid;
+		gap: var(--space-1);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-size: 0.9375rem;
+	}
+
+	.erase li {
+		display: flex;
+		flex-wrap: wrap;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+
+	.erase .gone {
+		color: var(--danger);
+	}
+
+	.erase .button.danger {
+		justify-self: start;
+		background: var(--danger);
+		color: #fff;
 	}
 
 	.status-tag.link-active {

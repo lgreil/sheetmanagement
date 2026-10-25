@@ -110,6 +110,9 @@ export function sqlStore(db: D1): Store {
 		},
 		remindersOf: (recipient) =>
 			all<SentReminder>('SELECT kind, subject, sent_at AS sentAt FROM reminders_sent WHERE recipient = ? ORDER BY sent_at, kind, subject', recipient),
+		async deleteRemindersOf(recipient) {
+			await run('DELETE FROM reminders_sent WHERE recipient = ?', recipient);
+		},
 		async pruneReminders(days) {
 			await run(`DELETE FROM reminders_sent WHERE sent_at < datetime('now', ?)`, `-${days} days`);
 		},

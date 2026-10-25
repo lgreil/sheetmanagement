@@ -64,6 +64,8 @@ export interface Store {
 	logReminder(kind: string, subject: string, recipient: string): Promise<void>;
 	/** The reminders one person got, oldest first; for their data export (#158). */
 	remindersOf(recipient: string): Promise<SentReminder[]>;
+	/** Forgets the reminders one person got; for "Mitglied löschen" (#158). */
+	deleteRemindersOf(recipient: string): Promise<void>;
 	/** Forgets reminders older than this many days. */
 	pruneReminders(days: number): Promise<void>;
 

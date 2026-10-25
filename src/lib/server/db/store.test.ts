@@ -77,6 +77,9 @@ describe.each([
 		expect(mine.map(({ kind, subject }) => [kind, subject])).toEqual([['signup', 'event-1']]);
 		expect(mine[0].sentAt).toMatch(/^\d{4}-\d\d-\d\d \d\d:\d\d:\d\d$/);
 		expect(await store.remindersOf('nobody@x.org')).toEqual([]);
+		await store.deleteRemindersOf('a@x.org');
+		expect(await store.remindersOf('a@x.org')).toEqual([]);
+		expect(await store.remindersOf('b@x.org')).toHaveLength(1);
 	});
 
 	it('remembers who turned email reminders off (#123)', async () => {

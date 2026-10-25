@@ -65,6 +65,24 @@ test('the completeness check finds a short part, which can be marked or dismisse
 	await expect(page.getByText(/vielleicht unvollständig/)).toHaveCount(0);
 });
 
+test('deleting a member with all their data, after a preview (#158)', async ({ page }) => {
+	await open(page, '/admin');
+	await page.getByPlaceholder('Mitglieder suchen …').fill('Mia Beispiel');
+	const row = page.locator('li').filter({ hasText: 'Mia Beispiel' }).first();
+	await row.getByRole('button', { name: 'Bearbeiten' }).click();
+	await page.getByRole('button', { name: 'Alle Daten löschen …' }).click();
+	const preview = page.locator('form.erase');
+	await expect(preview.getByRole('heading', { name: 'Alle Daten von Mia Beispiel löschen' })).toBeVisible();
+	// Her row goes; her +1 on a wish stays, without her name.
+	await expect(preview.getByText('Mitglieder')).toBeVisible();
+	await expect(preview.getByText('Wünsche')).toBeVisible();
+	page.once('dialog', (dialog) => dialog.accept());
+	await preview.getByRole('button', { name: 'Endgültig löschen' }).click();
+	await expect(page.getByText('Die Daten von Mia Beispiel sind gelöscht.')).toBeVisible();
+	await page.getByPlaceholder('Mitglieder suchen …').fill('Mia Beispiel');
+	await expect(page.locator('li').filter({ hasText: 'Mia Beispiel' })).toHaveCount(0);
+});
+
 test('taking attendance', async ({ page }) => {
 	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');

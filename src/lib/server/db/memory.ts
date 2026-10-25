@@ -50,6 +50,9 @@ export function memoryStore(now = () => Date.now()): Store {
 				.filter(({ parts }) => parts[2] === recipient)
 				.map(({ parts, at }) => ({ kind: parts[0], subject: parts[1], sentAt: sqlTime(at) }));
 		},
+		async deleteRemindersOf(recipient) {
+			for (const key of sent.keys()) if (key.split('\n')[2] === recipient) sent.delete(key);
+		},
 		async pruneReminders(days) {
 			for (const [key, at] of sent) if (at < now() - days * 86_400_000) sent.delete(key);
 		},
