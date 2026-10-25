@@ -144,7 +144,7 @@ export const legal = {
 				heading: 'Wo deine Daten liegen und wie lange',
 				paragraphs: ['Ein Überblick über die Abschnitte oben:'],
 				list: [
-					'Google-Tabelle des Orchesters: Mitgliederliste, Rechte, Zugangsanfragen, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche, Hinweise und Probennotizen. Bis du austrittst oder die Löschung verlangst; Zugangsanfragen nur, bis über sie entschieden ist.',
+					'Google-Tabelle des Orchesters: Mitgliederliste, Rechte, Zugangsanfragen, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche, Hinweise und Probennotizen. Bis du austrittst oder die Löschung verlangst; Zugangsanfragen nur, bis über sie entschieden ist. Stellt das Orchester eine Aufbewahrungsfrist ein, verlieren Zu- und Absagen und Anwesenheit nach so vielen Saisons deinen Namen.',
 					'Datenbank bei Cloudflare (D1): Geräte für Benachrichtigungen (bis du sie ausschaltest), verschickte Erinnerungen (ein Jahr), ob du E-Mails abbestellt und die Tour beendet hast, Probenzeit und Eintragungen in Noten (bis du sie löschst), Terminumfragen (bis die Umfrage gelöscht wird) und Zähler gegen Missbrauch der Anmeldung (ein Tag).',
 					'Google Drive und Google Kalender: die Noten und die Termine. Daten über dich stehen dort nicht; Kommentare zu gemeldeten Dateien erscheinen ohne deinen Namen.',
 					'Zwischenspeicher bei Cloudflare (KV): kurzlebige Kopien von Archiv, Kalender und Tabelle, damit Seiten schnell laden. Sie werden laufend durch neue ersetzt.',

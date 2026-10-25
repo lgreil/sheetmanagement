@@ -83,6 +83,20 @@ test('deleting a member with all their data, after a preview (#158)', async ({ p
 	await expect(page.locator('li').filter({ hasText: 'Mia Beispiel' })).toHaveCount(0);
 });
 
+test('a retention period set on the settings page, applied by its job (#158)', async ({ page }) => {
+	await open(page, '/einstellungen');
+	await page.getByLabel('Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)').fill('2');
+	await page.getByRole('button', { name: 'Speichern', exact: true }).first().click();
+	await expect(page.getByRole('status').filter({ hasText: 'Gespeichert' }).first()).toBeVisible();
+	await open(page, '/einstellungen');
+	await expect(page.getByLabel('Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)')).toHaveValue('2');
+
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Aufbewahrung jetzt ausführen' }).click();
+	// The demo's rehearsals are from the last weeks: nothing is old enough yet.
+	await expect(page.getByRole('status').filter({ hasText: /0 Einträge von vor dem \d{4}-09-01 ohne Namen/ })).toBeVisible();
+});
+
 test('taking attendance', async ({ page }) => {
 	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');

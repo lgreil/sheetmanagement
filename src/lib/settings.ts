@@ -29,10 +29,16 @@ export interface StoredSettings {
 	look?: Look;
 	/** Set once the page saved the features, even when nothing is off. */
 	featuresOff?: Feature[];
+	/** Sign-ups and attendance keep names for this many seasons (#158); unset keeps them. */
+	retention?: number;
 }
 
 const MAX_NAME = 80;
 const MAX_SHORT_NAME = 24;
+const MAX_SEASONS = 20;
+
+/** "3" → 3; anything but a whole number from 1 to 20 is no retention. */
+const seasonsOf = (text: string) => (/^\d{1,2}$/.test(text.trim()) && Number(text) >= 1 && Number(text) <= MAX_SEASONS ? Number(text) : undefined);
 
 const keyOf = (word: string) =>
 	(Object.entries(SETTING_KEYS) as [SettingKey, string][]).find(([, name]) => name.toLowerCase() === word.trim().toLowerCase())?.[0];
@@ -54,12 +60,14 @@ export function readSettings(rows: { values: { key: string; value: string } }[])
 		else if (key === 'logo') settings.logo = validLogo(value);
 		else if (key === 'accent') settings.accent = parseColour(value);
 		else if (key === 'look') settings.look = lookOf(value);
+		else if (key === 'retention') settings.retention = seasonsOf(value);
 		else if (key === 'featuresOff') settings.featuresOff = FEATURES.filter((feature) => value.split(/[,;\s]+/).includes(feature));
 	}
 	return Object.fromEntries(Object.entries(settings).filter(([, value]) => value !== undefined)) as StoredSettings;
 }
 
 export type SettingsForm = { [K in SettingKey]: K extends 'featuresOff' ? Feature[] : string };
+
 
 /** Checks what the page sent; the message names the first field that can't be saved. */
 export function checkSettings(form: SettingsForm): { ok: true } | { ok: false; field: SettingKey } {
@@ -68,6 +76,7 @@ export function checkSettings(form: SettingsForm): { ok: true } | { ok: false; f
 	if (form.logo.trim() && !validLogo(form.logo)) return { ok: false, field: 'logo' };
 	if (form.accent.trim() && !parseColour(form.accent)) return { ok: false, field: 'accent' };
 	if (form.look.trim() && !lookOf(form.look.trim())) return { ok: false, field: 'look' };
+	if (form.retention.trim() && !seasonsOf(form.retention)) return { ok: false, field: 'retention' };
 	return { ok: true };
 }
 
@@ -80,7 +89,8 @@ export function planSettingsSave(table: Table<'key' | 'value'>, form: SettingsFo
 		logo: form.logo.trim(),
 		accent: parseColour(form.accent) ?? '',
 		look: look ? LOOK_WORDS[look] : '',
-		featuresOff: form.featuresOff.join(', ')
+		featuresOff: form.featuresOff.join(', '),
+		retention: String(seasonsOf(form.retention) ?? '')
 	};
 	const updates: { row: number; values: { value: string } }[] = [];
 	const append: { key: string; value: string }[] = [];

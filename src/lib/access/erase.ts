@@ -25,6 +25,9 @@ export interface TabErase {
  */
 export const pseudonym = (id: string) => `geloescht-${id}@geloescht.invalid`;
 
+/** Whether an address is such a pseudonym, e.g. so retention leaves it alone. */
+export const isPseudonym = (email: string) => email.trim().toLowerCase().endsWith('@geloescht.invalid');
+
 type Plan = (values: Record<string, string>, who: Who, stand: string, anonymous: string) => 'remove' | Record<string, string> | undefined;
 
 const mine = (value: string | undefined, who: Who) => normalizeEmail(value ?? '') === who.email;

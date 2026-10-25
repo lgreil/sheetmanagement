@@ -169,6 +169,25 @@
 			</ul>
 		</section>
 
+		<section class="ui-card card" aria-labelledby="privacy">
+			<h2 id="privacy"><Icon name="shield" size={18} />{t.settings.privacy}</h2>
+			<label class="field"
+				>{t.settings.retention}
+				<input
+					name="retention"
+					type="number"
+					min="1"
+					max="20"
+					inputmode="numeric"
+					value={values.retention}
+					placeholder={t.settings.retentionPlaceholder}
+					aria-describedby="retention-hint"
+					aria-invalid={invalid('retention')}
+				/>
+				<span id="retention-hint" class="hint">{t.settings.retentionHint}</span>
+			</label>
+		</section>
+
 		{#if form?.message}<p class="msg error" role="alert">{form.message}</p>{/if}
 		<div class="actions">
 			<button class="btn" disabled={saving.busy}><Icon name="check" size={16} />{t.settings.save}</button>

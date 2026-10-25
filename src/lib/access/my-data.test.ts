@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LAYOUT, readTable } from '#lib/repertoire/sheet.ts';
-import { exportFileName, myData, storedData } from './my-data.ts';
+import { exportFileName, myData, pollData, storedData } from './my-data.ts';
 
 const table = <K extends keyof typeof LAYOUT>(key: K, rows: Record<string, string>[]) => {
 	const columns = LAYOUT[key].columns as Record<string, string>;
@@ -97,5 +97,27 @@ describe('storedData', () => {
 		expect(storedData([], [], false, null, { on: true, days: [{ day: '2026-10-24', seconds: 1830 }] })).toEqual({
 			Probenzeit: [{ Aufzeichnen: 'ja' }, { Tag: '2026-10-24', Minuten: '31' }]
 		});
+	});
+});
+
+describe('pollData', () => {
+	it('lists the dates the member answered, with the answer', () => {
+		const poll = {
+			id: 'p1',
+			title: 'Probenwochenende',
+			options: [
+				{ id: 'o1', date: '2027-03-06' },
+				{ id: 'o2', date: '2027-03-13', start: '10:00', end: '17:00' }
+			],
+			groups: [],
+			createdBy: 'vera@example.org',
+			createdByName: 'Vera',
+			createdAt: '2027-01-01T00:00:00Z'
+		};
+		const response = { email: 'mia@example.org', name: 'Mia', choices: { o2: 'maybe' as const }, comment: 'Nur vormittags', updatedAt: '2027-01-02T10:00:00Z' };
+		expect(pollData([{ poll, response }])).toEqual({
+			Terminumfragen: [{ Umfrage: 'Probenwochenende', Termin: '2027-03-13 10:00–17:00', Antwort: 'Vielleicht', Kommentar: 'Nur vormittags', 'Geantwortet (UTC)': '2027-01-02T10:00:00Z' }]
+		});
+		expect(pollData([])).toEqual({});
 	});
 });

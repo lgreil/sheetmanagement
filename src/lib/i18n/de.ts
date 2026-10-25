@@ -511,6 +511,11 @@ export const de = {
 		name: 'Name des Orchesters',
 		shortName: 'Kurzname',
 		shortNameHint: 'Für die Kopfzeile auf dem Handy, höchstens 24 Zeichen.',
+		privacy: 'Datenschutz',
+		retention: 'Namen bei Zu- und Absagen und Anwesenheit behalten für (Saisons)',
+		retentionPlaceholder: 'unbegrenzt',
+		retentionHint:
+			'Ältere Einträge bleiben ohne Namen stehen, damit Chronik und Saisonbericht weiter zählen. Eine Saison läuft von September bis August; die laufende zählt mit. Leer lässt alle Namen stehen.',
 		logo: 'Logo',
 		logoField: 'Link zum Logo',
 		logoHint: 'Ein quadratisches Bild als https-Link, z. B. von der Website des Orchesters, oder eine Datei der App wie /logo.png.',
@@ -569,7 +574,8 @@ export const de = {
 			logo: 'Das Logo muss ein https-Link sein oder mit / beginnen.',
 			accent: 'Die Farbe muss die Form #rrggbb haben.',
 			look: 'Bitte einen der Stile wählen.',
-			featuresOff: ''
+			featuresOff: '',
+			retention: 'Die Aufbewahrung ist eine Zahl von Saisons, 1 bis 20, oder leer.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -1231,7 +1237,7 @@ export const de = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'Meine Daten',
-		lead: 'Alles, was die App über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen aus der Repertoire-Tabelle, dazu deine Geräte für Benachrichtigungen und die Erinnerungen, die du bekommen hast.',
+		lead: 'Alles, was die App über dich speichert: dein Eintrag, Zu- und Absagen, Anwesenheit, Meldungen, Wünsche und Notizen aus der Repertoire-Tabelle, dazu deine Geräte für Benachrichtigungen, die Erinnerungen, die du bekommen hast, und deine Antworten in Terminumfragen.',
 		download: 'Meine Daten herunterladen',
 		hint: 'Eine JSON-Datei, die sich mit jedem Texteditor öffnen lässt. Zum Ändern oder Löschen wende dich an die Verwaltung.',
 		fileName: 'meine-daten',
@@ -1242,6 +1248,12 @@ export const de = {
 		since: 'Angemeldet seit (UTC)',
 		keys: 'Schlüssel zum Verschlüsseln',
 		keysStored: 'gespeichert, hier nicht ausgegeben',
+		polls: 'Terminumfragen',
+		poll: 'Umfrage',
+		pollDate: 'Termin',
+		pollAnswer: 'Antwort',
+		pollComment: 'Kommentar',
+		pollAnsweredAt: 'Geantwortet (UTC)',
 		reminders: 'Verschickte Erinnerungen',
 		mailReminders: 'Erinnerungen per E-Mail',
 		mailState: 'Stand',
@@ -1435,6 +1447,9 @@ export const de = {
 		date: 'Datum',
 		venue: 'Ort'
 	},
+	retention: {
+		anonymous: 'Ohne Namen'
+	},
 	erase: {
 		anonymous: 'Ehemaliges Mitglied',
 		button: 'Alle Daten löschen …',
@@ -1603,7 +1618,9 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung' },
+		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
+		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
 		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatisch' : 'per Knopf'}, ${ms} ms`,
 		jobNever: (name: string) => `${name}: noch nie gelaufen`,
@@ -1974,7 +1991,8 @@ export const de = {
 				logo: 'Logo',
 				accent: 'Akzentfarbe',
 				look: 'Stil',
-				featuresOff: 'Ausgeschaltet'
+				featuresOff: 'Ausgeschaltet',
+				retention: 'Aufbewahrung (Saisons)'
 			},
 			/** The words for the look in the "Wert" column (#163). */
 			lookValues: {

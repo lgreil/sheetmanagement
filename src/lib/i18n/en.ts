@@ -511,6 +511,11 @@ export const en: Texts = {
 		name: 'Name of the orchestra',
 		shortName: 'Short name',
 		shortNameHint: 'For the header on phones, at most 24 characters.',
+		privacy: 'Privacy',
+		retention: 'Keep names on sign-ups and attendance for (seasons)',
+		retentionPlaceholder: 'no limit',
+		retentionHint:
+			'Older entries stay without names, so the Chronik and the season report still count them. A season runs from September to August; the current one counts. Empty keeps all names.',
 		logo: 'Logo',
 		logoField: 'Link to the logo',
 		logoHint: "A square image as an https link, e.g. from the orchestra's website, or a file of the app such as /logo.png.",
@@ -570,7 +575,8 @@ export const en: Texts = {
 			logo: 'The logo must be an https link or start with /.',
 			accent: 'The colour must look like #rrggbb.',
 			look: 'Please choose one of the looks.',
-			featuresOff: ''
+			featuresOff: '',
+			retention: 'Retention is a number of seasons, 1 to 20, or empty.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -1228,7 +1234,7 @@ export const en: Texts = {
 	/** Everything the sheet keeps about a member, as one file (#158). */
 	myData: {
 		title: 'My data',
-		lead: 'Everything the app keeps about you: your entry, sign-ups, attendance, reports, wishes and notes from the repertoire sheet, plus your devices for notifications and the reminders you got.',
+		lead: 'Everything the app keeps about you: your entry, sign-ups, attendance, reports, wishes and notes from the repertoire sheet, plus your devices for notifications, the reminders you got and your answers in date polls.',
 		download: 'Download my data',
 		hint: 'A JSON file that opens in any text editor. To change or delete something, please ask the admins.',
 		fileName: 'my-data',
@@ -1239,6 +1245,12 @@ export const en: Texts = {
 		since: 'Signed up (UTC)',
 		keys: 'Encryption keys',
 		keysStored: 'stored, not included here',
+		polls: 'Date polls',
+		poll: 'Poll',
+		pollDate: 'Date',
+		pollAnswer: 'Answer',
+		pollComment: 'Comment',
+		pollAnsweredAt: 'Answered (UTC)',
 		reminders: 'Reminders sent',
 		mailReminders: 'Reminders by email',
 		mailState: 'State',
@@ -1427,6 +1439,9 @@ export const en: Texts = {
 		date: 'Date',
 		venue: 'Venue'
 	},
+	retention: {
+		anonymous: 'No name'
+	},
 	erase: {
 		anonymous: 'Former member',
 		button: 'Delete all data …',
@@ -1594,7 +1609,9 @@ export const en: Texts = {
 		redirectUri: (uri: string) => `Redirect URI: ${uri}`,
 		bootstrapAdmins: (n: number) => `${n} bootstrap admins`,
 		jobs: 'Background jobs',
-		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts' },
+		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention' },
+		retentionOff: 'No retention set; all names stay.',
+		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'entry' : 'entries'} from before ${cutoff} without names.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'part' : 'parts'} checked, ${left ? `${left} to go` : 'all checked'}.`,
 		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatic' : 'by hand'}, ${ms} ms`,
 		jobNever: (name: string) => `${name}: hasn't run yet`,
@@ -1951,7 +1968,8 @@ export const en: Texts = {
 				logo: 'Logo',
 				accent: 'Accent colour',
 				look: 'Look',
-				featuresOff: 'Turned off'
+				featuresOff: 'Turned off',
+				retention: 'Retention (seasons)'
 			},
 			lookValues: {
 				bold: 'bold',
