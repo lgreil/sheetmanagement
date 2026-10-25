@@ -1,4 +1,4 @@
-import { reminderKey, type PageMarks, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -17,6 +17,7 @@ export function memoryStore(now = () => Date.now()): Store {
 	/** Marks by member, then by `${page} ${file}`. */
 	const marks = new Map<string, Map<string, PageMarks>>();
 	const hits = new Map<string, { count: number; since: number }>();
+	const partChecks = new Map<string, PartCheck>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
 	return {
@@ -92,6 +93,19 @@ export function memoryStore(now = () => Date.now()): Store {
 		},
 		async deleteMarks(email) {
 			marks.delete(email);
+		},
+
+		partChecks: async () => [...partChecks.values()],
+		async savePartCheck(check) {
+			const old = partChecks.get(check.fileId);
+			partChecks.set(check.fileId, { ...check, dismissed: !!old?.dismissed && old.modified === check.modified });
+		},
+		async dismissPartCheck(fileId) {
+			const old = partChecks.get(fileId);
+			if (old) partChecks.set(fileId, { ...old, dismissed: true });
+		},
+		async clearPartChecks() {
+			partChecks.clear();
 		},
 
 		async hit(key, windowMinutes) {

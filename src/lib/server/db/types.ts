@@ -33,6 +33,19 @@ export interface PageMarks {
 	strokes: Stroke[];
 }
 
+/** What the completeness check found for one file in the archive (#93). */
+export interface PartCheck {
+	fileId: string;
+	/** Drive's modifiedTime when it was checked; a newer one is checked again. */
+	modified: string;
+	/** Its pages; null when it isn't a readable PDF. */
+	pages: number | null;
+	/** Too big to check within the CPU limit. */
+	skipped: boolean;
+	/** An organiser said the hint is wrong. */
+	dismissed: boolean;
+}
+
 export interface Store {
 	kind: 'd1' | 'memory';
 	/** The newest migration applied, e.g. "0001_reminders.sql"; null before the first. */
@@ -79,6 +92,14 @@ export interface Store {
 	saveMarks(email: string, file: string, page: number, strokes: Stroke[]): Promise<void>;
 	/** Forgets all of a member's marks. */
 	deleteMarks(email: string): Promise<void>;
+
+	/** Everything the completeness check found (#93). */
+	partChecks(): Promise<PartCheck[]>;
+	/** Saves a check; a dismissed hint stays dismissed while the file is the same version. */
+	savePartCheck(check: Omit<PartCheck, 'dismissed'>): Promise<void>;
+	dismissPartCheck(fileId: string): Promise<void>;
+	/** Forgets every check, so the archive is read again from the start; for the demo's reset. */
+	clearPartChecks(): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

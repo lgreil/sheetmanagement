@@ -27,7 +27,7 @@ export interface DemoFile {
 	modifiedTime: string;
 	shortcutDetails?: { targetId: string; targetMimeType: string };
 	/** For the generated PDF. */
-	pdf?: { title: string; composer?: string; arranger?: string; part: string };
+	pdf?: { title: string; composer?: string; arranger?: string; part: string; pages?: number };
 }
 
 export interface DemoEvent {
@@ -64,6 +64,8 @@ interface SamplePiece {
 	gaps?: Record<string, 'FEHLT' | 'LEER' | 'UNVOLLSTÄNDIG'>;
 	/** Old file names as scanned years ago, for trying the naming check on /namen. */
 	rawNames?: string[];
+	/** Pages per part (one without), and parts with fewer, so the completeness check (#93) has something to find. */
+	pages?: { all: number; short?: Record<string, number> };
 }
 
 const PIECES: SamplePiece[] = [
@@ -153,7 +155,9 @@ const PIECES: SamplePiece[] = [
 		category: 'christmas',
 		duration: '3:00',
 		publisher: 'Mills Music',
-		parts: ['Partitur', 'Flöte', 'Trompete in B', 'Schlagwerk', ...STRINGS]
+		parts: ['Partitur', 'Flöte', 'Trompete in B', 'Schlagwerk', ...STRINGS],
+		// The second violins' copy lost two pages; nobody has noticed yet.
+		pages: { all: 3, short: { 'Geige II': 1 } }
 	},
 	{
 		id: 'demo-stille-nacht',
@@ -206,7 +210,10 @@ export function demoFiles(): DemoFile[] {
 				mimeType: gap === 'FEHLT' ? DOC : PDF,
 				parents: [piece.id],
 				modifiedTime: MODIFIED,
-				pdf: gap === 'FEHLT' ? undefined : { title: piece.title, composer: piece.composer, arranger: piece.arranger, part }
+				pdf:
+					gap === 'FEHLT'
+						? undefined
+						: { title: piece.title, composer: piece.composer, arranger: piece.arranger, part, pages: piece.pages?.short?.[part] ?? piece.pages?.all }
 			});
 		});
 	}

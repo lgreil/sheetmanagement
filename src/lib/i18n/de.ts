@@ -709,7 +709,17 @@ export const de = {
 		lead: 'Alle Lücken im Archiv: aus den Dateinamen und den offenen Meldungen.',
 		all: 'Alle',
 		current: 'Aktuelle Programme',
-		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'mit fehlenden Seiten', reports: 'davon nur gemeldet' },
+		counts: { missing: 'fehlen', empty: 'leer', incomplete: 'mit fehlenden Seiten', reports: 'davon nur gemeldet', hints: 'Hinweise aus der Prüfung' },
+		hint: {
+			empty: 'vielleicht leer',
+			incomplete: (pages: number, usual: number) => `vielleicht unvollständig: ${pages} ${pages === 1 ? 'Seite' : 'Seiten'}, die anderen meist ${usual}`
+		},
+		hintTitle: 'Von der App gefunden: die Datei ist leer oder nicht lesbar, oder sie hat viel weniger Seiten als die anderen Stimmen.',
+		hintConfirm: (word: string) => `Als ${word} markieren`,
+		hintDismiss: 'Stimmt so',
+		hintGone: 'Diesen Hinweis gibt es nicht mehr.',
+		hintDriveFailed: 'Die Datei konnte in Drive nicht umbenannt werden. Bitte versuch es noch einmal oder benenn sie von Hand um.',
+		checkProgress: (checked: number, total: number) => `Die App prüft die Seiten der Stimmen nach und nach: ${checked} von ${total} PDFs geprüft.`,
 		reported: 'gemeldet',
 		reportedHint: 'In der App gemeldet. Der Dateiname in Drive sagt es noch nicht.',
 		none: 'Keine Lücken im Archiv.',
@@ -1572,7 +1582,8 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen' },
+		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
 		jobRun: (name: string, when: string, auto: boolean, ms: number) => `${name}: ${when}, ${auto ? 'automatisch' : 'per Knopf'}, ${ms} ms`,
 		jobNever: (name: string) => `${name}: noch nie gelaufen`,
 		jobsNever: 'Noch keine Aufgabe ist von selbst gelaufen.',

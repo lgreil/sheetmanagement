@@ -43,6 +43,28 @@ test('a new piece straight from the programme, with a guard against duplicates (
 	await expect(page.locator('.entries').getByText('Rosamunde')).toBeVisible();
 });
 
+test('the completeness check finds a short part, which can be marked or dismissed (#93)', async ({ page }) => {
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Stimmen prüfen jetzt ausführen' }).click();
+	await expect(page.getByRole('status').filter({ hasText: 'Stimmen geprüft' })).toBeVisible();
+
+	await open(page, '/fehlende-stimmen');
+	const sleigh = page.locator('.piece').filter({ hasText: 'Sleigh Ride' });
+	await expect(sleigh.getByText('vielleicht unvollständig: 1 Seite, die anderen meist 3')).toBeVisible();
+	await sleigh.getByRole('button', { name: 'Stimmt so' }).click();
+	await expect(page.locator('.piece').filter({ hasText: 'Sleigh Ride' })).toHaveCount(0);
+
+	// Back to the sample data: the hint is there again, and confirming it renames the file.
+	await resetDemo(page);
+	await open(page, '/status');
+	await page.getByRole('button', { name: 'Stimmen prüfen jetzt ausführen' }).click();
+	await expect(page.getByRole('status').filter({ hasText: 'Stimmen geprüft' })).toBeVisible();
+	await open(page, '/fehlende-stimmen');
+	await page.locator('.piece').filter({ hasText: 'Sleigh Ride' }).getByRole('button', { name: 'Als UNVOLLSTÄNDIG markieren' }).click();
+	await expect(page.locator('.piece').filter({ hasText: 'Sleigh Ride' }).getByText('Seiten fehlen')).toBeVisible();
+	await expect(page.getByText(/vielleicht unvollständig/)).toHaveCount(0);
+});
+
 test('taking attendance', async ({ page }) => {
 	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');

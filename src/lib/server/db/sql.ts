@@ -1,4 +1,4 @@
-import { reminderKey, type PageMarks, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -174,6 +174,31 @@ export function sqlStore(db: D1): Store {
 		},
 		async deleteMarks(email) {
 			await run('DELETE FROM practice_marks WHERE email = ?', email);
+		},
+
+		async partChecks() {
+			const rows = await all<{ file_id: string; modified: string; pages: number | null; skipped: number; dismissed: number }>(
+				'SELECT file_id, modified, pages, skipped, dismissed FROM part_checks'
+			);
+			return rows.map((row): PartCheck => ({ fileId: row.file_id, modified: row.modified, pages: row.pages, skipped: !!row.skipped, dismissed: !!row.dismissed }));
+		},
+		async savePartCheck(check) {
+			await run(
+				`INSERT INTO part_checks (file_id, modified, pages, skipped) VALUES (?, ?, ?, ?)
+				 ON CONFLICT (file_id) DO UPDATE SET
+					dismissed = CASE WHEN modified = excluded.modified THEN dismissed ELSE 0 END,
+					modified = excluded.modified, pages = excluded.pages, skipped = excluded.skipped, checked_at = datetime('now')`,
+				check.fileId,
+				check.modified,
+				check.pages,
+				check.skipped ? 1 : 0
+			);
+		},
+		async dismissPartCheck(fileId) {
+			await run('UPDATE part_checks SET dismissed = 1 WHERE file_id = ?', fileId);
+		},
+		async clearPartChecks() {
+			await run('DELETE FROM part_checks');
 		},
 
 		async hit(key, windowMinutes) {
