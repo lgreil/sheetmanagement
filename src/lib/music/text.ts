@@ -60,6 +60,24 @@ export function searchText(...parts: (string | undefined)[]): string {
 		.toLowerCase();
 }
 
+/** Letters only, lower case, without accents: "Tschaikowski" and "Tschaikowsky" become close. */
+export const bare = (text: string) => searchText(text).replace(/[^a-z]/g, '');
+
+/** How many letters to change to turn one text into the other (Levenshtein). */
+export function distance(a: string, b: string): number {
+	const row = Array.from({ length: b.length + 1 }, (_, i) => i);
+	for (let i = 1; i <= a.length; i++) {
+		let previous = row[0];
+		row[0] = i;
+		for (let j = 1; j <= b.length; j++) {
+			const current = row[j];
+			row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1] === b[j - 1] ? 0 : 1));
+			previous = current;
+		}
+	}
+	return row[b.length];
+}
+
 /**
  * Old file names repeat the piece title in every file ("Best_of_Bach-ViolinI.pdf").
  * Returns that shared prefix, cut back to the last "-" or "_" so no instrument is cut.

@@ -1465,6 +1465,13 @@ export const de = {
 		missingColumns: (columns: string) => `${columns}: Die Spalten fehlen noch in der Tabelle. Einmal „Tabelle einrichten“ ausführen, dann lassen sie sich hier eintragen.`
 	},
 	editor: {
+		newPiece: (title: string) => `„${title}“ als neues Stück anlegen`,
+		newPieceTitle: 'Neues Stück',
+		newPieceLead: 'Kommt ohne Noten ins Archiv und gleich ins Programm. Das Programm wird erst mit „Speichern“ gespeichert.',
+		newPieceSave: 'Anlegen und hinzufügen',
+		newPieceAnyway: 'Trotzdem neu anlegen',
+		similarTitle: 'Gibt es das Stück schon?',
+		similarTake: 'Dieses nehmen',
 		orchestras: 'Programm je Orchester',
 		orchestraTab: (orchestra: string) => `Programm ${orchestra}`,
 		jointTab: (orchestras: string[]) => `Gemeinsam: ${orchestras.join(' + ')}`,

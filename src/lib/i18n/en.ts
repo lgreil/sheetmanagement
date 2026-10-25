@@ -1457,6 +1457,13 @@ export const en: Texts = {
 		missingColumns: (columns: string) => `${columns}: these columns aren't in the sheet yet. Run “Set up sheet” once, then they can be entered here.`
 	},
 	editor: {
+		newPiece: (title: string) => `Add “${title}” as a new piece`,
+		newPieceTitle: 'New piece',
+		newPieceLead: 'Goes into the library without music and straight into the programme. The programme is saved with “Save”.',
+		newPieceSave: 'Create and add',
+		newPieceAnyway: 'Create it anyway',
+		similarTitle: 'Is the piece there already?',
+		similarTake: 'Take this one',
 		orchestras: 'Programme per orchestra',
 		orchestraTab: (orchestra: string) => `Programme ${orchestra}`,
 		jointTab: (orchestras: string[]) => `Together: ${orchestras.join(' + ')}`,

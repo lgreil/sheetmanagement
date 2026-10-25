@@ -26,6 +26,23 @@ test('the programme editor saves', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Entfernen' })).toHaveCount(before - 1);
 });
 
+test('a new piece straight from the programme, with a guard against duplicates (#192)', async ({ page }) => {
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
+	const search = page.getByRole('searchbox', { name: 'Stück suchen und hinzufügen …' });
+	await search.fill('Ungarischer Tanz 5');
+	await page.getByRole('button', { name: '„Ungarischer Tanz 5“ als neues Stück anlegen' }).click();
+	// The piece is in the archive already, written another way.
+	await expect(page.getByRole('heading', { name: 'Gibt es das Stück schon?' })).toBeVisible();
+	await page.getByLabel('Titel').fill('Rosamunde');
+	await page.getByLabel('Komponist').fill('Schubert');
+	await page.getByRole('button', { name: 'Anlegen und hinzufügen' }).click();
+	await expect(page.locator('.entries').getByText('Rosamunde')).toBeVisible();
+	await page.getByRole('button', { name: 'Speichern' }).click();
+	await expect(page.getByText('Programm gespeichert.')).toBeVisible();
+	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');
+	await expect(page.locator('.entries').getByText('Rosamunde')).toBeVisible();
+});
+
 test('taking attendance', async ({ page }) => {
 	await open(page, '/kalender/demo-probe-2/anwesenheit');
 	const boxes = page.getByRole('checkbox');

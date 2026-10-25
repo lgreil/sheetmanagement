@@ -1,6 +1,6 @@
 import { LANGUAGE } from '#lib/i18n/index.ts';
 import { tidyCatalogue } from './score-text.ts';
-import { searchText } from './text.ts';
+import { bare, distance, searchText } from './text.ts';
 
 /**
  * Looks up a work on Wikidata, from the browser and only on request: composer, catalogue
@@ -177,23 +177,6 @@ export async function workDetails(id: string, fetchImpl: Fetch = fetch): Promise
 		youtube: claims.P1651?.[0]?.mainsnak?.datavalue?.value,
 		duration: durationOf(claims)
 	};
-}
-
-/** Letters only, lower case, without accents: "Tschaikowski" and "Tschaikowsky" become close. */
-const bare = (text: string) => searchText(text).replace(/[^a-z]/g, '');
-
-function distance(a: string, b: string): number {
-	const row = Array.from({ length: b.length + 1 }, (_, i) => i);
-	for (let i = 1; i <= a.length; i++) {
-		let previous = row[0];
-		row[0] = i;
-		for (let j = 1; j <= b.length; j++) {
-			const current = row[j];
-			row[j] = Math.min(row[j] + 1, row[j - 1] + 1, previous + (a[i - 1] === b[j - 1] ? 0 : 1));
-			previous = current;
-		}
-	}
-	return row[b.length];
 }
 
 /**
