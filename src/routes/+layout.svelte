@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { afterNavigate, onNavigate } from '$app/navigation';
 	import { navigating, page } from '$app/state';
+	import { DEFAULT_LOGO, shownLogo } from '#lib/branding.ts';
 	import { config, useInstrumentOverrides } from '#lib/config/index.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
@@ -91,7 +92,7 @@
 
 <svelte:head>
 	<meta name="theme-color" content={data.brand.colour} />
-	{#if data.logo !== '/logo.png'}<link rel="icon" href={data.logo} />{/if}
+	{#if data.logo !== shownLogo(DEFAULT_LOGO)}<link rel="icon" href={data.logo} />{/if}
 	<!-- On :root, so the theme tokens in app.css derive from it. -->
 	{@html `<style>${data.brand.style}</style>`}
 </svelte:head>

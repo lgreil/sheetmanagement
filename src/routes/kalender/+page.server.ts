@@ -1,5 +1,5 @@
 import { fail } from '@sveltejs/kit';
-import { concertSummary, getLibrary, isPastConcert } from '#lib/server/library.ts';
+import { concertSummary, getLibrary, isPastConcert, shownDates } from '#lib/server/library.ts';
 import { config } from '#lib/config/index.ts';
 import { newEventFromForm } from '#lib/events/new-event.ts';
 import { t } from '#lib/i18n/index.ts';
@@ -73,6 +73,8 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {} as Record<string, string>, subscribeUrl: null, ...polls, adding };
 	}
 
+	// Members see the rehearsals of their own orchestras; concerts are for everyone.
+	const shown = schedule.events.filter(await shownDates(library, locals));
 	const concertTitles: Record<string, string> = {};
 	for (const event of schedule.events) {
 		if (event.type === 'konzert') concertTitles[event.id] = event.displayTitle;
@@ -80,9 +82,9 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 
 	return {
 		error: null,
-		upcoming: schedule.events.filter((event) => !event.past),
+		upcoming: shown.filter((event) => !event.past),
 		// The calendar shows the recent past of the current month too.
-		events: schedule.events,
+		events: shown,
 		today: library.today,
 		view,
 		past,
@@ -120,7 +122,7 @@ export const actions: Actions = {
 
 		const schedule = await getSchedule();
 		const concerts = schedule.ok ? schedule.events.filter((event) => event.type === 'konzert' && !event.past) : [];
-		const parsed = newEventFromForm(form, { keywords: config.events, timeZone: config.timeZone, concerts, range: shownDays() });
+		const parsed = newEventFromForm(form, { keywords: config.events, timeZone: config.timeZone, concerts, orchestras: config.orchestras, range: shownDays() });
 		if ('error' in parsed) return fail(400, { eventError: t.calendar.add.problems[parsed.error], eventValues: values });
 
 		const result = await addCalendarEvent(parsed.event);

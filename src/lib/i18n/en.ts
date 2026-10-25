@@ -255,6 +255,7 @@ export const en: Texts = {
 				time: 'Please give times as HH:MM; an end only with a start.',
 				end: 'The end must be after the start.',
 				concert: "That concert isn't in the calendar (any more); please pick one from the list.",
+				orchestra: 'Please pick the orchestras from the list.',
 				'too-long': "That's too long: title up to 120, place up to 200, note up to 2000 characters."
 			},
 			errors: {
@@ -648,6 +649,7 @@ export const en: Texts = {
 		/** "about 74 min. (2 pieces without duration)" */
 		total: (minutes: number, missing: number) =>
 			`about ${minutes} min.${missing ? ` (${missing === 1 ? '1 piece' : `${missing} pieces`} without duration)` : ''}`,
+		minutes: (minutes: number) => `${minutes} min.`,
 		unknown: 'Duration not known yet',
 		hint: 'The duration is on the piece (“Edit details”) and is added up here.'
 	},
@@ -753,6 +755,7 @@ export const en: Texts = {
 		noConcert: 'There is no concert with a programme coming up right now.',
 		noProgram: 'No programme entered for this concert yet.',
 		shared: 'Shared part',
+		open: (part: string) => `Open ${part}`,
 		noPart: (instrument: string) => `No part for ${instrument}`,
 		noMusic: 'No music in the library',
 		missing: 'missing from the library',

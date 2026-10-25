@@ -1,3 +1,4 @@
+import { normalizeEmail, seesDate } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
 import type { Catalog } from '#lib/music/catalog.ts';
@@ -5,10 +6,10 @@ import { searchText } from '#lib/music/text.ts';
 import type { PieceDetail, PieceStatus, PieceSummary } from '#lib/music/types.ts';
 import { eventDay, formatFuzzyDate, fuzzyDateKey, parseFuzzyDate, type FuzzyDate, type FuzzyDateLabel } from '#lib/repertoire/dates.ts';
 import type { ReportPiece } from '#lib/repertoire/music-report.ts';
-import { isJoint, playedBy, sameOrchestra } from '#lib/repertoire/orchestras.ts';
+import { eventOrchestra, isJoint, playedBy, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { normalize, type SheetConcert, type SheetPiece } from '#lib/repertoire/sheet.ts';
 import { getCatalog } from './catalog.ts';
-import { getRepertoire, type RepertoireResult } from './repertoire.ts';
+import { getAccessList, getRepertoire, type RepertoireResult } from './repertoire.ts';
 import { getSchedule, type ScheduleResult } from './schedule.ts';
 
 export interface LibraryPiece extends PieceSummary {
@@ -280,6 +281,21 @@ export function programsOf(concert: Pick<LibraryConcert, 'orchestras' | 'program
  */
 export function programOf(concert: Pick<LibraryConcert, 'orchestras' | 'program'>, orchestra: string | undefined): ProgramItem[] {
 	return concert.program.filter((item) => playedBy(item.orchestra, orchestra));
+}
+
+/** The orchestras a date is for (see eventOrchestra): undefined is everyone. */
+export const orchestraOf = (library: Pick<Library, 'concertsById'>, event: Parameters<typeof eventOrchestra>[0]) =>
+	eventOrchestra(event, (id) => library.concertsById.get(id)?.orchestra);
+
+/**
+ * Which dates the pages show the viewer: a member only the rehearsals of their orchestras
+ * (see seesDate); those who plan dates, and anyone not in "Mitglieder", see them all.
+ */
+export async function shownDates(library: Pick<Library, 'concertsById'>, locals: App.Locals): Promise<(event: ShownEvent) => boolean> {
+	const user = locals.access.user;
+	if (!user || locals.access.rights.has('termine.planen')) return () => true;
+	const member = (await getAccessList().catch(() => null))?.membersByEmail.get(normalizeEmail(user.email));
+	return (event) => seesDate(member, event, orchestraOf(library, event));
 }
 
 /** A piece named in another tab (e.g. "Proben") as the pages show it. */

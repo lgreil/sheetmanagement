@@ -1,6 +1,7 @@
 import type { EventKeywords } from '#lib/config/index.ts';
 import type { CalendarEvent } from '#lib/server/google/calendar.ts';
 import { searchText } from '#lib/music/text.ts';
+import { titleOrchestra } from '#lib/repertoire/orchestras.ts';
 import type { DateParts } from './format.ts';
 
 export type EventType = 'konzert' | 'generalprobe' | 'probe' | 'sonstiges';
@@ -13,6 +14,11 @@ export interface ScheduleEvent extends CalendarEvent {
 	tentative: boolean;
 	/** For rehearsals: the concert they prepare for. */
 	concertId?: string;
+	/**
+	 * For rehearsals: the orchestras their title names ("Probe A"), "EO, A" when together.
+	 * Without one, a rehearsal is for its concert's orchestras (see eventOrchestra).
+	 */
+	orchestra?: string;
 	/** For concerts: their rehearsals, in date order. */
 	rehearsalIds: string[];
 }
@@ -57,9 +63,10 @@ const FALLBACK_DAYS = 90;
 /**
  * Classifies events and links rehearsals to concerts: a rehearsal belongs to the first
  * later concert sharing a word with it ("Probe Herbstkonzert" → "Herbstkonzert"),
- * otherwise to the next concert within a few months.
+ * otherwise to the next concert within a few months. A rehearsal whose title names one of
+ * the orchestras is for that one.
  */
-export function buildSchedule(events: CalendarEvent[], keywords: EventKeywords): ScheduleEvent[] {
+export function buildSchedule(events: CalendarEvent[], keywords: EventKeywords, orchestras: string[] = []): ScheduleEvent[] {
 	const schedule: ScheduleEvent[] = events
 		.map((event) => ({
 			...event,
@@ -73,6 +80,8 @@ export function buildSchedule(events: CalendarEvent[], keywords: EventKeywords):
 	const concerts = schedule.filter((event) => event.type === 'konzert');
 	for (const rehearsal of schedule) {
 		if (rehearsal.type !== 'probe' && rehearsal.type !== 'generalprobe') continue;
+		const orchestra = titleOrchestra(rehearsal.title, orchestras);
+		if (orchestra) rehearsal.orchestra = orchestra;
 		const later = concerts.filter((concert) => startTime(concert) >= startTime(rehearsal));
 		const words = significantWords(rehearsal.title, keywords);
 		const byTitle = later.find((concert) =>

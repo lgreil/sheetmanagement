@@ -11,7 +11,7 @@
 <Title title={t.email.answerTitle} />
 
 <section class="card">
-	<img class="logo" src="/logo.png" alt="" width="88" height="88" />
+	<img class="logo" src="/logo.svg" alt="" width="88" height="88" />
 	{#if data.found && !form?.invalid}
 		<h1>{data.found.title}</h1>
 		<p class="when">{data.found.when}</p>

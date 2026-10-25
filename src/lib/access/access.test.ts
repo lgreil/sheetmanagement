@@ -16,7 +16,8 @@ import {
 	planApproval,
 	playsIn,
 	resolveAccess,
-	RIGHTS
+	RIGHTS,
+	seesDate
 } from './access.ts';
 
 const list = buildAccessList({
@@ -257,6 +258,22 @@ describe('member status and orchestras', () => {
 		expect(playsIn(members[2], 'EO, A')).toBe(true);
 		expect(playsIn(members[3], 'B; A')).toBe(true);
 		expect(playsIn(members[3], 'EO, A')).toBe(false);
+	});
+
+	it('shows a rehearsal only to members of its orchestras, other dates to everyone', () => {
+		const eo = { orchestras: ['EO'] };
+		const both = { orchestras: ['EO', 'A'] };
+		const probe = { type: 'probe' };
+		expect(seesDate(eo, probe, 'A')).toBe(false);
+		expect(seesDate(both, probe, 'A')).toBe(true);
+		expect(seesDate(eo, { type: 'generalprobe' }, 'A')).toBe(false);
+		// Played together, or nothing set: for everyone.
+		expect(seesDate(eo, probe, 'EO, A')).toBe(true);
+		expect(seesDate(eo, probe, undefined)).toBe(true);
+		// Without orchestras a member is in all of them; without a member row, everything shows.
+		expect(seesDate({ orchestras: [] }, probe, 'A')).toBe(true);
+		expect(seesDate(undefined, probe, 'A')).toBe(true);
+		expect(seesDate(eo, { type: 'konzert' }, 'A')).toBe(true);
 	});
 
 	it('counts only active members of the concert orchestra', () => {

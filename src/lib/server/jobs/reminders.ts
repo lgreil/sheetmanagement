@@ -1,8 +1,10 @@
 import { config } from '#lib/config/index.ts';
 import { dateFormat } from '#lib/events/format.ts';
+import type { ShownEvent } from '#lib/events/schedule.ts';
 import { t } from '#lib/i18n/index.ts';
 import { loanReminders, peopleWithRight, signupReminders, type Reminder, type ReminderKind } from '#lib/reminders/reminders.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
+import { eventOrchestra } from '#lib/repertoire/orchestras.ts';
 import { ANSWERS } from '#lib/signups/signups.ts';
 import { authConfig } from '../auth/index.ts';
 import { answerToken } from '../auth/mail-links.ts';
@@ -61,9 +63,8 @@ export async function sendReminders(now = Date.now()): Promise<JobResult> {
 
 	const pending: Pending[] = [];
 	if (library?.schedule.ok && signups && access) {
-		const orchestraOf = (event: { id: string; concertId?: string }) =>
-			library.concertsById.get(event.id)?.orchestra ?? (event.concertId ? library.concertsById.get(event.concertId)?.orchestra : undefined);
-		for (const reminder of signupReminders(library.schedule.events, signups.byEvent, access.members, { orchestraOf, today })) {
+		const forEvent = (event: ShownEvent) => eventOrchestra(event, (id) => library.concertsById.get(id)?.orchestra);
+		for (const reminder of signupReminders(library.schedule.events, signups.byEvent, access.members, { orchestraOf: forEvent, today })) {
 			const event = reminder.about;
 			const when = event.allDay ? allDayDate.format(new Date(event.start)) : eventDate.format(new Date(event.start));
 			pending.push({

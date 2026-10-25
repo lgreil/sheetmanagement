@@ -246,6 +246,8 @@ export function demoEvents(now: number): DemoEvent[] {
 		timed('demo-probe-1', 'Probe Herbstkonzert 🎶', -10, '10:00', '13:00'),
 		timed('demo-probe-2', 'Probe Herbstkonzert 🎶', -3, '10:00', '13:00'),
 		timed('demo-probe-3', 'Probe Herbstkonzert 🎶', 4, '10:00', '13:00'),
+		// Only for A, which plays the Herbstkonzert with EO: the demo member (EO) doesn't see it.
+		timed('demo-probe-a', 'Probe Herbstkonzert (A)', 7, '18:00', '21:00'),
 		timed('demo-probe-4', 'Probe Herbstkonzert 🎶', 11, '10:00', '13:00'),
 		timed('demo-probe-5', 'Probe Herbstkonzert 🎶', 18, '10:00', '13:00'),
 		timed('demo-generalprobe', 'Generalprobe Herbstkonzert', 24, '15:00', '18:00', 'Stadthalle Musterstadt'),

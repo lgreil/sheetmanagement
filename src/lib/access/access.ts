@@ -252,6 +252,14 @@ export function playsIn(member: Pick<Member, 'orchestras'>, orchestra: string | 
 	return !wanted.length || !member.orchestras.length || member.orchestras.some((name) => wanted.some((other) => normalize(name) === normalize(other)));
 }
 
+/**
+ * Whether a date shows on a member's pages: a rehearsal only when they play in its orchestra
+ * (undefined is everyone's), concerts and other dates always. Without a member, everything.
+ */
+export function seesDate(member: Pick<Member, 'orchestras'> | undefined, event: { type: string }, orchestra: string | undefined): boolean {
+	return !member || (event.type !== 'probe' && event.type !== 'generalprobe') || playsIn(member, orchestra);
+}
+
 /** Members who count for a concert's instrumentation: active ones in its orchestra. */
 export function countingMembers<M extends Pick<Member, 'orchestras' | 'status' | 'pausedUntil'>>(
 	members: M[],

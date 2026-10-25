@@ -10,7 +10,7 @@
 <Title title={t.auth.title} />
 
 <section class="card">
-	<img class="logo" src="/logo.png" alt="" width="88" height="88" />
+	<img class="logo" src="/logo.svg" alt="" width="88" height="88" />
 	<h1>{t.auth.title}</h1>
 	<p>{t.auth.lead}</p>
 

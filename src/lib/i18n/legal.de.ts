@@ -86,6 +86,14 @@ export const legal = {
 				]
 			},
 			{
+				heading: 'Probenzeit',
+				paragraphs: [
+					'Im Profil kannst du „Probenzeit aufzeichnen“ einschalten. Dann zählt die App, wie lange eine Stimme deines Instruments aus „Meine Noten“ in der App geöffnet und sichtbar ist, und speichert je Tag deine E-Mail-Adresse, das Datum und die Sekunden in der Datenbank bei Cloudflare (D1), nicht in der Google-Tabelle. Welche Stimme du geöffnet hattest, gehört nicht zur Zeit.',
+					'Was du beim Üben in eine Stimme zeichnest, speichert die App mit deiner E-Mail-Adresse, der Stimme und der Seite in derselben Datenbank, damit du es beim nächsten Öffnen wiederfindest.',
+					'Beides siehst nur du selbst, nicht die Verwaltung, nicht die anderen Mitglieder und in keiner Auswertung. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Mit „Aufzeichnen ausschalten“ zählt nichts mehr; „Aufgezeichnete Zeit löschen“ und „Alle Notizen löschen“ im Profil löschen sofort alles.'
+				]
+			},
+			{
 				heading: 'Anwesenheit bei Proben',
 				paragraphs: [
 					'Nach einer Probe können Personen mit dem Recht „Anwesenheit erfassen“ (z. B. Dirigat und Organisation) eintragen, wer da war. Gespeichert werden nur Termin, Name, E-Mail-Adresse und ob du anwesend warst, im Blatt „Anwesenheit“ der Google-Tabelle des Orchesters. Daraus zeigt die App, bei wie vielen Proben vor einem Konzert du dabei warst.',

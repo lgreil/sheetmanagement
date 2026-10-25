@@ -49,7 +49,11 @@ test('taking the tour, and taking it again from the profile', async ({ page }) =
 });
 
 test('skipping the tour, at the start or at any step', async ({ page }) => {
+	// Offered on the start page only, so it never covers another page.
 	await open(page, '/kalender');
+	await expect(page.getByRole('heading', { level: 1 })).toContainText('Kalender');
+	await expect(card(page, /Willkommen/)).toHaveCount(0);
+	await open(page, '/');
 	await card(page, 'Willkommen, Mia!').getByRole('button', { name: 'Überspringen' }).click();
 	await expect(card(page, /Willkommen/)).toBeHidden();
 	await open(page, '/');

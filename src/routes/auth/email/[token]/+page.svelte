@@ -8,7 +8,7 @@
 <Title title={t.email.linkTitle} />
 
 <section class="card">
-	<img class="logo" src="/logo.png" alt="" width="88" height="88" />
+	<img class="logo" src="/logo.svg" alt="" width="88" height="88" />
 	<h1>{t.email.linkTitle}</h1>
 	{#if data.email && !form?.invalid}
 		<p>{t.email.linkLead(data.email)}</p>

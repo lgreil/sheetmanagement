@@ -62,3 +62,33 @@ export function orchestraChoices(orchestras: string[]): string[] {
 	const combinations = Array.from({ length: 2 ** orchestras.length - 1 }, (_, i) => orchestras.filter((_, bit) => (i + 1) & (1 << bit)));
 	return combinations.sort((a, b) => a.length - b.length).map(joinList);
 }
+
+/**
+ * The orchestras a calendar title names as whole words: "Probe A" or "Probe Herbstkonzert (A)"
+ * is a rehearsal for A, "Probe EO + A" one they rehearse together. In the configured order,
+ * undefined when it names none. Words are split at spaces and punctuation, but not at
+ * hyphens, so "A-Dur" doesn't name A; a name in capitals (an abbreviation) counts only in
+ * capitals, so "a cappella" doesn't either.
+ */
+export function titleOrchestra(title: string, orchestras: string[]): string | undefined {
+	const words = (text: string, exact: boolean) => (exact ? text : searchText(text)).split(/[\s,;/+&()[\]|·:]+/).filter(Boolean).join(' ');
+	const named = orchestras.filter((orchestra) => {
+		const exact = orchestra === orchestra.toUpperCase();
+		const name = words(orchestra, exact);
+		// A name of several words ("Junges Orchester") counts when they stand together.
+		return !!name && ` ${words(title, exact)} `.includes(` ${name} `);
+	});
+	return named.length ? joinList(named) : undefined;
+}
+
+/**
+ * Whose date it is: a concert's orchestras come from the sheet, a rehearsal's from its own
+ * title ("Probe A"), else from the concert it prepares for. Undefined is everyone's.
+ */
+export function eventOrchestra(
+	event: { id: string; type: string; concertId?: string; orchestra?: string },
+	concertOrchestra: (concertId: string) => string | undefined
+): string | undefined {
+	if (event.type === 'konzert') return concertOrchestra(event.id);
+	return event.orchestra ?? (event.concertId ? concertOrchestra(event.concertId) : undefined);
+}

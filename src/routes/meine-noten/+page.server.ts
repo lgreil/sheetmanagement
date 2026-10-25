@@ -1,13 +1,15 @@
 import { fail } from '@sveltejs/kit';
 import { currentStatus, normalizeEmail, playsIn, type Member } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
+import { eventDay, shortDateLabel } from '#lib/repertoire/dates.ts';
+import { splitList } from '#lib/repertoire/lists.ts';
 import { t } from '#lib/i18n/index.ts';
 import { choicesFromForm, commonInstruments, formatInstrument, formatInstruments, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import { partGlyph } from '#lib/music/instrument-glyph.ts';
 import type { Part } from '#lib/music/types.ts';
 import { partUrl } from '#lib/server/catalog.ts';
-import { plannedInProgramOrder } from '#lib/rehearsals/plan.ts';
-import { getLibrary, isPastConcert, namedItem, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { plannedInProgramOrder, programPositions } from '#lib/rehearsals/plan.ts';
+import { getLibrary, isPastConcert, namedItem, orchestraOf, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { getAccessList, getMusicConfig, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { appliesTo, forConcert, notesOf } from '#lib/notes/piece-notes.ts';
 import { readTab, refreshAfterWrite, updateRecord } from '#lib/server/sheet-writes.ts';
@@ -60,14 +62,20 @@ function pickConcerts(concerts: LibraryConcert[], today: string, wanted: string 
 async function rehearsalOf(library: Library, id: string | null, member: Member | undefined) {
 	const event = id && library.schedule.ok ? library.schedule.byId.get(id) : undefined;
 	if (!event || (event.type !== 'probe' && event.type !== 'generalprobe')) return null;
-	const program = programFor(event.concertId ? library.concertsById.get(event.concertId) : undefined, member);
+	const concert = event.concertId ? library.concertsById.get(event.concertId) : undefined;
+	// A rehearsal of one orchestra ("Probe A") rehearses its programme and what it plays together with others.
+	const own = concert && concert.orchestras.length > 1 ? orchestraOf(library, event) : undefined;
+	const program = programFor(concert, member).filter((item) => !own || playsIn({ orchestras: splitList(own) }, item.orchestra));
 	const planned = ((await getRehearsalPlan())?.byEvent.get(event.id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));
 	return {
 		id: event.id,
 		title: event.displayTitle,
 		label: [event.date.long, event.date.time].filter(Boolean).join(' · '),
-		concert: event.concertId ? library.concertsById.get(event.concertId) : undefined,
+		jump: shortDateLabel(eventDay(event, config.timeZone), library.today, config.locale),
+		concert,
 		items: planned.length ? plannedInProgramOrder(program, planned) : program,
+		// Numbered as in the concert, so "3" is the third piece the member plays there.
+		position: programPositions(programFor(concert, member)),
 		note: planned.length ? undefined : program.length ? t.myParts.wholeProgram : undefined
 	};
 }
@@ -93,13 +101,13 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 			.filter((note) => forConcert(note, concertTitle) && appliesTo(note, instruments, config))
 			.map((note) => ({ text: note.text, section: note.section }));
 	};
-	const piecesOf = (items: ProgramItem[], concert: LibraryConcert | undefined) =>
+	const piecesOf = (items: ProgramItem[], concert: LibraryConcert | undefined, position = programPositions(items)) =>
 		items.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
 			return {
 				notes: notesFor(item, concert),
-				position: item.position,
+				position: position(item),
 				title: item.title,
 				subtitle: item.subtitle,
 				pieceId: item.pieceId,
@@ -125,11 +133,13 @@ export const load: PageServerLoad = async ({ url, cookies, locals }) => {
 		common: commonInstruments(config),
 		concerts: [
 			// A rehearsal asked for in the URL comes first, above the concerts.
-			...(rehearsal ? [{ id: rehearsal.id, title: rehearsal.title, label: rehearsal.label, note: rehearsal.note, pieces: piecesOf(rehearsal.items, rehearsal.concert) }] : []),
+			...(rehearsal ? [{ id: rehearsal.id, title: rehearsal.title, label: rehearsal.label, jump: rehearsal.jump, note: rehearsal.note, pieces: piecesOf(rehearsal.items, rehearsal.concert, rehearsal.position) }] : []),
 			...concerts.map((concert) => ({
 				id: concert.id,
 				title: concert.title,
 				label: concert.label?.long,
+				// "Springen zu" is narrow on a phone: "Herbstkonzert · 19. Nov." (#223).
+				jump: shortDateLabel(concert.dateKey, library.today, config.locale),
 				note: undefined as string | undefined,
 				pieces: piecesOf(programFor(concert, member), concert)
 			}))

@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { brandColours, brandStyle, COLOUR_PRESETS, contrast, parseColour } from './branding.ts';
+import { brandColours, brandStyle, COLOUR_PRESETS, contrast, DEFAULT_LOGO, parseColour, shownLogo } from './branding.ts';
+
+describe('shownLogo', () => {
+	it('draws the built-in logo as SVG, any other as it is', () => {
+		expect(shownLogo(DEFAULT_LOGO)).toBe('/logo.svg');
+		expect(shownLogo('/demo/musterorchester.svg')).toBe('/demo/musterorchester.svg');
+		expect(shownLogo('https://example.org/logo.png')).toBe('https://example.org/logo.png');
+	});
+});
 
 describe('parseColour', () => {
 	it('takes #rrggbb and #rgb, in any case', () => {

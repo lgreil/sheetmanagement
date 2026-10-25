@@ -1,5 +1,6 @@
 import { error, redirect } from '@sveltejs/kit';
 import { normalizeEmail } from '#lib/access/access.ts';
+import { shownLogo } from '#lib/branding.ts';
 import { config, instrumentOverrides } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { DEMO_ROLE_COOKIE, isPublicPath } from '#lib/server/auth/index.ts';
@@ -36,7 +37,8 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	return {
 		orchestraName: name,
 		orchestraShortName: shortName,
-		logo,
+		// Sharp on the page: the built-in PNG's SVG twin.
+		logo: shownLogo(logo),
 		brand: { colour: colours.brand, style, look },
 		features: on,
 		instruments: instrumentOverrides(),

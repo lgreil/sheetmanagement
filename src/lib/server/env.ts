@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import { env, waitUntil } from 'cloudflare:workers';
-import { brandColours, brandStyle, lookStyle, parseColour } from '#lib/branding.ts';
+import { brandColours, brandStyle, DEFAULT_LOGO, lookStyle, parseColour } from '#lib/branding.ts';
 import { config } from '#lib/config/index.ts';
 import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
@@ -67,7 +67,7 @@ export function appEnv(): AppEnv {
 
 /** The logo for header, calendar and app icon; ORCHESTRA_LOGO if it is a path or a web link. */
 function orchestraLogo(logo: string | undefined): string {
-	return validLogo(logo) ?? '/logo.png';
+	return validLogo(logo) ?? DEFAULT_LOGO;
 }
 
 /**

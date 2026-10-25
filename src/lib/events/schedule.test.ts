@@ -55,6 +55,18 @@ describe('buildSchedule', () => {
 		expect(byId.get('gp')?.concertId).toBe('autumn');
 	});
 
+	it('reads the orchestras a rehearsal’s title names, not a concert’s', () => {
+		const shared = buildSchedule(
+			[...events, timed('pa', 'Probe Herbstkonzert (A)', '2026-10-20T18:00:00+02:00', '2026-10-20T21:00:00+02:00'), allDay('ka', 'Konzert A', '2026-11-20')],
+			keywords,
+			['EO', 'A']
+		);
+		const of = new Map(shared.map((event) => [event.id, event]));
+		expect(of.get('pa')).toMatchObject({ orchestra: 'A', concertId: 'autumn' });
+		expect(of.get('p1')?.orchestra).toBeUndefined();
+		expect(of.get('ka')?.orchestra).toBeUndefined();
+	});
+
 	it('falls back to the next concert when the title names none', () => {
 		expect(byId.get('px')?.concertId).toBe('xmas1');
 		expect(byId.get('xmas2')?.rehearsalIds).toEqual([]);

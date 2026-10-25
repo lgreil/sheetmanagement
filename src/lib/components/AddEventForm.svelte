@@ -107,7 +107,8 @@
 			{t.calendar.add.location}
 			<PlaceInput name="location" value={values.location ?? ''} placeholder={t.calendar.add.locationHint} />
 		</label>
-		{#if past && orchestras.length}
+		<!-- A past concert's orchestras go into the archive, a rehearsal's into its title ("Probe A"). -->
+		{#if (past && orchestras.length) || (type !== 'konzert' && orchestras.length > 1)}
 			<label class="field">
 				{t.archive.orchestra}
 				<!-- Playing together is the usual case: all orchestras first, then each alone or in pairs. -->

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isJoint, orchestraChoices, pickOrchestra, playedBy, programLabel, programScopes, rowOrchestra } from './orchestras.ts';
+import { eventOrchestra, isJoint, orchestraChoices, pickOrchestra, playedBy, programLabel, programScopes, rowOrchestra, titleOrchestra } from './orchestras.ts';
 
 describe('orchestras of a programme row', () => {
 	const concert = ['EO', 'A'];
@@ -48,5 +48,41 @@ describe('orchestraChoices', () => {
 	it('offers each orchestra, then the combinations', () => {
 		expect(orchestraChoices(['EO', 'A', 'B'])).toEqual(['EO', 'A', 'B', 'EO, A', 'EO, B', 'A, B', 'EO, A, B']);
 		expect(orchestraChoices(['EO'])).toEqual(['EO']);
+	});
+});
+
+describe('orchestras a rehearsal is for', () => {
+	const orchestras = ['EO', 'A', 'B', 'Junges Orchester'];
+
+	it('reads the orchestras its title names as whole words', () => {
+		expect(titleOrchestra('Probe A', orchestras)).toBe('A');
+		expect(titleOrchestra('Probe Herbstkonzert (A)', orchestras)).toBe('A');
+		expect(titleOrchestra('Probe A + EO', orchestras)).toBe('EO, A');
+		expect(titleOrchestra('Probe Herbstkonzert (EO, A) (?)', orchestras)).toBe('EO, A');
+		expect(titleOrchestra('Stimmprobe Junges Orchester', orchestras)).toBe('Junges Orchester');
+		expect(titleOrchestra('Probe junges orchester', orchestras)).toBe('Junges Orchester');
+	});
+
+	it('names none in ordinary titles', () => {
+		expect(titleOrchestra('Probe Herbstkonzert', orchestras)).toBeUndefined();
+		expect(titleOrchestra('Probe Mozart A-Dur', orchestras)).toBeUndefined();
+		expect(titleOrchestra('Probe a cappella', orchestras)).toBeUndefined();
+		expect(titleOrchestra('Probe B-Stimmen', orchestras)).toBeUndefined();
+		expect(titleOrchestra('Probe Orchester', orchestras)).toBeUndefined();
+		expect(titleOrchestra('Probe A', [])).toBeUndefined();
+	});
+
+	const concerts = new Map([
+		['herbst', 'EO, A'],
+		['sommer', undefined]
+	]);
+	const of = (event: Parameters<typeof eventOrchestra>[0]) => eventOrchestra(event, (id) => concerts.get(id));
+
+	it('takes a rehearsal’s own orchestras first, else its concert’s', () => {
+		expect(of({ id: 'p1', type: 'probe', concertId: 'herbst', orchestra: 'A' })).toBe('A');
+		expect(of({ id: 'p2', type: 'probe', concertId: 'herbst' })).toBe('EO, A');
+		expect(of({ id: 'p3', type: 'generalprobe', concertId: 'sommer' })).toBeUndefined();
+		expect(of({ id: 'p4', type: 'probe' })).toBeUndefined();
+		expect(of({ id: 'herbst', type: 'konzert' })).toBe('EO, A');
 	});
 });

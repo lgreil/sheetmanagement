@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
-	import { formatDuration, programLength, roundMinutes } from '#lib/repertoire/duration.ts';
+	import { programLength, roundMinutes } from '#lib/repertoire/duration.ts';
 	import type { ProgramItem } from '#lib/server/library.ts';
 	import Icon from './Icon.svelte';
 
@@ -33,7 +33,8 @@
 						</span>
 					{/if}
 				</span>
-				{#if item.duration}<span class="duration">{formatDuration(item.duration)}</span>{/if}
+				<!-- In minutes: on a date page "17:30" would read as a clock time (#218). -->
+				{#if item.duration}<span class="duration">{t.duration.minutes(roundMinutes(item.duration))}</span>{/if}
 				{#if item.pieceId}<span class="chevron"><Icon name="chevron" size={16} /></span>{/if}
 			</svelte:element>
 		</li>
@@ -50,7 +51,7 @@
 							class="segment"
 							class:lit={hovered === segment.i}
 							style:flex-grow={segment.share}
-							title="{segment.item.title} · {formatDuration(segment.item.duration ?? 0)}"
+							title="{segment.item.title} · {t.duration.minutes(roundMinutes(segment.item.duration ?? 0))}"
 							onpointerenter={() => (hovered = segment.i)}
 							onpointerleave={() => (hovered = null)}
 						></span>

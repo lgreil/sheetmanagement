@@ -9,7 +9,7 @@ import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
 import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
-import { getLibrary, isPastConcert, namedItem, programsOf, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
+import { getLibrary, isPastConcert, namedItem, orchestraOf, programsOf, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { pickOrchestra, programScopes, sameOrchestra } from '#lib/repertoire/orchestras.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
@@ -332,8 +332,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	}
 
 	const lookup = (id: string) => (schedule.ok ? schedule.byId.get(id) : undefined);
-	// A rehearsal belongs to the orchestra of the concert it prepares for.
-	const orchestra = concert?.orchestra ?? (event.concertId ? library.concertsById.get(event.concertId)?.orchestra : undefined);
+	// A rehearsal is for the orchestras its title names, else those of the concert it prepares for.
+	const orchestra = orchestraOf(library, event);
 	// The rehearsal plan (#65): what's rehearsed when, edited per concert.
 	const plan = await getRehearsalPlan();
 	const planned = (id: string) => (plan?.byEvent.get(id) ?? []).map((entry) => namedItem(library, entry.pieceName, entry.notes));

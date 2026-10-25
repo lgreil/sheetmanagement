@@ -103,9 +103,23 @@ export function planRehearsalSave(table: RehearsalTable, edit: PlanEdit, labels:
  * planned, then planned pieces that aren't in the programme. Matched by piece id, else by title.
  */
 export function plannedInProgramOrder<T extends { pieceId?: string; title: string }>(program: T[], planned: T[]): T[] {
-	const key = (item: T) => item.pieceId ?? `title:${normalize(item.title)}`;
+	const key = programKey;
 	const wanted = new Set(planned.map(key));
 	const inProgram = program.filter((item) => wanted.has(key(item)));
 	const seen = new Set(inProgram.map(key));
 	return [...inProgram, ...planned.filter((item) => !seen.has(key(item)))];
+}
+
+const programKey = (item: { pieceId?: string; title: string }) => item.pieceId ?? `title:${normalize(item.title)}`;
+
+/**
+ * A piece's number in what one member plays of a concert, counted straight through (#217):
+ * the sheet numbers each orchestra's programme and the pieces played together on their own,
+ * so a member of one orchestra would otherwise see 1, 2, 3, 4 and then 1 again. Undefined for
+ * a piece outside the programme.
+ */
+export function programPositions(program: { pieceId?: string; title: string }[]): (item: { pieceId?: string; title: string }) => number | undefined {
+	const positions = new Map<string, number>();
+	for (const item of program) if (!positions.has(programKey(item))) positions.set(programKey(item), positions.size + 1);
+	return (item) => positions.get(programKey(item));
 }

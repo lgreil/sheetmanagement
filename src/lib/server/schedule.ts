@@ -55,7 +55,7 @@ export async function getSchedule(now = Date.now()): Promise<ScheduleResult> {
 		// the current time is computed per request.
 		let schedule = built.get(raw);
 		if (!schedule) {
-			schedule = buildSchedule(raw, config.events).map((event) => ({
+			schedule = buildSchedule(raw, config.events, config.orchestras).map((event) => ({
 				...event,
 				date: dateParts(event, config.locale, config.timeZone)
 			}));

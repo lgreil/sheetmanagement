@@ -19,6 +19,14 @@ const SOFT_DARK = 0.16;
 /** Mixing in oklab (as the CSS does) and sRGB (as here) differ a little, hence the margin. */
 const TINT_MARGIN = 0.15;
 
+/**
+ * The built-in logo. It stays a PNG for notifications and the app icon, which can't show SVG;
+ * on the page the same picture traced to SVG is drawn instead, sharp at any size (the start
+ * page shows it 440px wide, the PNG is 256px).
+ */
+export const DEFAULT_LOGO = '/logo.png';
+export const shownLogo = (logo: string) => (logo === DEFAULT_LOGO ? '/logo.svg' : logo);
+
 /** Ready-made accents offered on /einstellungen; each reads well in both schemes once derived. */
 export const COLOUR_PRESETS = {
 	gold: '#e6b422',

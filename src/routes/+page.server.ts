@@ -1,4 +1,4 @@
-import { getLibrary, namedItem } from '#lib/server/library.ts';
+import { getLibrary, namedItem, shownDates } from '#lib/server/library.ts';
 import { getRehearsalNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { currentRehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { openWork } from '#lib/server/todo.ts';
@@ -11,7 +11,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 	if (!result.ok)
 		return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsalFor: undefined, rehearsalParts: undefined, rehearsing: [], program: [], lastNote: null, todo: open };
 
-	const upcoming = result.events.filter((event) => !event.past);
+	// A member's next rehearsal is one of their own orchestras.
+	const shown = await shownDates(library, locals);
+	const upcoming = result.events.filter((event) => !event.past && shown(event));
 	const nextConcert = upcoming.find((event) => event.type === 'konzert') ?? null;
 	const nextRehearsal = upcoming.find((event) => event.type === 'probe' || event.type === 'generalprobe') ?? null;
 	const program = nextConcert
@@ -30,7 +32,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 		nextRehearsal && (rehearsing.length || rehearsalConcert?.program.length) ? `/meine-noten?probe=${encodeURIComponent(nextRehearsal.id)}` : undefined;
 	// What the last rehearsal left to practise (#145), until the next one is over too.
 	const last = currentRehearsalNote(
-		result.events.filter((event) => event.type === 'probe' || event.type === 'generalprobe'),
+		result.events.filter((event) => (event.type === 'probe' || event.type === 'generalprobe') && shown(event)),
 		notes.byEvent
 	);
 	const lastNote =

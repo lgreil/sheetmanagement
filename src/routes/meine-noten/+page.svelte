@@ -100,7 +100,7 @@
 				{t.myParts.jumpTo}
 				<select name="konzert" value={data.focus} onchange={(event) => event.currentTarget.form?.requestSubmit()}>
 					{#each data.concerts as concert (concert.id)}
-						<option value={concert.id}>{concert.title}{concert.label ? ` · ${concert.label}` : ''}</option>
+						<option value={concert.id}>{concert.title}{concert.jump ? ` · ${concert.jump}` : ''}</option>
 					{/each}
 				</select>
 			</label>
