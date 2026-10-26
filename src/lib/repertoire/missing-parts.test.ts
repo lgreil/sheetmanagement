@@ -132,13 +132,17 @@ describe('doneFileIds', () => {
 });
 
 describe('reportedGaps', () => {
-	const report = (id: string, fileId: string, kind: 'missing' | 'scan' | 'pages' | 'wrong' | 'other', marked?: Gap['status']) => ({
+	const report = (id: string, fileId: string, kind: 'missing' | 'scan' | 'pages' | 'wrong' | 'recording' | 'other', marked?: Gap['status']) => ({
 		id,
 		part: fileId ? `Stimme ${fileId}` : '',
 		fileId,
 		kind,
 		comment: '',
 		marked
+	});
+
+	it('leaves out a reported Hörbeispiel: it is no gap in the parts', () => {
+		expect(reportedGaps([], [report('r1', '', 'recording')])).toEqual([]);
 	});
 
 	it('counts app-only reports with the status their kind stands for', () => {

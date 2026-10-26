@@ -376,12 +376,13 @@ export function demoSheet(now: number): Map<string, string[][]> {
 				id: 'demo-report-1'
 			},
 			{
-				// A better Hörbeispiel, ready for "Vorschlag übernehmen" on /meldungen.
-				piece: titles['demo-sleigh'],
-				pieceId: 'demo-sleigh',
+				// A better Hörbeispiel, ready for "Vorschlag übernehmen" on /meldungen; on the piece
+				// without sheet music, which is keyed by its title.
+				piece: 'Ungarischer Tanz Nr. 5',
+				pieceId: 's-ungarischer-tanz-nr-5',
 				kind: t.feedbackValues.reportKind.recording,
 				comment: 'Hier gibt es eine gute Aufnahme.',
-				link: 'https://example.org/sleigh-ride',
+				link: 'https://example.org/ungarischer-tanz',
 				status: t.feedbackValues.reportStatus.open,
 				reportedBy: `${DEMO_MEMBER.name} <${DEMO_MEMBER.email}>`,
 				reportedAt: at(-2),
