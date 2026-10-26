@@ -38,7 +38,8 @@
 		{ name: 'duration', placeholder: t.pieceEditor.durationHint },
 		{ name: 'publisher', list: 'publishers', placeholder: t.pieceEditor.publisherHint },
 		{ name: 'reviewedAt', placeholder: t.pieceEditor.reviewedHint },
-		{ name: 'recording', wide: true, type: 'url', placeholder: t.pieceEditor.recordingHint }
+		// Text, not url: "keins" says there is none.
+		{ name: 'recording', wide: true, inputmode: 'url', placeholder: t.pieceEditor.recordingHint }
 	] as const;
 	// Fields for columns the sheet doesn't have yet stay hidden until setup adds them.
 	const fields = $derived(FIELDS.filter((field) => data.state !== 'ready' || !(data.missing as string[]).includes(field.name)));
@@ -78,7 +79,8 @@
 				<span class="input">
 					<input
 						name={field.name}
-						type={'type' in field ? field.type : 'text'}
+						type="text"
+						inputmode={'inputmode' in field ? field.inputmode : undefined}
 						bind:value={current[field.name]}
 						list={'list' in field ? `${field.list}-list` : undefined}
 						required={'required' in field}
@@ -89,6 +91,10 @@
 					/>
 					{#if field.name === 'reviewedAt'}
 						<button class="btn ghost small" type="button" onclick={() => (current.reviewedAt = today())}>{t.pieceEditor.today}</button>
+					{:else if field.name === 'recording'}
+						<button class="btn ghost small" type="button" title={t.pieceEditor.noRecordingHint} onclick={() => (current.recording = t.sheetValues.noRecording)}>
+							{t.pieceEditor.noRecording}
+						</button>
 					{/if}
 				</span>
 			</label>

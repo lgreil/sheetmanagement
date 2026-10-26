@@ -17,6 +17,8 @@ import { listEvents } from '#lib/server/google/calendar.ts';
 import { ACCESS_TABS } from '#lib/access/access.ts';
 import { LAYOUT, REPERTOIRE_TABS, type TabKey } from '#lib/repertoire/sheet.ts';
 import { getSpreadsheetInfo } from '#lib/server/google/sheets.ts';
+import { freshness } from '#lib/server/version-check.ts';
+import { APP_COMMIT, versionLabel, versionUrl } from '#lib/version.ts';
 import { getRepertoire } from '#lib/server/repertoire.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle, NotConfiguredError, requireSetting } from '#lib/server/services.ts';
 
@@ -33,6 +35,10 @@ export interface Check {
 	problem?: string;
 	/** What to do about it. */
 	hint?: string;
+	/** Another word for the state than "Verbunden", "Fehler" … */
+	pill?: string;
+	/** A page with more, e.g. the changes on GitHub. */
+	link?: { href: string; label: string };
 }
 
 function describeError(error: unknown, what: string, serviceAccountEmail?: string): Check {
@@ -232,7 +238,19 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const mail = await mailCheck();
 	return {
-		checks: { account, drive, calendar, sheet, signIn, look: lookCheck(), jobs: await jobsCheck(), store: await storeCheck(), push: await pushCheck(), mail: mail.check },
+		checks: {
+			account,
+			drive,
+			calendar,
+			sheet,
+			signIn,
+			look: lookCheck(),
+			jobs: await jobsCheck(),
+			store: await storeCheck(),
+			push: await pushCheck(),
+			mail: mail.check,
+			version: await versionCheck()
+		},
 		mail: { connected: mail.connected, canConnect: mail.canConnect, result: url.searchParams.get('mail') },
 		// The account new uploads belong to (#193); only with DRIVE_WRITE, where uploading exists.
 		drive: driveWriteEnabled() && canConnectDrive() ? { account: await driveAccount(), result: url.searchParams.get('drive') } : null,
@@ -265,6 +283,31 @@ export const actions: Actions = {
 		return { job: name, ok: run.ok, summary: run.summary };
 	}
 };
+
+/** Which version runs, and whether GitHub has a newer one (#206). */
+async function versionCheck(): Promise<Check> {
+	const running = t.status.versionRunning(versionLabel());
+	const link = { href: versionUrl(), label: 'GitHub' };
+	if (!APP_COMMIT) return { state: 'missing', pill: '–', details: [running], problem: t.status.versionNoCommit, link };
+	const fresh = await freshness(APP_COMMIT);
+	if (!fresh) return { state: 'ok', pill: '–', details: [running, t.status.versionUnchecked], link };
+	if (fresh.behind) {
+		return {
+			state: 'missing',
+			pill: t.status.versionUpdate,
+			details: [running],
+			problem: t.status.versionBehind(fresh.behind),
+			hint: t.status.versionBehindHint,
+			link: { href: fresh.url, label: 'GitHub' }
+		};
+	}
+	return {
+		state: 'ok',
+		pill: t.status.versionCurrent,
+		details: [running, fresh.ahead ? t.status.versionAhead(fresh.ahead) : t.status.versionUpToDate],
+		link
+	};
+}
 
 /** Where the app keeps what it writes itself (#161), and its schema version. */
 async function storeCheck(): Promise<Check> {

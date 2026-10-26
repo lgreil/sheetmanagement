@@ -10,6 +10,7 @@ import { getFeedback, getLoans, getPieceNotes, getRehearsalPlan } from '#lib/ser
 import { checkNote, notesOf, sectionOptions } from '#lib/notes/piece-notes.ts';
 import { today } from '#lib/server/members.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
+import { cleanLink } from '#lib/links.ts';
 import { daysUntilDue, loanState, loansOf } from '#lib/loans/loans.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { pieceArt } from '#lib/music/piece-art.ts';
@@ -75,7 +76,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 					reportedAt,
 					reportedBy: canClose ? reportedBy : undefined
 				})),
-			state: !detail
+			// Without parts, only the Hörbeispiel of a piece in the sheet can be reported.
+			state: !detail && !sheet
 				? ('no-parts' as const)
 				: !feedbackUser(locals)
 					? ('sign-in' as const)
@@ -83,6 +85,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 						? ('ready' as const)
 						: ('not-set-up' as const),
 			canClose,
+			kinds: detail ? REPORT_KINDS : (['recording'] as ReportKind[]),
+			// What "Hörbeispiel falsch" is about: the link, or "keins".
+			recording: sheet?.recording ?? (sheet?.noRecording ? t.sheetValues.noRecording : undefined),
 			instruments: playableInstruments(config),
 			common: commonInstruments(config),
 			present: [...new Set((detail?.parts ?? []).filter((part) => part.status !== 'missing').flatMap((part) => part.instruments))]
@@ -293,10 +298,15 @@ export const actions: Actions = {
 		if (!REPORT_KINDS.includes(kind)) return fail(400, { reportError: t.reports.failed });
 
 		const piece = (await getLibrary()).piecesById.get(params.id);
-		if (!piece?.detail) error(404, t.messages.noPiece);
+		// A piece without parts has only its Hörbeispiel to report.
+		if (!piece || (!piece.detail && !(piece.sheet && kind === 'recording'))) error(404, t.messages.noPiece);
+		// A better Hörbeispiel goes along with "Hörbeispiel falsch"; only web links.
+		const rawLink = kind === 'recording' ? formText(data, 'link', 500) : '';
+		const link = rawLink ? cleanLink(rawLink) : '';
+		if (link === undefined) return fail(400, { reportError: t.wishes.invalidLink });
 		// The part's name comes from the archive, not from the form.
-		const fileId = formText(data, 'fileId');
-		const part = fileId ? piece.detail.parts.find((p) => p.id === fileId) : undefined;
+		const fileId = kind === 'recording' ? '' : formText(data, 'fileId');
+		const part = fileId ? piece.detail?.parts.find((p) => p.id === fileId) : undefined;
 		if (fileId && !part) return fail(400, { reportError: t.reports.unknownPart });
 		// A missing part has no file: it's named by instrument and number, from the configured list.
 		const instrument = formText(data, 'missingInstrument');
@@ -314,7 +324,8 @@ export const actions: Actions = {
 				part: part?.label ?? missingLabel,
 				fileId,
 				kind,
-				comment: formText(data, 'comment', 1000)
+				comment: formText(data, 'comment', 1000),
+				link
 			});
 			return { reported: true };
 		} catch (cause) {

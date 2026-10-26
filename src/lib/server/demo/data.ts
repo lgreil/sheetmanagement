@@ -374,6 +374,18 @@ export function demoSheet(now: number): Map<string, string[][]> {
 				reportedBy: `${DEMO_MEMBER.name} <${DEMO_MEMBER.email}>`,
 				reportedAt: at(-5),
 				id: 'demo-report-1'
+			},
+			{
+				// A better Hörbeispiel, ready for "Vorschlag übernehmen" on /meldungen.
+				piece: titles['demo-sleigh'],
+				pieceId: 'demo-sleigh',
+				kind: t.feedbackValues.reportKind.recording,
+				comment: 'Hier gibt es eine gute Aufnahme.',
+				link: 'https://example.org/sleigh-ride',
+				status: t.feedbackValues.reportStatus.open,
+				reportedBy: `${DEMO_MEMBER.name} <${DEMO_MEMBER.email}>`,
+				reportedAt: at(-2),
+				id: 'demo-report-2'
 			}
 		]),
 		tab('wishes', [

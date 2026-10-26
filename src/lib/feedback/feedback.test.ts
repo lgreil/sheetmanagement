@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildFeedback, markedStatus, mayDeleteWish, newId, parseVotes, safeLink, sortWishes, submitterEmail, toggleVote } from './feedback.ts';
+import { buildFeedback, markedStatus, mayDeleteWish, newId, parseVotes, safeLink, sortWishes, submitterEmail, toggleVote, wishFollowers } from './feedback.ts';
 
 const REPORT_HEADER = ['Stück', 'Drive-Ordner-ID', 'Stimme', 'Datei-ID', 'Art', 'Kommentar', 'Status', 'Notiz', 'Gemeldet von', 'Gemeldet am', 'Meldungs-ID'];
 const WISH_HEADER = ['Art', 'Titel', 'Komponist', 'Link', 'Beschreibung', 'Status', 'Antwort', 'Eingereicht von', 'Datum', '+1', 'Wunsch-ID'];
@@ -37,7 +37,7 @@ describe('reports', () => {
 		expect(reports[0]).toMatchObject({ marked: 'incomplete', driveComment: 'c-1' });
 		const old = buildFeedback({ reports: [REPORT_HEADER, ['X', 'f', '', '', '', '', '', '', '', '', 'r1']] });
 		expect(old.reports[0]).toMatchObject({ marked: undefined, driveComment: '' });
-		expect(old.tables.reports?.missing).toEqual(['marked', 'driveComment']);
+		expect(old.tables.reports?.missing).toEqual(['marked', 'driveComment', 'link']);
 	});
 
 	it('maps status words back like the naming convention', () => {
@@ -143,5 +143,16 @@ describe('deleting wishes', () => {
 	it('lets admins delete any wish, anonymous ones too', () => {
 		expect(mayDeleteWish({ submittedBy: '', status: 'done' }, 'admin@example.org', true)).toBe(true);
 		expect(mayDeleteWish({ submittedBy: '', status: 'open' }, 'anna@example.org', false)).toBe(false);
+	});
+});
+
+describe('who hears about an answer', () => {
+	it('tells the submitter and every +1 once, but not the one answering', () => {
+		const wish = { submittedBy: 'Anna <Anna@x.org>', votes: ['anna@x.org', 'ben@x.org', 'admin@x.org'] };
+		expect(wishFollowers(wish, 'Admin@x.org')).toEqual(['anna@x.org', 'ben@x.org']);
+	});
+
+	it('has only the +1s for an anonymous wish', () => {
+		expect(wishFollowers({ submittedBy: '', votes: ['ben@x.org'] }, 'admin@x.org')).toEqual(['ben@x.org']);
 	});
 });

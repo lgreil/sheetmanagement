@@ -8,7 +8,7 @@ A lightweight web app for orchestras and ensembles: the **sheet music archive**,
 
 Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
 
-> **Status:** in use, version 0.10. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. New: the Chronik with the orchestra's history in numbers and a printable season report, notes from rehearsals on pieces and after each rehearsal, full composer names for the GEMA list, and a download of one's own data on /profil. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
+> **Status:** in use, version 0.15. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. New: the Chronik with the orchestra's history in numbers and a printable season report, notes from rehearsals on pieces and after each rehearsal, full composer names for the GEMA list, and a download of one's own data on /profil. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
 
 Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
 

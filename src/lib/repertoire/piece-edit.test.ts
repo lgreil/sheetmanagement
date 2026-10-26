@@ -56,6 +56,10 @@ describe('checkPieceValues', () => {
 		expect(result).toMatchObject({ values: { composer: 'Mozart, Haydn', genre: 'Filmmusik, Pop', arranger: '', publisher: 'Schott, Bärenreiter' } });
 	});
 
+	it('takes "keins" as a piece without a recording, written one way', () => {
+		expect(checkPieceValues(edit({ recording: ' Keins ' }), pieces, 2)).toMatchObject({ values: { recording: 'keins' } });
+	});
+
 	it('lets a piece keep its own title', () => {
 		expect('values' in checkPieceValues(edit({ title: 'BOLERO' }), pieces, 2)).toBe(true);
 	});

@@ -949,7 +949,10 @@ export const de = {
 		saveNext: 'Speichern & weiter',
 		backToList: 'Zur Liste',
 		allDone: 'Geschafft: In dieser Liste ist nichts mehr offen.',
-		none: 'Hier fehlt nichts.'
+		none: 'Hier fehlt nichts.',
+		noRecording: 'Gibt es keins',
+		noRecordingHint: (title: string) => `„${title}“ hat kein Hörbeispiel: nicht mehr danach fragen`,
+		noRecordingSaved: (title: string) => `„${title}“: als ohne Hörbeispiel vermerkt.`
 	},
 	suggest: {
 		title: 'Vorschläge',
@@ -1490,6 +1493,9 @@ export const de = {
 		title: (piece: string) => `Bearbeiten: ${piece}`,
 		lead: 'Was hier steht, gilt statt dem Ordnernamen.',
 		recordingHint: 'Link zu einer Aufnahme, z. B. YouTube',
+		/** Writes the sheet's word for "no recording" into the field. */
+		noRecording: 'Gibt es keins',
+		noRecordingHint: 'Für Stücke ohne Aufnahme: „Angaben ergänzen“ fragt dann nicht mehr danach.',
 		reviewedHint: 'z. B. 2026-10-18',
 		today: 'Heute',
 		save: 'Speichern',
@@ -1500,7 +1506,7 @@ export const de = {
 		problems: {
 			'title-missing': 'Bitte einen Titel angeben.',
 			'title-taken': 'Diesen Titel hat schon ein anderes Stück. Programme finden Stücke über den Titel, er muss eindeutig sein.',
-			'bad-link': 'Das Hörbeispiel muss ein Link sein, der mit http:// oder https:// beginnt.',
+			'bad-link': 'Das Hörbeispiel muss ein Link sein, der mit http:// oder https:// beginnt, oder „keins“.',
 			'bad-duration': 'Die Dauer ist nicht lesbar. Möglich sind z. B. 7:30, 7 Min. oder 1:02:00.'
 		},
 		durationHint: 'z. B. 7:30',
@@ -1642,6 +1648,17 @@ export const de = {
 		storeMemoryHint: 'Die DB-Bindung in wrangler.toml anlegen, siehe README.',
 		storeDemo: 'Demo: alles nur im Speicher.',
 		storeFailed: (message: string) => `D1 antwortet nicht: ${message}`,
+		/** The deployed version against GitHub (#206). */
+		version: 'Version',
+		versionRunning: (label: string) => `Läuft: ${label}`,
+		versionCurrent: 'Aktuell',
+		versionUpToDate: 'Auf dem Stand von GitHub (main).',
+		versionAhead: (n: number) => (n === 1 ? '1 Änderung, die nicht auf main ist.' : `${n} Änderungen, die nicht auf main sind.`),
+		versionUpdate: 'Update verfügbar',
+		versionBehind: (n: number) => (n === 1 ? 'Auf GitHub gibt es 1 neuere Änderung.' : `Auf GitHub gibt es ${n} neuere Änderungen.`),
+		versionBehindHint: 'Neu bereitstellen: mit dem Deploy-Workflow oder „pnpm run deploy“.',
+		versionUnchecked: 'GitHub war nicht erreichbar; ob es Neueres gibt, ist nicht geprüft.',
+		versionNoCommit: 'Ohne Git gebaut: Welcher Stand das ist, ist unbekannt.',
 		/** Notifications (#157). */
 		push: 'Benachrichtigungen (Web Push)',
 		pushOn: (devices: number) => (devices === 1 ? 'Eingerichtet, 1 Gerät angemeldet' : `Eingerichtet, ${devices} Geräte angemeldet`),
@@ -1699,7 +1716,7 @@ export const de = {
 	/** Allowing notifications on /profil (#157). */
 	push: {
 		title: 'Benachrichtigungen',
-		lead: 'Erinnert dich auf diesem Gerät an Proben und Konzerte, auf die du noch nicht geantwortet hast. Wer Leihmaterial betreut oder die App verwaltet, hört auch von Rückgaben und Störungen.',
+		lead: 'Erinnert dich auf diesem Gerät an Proben und Konzerte, auf die du noch nicht geantwortet hast, und sagt Bescheid, wenn deine Wünsche eine Antwort bekommen. Wer Leihmaterial betreut oder die App verwaltet, hört auch von Rückgaben, neuen Wünschen und Störungen.',
 		enable: 'Benachrichtigungen erlauben',
 		disable: 'Ausschalten',
 		test: 'Test senden',
@@ -1852,6 +1869,8 @@ export const de = {
 				reportedAt: 'Gemeldet am',
 				marked: 'Im Dateinamen',
 				driveComment: 'Drive-Kommentar-ID',
+				/** A better Hörbeispiel, with "Hörbeispiel falsch". */
+				link: 'Vorschlag',
 				id: 'Meldungs-ID'
 			}
 		},
@@ -2002,12 +2021,19 @@ export const de = {
 		}
 	},
 	/** Values of the dropdown columns in "Meldungen" and "Wünsche", as they appear in the sheet. */
+	/** Words the app writes into cells and reads back. */
+	sheetValues: {
+		/** In "Hörbeispiel": there is none, so "Angaben ergänzen" stops asking. */
+		noRecording: 'keins'
+	},
 	feedbackValues: {
 		reportKind: {
 			missing: 'Stimme fehlt',
 			scan: 'Schlechter Scan',
 			pages: 'Seiten fehlen',
 			wrong: 'Falsche Stimme',
+			/** The piece's Hörbeispiel is wrong or missing; the report can carry a better link. */
+			recording: 'Hörbeispiel falsch',
 			other: 'Sonstiges'
 		},
 		reportStatus: { open: 'offen', done: 'erledigt' },
@@ -2064,7 +2090,16 @@ export const de = {
 		marked: (word: string) => `Im Dateinamen: ${word}`,
 		markHint: 'Hängt das Statuswort an den Dateinamen in Drive an. „Erledigt“ entfernt es wieder.',
 		noFile: 'Diese Meldung betrifft keine einzelne Datei.',
-		driveFailed: 'Gespeichert, aber in Drive konnte nichts geändert werden. Ist das Dienstkonto Bearbeiter des Noten-Ordners?'
+		driveFailed: 'Gespeichert, aber in Drive konnte nichts geändert werden. Ist das Dienstkonto Bearbeiter des Noten-Ordners?',
+		recording: 'Hörbeispiel',
+		recordingNone: 'keins eingetragen',
+		suggestion: 'Besseres Hörbeispiel (Link, optional)',
+		suggestionHint: 'z. B. ein YouTube-Link',
+		suggested: 'Vorschlag',
+		useSuggestion: 'Vorschlag übernehmen',
+		useSuggestionHint: 'Trägt den Link als Hörbeispiel des Stücks ein und schließt die Meldung.',
+		suggestionUsed: 'Als Hörbeispiel übernommen.',
+		reportRecording: 'Hörbeispiel melden'
 	},
 	loans: {
 		title: 'Leihmaterial',
@@ -2143,7 +2178,11 @@ export const de = {
 		forConcert: (concert: string) => `für ${concert}`,
 		delete: 'Wunsch löschen',
 		confirmDelete: (title: string) => `„${title}“ wirklich löschen? Das lässt sich nicht rückgängig machen.`,
-		notYours: 'Löschen kannst du nur eigene Wünsche, solange sie noch offen sind.'
+		notYours: 'Löschen kannst du nur eigene Wünsche, solange sie noch offen sind.',
+		/** Notifications: a new wish for admins, an answer for whoever wished it and their +1s. */
+		pushNew: { piece: 'Neuer Stückwunsch', feature: 'Neue Idee für die App' } as Record<string, string>,
+		pushAnswer: (title: string) => `Antwort auf „${title}“`,
+		pushStatus: (status: string, answer: string) => (answer ? `${status}: ${answer}` : `Jetzt ${status}.`)
 	},
 	legal,
 	common: {

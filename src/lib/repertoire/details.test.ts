@@ -24,6 +24,10 @@ describe('gapsOf', () => {
 	it('leaves out pieces without a row in the sheet', () => {
 		expect(gapsOf(pieces[4], 'alle')).toEqual([]);
 	});
+
+	it('stops asking for a recording once the sheet says there is none', () => {
+		expect(gapsOf({ id: 'f', composer: 'Rossini', sheet: { genre: 'Oper', noRecording: true } }, 'hoerbeispiel')).toEqual([]);
+	});
 });
 
 it('counts per filter', () => {

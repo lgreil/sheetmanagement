@@ -3,6 +3,7 @@
 	import Icon, { type IconName } from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { REPOSITORY, versionLabel, versionUrl } from '#lib/version.ts';
 
 	let { data, form } = $props();
 
@@ -16,7 +17,8 @@
 		{ label: t.status.jobs, check: data.checks.jobs },
 		{ label: t.status.store, check: data.checks.store },
 		{ label: t.status.push, check: data.checks.push },
-		{ label: t.email.status, check: data.checks.mail }
+		{ label: t.email.status, check: data.checks.mail },
+		{ label: t.status.version, check: data.checks.version }
 	]);
 
 	// Back from Google's consent page (#123), or after disconnecting.
@@ -56,11 +58,14 @@
 			<div class="body">
 				<div class="head">
 					<strong>{label}</strong>
-					<span class="pill">{t.status[check.state]}</span>
+					<span class="pill">{check.pill ?? t.status[check.state]}</span>
 				</div>
 				{#each check.details as detail (detail)}<p>{detail}</p>{/each}
 				{#if check.problem}<p class="problem">{check.problem}</p>{/if}
 				{#if check.hint}<p class="hint">{check.hint}</p>{/if}
+				{#if check.link}
+					<a class="link external" href={check.link.href} target="_blank" rel="noopener noreferrer">{check.link.label}<Icon name="external" size={14} /></a>
+				{/if}
 			</div>
 		</li>
 	{/each}
@@ -147,12 +152,14 @@
 	{#if data.checks.account.state === 'ok'}
 		<a class="link" href="/setup">{t.status.setupSheet}</a>
 	{/if}
-	<a class="link" href="https://github.com/lgreil/sheetmanagement/blob/main/docs/setup-google.md">{t.status.setupGuide}</a>
+	<a class="link" href="{REPOSITORY}/blob/main/docs/setup-google.md">{t.status.setupGuide}</a>
 </div>
 {#if form?.job}
 	<p class="result" class:problem={!form.ok} role="status">{t.status.jobNames[form.job]}: {form.summary}</p>
 {/if}
-<p class="version">{t.nav.appName} v{__APP_VERSION__}</p>
+<p class="version">
+	<a href={versionUrl()} target="_blank" rel="noopener noreferrer">{t.nav.appName} {versionLabel()}</a>
+</p>
 
 <style>
 	.extras {
@@ -206,6 +213,18 @@
 		margin-top: var(--space-5);
 		color: var(--text-muted);
 		font-size: 0.8125rem;
+	}
+
+	.version a {
+		color: inherit;
+	}
+
+	.link.external {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		justify-self: start;
+		font-size: 0.875rem;
 	}
 
 	.checks {

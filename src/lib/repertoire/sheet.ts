@@ -41,6 +41,9 @@ export interface Table<K extends string> {
 /** Headers are matched ignoring case, accents and surrounding spaces. */
 export const normalize = (text: string) => searchText(text.replace(/\s+/g, ' ').trim());
 
+/** "keins" in "Hörbeispiel": the piece has no recording, and that's known. */
+export const isNoRecording = (text: string) => !!text.trim() && normalize(text) === normalize(t.sheetValues.noRecording);
+
 /** Reads a tab by its header row, so columns can be in any order. Empty rows are skipped. */
 export function readTable<K extends string>(values: string[][], columns: Record<K, string>): Table<K> {
 	const header = (values[0] ?? []).map(normalize);
@@ -83,6 +86,8 @@ export interface SheetPiece {
 	reviewedAt?: string;
 	/** A link to listen to, e.g. on YouTube; only http(s). */
 	recording?: string;
+	/** "keins" in the column: there is no recording to find. */
+	noRecording?: boolean;
 	/** In seconds, read from "Dauer"; undefined when empty or unreadable. */
 	duration?: number;
 	publisher?: string;
@@ -211,6 +216,7 @@ export function buildRepertoire(values: SheetValues): Repertoire {
 			notes: optional(v.notes),
 			reviewedAt: optional(v.reviewedAt),
 			recording: cleanLink(v.recording),
+			noRecording: isNoRecording(v.recording) || undefined,
 			duration: parseDuration(v.duration),
 			publisher: optional(v.publisher),
 			driveFolderId: optional(folder)
