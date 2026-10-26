@@ -202,6 +202,8 @@
 	reports={data.reports.open}
 	status={data.reports.state}
 	canClose={data.reports.canClose}
+	kinds={data.reports.kinds}
+	recording={data.reports.recording}
 	parts={piece.parts.filter((part) => part.status !== 'missing').map(({ id, label }) => ({ id, label }))}
 	instruments={data.reports.instruments}
 	common={data.reports.common}

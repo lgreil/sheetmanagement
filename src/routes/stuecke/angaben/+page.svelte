@@ -1,10 +1,13 @@
 <script lang="ts">
+	import { enhance } from '$app/forms';
+	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
 
-	let { data } = $props();
+	let { data, form } = $props();
+	const saving = new FormState();
 	const first = $derived(data.pieces[0]);
 	const complete = $derived(data.total ? Math.round(((data.total - data.filters[0].count) / data.total) * 100) : 0);
 </script>
@@ -14,6 +17,11 @@
 
 {#if data.done}
 	<p class="msg ok" role="status"><Icon name="check" size={16} />{t.details.allDone}</p>
+{/if}
+{#if form?.message}
+	<p class="msg error" role="alert">{form.message}</p>
+{:else if form?.noRecording}
+	<p class="msg ok" role="status"><Icon name="check" size={16} />{t.details.noRecordingSaved(form.noRecording)}</p>
 {/if}
 
 <div class="progress" aria-label={t.details.progress(complete)}>
@@ -50,6 +58,15 @@
 					</span>
 					<Icon name="chevron" size={18} />
 				</a>
+				{#if piece.gaps.includes('recording')}
+					<!-- For pieces nobody ever recorded: say so once, and the list stops asking. -->
+					<form method="POST" action="?/noRecording&filter={data.filter}" use:enhance={saving.submit()}>
+						<input type="hidden" name="id" value={piece.id} />
+						<button class="btn ghost small" disabled={saving.busy} title={t.details.noRecordingHint(piece.title)} aria-label={t.details.noRecordingHint(piece.title)}>
+							{t.details.noRecording}
+						</button>
+					</form>
+				{/if}
 			</li>
 		{/each}
 	</ul>
@@ -135,11 +152,23 @@
 		overflow: hidden;
 	}
 
+	.list li {
+		display: flex;
+		align-items: center;
+	}
+
 	.list li + li {
 		border-top: 1px solid var(--border);
 	}
 
+	.list form {
+		flex: none;
+		padding-right: var(--space-3);
+	}
+
 	.list a {
+		flex: 1;
+		min-width: 0;
 		display: flex;
 		align-items: center;
 		gap: var(--space-3);
@@ -172,5 +201,21 @@
 		color: var(--warn);
 		font-size: 0.75rem;
 		font-weight: 600;
+	}
+
+	/* On a phone the button goes under the piece, so the title keeps the width. */
+	@media (max-width: 600px) {
+		.list li {
+			flex-wrap: wrap;
+		}
+
+		.list a {
+			flex-basis: 100%;
+		}
+
+		.list form {
+			margin-left: auto;
+			padding: 0 var(--space-4) var(--space-3);
+		}
 	}
 </style>

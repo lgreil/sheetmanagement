@@ -1,13 +1,17 @@
 import { normalizeEmail, type User } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
-import { markedStatus, mayDeleteWish, newId, parseVotes, readWishStatus, toggleVote, type ReportKind, type ReportStatus, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
+import { markedStatus, mayDeleteWish, newId, parseVotes, readWishKind, readWishStatus, toggleVote, type ReportKind, type ReportStatus, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { withoutStatusWord, withStatusWord, type MarkableStatus } from '#lib/music/status-word.ts';
+import { cleanLink } from '#lib/links.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
+import { findPieceRow } from '#lib/repertoire/piece-edit.ts';
+import type { SheetPiece } from '#lib/repertoire/sheet.ts';
 import { runInBackground } from './env.ts';
 import { createComment, createGoogleDoc, getFile, renameFile, replyToComment } from './google/drive.ts';
 import { driveWriteEnabled, getArchiveIndex, getGoogle } from './services.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord, updateRecords, withSheetLock } from './sheet-writes.ts';
+import { announceAnswer, announceWish } from './wish-notices.ts';
 
 /**
  * Writes for problem reports and wishes. Like the programme editor, every change starts
@@ -49,9 +53,15 @@ export type DriveResult = boolean | null;
 
 export async function addReport(
 	user: User,
-	report: { pieceId: string; pieceName: string; part: string; fileId: string; kind: ReportKind; comment: string }
+	report: { pieceId: string; pieceName: string; part: string; fileId: string; kind: ReportKind; comment: string; link?: string }
 ): Promise<DriveResult> {
 	const table = await readTab('reports');
+	let { comment, link = '' } = report;
+	// An older tab without "Vorschlag" keeps the suggested link in the comment.
+	if (link && table.missing.includes('link')) {
+		comment = [comment, link].filter(Boolean).join(' ');
+		link = '';
+	}
 	let driveComment = '';
 	let drive: DriveResult = null;
 	if (driveWriteEnabled() && report.fileId) {
@@ -69,7 +79,8 @@ export async function addReport(
 			part: report.part,
 			fileId: report.fileId,
 			kind: t.feedbackValues.reportKind[report.kind],
-			comment: report.comment,
+			comment,
+			link,
 			status: t.feedbackValues.reportStatus.open,
 			reportedBy: who(user),
 			reportedAt: today(),
@@ -140,6 +151,31 @@ export async function markReportedFile(id: string, status: MarkableStatus): Prom
 	return true;
 }
 
+/** Writes a piece's Hörbeispiel ("keins" for none) into its row in "Stücke"; false when the row is gone. */
+export async function setRecording(piece: SheetPiece, value: string, { refresh = true } = {}): Promise<boolean> {
+	const table = await readTab('pieces');
+	const row = findPieceRow(table, piece);
+	if (!row) return false;
+	await updateRecord('pieces', table, row.row, { recording: value });
+	if (refresh) await refreshAfterWrite();
+	return true;
+}
+
+/**
+ * "Vorschlag übernehmen" on a reported Hörbeispiel: the suggested link becomes the piece's
+ * recording and the report is closed. Undefined when the report or the piece's row is gone.
+ */
+export async function useSuggestedRecording(id: string, piece: SheetPiece): Promise<boolean | undefined> {
+	const table = await readTab('reports');
+	const row = table.rows.find((r) => r.values.id === id);
+	const link = cleanLink(row?.values.link ?? '');
+	if (!row || !link) return undefined;
+	if (!(await setRecording(piece, link, { refresh: false }))) return undefined;
+	await updateRecord('reports', table, row.row, { status: t.feedbackValues.reportStatus.done, note: t.reports.suggestionUsed });
+	await refreshAfterWrite();
+	return true;
+}
+
 /**
  * After someone with the right confirmed a reported missing part: creates the convention's
  * placeholder (a Google Doc "<Kurztitel> - <Stimme> - FEHLT") in the piece folder and
@@ -186,6 +222,7 @@ export async function addWish(
 		}
 	]);
 	await refreshAfterWrite();
+	announceWish(wish, user);
 }
 
 /**
@@ -235,12 +272,18 @@ export async function voteOnWish(id: string, user: User): Promise<boolean> {
 	return found;
 }
 
-export async function setWishStatus(id: string, status: WishStatus, answer: string): Promise<boolean> {
+/** Sets a wish's status and answer; whoever follows the wish hears of a change (see wish-notices). */
+export async function setWishStatus(id: string, status: WishStatus, answer: string, by: string): Promise<boolean> {
 	const table = await readTab('wishes');
 	const row = table.rows.find((r) => r.values.id === id);
 	if (!row) return false;
-	await updateRecord('wishes', table, row.row, { status: t.feedbackValues.wishStatus[status], answer });
+	const label = t.feedbackValues.wishStatus[status];
+	await updateRecord('wishes', table, row.row, { status: label, answer });
 	await refreshAfterWrite();
+	const { values: v } = row;
+	if (readWishStatus(v.status) !== status || v.answer.trim() !== answer.trim()) {
+		announceAnswer({ id, kind: readWishKind(v.kind), title: v.title, submittedBy: v.submittedBy, votes: parseVotes(v.votes) }, label, answer, by);
+	}
 	return true;
 }
 

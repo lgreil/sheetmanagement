@@ -53,6 +53,7 @@ export const reportedStatus = (report: Pick<Report, 'kind' | 'marked'>): GapStat
 /**
  * Open reports as gaps, for parts whose file name doesn't mark a gap yet. A part that
  * already is a gap keeps its own status, and several reports on one file count once.
+ * A wrong Hörbeispiel is no gap in the parts.
  */
 export function reportedGaps(
 	gapFileIds: Iterable<string>,
@@ -61,6 +62,7 @@ export function reportedGaps(
 	const seen = new Set(gapFileIds);
 	const result: ReportedGap[] = [];
 	for (const report of reports) {
+		if (report.kind === 'recording') continue;
 		if (report.fileId) {
 			if (seen.has(report.fileId)) continue;
 			seen.add(report.fileId);

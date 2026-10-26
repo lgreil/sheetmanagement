@@ -25,7 +25,7 @@ export interface DetailPiece {
 	/** As shown: from the sheet, else read from the folder name. */
 	composer?: string;
 	catalogue?: string;
-	sheet?: { genre?: string; recording?: string };
+	sheet?: { genre?: string; recording?: string; noRecording?: boolean };
 }
 
 /**
@@ -37,7 +37,8 @@ export function gapsOf(piece: DetailPiece, filter: DetailFilter): DetailGap[] {
 	const missing: Record<DetailGap, boolean> = {
 		composer: !piece.composer,
 		genre: !piece.sheet.genre,
-		recording: !piece.sheet.recording,
+		// "keins" in the sheet: known to have none, nothing to look for.
+		recording: !piece.sheet.recording && !piece.sheet.noRecording,
 		catalogue: !!piece.composer && !piece.catalogue
 	};
 	return LOOKS_FOR[filter].filter((gap) => missing[gap]);

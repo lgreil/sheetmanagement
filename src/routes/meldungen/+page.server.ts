@@ -7,7 +7,7 @@ import { requireRight } from '#lib/server/auth/index.ts';
 import { placeholderName } from '#lib/music/naming.ts';
 import { fileWords } from '#lib/music/instrument-label.ts';
 import { folderUrl } from '#lib/server/catalog.ts';
-import { confirmMissingPart, formText, markReportedFile, setReportStatus } from '#lib/server/feedback.ts';
+import { confirmMissingPart, formText, markReportedFile, setReportStatus, useSuggestedRecording } from '#lib/server/feedback.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { getFeedback } from '#lib/server/repertoire.ts';
 import { driveWriteEnabled } from '#lib/server/services.ts';
@@ -31,7 +31,9 @@ export const load: PageServerLoad = async ({ locals }) => {
 		inDrive: !!driveComment,
 		suggested: SUGGESTED_STATUS[report.kind],
 		// A part reported as missing, not yet in Drive: the placeholder it would get.
-		placeholder: report.kind === 'missing' && report.part && !report.fileId ? placeholderFor(library, report.pieceId, report.part) : undefined
+		placeholder: report.kind === 'missing' && report.part && !report.fileId ? placeholderFor(library, report.pieceId, report.part) : undefined,
+		// "Hörbeispiel falsch": the one there now, next to the suggestion.
+		recording: report.kind === 'recording' ? recordingOf(library, report.pieceId) : undefined
 	}));
 	return {
 		state: 'ready' as const,
@@ -41,6 +43,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 		done: shown.filter((report) => report.status === 'done')
 	};
 };
+
+/** A piece's Hörbeispiel as the sheet has it: the link, "keins", or empty; null without a row. */
+function recordingOf(library: Awaited<ReturnType<typeof getLibrary>>, pieceId: string): string | null {
+	const sheet = library.piecesById.get(pieceId)?.sheet;
+	if (!sheet) return null;
+	return sheet.recording ?? (sheet.noRecording ? t.sheetValues.noRecording : '');
+}
 
 /** Name and folder of the placeholder for a missing part, per the naming convention. */
 function placeholderFor(library: Awaited<ReturnType<typeof getLibrary>>, pieceId: string, part: string) {
@@ -98,6 +107,17 @@ export const actions: Actions = {
 			console.error('Confirming a missing part failed:', cause);
 			return fail(503, { message: t.reports.failed });
 		}
+	},
+
+	/** The suggested Hörbeispiel becomes the piece's, and the report is done. */
+	useSuggestion: async ({ locals, request }) => {
+		requireRight(locals, RIGHT);
+		const data = await request.formData();
+		const id = formText(data, 'id', 40);
+		const report = (await getFeedback())?.reports.find((r) => r.id === id);
+		const sheet = report && (await getLibrary()).piecesById.get(report.pieceId)?.sheet;
+		if (!report || report.kind !== 'recording' || !report.link || !sheet) return fail(404, { message: t.reports.gone });
+		return run(() => useSuggestedRecording(id, sheet));
 	},
 
 	mark: async ({ locals, request }) => {

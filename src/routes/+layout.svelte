@@ -16,6 +16,7 @@
 	import WorkspaceTabs from '#lib/components/WorkspaceTabs.svelte';
 	import { currentItem, navGroups, primaryNav, workspaceOf } from '#lib/nav.ts';
 	import { orchestraLinks, safeLink } from '#lib/links.ts';
+	import { versionLabel } from '#lib/version.ts';
 
 	let { data, children } = $props();
 
@@ -180,7 +181,7 @@
 			</div>
 			{#if sourceUrl}
 				<p class="source">
-					{t.nav.appName} v{__APP_VERSION__} · <a href={sourceUrl} target="_blank" rel="noopener noreferrer">{t.footer.source}</a>
+					{t.nav.appName} {versionLabel()} · <a href={sourceUrl} target="_blank" rel="noopener noreferrer">{t.footer.source}</a>
 				</p>
 			{/if}
 			<!-- The instrument drawings are CC BY: credited where everyone sees them. -->

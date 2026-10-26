@@ -129,6 +129,6 @@ export const actions: Actions = {
 		const data = await request.formData();
 		const status = formText(data, 'status') as WishStatus;
 		if (!WISH_STATUSES.includes(status)) return fail(400, { message: t.wishes.failed });
-		return save(() => setWishStatus(formText(data, 'id', 40), status, formText(data, 'answer', 1000)));
+		return save(() => setWishStatus(formText(data, 'id', 40), status, formText(data, 'answer', 1000), locals.access.user?.email ?? ''));
 	}
 };

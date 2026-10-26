@@ -38,7 +38,7 @@ test('Meine Noten for a member', async ({ page }) => {
 test('workspace tabs count open work (#139)', async ({ page }) => {
 	await open(page, '/meldungen');
 	const tabs = page.getByRole('navigation', { name: 'Noten pflegen' });
-	await expect(tabs.getByRole('link', { name: /Meldungen\s*1 offen/ })).toBeVisible();
+	await expect(tabs.getByRole('link', { name: /Meldungen\s*2 offen/ })).toBeVisible();
 	await expectAccessible(page);
 });
 

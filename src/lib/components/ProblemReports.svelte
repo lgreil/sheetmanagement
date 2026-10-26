@@ -20,6 +20,8 @@
 		status,
 		canClose,
 		parts,
+		kinds = REPORT_KINDS,
+		recording,
 		instruments = [],
 		common = [],
 		present = [],
@@ -32,6 +34,10 @@
 		status: 'ready' | 'sign-in' | 'not-set-up' | 'no-parts';
 		canClose: boolean;
 		parts: { id: string; label: string }[];
+		/** What can be reported; a piece without parts has only its Hörbeispiel. */
+		kinds?: ReportKind[];
+		/** The Hörbeispiel now, shown with "Hörbeispiel falsch". */
+		recording?: string;
 		/** For "Stimme fehlt": every instrument a part can be for … */
 		instruments?: string[];
 		/** … of which the usual ones are offered first, the rest behind "Mehr" … */
@@ -46,7 +52,8 @@
 	} = $props();
 
 	const saving = new FormState();
-	let kind = $state<ReportKind>('missing');
+	let picked = $state<ReportKind>('missing');
+	const kind = $derived(kinds.includes(picked) ? picked : kinds[0]);
 	// A part that's missing has no file to pick: name the instrument instead.
 	const missing = $derived(kind === 'missing' && !fileId);
 	const absent = $derived(instruments.filter((name) => !present.includes(name)));
@@ -66,7 +73,7 @@
 				<ul>
 					{#each reports as report (report.id)}
 						<li>
-							<strong>{report.part || t.reports.wholePiece}</strong>
+							<strong>{report.kind === 'recording' ? t.reports.recording : report.part || t.reports.wholePiece}</strong>
 							– {t.feedbackValues.reportKind[report.kind]}{report.comment ? `: ${report.comment}` : ''}
 							<span class="muted">
 								{report.reportedBy ? t.reports.by(report.reportedBy, report.reportedAt) : report.reportedAt}
@@ -101,11 +108,21 @@
 					{#if result?.reportError}<p class="msg error" role="alert">{result.reportError}</p>{/if}
 					<label class="field">
 						{t.reports.kind}
-						<select name="kind" required bind:value={kind}>
-							{#each REPORT_KINDS as option (option)}<option value={option}>{t.feedbackValues.reportKind[option]}</option>{/each}
+						<select name="kind" required value={kind} onchange={(event) => (picked = event.currentTarget.value as ReportKind)}>
+							{#each kinds as option (option)}<option value={option}>{t.feedbackValues.reportKind[option]}</option>{/each}
 						</select>
 					</label>
-					{#if missing && instruments.length}
+					{#if kind === 'recording'}
+						<!-- Not about a part: what's there now, and room for a better link. -->
+						<p class="muted wide">
+							{t.reports.recording}:
+							{#if recording?.startsWith('http')}<a href={recording} target="_blank" rel="noopener noreferrer nofollow">{recording}</a>{:else}{recording ?? t.reports.recordingNone}{/if}
+						</p>
+						<label class="field wide">
+							{t.reports.suggestion}
+							<input name="link" type="text" inputmode="url" maxlength="500" placeholder={t.reports.suggestionHint} autocomplete="off" />
+						</label>
+					{:else if missing && instruments.length}
 						<label class="field">
 							{t.reports.missingPart}
 							<InstrumentSelect
@@ -216,6 +233,11 @@
 	.wide,
 	.actions {
 		grid-column: 1 / -1;
+	}
+
+	p.wide {
+		margin: 0;
+		overflow-wrap: anywhere;
 	}
 
 	.form h3 {

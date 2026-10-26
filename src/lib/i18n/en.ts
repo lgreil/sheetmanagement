@@ -947,7 +947,10 @@ export const en: Texts = {
 		saveNext: 'Save & next',
 		backToList: 'Back to the list',
 		allDone: 'Done: nothing is open in this list any more.',
-		none: 'Nothing missing here.'
+		none: 'Nothing missing here.',
+		noRecording: 'There is none',
+		noRecordingHint: (title: string) => `“${title}” has no recording: stop asking`,
+		noRecordingSaved: (title: string) => `“${title}”: marked as without a recording.`
 	},
 	suggest: {
 		title: 'Suggestions',
@@ -1482,6 +1485,9 @@ export const en: Texts = {
 		title: (piece: string) => `Edit: ${piece}`,
 		lead: 'What is entered here applies instead of the folder name.',
 		recordingHint: 'Link to a recording, e.g. YouTube',
+		/** Writes the sheet's word for "no recording" into the field. */
+		noRecording: 'There is none',
+		noRecordingHint: "For pieces without a recording: “Complete details” won't ask for one any more.",
 		reviewedHint: 'e.g. 2026-10-18',
 		today: 'Today',
 		save: 'Save',
@@ -1492,7 +1498,7 @@ export const en: Texts = {
 		problems: {
 			'title-missing': 'Please give a title.',
 			'title-taken': 'Another piece has this title already. Programmes find pieces by title, so it must be unique.',
-			'bad-link': 'The recording must be a link starting with http:// or https://.',
+			'bad-link': 'The recording must be a link starting with http:// or https://, or “none”.',
 			'bad-duration': "The duration can't be read. Possible are e.g. 7:30, 7 min. or 1:02:00."
 		},
 		durationHint: 'e.g. 7:30',
@@ -1633,6 +1639,17 @@ export const en: Texts = {
 		storeMemoryHint: 'Add the DB binding in wrangler.toml, see the README.',
 		storeDemo: 'Demo: everything in memory only.',
 		storeFailed: (message: string) => `D1 doesn't answer: ${message}`,
+		/** The deployed version against GitHub (#206). */
+		version: 'Version',
+		versionRunning: (label: string) => `Running: ${label}`,
+		versionCurrent: 'Up to date',
+		versionUpToDate: 'Matches GitHub (main).',
+		versionAhead: (n: number) => (n === 1 ? '1 change that is not on main.' : `${n} changes that are not on main.`),
+		versionUpdate: 'Update available',
+		versionBehind: (n: number) => (n === 1 ? 'There is 1 newer change on GitHub.' : `There are ${n} newer changes on GitHub.`),
+		versionBehindHint: 'Deploy again: with the deploy workflow or “pnpm run deploy”.',
+		versionUnchecked: "GitHub couldn't be reached; whether there's anything newer isn't checked.",
+		versionNoCommit: 'Built without git: which state this is, is unknown.',
 		/** Notifications (#157). */
 		push: 'Notifications (Web Push)',
 		pushOn: (devices: number) => (devices === 1 ? 'Set up, 1 device signed up' : `Set up, ${devices} devices signed up`),
@@ -1690,7 +1707,7 @@ export const en: Texts = {
 	/** Allowing notifications on /profil (#157). */
 	push: {
 		title: 'Notifications',
-		lead: "Reminds you on this device of rehearsals and concerts you haven't answered yet. If you look after rented music or run the app, you also hear about returns and outages.",
+		lead: "Reminds you on this device of rehearsals and concerts you haven't answered yet, and tells you when your wishes get an answer. If you look after rented music or run the app, you also hear about returns, new wishes and outages.",
 		enable: 'Allow notifications',
 		disable: 'Turn off',
 		test: 'Send a test',
@@ -1837,6 +1854,8 @@ export const en: Texts = {
 				reportedAt: 'Reported on',
 				marked: 'In file name',
 				driveComment: 'Drive comment ID',
+				/** A better recording, with "Wrong recording". */
+				link: 'Suggestion',
 				id: 'Report ID'
 			}
 		},
@@ -1978,12 +1997,19 @@ export const en: Texts = {
 		}
 	},
 	/** Values of the dropdown columns in "Reports" and "Wishes", as they appear in the sheet. */
+	/** Words the app writes into cells and reads back. */
+	sheetValues: {
+		/** In "Recording": there is none, so "Complete details" stops asking. */
+		noRecording: 'none'
+	},
 	feedbackValues: {
 		reportKind: {
 			missing: 'Part missing',
 			scan: 'Bad scan',
 			pages: 'Pages missing',
 			wrong: 'Wrong part',
+			/** The piece's recording is wrong or missing; the report can carry a better link. */
+			recording: 'Wrong recording',
 			other: 'Other'
 		},
 		reportStatus: { open: 'open', done: 'done' },
@@ -2040,7 +2066,16 @@ export const en: Texts = {
 		marked: (word: string) => `In the file name: ${word}`,
 		markHint: 'Adds the status word to the file name in Drive. “Done” removes it again.',
 		noFile: "This report isn't about a single file.",
-		driveFailed: 'Saved, but nothing could be changed in Drive. Is the service account an editor of the music folder?'
+		driveFailed: 'Saved, but nothing could be changed in Drive. Is the service account an editor of the music folder?',
+		recording: 'Recording',
+		recordingNone: 'none entered',
+		suggestion: 'A better recording (link, optional)',
+		suggestionHint: 'e.g. a YouTube link',
+		suggested: 'Suggestion',
+		useSuggestion: 'Use the suggestion',
+		useSuggestionHint: "Enters the link as the piece's recording and closes the report.",
+		suggestionUsed: 'Taken over as the recording.',
+		reportRecording: 'Report the recording'
 	},
 	loans: {
 		title: 'Rentals',
@@ -2119,7 +2154,11 @@ export const en: Texts = {
 		forConcert: (concert: string) => `for ${concert}`,
 		delete: 'Delete wish',
 		confirmDelete: (title: string) => `Really delete “${title}”? This can't be undone.`,
-		notYours: 'You can only delete your own wishes while they are still open.'
+		notYours: 'You can only delete your own wishes while they are still open.',
+		/** Notifications: a new wish for admins, an answer for whoever wished it and their +1s. */
+		pushNew: { piece: 'New piece request', feature: 'New idea for the app' } as Record<string, string>,
+		pushAnswer: (title: string) => `Answer to “${title}”`,
+		pushStatus: (status: string, answer: string) => (answer ? `${status}: ${answer}` : `Now ${status}.`)
 	},
 	legal,
 	common: {

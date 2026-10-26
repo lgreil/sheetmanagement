@@ -1,6 +1,6 @@
 import { normalizeEmail } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
-import { safeLink } from '#lib/links.ts';
+import { cleanLink, safeLink } from '#lib/links.ts';
 import type { MarkableStatus } from '#lib/music/status-word.ts';
 import { t } from '#lib/i18n/index.ts';
 import { LAYOUT, normalize, readTable, type ColumnKey, type Table } from '#lib/repertoire/sheet.ts';
@@ -48,6 +48,8 @@ function fromLabel<K extends string>(labels: Record<K, string>, text: string, fa
 
 /** A wish's status cell ("offen", "geplant" …) as its key. */
 export const readWishStatus = (text: string): WishStatus => fromLabel(VALUES.wishStatus, text, 'open');
+/** A wish's kind cell ("Stück", "Funktion") as its key. */
+export const readWishKind = (text: string): WishKind => fromLabel(VALUES.wishKind, text, 'piece');
 
 export interface Report {
 	row: number;
@@ -68,6 +70,8 @@ export interface Report {
 	marked?: MarkableStatus;
 	/** The comment the app added to the file in Drive. */
 	driveComment: string;
+	/** A better Hörbeispiel, with "Hörbeispiel falsch"; only http(s) links. */
+	link?: string;
 }
 
 export interface Wish {
@@ -111,6 +115,8 @@ export const SUGGESTED_STATUS: Record<ReportKind, MarkableStatus> = {
 	scan: 'incomplete',
 	pages: 'incomplete',
 	wrong: 'incomplete',
+	// Not about a file: there's no name to mark.
+	recording: 'incomplete',
 	other: 'incomplete'
 };
 
@@ -148,7 +154,8 @@ export function buildFeedback(values: FeedbackValues): Feedback {
 			reportedBy: v.reportedBy,
 			reportedAt: v.reportedAt,
 			marked: markedStatus(v.marked),
-			driveComment: v.driveComment
+			driveComment: v.driveComment,
+			link: cleanLink(v.link ?? '')
 		}));
 
 	const wishes: Wish[] = (tables.wishes?.rows ?? [])
@@ -156,7 +163,7 @@ export function buildFeedback(values: FeedbackValues): Feedback {
 		.map(({ row, values: v }) => ({
 			row,
 			id: v.id,
-			kind: fromLabel(VALUES.wishKind, v.kind, 'piece'),
+			kind: readWishKind(v.kind),
 			title: v.title,
 			composer: v.composer,
 			link: safeLink(v.link),
@@ -184,6 +191,16 @@ export function sortWishes(wishes: Wish[]): Wish[] {
 			b.submittedAt.localeCompare(a.submittedAt) ||
 			b.row - a.row
 	);
+}
+
+/**
+ * Who hears about an answer to a wish: whoever wished it and everyone who gave a +1, each once,
+ * but not the person answering. Anonymous wishes keep no name, so only their +1s hear of it.
+ */
+export function wishFollowers(wish: Pick<Wish, 'submittedBy' | 'votes'>, answeredBy: string): string[] {
+	const me = normalizeEmail(answeredBy);
+	const submitter = submitterEmail(wish.submittedBy);
+	return [...new Set([...(submitter ? [submitter] : []), ...wish.votes])].filter((email) => email !== me);
 }
 
 /** Short random id for a new row, so status changes find it even after rows move. */

@@ -3,6 +3,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 import { loadEnv } from 'vite';
 import { defineConfig } from 'vitest/config';
 import pkg from './package.json' with { type: 'json' };
+import { commit } from './scripts/commit.mjs';
 
 // `pnpm dev:demo` (vite --mode demo) runs the demo: [env.demo] in wrangler.toml, with local
 // settings from .dev.vars.demo instead of .dev.vars.
@@ -25,7 +26,11 @@ export default defineConfig(({ mode }) => ({
 		})
 	],
 	// Shown next to the source link and on /status.
-	define: { __APP_VERSION__: JSON.stringify(pkg.version), __LANGUAGE__: JSON.stringify(language(mode)) },
+	define: {
+		__APP_VERSION__: JSON.stringify(pkg.version),
+		__APP_COMMIT__: JSON.stringify(commit()),
+		__LANGUAGE__: JSON.stringify(language(mode))
+	},
 	test: {
 		include: ['src/**/*.test.ts']
 	}

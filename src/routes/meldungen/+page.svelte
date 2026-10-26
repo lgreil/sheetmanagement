@@ -31,10 +31,27 @@
 					<div class="main">
 						<a class="piece" href="/stuecke/{encodeURIComponent(report.pieceId)}">{report.pieceName || t.reports.toPiece}</a>
 						<span>
-							<strong>{report.part || t.reports.wholePiece}</strong>
+							<strong>{report.kind === 'recording' ? t.reports.recording : report.part || t.reports.wholePiece}</strong>
 							– {t.feedbackValues.reportKind[report.kind]}
 						</span>
 						{#if report.comment}<span class="comment">{t.common.quote(report.comment)}</span>{/if}
+						{#if report.kind === 'recording'}
+							<span class="recording muted">
+								{t.reports.recording}:
+								{#if report.recording?.startsWith('http')}<a href={report.recording} target="_blank" rel="noopener noreferrer nofollow">{report.recording}</a>{:else}{report.recording || t.reports.recordingNone}{/if}
+							</span>
+							{#if report.link}
+								<span class="recording">
+									{t.reports.suggested}: <a href={report.link} target="_blank" rel="noopener noreferrer nofollow">{report.link}</a>
+								</span>
+								{#if !done && report.recording !== null && report.recording !== report.link}
+									<form method="POST" action="?/useSuggestion" use:enhance={submit} title={t.reports.useSuggestionHint}>
+										<input type="hidden" name="id" value={report.id} />
+										<button class="btn small" disabled={saving.busy}><Icon name="headphones" size={14} />{t.reports.useSuggestion}</button>
+									</form>
+								{/if}
+							{/if}
+						{/if}
 						<span class="muted">{t.reports.by(report.reportedBy, report.reportedAt)}</span>
 						{#if done && report.note}<span class="muted">{t.sheet.reports.columns.note}: {report.note}</span>{/if}
 						{#if report.inDrive || report.marked}
@@ -131,6 +148,14 @@
 
 	.small {
 		font-size: 0.8125rem;
+	}
+
+	.recording {
+		overflow-wrap: anywhere;
+	}
+
+	.recording a {
+		color: var(--accent);
 	}
 
 
