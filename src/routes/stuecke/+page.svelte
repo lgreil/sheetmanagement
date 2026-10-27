@@ -411,16 +411,17 @@
 	.tag {
 		padding: 0 var(--space-2);
 		border-radius: var(--radius-pill);
-		background: var(--accent-soft);
-		color: var(--accent);
+		background: var(--surface-2);
+		color: var(--text-muted);
 		font-size: var(--text-2xs);
 		font-weight: 600;
+		white-space: nowrap;
 	}
 
-	/* Pieces in a current programme stand out. */
+	/* Pieces in a current programme stand out, softly. */
 	.tag.program {
-		background: var(--accent);
-		color: var(--accent-contrast);
+		background: var(--accent-soft);
+		color: var(--accent);
 	}
 
 	.side {
@@ -434,6 +435,7 @@
 
 	.status {
 		padding: 1px var(--space-2);
+		white-space: nowrap;
 		border-radius: var(--radius-pill);
 		font-size: var(--text-2xs);
 		font-weight: 600;

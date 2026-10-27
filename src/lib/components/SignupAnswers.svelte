@@ -135,10 +135,16 @@
 
 	/* On phones the mark sits above the words, so "Ich kann nicht" keeps its part and its icon. */
 	@media (max-width: 480px) {
+		/* "Ich kann nicht" is the longest: a little more room keeps it on one line. */
+		.answers {
+			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.25fr);
+		}
+
 		.answer {
 			flex-direction: column;
 			gap: 4px;
 			min-height: 64px;
+			padding-inline: var(--space-1);
 			font-size: var(--text-sm);
 		}
 	}

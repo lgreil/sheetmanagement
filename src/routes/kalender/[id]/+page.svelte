@@ -100,14 +100,18 @@
 		</span>
 	{/if}
 	<div class="head-text">
-		<p class="eyebrow">
-			{data.kind === 'event' ? t.concerts.types[data.event.type] : t.concert.archive}
-			{#if data.kind === 'event' && data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
-			{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
-		</p>
 		<h1>{titleStart}{#if titleEnd}<span class="keep">{titleEnd}</span>{/if}</h1>
+		<!-- The title leads; the type is said again only when the title doesn't say it. -->
 		{#if data.kind === 'event'}
-			<p class="when">{data.event.date.long} · {data.event.date.time || t.concerts.allDay}</p>
+			{@const type = t.concerts.types[data.event.type]}
+			<p class="when">
+				{#if !title.toLowerCase().includes(type.toLowerCase())}<span class="type">{type}</span>{' · '}{/if}
+				{data.event.date.long} · {data.event.date.time || t.concerts.allDay}
+				{#if !data.event.past}{' · '}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
+				{#if data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
+			</p>
+		{:else}
+			<p class="when"><span class="type">{t.concert.archive}</span></p>
 		{/if}
 	</div>
 	<div class="head-actions">
@@ -583,40 +587,32 @@
 		}
 	}
 
-	.eyebrow {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-2);
-		color: var(--text-muted);
-		font-size: var(--text-xs);
-		font-weight: 650;
-		letter-spacing: 0.07em;
-		text-transform: uppercase;
+	.when .type {
+		font-weight: 600;
 	}
 
-	.head.konzert .eyebrow {
+	.head.konzert .when .type {
 		color: var(--accent);
 	}
 
-	.head.generalprobe .eyebrow {
+	.head.generalprobe .when .type {
 		color: var(--warn);
 	}
 
 	.tentative {
-		padding: 0 6px;
-		border-radius: var(--radius-xs);
+		display: inline-block;
+		margin-left: var(--space-2);
+		padding: 0 8px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
-		letter-spacing: 0;
-		text-transform: none;
+		font-size: var(--text-xs);
+		font-weight: 600;
 	}
 
 	.relative {
-		color: var(--text-muted);
-		font-weight: 500;
-		letter-spacing: 0;
-		text-transform: none;
+		color: var(--text);
+		font-weight: 600;
 	}
 
 	.views {

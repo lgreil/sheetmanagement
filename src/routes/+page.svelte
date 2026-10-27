@@ -8,6 +8,7 @@
 	import type { ShownEvent } from '#lib/events/schedule.ts';
 	import { splitTrailingEmoji } from '#lib/events/format.ts';
 	import { instrumentLabel } from '#lib/music/instrument-label.ts';
+	import { tour } from '#lib/tour/state.svelte.ts';
 
 	let { data } = $props();
 
@@ -35,7 +36,11 @@
 			data.nextRehearsal && {
 				kind: 'probe' as const,
 				event: data.nextRehearsal,
-				note: data.rehearsalFor ? t.concerts.forConcert(data.rehearsalFor) : undefined,
+				// "für Herbstkonzert" only when the title doesn't already say it.
+				note:
+					data.rehearsalFor && !data.nextRehearsal.displayTitle.toLowerCase().includes(data.rehearsalFor.toLowerCase())
+						? t.concerts.forConcert(data.rehearsalFor)
+						: undefined,
 				piecesLabel: t.rehearsalPlan.title,
 				pieces: data.rehearsing,
 				partsUrl: data.rehearsalParts,
@@ -70,6 +75,8 @@
 	// not to whatever is on screen now.
 	let nextCard = $state<HTMLElement>();
 	let cardInView = $state(true);
+	// The tour's card sits where the dock is: while it's on screen, the dock steps aside.
+	const dockShown = $derived(cardInView && !tour.showing);
 	$effect(() => {
 		if (!nextCard) return;
 		const observer = new IntersectionObserver(([entry]) => (cardInView = entry.isIntersecting));
@@ -78,7 +85,7 @@
 	});
 	$effect(() => {
 		const root = document.documentElement;
-		root.style.setProperty('--dock-height', `${cardInView ? dockHeight : 0}px`);
+		root.style.setProperty('--dock-height', `${dockShown ? dockHeight : 0}px`);
 		return () => root.style.removeProperty('--dock-height');
 	});
 
@@ -194,7 +201,7 @@
 					<!-- Read at the top, act at the bottom: on phones this sits above the tab bar. -->
 					<!-- Answered, the whole dock wears the answer's colour; "ändern" brings the buttons back. -->
 					{@const settled = changing.has(first.event.id) ? undefined : answerOf(first.event)}
-					<div class="dock {settled ?? ''}" class:settled={!!settled} class:away={!cardInView} bind:clientHeight={dockHeight}>
+					<div class="dock {settled ?? ''}" class:settled={!!settled} class:away={!dockShown} bind:clientHeight={dockHeight}>
 						{#if data.answers}{@render answers(first.event, t.home.areYouIn(dayName(first.event)))}{/if}
 						{#if first.partsUrl}
 							<a class="btn parts" href={first.partsUrl}><Icon name="parts" size={18} />{partsLabel}</a>

@@ -21,6 +21,10 @@
 
 	const ANSWER_ICONS = { yes: 'check', maybe: 'minus', no: 'x', open: 'bell' } as const;
 	const answered = $derived(answer === undefined || event.past ? null : (answer ?? 'open'));
+	// The title leads; the type and the concert are said again only when the title doesn't say them.
+	const typeLabel = $derived(t.concerts.types[event.type]);
+	const saysType = $derived(event.displayTitle.toLowerCase().includes(typeLabel.toLowerCase()));
+	const saysConcert = $derived(!!concertTitle && event.displayTitle.toLowerCase().includes(concertTitle.toLowerCase()));
 </script>
 
 <a class="row {event.type}" class:past={event.past && showRelative} href="/kalender/{encodeURIComponent(event.id)}">
@@ -30,22 +34,26 @@
 		<span class="month">{event.date.month}</span>
 	</span>
 	<span class="body">
-		<span class="top">
-			<span class="type">{t.concerts.types[event.type]}</span>
-			{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
-			{#if showRelative && !event.past}<span class="relative">{t.concerts.relative(event.daysUntil)}</span>{/if}
+		<span class="title">
+			{event.displayTitle}
 			{#if badge}<span class="badge">{badge}</span>{/if}
 		</span>
-		<span class="title">{event.displayTitle}</span>
 		<span class="meta">
 			<span class="sr">{event.date.long}</span>
+			{#if !saysType}<span class="type">{typeLabel}</span>{' · '}{/if}
+			{#if showRelative && !event.past}<span class="relative">{t.concerts.relative(event.daysUntil)}</span>{' · '}{/if}
 			{event.date.time || t.concerts.allDay}
 			<!-- The venue's name; the full address is on the event's page. -->
-			{#if event.location}· {event.location.split(',')[0].trim()}{/if}
-			{#if concertTitle && event.type !== 'konzert'}· {t.concerts.forConcert(concertTitle)}{/if}
+			{#if event.location}{' · '}{event.location.split(',')[0].trim()}{/if}
+			{#if concertTitle && event.type !== 'konzert' && !saysConcert}{' · '}{t.concerts.forConcert(concertTitle)}{/if}
 		</span>
-		{#if answered}
-			<span class="answer {answered}"><Icon name={ANSWER_ICONS[answered]} size={14} />{t.signups.status[answered]}</span>
+		{#if answered || event.tentative}
+			<span class="pills">
+				{#if answered}
+					<span class="answer {answered}"><Icon name={ANSWER_ICONS[answered]} size={14} />{t.signups.status[answered]}</span>
+				{/if}
+				{#if event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
+			</span>
 		{/if}
 	</span>
 	<span class="chevron"><Icon name="chevron" size={16} /></span>
@@ -116,34 +124,39 @@
 		min-width: 0;
 	}
 
-	.top {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: var(--space-2);
-		font-size: var(--text-2xs);
+	.type {
+		color: var(--tone);
 		font-weight: 600;
 	}
 
-	.type {
-		color: var(--tone);
-		text-transform: uppercase;
-		letter-spacing: 0.05em;
-	}
-
-	.tentative {
-		padding: 0 6px;
-		border-radius: var(--radius-xs);
-		background: color-mix(in oklab, var(--warn) 14%, transparent);
-		color: var(--warn);
+	.row:not(.konzert):not(.generalprobe) .type {
+		color: var(--text-muted);
 	}
 
 	.relative {
-		color: var(--text-muted);
+		color: var(--text);
 		font-weight: 500;
 	}
 
+	.pills {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		margin-top: 2px;
+	}
+
+	.tentative {
+		padding: 1px 8px;
+		border-radius: var(--radius-pill);
+		background: color-mix(in oklab, var(--warn) 14%, transparent);
+		color: var(--warn);
+		font-size: var(--text-xs);
+		font-weight: 600;
+	}
+
 	.badge {
+		display: inline-block;
+		margin-left: var(--space-1);
 		padding: 0 7px;
 		border-radius: var(--radius-pill);
 		background: var(--accent);
@@ -151,6 +164,7 @@
 		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.03em;
+		vertical-align: 0.15em;
 	}
 
 	.title {
@@ -180,9 +194,7 @@
 		--answer: var(--text-muted);
 		display: inline-flex;
 		align-items: center;
-		justify-self: start;
 		gap: 4px;
-		margin-top: 2px;
 		padding: 1px 8px 1px 6px;
 		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--answer) 12%, transparent);

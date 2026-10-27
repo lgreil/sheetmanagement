@@ -50,6 +50,11 @@
 	const position = $derived(step ? shown.indexOf(step) : -1);
 	const last = $derived(step ? position === shown.length - 1 : false);
 
+	$effect(() => {
+		tour.showing = !!(offering || (step && ready));
+		return () => (tour.showing = false);
+	});
+
 	// "Tour noch einmal machen" on the profile.
 	$effect(() => {
 		if (tour.requested) untrack(() => go(0, 1));
