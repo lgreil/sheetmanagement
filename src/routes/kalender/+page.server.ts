@@ -10,6 +10,7 @@ import { requireRight } from '#lib/server/auth/index.ts';
 import { pollStore, pollViewer, visiblePolls } from '#lib/server/polls.ts';
 import { addCalendarEvent, calendarRange, getSchedule } from '#lib/server/schedule.ts';
 import { calendarWriteEnabled } from '#lib/server/services.ts';
+import { myAnswers } from '#lib/server/signups.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 /** The first and last day the site shows from the calendar, in the orchestra's time zone. */
@@ -42,10 +43,13 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 	const view = cookies.get(VIEW_COOKIE) === 'kalender' ? ('calendar' as const) : ('list' as const);
 	const library = await getLibrary();
 	const schedule = library.schedule;
-	const polls = await openPolls(locals, library.today).catch((error) => {
-		console.error('Loading the date polls failed:', error);
-		return { polls: [], plans: false };
-	});
+	const [polls, answers] = await Promise.all([
+		openPolls(locals, library.today).catch((error) => {
+			console.error('Loading the date polls failed:', error);
+			return { polls: [], plans: false };
+		}),
+		myAnswers(locals)
+	]);
 
 	// Past concerts: the calendar's recent ones and the history from the sheet, newest first.
 	const past = library.concerts.filter((concert) => isPastConcert(concert, library.today)).map(concertSummary);
@@ -70,7 +74,7 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 			: null;
 
 	if (!schedule.ok) {
-		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {} as Record<string, string>, subscribeUrl: null, ...polls, adding };
+		return { error: schedule.reason, upcoming: [], events: [], today: library.today, view, past, concertTitles: {} as Record<string, string>, subscribeUrl: null, ...polls, adding, answers };
 	}
 
 	// Members see the rehearsals of their own orchestras; concerts are for everyone.
@@ -91,7 +95,9 @@ export const load: PageServerLoad = async ({ locals, cookies }) => {
 		concertTitles,
 		subscribeUrl: schedule.subscribeUrl,
 		...polls,
-		adding
+		adding,
+		// The member's own answers, so the list shows which dates still wait for one.
+		answers
 	};
 };
 

@@ -1,14 +1,26 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
+	import type { Answer } from '#lib/signups/signups.ts';
 	import Icon from './Icon.svelte';
 
 	let {
 		event,
 		concertTitle,
 		showRelative = true,
-		badge
-	}: { event: ShownEvent; concertTitle?: string; showRelative?: boolean; badge?: string } = $props();
+		badge,
+		answer
+	}: {
+		event: ShownEvent;
+		concertTitle?: string;
+		showRelative?: boolean;
+		badge?: string;
+		/** The member's answer for an upcoming date; null: not answered yet, undefined: no sign-ups. */
+		answer?: Answer | null;
+	} = $props();
+
+	const ANSWER_ICONS = { yes: 'check', maybe: 'minus', no: 'x', open: 'bell' } as const;
+	const answered = $derived(answer === undefined || event.past ? null : (answer ?? 'open'));
 </script>
 
 <a class="row {event.type}" class:past={event.past && showRelative} href="/kalender/{encodeURIComponent(event.id)}">
@@ -32,6 +44,9 @@
 			{#if event.location}· {event.location.split(',')[0].trim()}{/if}
 			{#if concertTitle && event.type !== 'konzert'}· {t.concerts.forConcert(concertTitle)}{/if}
 		</span>
+		{#if answered}
+			<span class="answer {answered}"><Icon name={ANSWER_ICONS[answered]} size={14} />{t.signups.status[answered]}</span>
+		{/if}
 	</span>
 	<span class="chevron"><Icon name="chevron" size={16} /></span>
 </a>
@@ -158,6 +173,39 @@
 		height: 1px;
 		overflow: hidden;
 		clip: rect(0 0 0 0);
+	}
+
+	/* Your answer, in its colour; a date still waiting for one stands out most. */
+	.answer {
+		--answer: var(--text-muted);
+		display: inline-flex;
+		align-items: center;
+		justify-self: start;
+		gap: 4px;
+		margin-top: 2px;
+		padding: 1px 8px 1px 6px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--answer) 12%, transparent);
+		color: var(--answer);
+		font-size: 0.8125rem;
+		font-weight: 600;
+	}
+
+	.answer.yes {
+		--answer: var(--ok);
+	}
+
+	.answer.maybe {
+		--answer: var(--warn);
+	}
+
+	.answer.no {
+		--answer: var(--danger);
+	}
+
+	.answer.open {
+		--answer: var(--accent);
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--accent) 45%, transparent);
 	}
 
 	.chevron {

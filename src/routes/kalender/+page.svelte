@@ -160,6 +160,7 @@
 							{event}
 							concertTitle={event.concertId ? data.concertTitles[event.concertId] : undefined}
 							badge={event.id === next ? t.concerts.next : undefined}
+							answer={data.answers ? (data.answers[event.id] ?? null) : undefined}
 						/>
 					</li>
 				{/each}

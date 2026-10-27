@@ -45,6 +45,13 @@ export const en: Texts = {
 		light: 'Light',
 		dark: 'Dark'
 	},
+	textSize: {
+		label: 'Text size',
+		hint: 'For this device.',
+		normal: 'Normal',
+		large: 'Large',
+		larger: 'Larger'
+	},
 	home: {
 		title: (orchestra: string) => `${orchestra} music library`,
 		hello: (name: string) => `Hello ${name}`,
@@ -907,6 +914,7 @@ export const en: Texts = {
 		answers: { yes: "I'm coming", maybe: 'Maybe', no: "I can't" } as Record<string, string>,
 		answerValues: { yes: 'Yes', maybe: 'Maybe', no: 'No' } as Record<string, string>,
 		yourAnswer: 'Your answer',
+		status: { yes: "You're coming", maybe: 'Maybe', no: "Can't come", open: 'Not answered' } as Record<string, string>,
 		instrument: 'Instrument for this date',
 		ownInstrument: (instrument: string) => (instrument ? `as on your profile (${instrument})` : 'as on your profile'),
 		comment: 'Comment (optional)',

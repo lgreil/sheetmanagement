@@ -15,10 +15,14 @@ export function showToast(message: string, ms = 6000) {
 export interface SubmitOptions {
 	/** Clear the form after a successful save, e.g. an "add" form. */
 	reset?: boolean;
+	/** For an action of another page: stay on this one instead of following it there. */
+	stay?: boolean;
 	/** Called as the form is sent, e.g. to show the choice at once while the sheet catches up. */
 	onStart?: (input: Parameters<SubmitFunction>[0]) => void;
 	/** Called after a successful save, with what the action returned. */
 	onSuccess?: (data: Record<string, unknown> | undefined) => void;
+	/** Called when the action refused, with what it returned, e.g. to say so on another page. */
+	onFailure?: (data: Record<string, unknown> | undefined) => void;
 }
 
 /**
@@ -41,8 +45,9 @@ export class FormState {
 						showToast(result.status === 503 ? t.common.saveUnavailable : t.common.saveFailed);
 						return;
 					}
-					await update({ reset: !!options.reset && result.type === 'success' });
+					await update({ reset: !!options.reset && result.type === 'success', ...(options.stay ? { navigate: false } : {}) });
 					if (result.type === 'success') options.onSuccess?.(result.data);
+					if (result.type === 'failure') options.onFailure?.(result.data);
 				} catch (error) {
 					console.error(error);
 					showToast(t.common.saveFailed);

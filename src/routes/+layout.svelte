@@ -525,7 +525,8 @@
 			place-items: center;
 			align-content: center;
 			gap: 2px;
-			font-size: 0.6875rem;
+			/* Grows a little with "Schriftgröße", but five labels still fit side by side. */
+			font-size: min(0.6875rem, 11.5px);
 			font-weight: 500;
 			color: var(--text-muted);
 			transition:

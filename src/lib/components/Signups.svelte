@@ -5,9 +5,8 @@
 	import { enhance } from '$app/forms';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
-	import { ANSWERS } from '#lib/signups/signups.ts';
-	import type { PageData } from '../../routes/kalender/[id]/$types';
-	import Icon from './Icon.svelte';
+		import type { PageData } from '../../routes/kalender/[id]/$types';
+	import SignupAnswers from './SignupAnswers.svelte';
 
 	/** "Bist du dabei?" on an upcoming event, and how well each section is covered (#94). */
 	type Ready = Extract<NonNullable<Extract<PageData, { kind: 'event' }>['signups']>, { state: 'ready' }>;
@@ -19,15 +18,9 @@
 		result?: { signupError?: string; signupSaved?: boolean } | null;
 	} = $props();
 
+	// Instrument, comment and withdrawing; the answer buttons save on their own.
 	const saving = new FormState();
-	// The tapped answer shows as chosen at once; the sheet catches up in the background.
-	let tapped = $state<string | null>(null);
-	const submit = saving.submit({
-		onStart: ({ submitter }) => (tapped = submitter?.getAttribute('name') === 'answer' ? submitter.getAttribute('value') : null)
-	});
-	const chosen = $derived((saving.busy && tapped) || signups.mine?.answer);
-
-	const ICONS = { yes: 'check', maybe: 'minus', no: 'x' } as const;
+	const submit = saving.submit();
 	const KINDS = ['yes', 'maybe', 'no', 'open'] as const;
 	const mine = $derived(signups.mine);
 	const otherSections = $derived(signups.instruments.filter((name) => !signups.ownSections.includes(name)));
@@ -36,20 +29,7 @@
 <section class="signups" id="anmeldung" aria-labelledby="signups-title">
 	<h2 class="ui-label" id="signups-title">{t.signups.question}</h2>
 	<div class="ui-card card">
-		<form class="answers" method="POST" action="?/answer" use:enhance={submit}>
-			{#each ANSWERS as answer (answer)}
-				<button
-					class="answer {answer}"
-					class:chosen={chosen === answer}
-					aria-pressed={chosen === answer}
-					name="answer"
-					value={answer}
-					disabled={saving.busy}
-				>
-					<Icon name={ICONS[answer]} size={16} />{t.signups.answers[answer]}
-				</button>
-			{/each}
-		</form>
+		<SignupAnswers action="?/answer" answer={signups.mine?.answer} label={t.signups.question} />
 		{#if result?.signupError}<p class="msg error" role="alert">{result.signupError}</p>{/if}
 
 		{#if mine}
@@ -161,90 +141,6 @@
 	h3 {
 		margin: var(--space-3) 0 var(--space-1);
 		font-size: 0.875rem;
-	}
-
-	/* One segmented control: three equal parts that never wrap, the chosen one raised. */
-	.answers {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 2px;
-		padding: 3px;
-		border-radius: 14px;
-		background: var(--surface-2);
-	}
-
-	.answer {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: 6px;
-		min-width: 0;
-		height: calc(var(--tap) - 4px);
-		padding: 0 var(--space-2);
-		border: 0;
-		border-radius: 11px;
-		background: transparent;
-		color: var(--text-muted);
-		transition:
-			background var(--fast) var(--ease),
-			color var(--fast) var(--ease),
-			box-shadow var(--fast) var(--ease),
-			transform var(--fast) var(--ease);
-		font: inherit;
-		font-size: 0.9375rem;
-		font-weight: 600;
-		white-space: nowrap;
-		cursor: pointer;
-	}
-
-	.answer:hover:not(.chosen) {
-		color: var(--text);
-	}
-
-	.answer:active {
-		transform: scale(0.97);
-	}
-
-	/* Raised and tinted in the answer's colour, so it reads as chosen in light and dark. */
-	.answer.chosen {
-		--tone: var(--accent);
-		background: color-mix(in oklab, var(--tone) 18%, var(--surface));
-		color: var(--tone);
-		box-shadow:
-			0 1px 2px rgb(0 0 0 / 0.12),
-			inset 0 0 0 1px color-mix(in oklab, var(--tone) 35%, transparent);
-	}
-
-	.answer.yes.chosen {
-		--tone: var(--ok);
-	}
-
-	.answer.maybe.chosen {
-		--tone: var(--warn);
-	}
-
-	.answer.no.chosen {
-		--tone: var(--danger);
-	}
-
-	/* On narrow phones the words carry it; the icons would push "Ich kann nicht" off its part. */
-	@media (max-width: 400px) {
-		.answer {
-			font-size: 0.875rem;
-		}
-
-		.answer :global(svg) {
-			display: none;
-		}
-	}
-
-	/* While saving, the chosen answer already shows; only the others step back. */
-	.answer:disabled {
-		cursor: progress;
-	}
-
-	.answer:disabled:not(.chosen) {
-		opacity: 0.6;
 	}
 
 	.details {

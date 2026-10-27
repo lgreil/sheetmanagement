@@ -13,6 +13,19 @@ test('signing up for a concert', async ({ page }) => {
 	await expect(page.getByText(/1 Zusage/)).toBeVisible();
 });
 
+test('answering from the start page', async ({ page }) => {
+	// Right on the next date's card, without opening it; the page stays where it is.
+	await open(page, '/');
+	const card = page.getByRole('form', { name: /^Bist du dabei\?/ }).first();
+	await card.getByRole('button', { name: 'Ich komme' }).click();
+	await expect(card.getByRole('button', { name: 'Ich komme' })).toHaveAttribute('aria-pressed', 'true');
+	await expect(page).toHaveURL(/\/$/);
+	// The calendar list says which dates are answered and which still wait.
+	await open(page, '/kalender');
+	await expect(page.getByText('Du kommst').first()).toBeVisible();
+	await expect(page.getByText('Antwort fehlt').first()).toBeVisible();
+});
+
 test('the programme editor saves', async ({ page }) => {
 	// EO's own programme: the editor opens on what both orchestras play together, the finale alone.
 	await open(page, '/kalender/demo-herbstkonzert/programm?orchester=EO');

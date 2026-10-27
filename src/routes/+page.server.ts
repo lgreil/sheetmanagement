@@ -1,15 +1,16 @@
 import { getLibrary, namedItem, shownDates } from '#lib/server/library.ts';
 import { getRehearsalNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { currentRehearsalNote } from '#lib/notes/rehearsal-notes.ts';
+import { myAnswers } from '#lib/server/signups.ts';
 import { openWork } from '#lib/server/todo.ts';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	const library = await getLibrary();
-	const [open, plan, notes] = await Promise.all([openWork(locals), getRehearsalPlan(), getRehearsalNotes()]);
+	const [open, plan, notes, answers] = await Promise.all([openWork(locals), getRehearsalPlan(), getRehearsalNotes(), myAnswers(locals)]);
 	const result = library.schedule;
 	if (!result.ok)
-		return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsalFor: undefined, rehearsalParts: undefined, rehearsing: [], program: [], lastNote: null, todo: open };
+		return { calendar: result.reason, nextConcert: null, nextRehearsal: null, rehearsalFor: undefined, rehearsalParts: undefined, rehearsing: [], program: [], lastNote: null, todo: open, answers: null };
 
 	// A member's next rehearsal is one of their own orchestras.
 	const shown = await shownDates(library, locals);
@@ -48,6 +49,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 		rehearsalParts,
 		rehearsing,
 		program,
-		todo: open
+		todo: open,
+		// "Bist du dabei?" right on the cards: the member's answers, null without sign-ups.
+		answers
 	};
 };

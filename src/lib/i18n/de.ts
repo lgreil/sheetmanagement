@@ -44,6 +44,13 @@ export const de = {
 		light: 'Hell',
 		dark: 'Dunkel'
 	},
+	textSize: {
+		label: 'Schriftgröße',
+		hint: 'Gilt für dieses Gerät.',
+		normal: 'Normal',
+		large: 'Groß',
+		larger: 'Sehr groß'
+	},
 	home: {
 		title: (orchestra: string) => `Notenarchiv des ${orchestra}`,
 		hello: (name: string) => `Hallo ${name}`,
@@ -907,6 +914,8 @@ export const de = {
 		answers: { yes: 'Ich komme', maybe: 'Vielleicht', no: 'Ich kann nicht' } as Record<string, string>,
 		answerValues: { yes: 'Zusage', maybe: 'Vielleicht', no: 'Absage' } as Record<string, string>,
 		yourAnswer: 'Deine Antwort',
+		/** In the calendar list: what you answered, or that the date still waits for it. */
+		status: { yes: 'Du kommst', maybe: 'Vielleicht', no: 'Abgesagt', open: 'Antwort fehlt' } as Record<string, string>,
 		instrument: 'Instrument bei diesem Termin',
 		ownInstrument: (instrument: string) => (instrument ? `wie im Profil (${instrument})` : 'wie im Profil'),
 		comment: 'Kommentar (optional)',

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import SignupAnswers from '#lib/components/SignupAnswers.svelte';
 	import Title from '#lib/components/Title.svelte';
 	import { navGroups } from '#lib/nav.ts';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
@@ -118,6 +119,18 @@
 				</span>
 				<span class="chevron"><Icon name="chevron" size={16} /></span>
 			</a>
+			{#if data.answers}
+				<!-- Answered right here, without opening the date first. -->
+				<div class="rsvp" class:open={!data.answers[card.event.id]}>
+					<span class="pieces-label">{data.answers[card.event.id] ? t.signups.yourAnswer : t.signups.question}</span>
+					<SignupAnswers
+						action="/kalender/{encodeURIComponent(card.event.id)}?/answer"
+						answer={data.answers[card.event.id]}
+						label="{t.signups.question} {card.event.displayTitle}"
+						toastErrors
+					/>
+				</div>
+			{/if}
 			{#if card.pieces.length}
 				<div class="pieces">
 					<span class="pieces-label">{card.piecesLabel}</span>
@@ -434,6 +447,17 @@
 	.pieces {
 		display: grid;
 		gap: var(--space-2);
+	}
+
+	.rsvp {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	/* Not answered yet: the question stands out a little, it's what the card asks of you. */
+	.rsvp.open .pieces-label {
+		color: var(--text);
+		font-size: 0.9375rem;
 	}
 
 	.pieces-label {
