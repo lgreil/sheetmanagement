@@ -216,7 +216,7 @@
 		left: var(--space-2);
 		z-index: 80;
 		padding: var(--space-2) var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font-weight: 650;
@@ -239,7 +239,7 @@
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-4);
 		background: color-mix(in oklab, var(--warn) 16%, var(--surface));
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-align: center;
 	}
 
@@ -339,9 +339,9 @@
 	.nav-desktop .more {
 		padding: var(--space-2) var(--space-3);
 		white-space: nowrap;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 500;
 		transition:
 			color var(--fast) var(--ease),
@@ -380,11 +380,11 @@
 		margin-left: var(--space-2);
 		padding: 0 6px 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 		transition:
 			border-color var(--fast) var(--ease),
@@ -400,10 +400,10 @@
 	.search::after {
 		content: attr(data-shortcut) / '';
 		padding: 1px 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		font: inherit;
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -525,8 +525,8 @@
 			place-items: center;
 			align-content: center;
 			gap: 2px;
-			/* Grows a little with "Schriftgröße", but five labels still fit side by side. */
-			font-size: min(0.6875rem, 11.5px);
+			/* The readable floor, held there with "Schriftgröße" so five labels still fit side by side. */
+			font-size: min(var(--text-2xs), 12px);
 			font-weight: 500;
 			color: var(--text-muted);
 			transition:
@@ -561,7 +561,7 @@
 			position: absolute;
 			inset: 0;
 			z-index: -1;
-			border-radius: 999px;
+			border-radius: var(--radius-pill);
 			background: var(--accent-soft);
 			opacity: 0;
 			transform: scaleX(0.5);
@@ -592,7 +592,7 @@
 		margin-top: var(--space-7);
 		padding-top: var(--space-5);
 		border-top: 1px solid var(--hairline);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		color: var(--text-muted);
 	}
 
@@ -611,8 +611,8 @@
 		align-items: center;
 		gap: 6px;
 		padding: var(--space-1) var(--space-2);
-		border-radius: 999px;
-		font-size: 0.875rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-sm);
 		font-weight: 500;
 	}
 
@@ -634,7 +634,7 @@
 		display: grid;
 		flex: none;
 		margin-left: var(--space-1);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		transition: box-shadow var(--fast) var(--ease);
 	}
 

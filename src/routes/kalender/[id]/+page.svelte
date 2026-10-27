@@ -534,7 +534,7 @@
 
 	.when {
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.tile {
@@ -544,7 +544,7 @@
 		align-self: start;
 		width: 68px;
 		padding: var(--space-2) 0;
-		border-radius: 16px;
+		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--tone) 12%, transparent);
 		color: var(--tone);
 		line-height: 1.1;
@@ -562,14 +562,14 @@
 
 	.tile .weekday,
 	.tile .month {
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		text-transform: uppercase;
 	}
 
 	.tile .day {
 		font-family: var(--font-display);
-		font-size: 1.875rem;
+		font-size: var(--text-3xl);
 		font-weight: 600;
 	}
 
@@ -579,7 +579,7 @@
 		}
 
 		.tile .day {
-			font-size: 1.5rem;
+			font-size: var(--text-2xl);
 		}
 	}
 
@@ -589,7 +589,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 650;
 		letter-spacing: 0.07em;
 		text-transform: uppercase;
@@ -605,7 +605,7 @@
 
 	.tentative {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
 		letter-spacing: 0;
@@ -652,7 +652,7 @@
 
 	.tools small {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 400;
 	}
 
@@ -694,7 +694,7 @@
 		place-items: center;
 		width: 34px;
 		height: 34px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
 	}
@@ -711,7 +711,7 @@
 
 	.check-title span {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.check ul {
@@ -726,7 +726,7 @@
 		display: flex;
 		align-items: flex-start;
 		gap: var(--space-2);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.check li :global(svg) {
@@ -780,7 +780,7 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	th,
@@ -793,7 +793,7 @@
 
 	th {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 	}
 
@@ -837,7 +837,7 @@
 		flex: none;
 		width: 34px;
 		height: 34px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--surface-2);
 		color: var(--text-muted);
 	}
@@ -861,11 +861,11 @@
 
 	.fact-body span {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.fact-body .over {
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -882,7 +882,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	a.fact:hover .trail {
@@ -920,7 +920,7 @@
 	.hint {
 		margin: var(--space-2) var(--space-1) 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.saved.warn {
@@ -944,7 +944,7 @@
 		display: inline-flex;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	/* Played together: set apart in the accent colour, so it reads as its own part of the evening. */
@@ -961,7 +961,7 @@
 		border: 1px dashed var(--border);
 		border-radius: var(--radius-m);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -974,7 +974,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -997,7 +997,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -1021,7 +1021,7 @@
 		gap: var(--space-2);
 		margin: 0 0 var(--space-3) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.note :global(svg) {
@@ -1045,7 +1045,7 @@
 		gap: var(--space-1);
 		min-height: 32px;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		list-style: none;
 		cursor: pointer;
@@ -1082,10 +1082,10 @@
 		max-width: 100%;
 		padding: 3px 10px;
 		overflow: hidden;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		transition:

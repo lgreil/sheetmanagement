@@ -95,7 +95,7 @@
 		margin-top: var(--space-2);
 		padding: 12px 22px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		color: var(--text);
 		font-weight: 600;
@@ -110,7 +110,7 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.error {
@@ -128,7 +128,7 @@
 		gap: var(--space-3);
 		width: 100%;
 		margin: var(--space-2) 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.or::before,
@@ -147,7 +147,7 @@
 
 	.mail label {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.mail input[type='email'] {

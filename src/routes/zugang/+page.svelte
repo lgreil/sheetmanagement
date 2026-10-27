@@ -55,7 +55,7 @@
 		place-items: center;
 		width: 56px;
 		height: 56px;
-		border-radius: 16px;
+		border-radius: var(--radius-m);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -65,7 +65,7 @@
 	}
 
 	.small {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.request {
@@ -80,7 +80,7 @@
 		gap: var(--space-1);
 		width: 100%;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		text-align: left;
 	}
@@ -89,7 +89,7 @@
 		height: 42px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
@@ -98,7 +98,7 @@
 	.button {
 		padding: 10px 22px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font: inherit;

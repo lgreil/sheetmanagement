@@ -132,8 +132,8 @@
 		align-items: center;
 		gap: var(--space-2);
 		padding: var(--space-2);
-		border-radius: var(--radius-s, 6px);
-		font-size: 0.9375rem;
+		border-radius: var(--radius-s);
+		font-size: var(--text-md);
 		cursor: pointer;
 	}
 

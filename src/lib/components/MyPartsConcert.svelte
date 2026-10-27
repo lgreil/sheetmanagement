@@ -312,7 +312,7 @@
 		gap: var(--space-2);
 		margin: calc(-1 * var(--space-2)) 0 var(--space-3);
 		color: var(--ok);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.offline-note .link {
@@ -348,7 +348,7 @@
 		align-items: center;
 		gap: 2px;
 		font-family: var(--font-display);
-		font-size: 1.375rem;
+		font-size: var(--text-2xl);
 		font-weight: 600;
 		transition: color var(--fast) var(--ease);
 	}
@@ -409,7 +409,7 @@
 	.skipped ul {
 		margin: 0;
 		padding-left: var(--space-4);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.piece-notes {
@@ -417,11 +417,10 @@
 		gap: 4px;
 		margin: 0;
 		padding: var(--space-2) var(--space-3);
-		border-left: 3px solid var(--accent);
-		border-radius: 0 var(--radius-m) var(--radius-m) 0;
+		border-radius: var(--radius-m);
 		background: var(--accent-soft);
 		list-style: none;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -481,7 +480,7 @@
 		border-radius: 50%;
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 700;
 	}
 
@@ -507,7 +506,7 @@
 	}
 
 	.subtitle {
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.title a:hover {
@@ -519,7 +518,7 @@
 		align-items: center;
 		gap: 4px;
 		color: var(--accent);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.match {
@@ -529,7 +528,7 @@
 
 	.instrument {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
@@ -552,10 +551,10 @@
 		min-height: 38px;
 		padding: 6px var(--space-3);
 		border: 1px solid transparent;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 		transition:
 			background var(--fast) var(--ease),
@@ -583,10 +582,10 @@
 
 	.tag {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -600,7 +599,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.muted {
@@ -609,6 +608,6 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 </style>

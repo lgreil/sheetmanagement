@@ -140,7 +140,7 @@
 		gap: var(--space-1);
 		justify-self: start;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 500;
 	}
 
@@ -164,9 +164,9 @@
 		align-items: center;
 		min-height: 36px;
 		padding: 0 14px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 	}
 
@@ -206,7 +206,7 @@
 	.period-label {
 		margin-top: var(--space-1);
 		color: var(--text-muted);
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	section {
@@ -218,7 +218,7 @@
 		margin: 0 0 var(--space-2);
 		padding-bottom: var(--space-1);
 		border-bottom: 1px solid var(--hairline);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.figures {
@@ -237,13 +237,13 @@
 	.figures strong {
 		color: var(--accent);
 		font-family: var(--font-display);
-		font-size: 2rem;
+		font-size: var(--text-3xl);
 		line-height: 1.1;
 	}
 
 	.figures span {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.concerts {
@@ -278,7 +278,7 @@
 	}
 
 	.created {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	@media print {
@@ -290,7 +290,7 @@
 		}
 
 		.figures strong {
-			color: #000;
+			color: var(--text);
 		}
 	}
 </style>

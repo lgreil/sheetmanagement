@@ -157,7 +157,7 @@
 		gap: var(--space-2);
 		min-height: var(--tap);
 		padding: 0 var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -167,7 +167,7 @@
 		background: none;
 		color: inherit;
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-decoration: underline;
 		cursor: pointer;
 	}
@@ -195,7 +195,7 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.concerts {

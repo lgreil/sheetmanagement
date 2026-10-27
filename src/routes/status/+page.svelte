@@ -172,7 +172,7 @@
 
 	.extras h2 {
 		margin: 0;
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.extras p {
@@ -192,13 +192,13 @@
 		gap: var(--space-1);
 		padding: var(--space-3) var(--space-4);
 		border: 1px solid var(--border);
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--surface);
 	}
 
 	.extras li p {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.extras .link {
@@ -206,13 +206,13 @@
 		align-items: center;
 		gap: var(--space-1);
 		justify-self: start;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.version {
 		margin-top: var(--space-5);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.version a {
@@ -224,7 +224,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		justify-self: start;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.checks {
@@ -259,7 +259,7 @@
 		flex: none;
 		width: 32px;
 		height: 32px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		color: var(--state);
 		background: color-mix(in oklab, var(--state) 14%, transparent);
 	}
@@ -279,8 +279,8 @@
 
 	.pill {
 		padding: 1px var(--space-2);
-		border-radius: 999px;
-		font-size: 0.75rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		color: var(--state);
 		background: color-mix(in oklab, var(--state) 12%, transparent);
@@ -288,7 +288,7 @@
 
 	p {
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		overflow-wrap: anywhere;
 	}
 
@@ -308,7 +308,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font-weight: 600;

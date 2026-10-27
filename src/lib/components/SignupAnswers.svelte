@@ -73,7 +73,7 @@
 		min-height: var(--tap);
 		padding: var(--space-2);
 		border: 1.5px solid color-mix(in oklab, var(--tone) 35%, var(--hairline));
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--surface);
 		color: var(--text);
 		transition:
@@ -82,7 +82,7 @@
 			border-color var(--fast) var(--ease),
 			transform var(--fast) var(--ease);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 		line-height: 1.2;
 		text-align: center;
@@ -139,7 +139,7 @@
 			flex-direction: column;
 			gap: 4px;
 			min-height: 64px;
-			font-size: 0.875rem;
+			font-size: var(--text-sm);
 		}
 	}
 

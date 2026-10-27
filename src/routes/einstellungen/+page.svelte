@@ -263,13 +263,13 @@
 		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 400;
 	}
 
@@ -351,11 +351,11 @@
 		min-height: var(--tap);
 		padding: 0 var(--space-4) 0 var(--space-2);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 	}
 
@@ -412,7 +412,7 @@
 
 	.preview-label {
 		width: 100%;
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
@@ -421,13 +421,13 @@
 
 	.sample {
 		padding: 6px 14px;
-		border-radius: 999px;
-		font-size: 0.875rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-sm);
 		font-weight: 650;
 	}
 
 	.ratio {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		opacity: 0.8;
 	}
 
@@ -482,7 +482,7 @@
 	.row.head {
 		border-top: 0;
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
@@ -499,11 +499,11 @@
 		min-width: 0;
 		padding: 7px var(--space-2);
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: var(--radius-s);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.row [role='cell'] {
@@ -513,7 +513,7 @@
 	}
 
 	.known {
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -547,7 +547,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--ok);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 </style>

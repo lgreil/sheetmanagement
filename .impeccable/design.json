@@ -1,6 +1,6 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-10-27T17:38:42.056Z",
+	"generatedAt": "2026-10-27T18:31:14.051Z",
 	"title": "Design System: Sheetmanagement",
 	"extensions": {
 		"colorMeta": {
@@ -340,6 +340,28 @@
 				],
 				"purpose": "Errors in dark."
 			},
+			"night-surface-lifted": {
+				"role": "neutral",
+				"displayName": "Night Surface, lifted",
+				"canonical": "#3a362f",
+				"tonalRamp": [
+					"#0d0b08",
+					"#27241e",
+					"#433f38",
+					"#615d55",
+					"#848078",
+					"#a8a49d",
+					"#cdcac5",
+					"#efeeec"
+				],
+				"purpose": "A thumb or knob standing off its track in dark."
+			},
+			"scrim": {
+				"role": "neutral",
+				"displayName": "Scrim",
+				"canonical": "rgb(0 0 0 / 0.35)",
+				"purpose": "Dims the page behind dialogs, search and menus."
+			},
 			"calendar-velvet": {
 				"role": "signature",
 				"displayName": "Calendar Velvet",
@@ -498,7 +520,7 @@
 			"refersTo": "field-input",
 			"description": "A labelled text field set into a card.",
 			"html": "<label class=\"ds-field\">Name<input value=\"Mia Muster\"></label>",
-			"css": ".ds-field{display:grid;gap:4px;color:var(--text-muted,#625e55);font:600 0.8125rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input{padding:9px 12px;border:1px solid var(--border,#e0ded7);border-radius:10px;background:var(--bg,#f4f4f1);color:var(--text,#161512);font:400 0.9375rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input:focus{outline:2px solid var(--accent,#815c09);outline-offset:1px}"
+			"css": ".ds-field{display:grid;gap:4px;color:var(--text-muted,#625e55);font:600 0.8125rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input{padding:9px 12px;border:1px solid var(--border,#e0ded7);border-radius:var(--radius-control,12px);background:var(--bg,#f4f4f1);color:var(--text,#161512);font:400 0.9375rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input:focus{outline:2px solid var(--accent,#815c09);outline-offset:1px}"
 		},
 		{
 			"name": "Card with label",
@@ -554,7 +576,12 @@
 			},
 			{
 				"name": "The Readable Floor Rule",
-				"body": "Everything is in rem so the text size setting reaches it. Text people need to read stays at 0.75rem or larger. The current 0.6875rem date-block and meta labels are below that and are meant to be raised.",
+				"body": "Everything is in rem so the text size setting reaches it. Nothing anyone reads is smaller than `--text-2xs` (0.75rem). The tab bar labels are the one place held at that floor (12px) at every text size, so five still fit side by side.",
+				"section": "typography"
+			},
+			{
+				"name": "The One Scale Rule",
+				"body": "Every font size is a token from `src/app.css`, never a literal: `--text-2xs` 0.75, `--text-xs` 0.8125, `--text-sm` 0.875, `--text-md` 0.9375, `--text-base` 1, `--text-lg` 1.125, `--text-xl` 1.25, `--text-2xl` 1.5, `--text-3xl` 2, `--text-4xl` 2.25 (rem), plus the fluid `--text-display`, `--text-headline` and `--text-date` for the condensed face. Labels and meta use 2xs–sm, body and controls md–base, card titles lg–xl, big numbers 2xl–4xl. The only exceptions are SVG text drawn in a viewBox's own units and the print programme, which is set in pt.",
 				"section": "typography"
 			},
 			{
@@ -577,7 +604,8 @@
 			"**Don't** add thick one-sided colour stripes to cards or chips. Use a tint, a full hairline or a small dot to mark a type.",
 			"**Don't** set readable text below 0.75rem, or in px where it should follow the text size setting.",
 			"**Don't** nest a shadowed card inside a shadowed card.",
-			"**Don't** use bouncy or elastic easing. The one spring in the segmented control is the exception being phased out, not a pattern."
+			"**Don't** use bouncy or elastic easing. Every transition, the segmented control's thumb included, runs on the one curve.",
+			"**Don't** write a colour, size or radius as a literal in a component. Use the tokens in `src/app.css`; the tuner and metronome drawings, which paint their own wood, brass and dial, are the only exception."
 		]
 	}
 }

@@ -177,13 +177,13 @@
 	}
 
 	.what strong {
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.what span {
 		overflow: hidden;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -194,10 +194,10 @@
 		gap: var(--space-2);
 		margin: 0;
 		padding: var(--space-1) var(--space-3);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -229,7 +229,7 @@
 		aspect-ratio: 16 / 9;
 		overflow: hidden;
 		border-radius: var(--radius-s);
-		background: #000;
+		background: var(--brand-ink);
 	}
 
 	.video iframe {
@@ -243,7 +243,7 @@
 	.muted {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.external,
@@ -252,7 +252,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.elsewhere {

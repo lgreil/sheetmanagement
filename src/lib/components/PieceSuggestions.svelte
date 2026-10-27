@@ -283,18 +283,18 @@
 		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.muted,
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.hint {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.sources,
@@ -309,11 +309,11 @@
 		height: 32px;
 		padding: 0 var(--space-2);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	/* A fieldset is as wide as its longest line unless told otherwise; long descriptions should wrap. */
@@ -324,14 +324,14 @@
 		margin: 0;
 		padding: var(--space-2) var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
-		font-size: 0.875rem;
+		border-radius: var(--radius-control);
+		font-size: var(--text-sm);
 	}
 
 	.candidates legend {
 		padding: 0 var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -359,7 +359,7 @@
 		align-items: center;
 		gap: var(--space-1) var(--space-3);
 		padding: var(--space-2) 0;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.list li + li {
@@ -378,21 +378,21 @@
 
 	.from {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	.take {
 		height: 28px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--accent);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--accent);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -407,7 +407,7 @@
 		align-items: center;
 		gap: 2px;
 		color: var(--ok);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.source-link {
@@ -416,7 +416,7 @@
 		gap: var(--space-1);
 		justify-self: start;
 		color: var(--accent);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	@media (max-width: 520px) {

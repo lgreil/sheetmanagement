@@ -70,7 +70,7 @@
 	.lead {
 		margin-bottom: var(--space-5);
 		color: var(--text-muted);
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	section {
@@ -79,7 +79,7 @@
 
 	h2 {
 		margin: 0 0 var(--space-2);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	p,
@@ -110,12 +110,12 @@
 		padding: var(--space-2) var(--space-3);
 		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.footer {
 		margin-top: var(--space-6);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 </style>

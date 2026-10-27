@@ -149,7 +149,7 @@
 		height: 44px;
 		padding: 0 var(--space-4);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text-muted);
 	}
@@ -201,7 +201,7 @@
 		width: 26px;
 		height: 26px;
 		border: 2px solid var(--border);
-		border-radius: 8px;
+		border-radius: var(--radius-s);
 		color: transparent;
 		transition:
 			background var(--fast) var(--ease),
@@ -229,10 +229,10 @@
 	.answer {
 		flex: none;
 		padding: 1px 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 

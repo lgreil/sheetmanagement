@@ -145,7 +145,6 @@
 		gap: var(--space-2);
 		padding: var(--space-3) var(--space-4);
 		border: 1px solid var(--hairline);
-		border-left: 3px solid var(--accent);
 		border-radius: var(--radius-m);
 		background: var(--surface);
 		box-shadow: var(--shadow);
@@ -163,12 +162,12 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1) var(--space-2);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.tag {
 		padding: 1px var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
 		font-weight: 600;
@@ -197,7 +196,7 @@
 		width: 32px;
 		height: 32px;
 		border: 0;
-		border-radius: 9px;
+		border-radius: var(--radius-s);
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;
@@ -219,7 +218,7 @@
 		gap: var(--space-1);
 		min-height: 36px;
 		color: var(--accent);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 		cursor: pointer;
 		list-style: none;

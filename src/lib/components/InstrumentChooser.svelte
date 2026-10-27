@@ -238,11 +238,11 @@
 		min-height: 42px;
 		padding: 6px var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 500;
 		text-align: left;
 		cursor: pointer;
@@ -268,7 +268,7 @@
 		place-items: center;
 		width: 28px;
 		height: 28px;
-		border-radius: 8px;
+		border-radius: var(--radius-s);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -332,7 +332,7 @@
 			z-index: 90;
 			inset: 0;
 			display: block;
-			background: rgb(0 0 0 / 0.35);
+			background: var(--scrim);
 			animation: fade 0.2s var(--ease);
 		}
 
@@ -374,7 +374,7 @@
 		gap: var(--space-2);
 		margin: var(--space-2);
 		padding: 0 var(--space-3);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text-muted);
 	}
@@ -393,7 +393,7 @@
 		background: none;
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.scroll {
@@ -406,7 +406,7 @@
 		margin: var(--space-2) var(--space-2) var(--space-1);
 		color: var(--text-muted);
 		font-family: var(--font);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -426,11 +426,11 @@
 		min-height: 88px;
 		padding: var(--space-2) var(--space-1);
 		border: 1px solid transparent;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 500;
 		line-height: 1.2;
 		text-align: center;
@@ -491,7 +491,7 @@
 	.none {
 		margin: var(--space-4) var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-align: center;
 	}
 </style>

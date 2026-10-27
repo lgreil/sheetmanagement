@@ -105,10 +105,10 @@
 		gap: var(--space-2);
 		margin-bottom: var(--space-4);
 		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-left: 3px solid var(--state);
+		/* The state colours the whole edge and tints the card, not one side. */
+		border: 1px solid color-mix(in oklab, var(--state) 45%, var(--border));
 		border-radius: var(--radius-m);
-		background: var(--surface);
+		background: color-mix(in oklab, var(--state) 6%, var(--surface));
 	}
 
 	.card.ok {
@@ -130,7 +130,7 @@
 	.label {
 		margin-top: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -155,7 +155,7 @@
 		gap: var(--space-1);
 		padding: 4px 12px;
 		border: 1px dashed var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		font-weight: 500;
 	}
 
@@ -165,7 +165,7 @@
 	}
 
 	.tabs li .muted {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.muted {
@@ -173,7 +173,7 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	p {
@@ -201,7 +201,7 @@
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-4);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font: inherit;
@@ -217,7 +217,7 @@
 	.problems h2 {
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;

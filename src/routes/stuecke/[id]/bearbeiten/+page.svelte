@@ -154,7 +154,7 @@
 		gap: var(--space-1);
 		margin-bottom: var(--space-4);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.msg {
@@ -215,6 +215,6 @@
 
 	.hint {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 </style>

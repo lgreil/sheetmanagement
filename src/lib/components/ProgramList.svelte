@@ -97,7 +97,7 @@
 		width: 1.75rem;
 		color: var(--accent);
 		font-family: var(--font-display);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 		font-weight: 700;
 		text-align: right;
 	}
@@ -120,14 +120,14 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -138,7 +138,7 @@
 	.duration {
 		flex: none;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -148,7 +148,7 @@
 		padding: var(--space-3) var(--space-4);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.length {
@@ -166,7 +166,7 @@
 	.segment {
 		flex-basis: 0;
 		min-width: 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--accent) 45%, var(--surface-2));
 		transition:
 			background var(--fast) var(--ease),

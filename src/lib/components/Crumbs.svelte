@@ -24,7 +24,7 @@
 <style>
 	.crumbs {
 		margin-bottom: var(--space-4);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 500;
 	}
 
@@ -78,7 +78,7 @@
 			min-height: 36px;
 			margin-left: -6px;
 			color: var(--accent);
-			font-size: 1rem;
+			font-size: var(--text-base);
 		}
 	}
 </style>

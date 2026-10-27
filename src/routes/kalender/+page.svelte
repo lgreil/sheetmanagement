@@ -217,7 +217,7 @@
 		border-radius: var(--radius-m);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 	}
 
@@ -262,7 +262,7 @@
 		width: 52px;
 		height: 40px;
 		border: 1.5px dashed color-mix(in oklab, var(--accent) 55%, transparent);
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		color: var(--accent);
 	}
 
@@ -271,12 +271,12 @@
 		flex: 1;
 		min-width: 0;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.poll-body strong {
 		color: var(--text);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 	}
 
@@ -285,7 +285,7 @@
 		flex: none;
 		width: 8px;
 		height: 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 	}
 
@@ -316,7 +316,7 @@
 	.past-count {
 		color: var(--text-muted);
 		font-family: var(--font-sans, inherit);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.subscribe {
@@ -327,7 +327,7 @@
 	.section {
 		margin: var(--space-5) 0 var(--space-2);
 		font-family: var(--font-display);
-		font-size: 1.375rem;
+		font-size: var(--text-2xl);
 	}
 
 	.section.past {

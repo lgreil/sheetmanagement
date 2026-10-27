@@ -155,7 +155,7 @@
 	}
 
 	.muted {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.overview {
@@ -170,7 +170,7 @@
 
 	.overview h2 {
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.overview ul {
@@ -178,7 +178,7 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.overview li {
@@ -210,7 +210,7 @@
 
 	.warn {
 		margin: 0;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -247,7 +247,7 @@
 		flex: none;
 		width: 48px;
 		height: 48px;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--accent-soft);
 		color: var(--accent);
 		line-height: 1;
@@ -255,12 +255,12 @@
 
 	.day {
 		font-family: var(--font-display);
-		font-size: 1.25rem;
+		font-size: var(--text-xl);
 		font-weight: 700;
 	}
 
 	.month {
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		text-transform: uppercase;
 	}
@@ -279,16 +279,16 @@
 	.count {
 		flex: none;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
 	.tag {
 		margin-left: var(--space-1);
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -306,11 +306,11 @@
 		min-height: 36px;
 		padding: var(--space-1) var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		text-align: left;
 		cursor: pointer;
 		transition:
@@ -335,7 +335,7 @@
 
 	.chip .hint {
 		opacity: 0.75;
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	.quick {
@@ -349,7 +349,7 @@
 		background: none;
 		color: var(--accent);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -366,7 +366,7 @@
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-5);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font: inherit;

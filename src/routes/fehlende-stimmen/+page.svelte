@@ -127,9 +127,9 @@
 
 	.counts li {
 		padding: var(--space-1) var(--space-3);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.counts .missing,
@@ -154,11 +154,11 @@
 	.filter {
 		padding: 6px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		white-space: nowrap;
 		cursor: pointer;
@@ -203,10 +203,10 @@
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -216,7 +216,7 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.gaps li {
@@ -236,8 +236,8 @@
 		align-items: center;
 		gap: 4px;
 		padding: 0 6px;
-		border-radius: 6px;
-		font-size: 0.75rem;
+		border-radius: var(--radius-xs);
+		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
 
@@ -269,11 +269,11 @@
 	.mini {
 		padding: 2px 10px;
 		border: 1px solid var(--accent);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -300,6 +300,6 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 </style>

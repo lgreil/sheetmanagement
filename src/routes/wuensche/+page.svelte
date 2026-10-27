@@ -193,11 +193,11 @@
 		gap: var(--space-2);
 		padding: 8px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 		cursor: pointer;
 		white-space: nowrap;
@@ -211,9 +211,9 @@
 
 	.count {
 		padding: 0 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, currentColor 14%, transparent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	.msg {
@@ -228,7 +228,7 @@
 		display: flex;
 		align-items: flex-start;
 		gap: var(--space-2);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.anonymous input {
@@ -294,7 +294,7 @@
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 700;
 		cursor: pointer;
 	}
@@ -331,9 +331,8 @@
 
 	.answer {
 		padding: var(--space-2) var(--space-3);
-		border-left: 3px solid var(--accent);
+		border-radius: var(--radius-m);
 		background: var(--accent-soft);
-		border-radius: 0 var(--radius-s) var(--radius-s) 0;
 	}
 
 	.links {
@@ -351,16 +350,16 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
 	.status {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
 
@@ -376,26 +375,26 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		overflow-wrap: anywhere;
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.for-concert {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
 	.piece-status {
 		color: var(--warn);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.meta {
@@ -411,7 +410,7 @@
 		width: 32px;
 		height: 32px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;

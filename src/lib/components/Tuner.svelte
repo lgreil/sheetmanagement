@@ -347,7 +347,7 @@
 		justify-items: center;
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-2) var(--space-3);
-		border-radius: 18px;
+		border-radius: var(--radius-l);
 		background: radial-gradient(120% 90% at 50% 0%, #2f363d, #171b1f 70%);
 		box-shadow:
 			inset 0 1px 0 rgb(255 255 255 / 0.08),
@@ -367,7 +367,7 @@
 		gap: var(--space-3);
 		margin-top: calc(-1 * var(--space-2));
 		padding: var(--space-1) var(--space-4);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: #0c0f11;
 		box-shadow: inset 0 2px 6px rgb(0 0 0 / 0.7);
 	}
@@ -375,7 +375,7 @@
 	.name {
 		color: #e9eef2;
 		font-family: var(--font-display);
-		font-size: 2rem;
+		font-size: var(--text-3xl);
 		line-height: 1.1;
 		text-align: center;
 		transition:
@@ -386,7 +386,7 @@
 	.name sub {
 		margin-left: 2px;
 		color: #9aa3ab;
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.reading.ok .name {
@@ -418,7 +418,7 @@
 	.detail {
 		min-height: 1.5em;
 		color: #aab3bb;
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		text-align: center;
 		font-variant-numeric: tabular-nums;
 	}
@@ -482,7 +482,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		min-height: 32px;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -508,7 +508,7 @@
 		grid-template-columns: repeat(7, 1fr);
 		height: 80px;
 		padding: 5px 5px 6px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: linear-gradient(#2a1d14, #3b291c);
 		box-shadow: inset 0 2px 4px rgb(0 0 0 / 0.5);
 	}
@@ -520,7 +520,7 @@
 		padding: 0 0 6px;
 		border: 0;
 		font: inherit;
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		cursor: pointer;
 		transition:
 			background 0.1s,
@@ -529,7 +529,7 @@
 
 	.key.white {
 		margin: 0 1px;
-		border-radius: 0 0 6px 6px;
+		border-radius: 0 0 var(--radius-xs) var(--radius-xs);
 		background: linear-gradient(#fdfdfb, #ecebe6);
 		box-shadow:
 			inset 0 -4px 0 #d6d4cc,
@@ -544,13 +544,13 @@
 		width: 10%;
 		height: 60%;
 		margin-left: -5%;
-		border-radius: 0 0 5px 5px;
+		border-radius: 0 0 var(--radius-xs) var(--radius-xs);
 		background: linear-gradient(#3a3a3a, #111);
 		box-shadow:
 			inset 0 -3px 0 #000,
 			0 2px 3px rgb(0 0 0 / 0.5);
 		color: #cfcfcf;
-		font-size: 0.625rem;
+		font-size: var(--text-2xs);
 	}
 
 	.key:active {
@@ -580,7 +580,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		min-height: 40px;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.volume input {

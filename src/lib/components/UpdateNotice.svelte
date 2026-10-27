@@ -75,11 +75,11 @@
 		gap: var(--space-2);
 		max-width: calc(100vw - 2 * var(--space-4));
 		padding: var(--space-2) var(--space-2) var(--space-2) var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--text);
 		color: var(--bg);
 		box-shadow: var(--shadow-raised);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		transform: translateX(-50%);
 		animation: rise 0.3s var(--ease);
 	}
@@ -92,7 +92,7 @@
 		height: 32px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--brand);
 		color: var(--brand-ink);
 		font: inherit;
@@ -116,7 +116,7 @@
 	/* Above the bottom navigation on phones. */
 	@media (max-width: 720px) {
 		.update {
-			bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-3));
+			bottom: calc(var(--tabbar-height) + var(--dock-height, 0px) + env(safe-area-inset-bottom) + var(--space-3));
 		}
 	}
 </style>

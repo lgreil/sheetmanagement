@@ -91,7 +91,7 @@
 		max-width: 320px;
 		height: 8px;
 		overflow: hidden;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 	}
 
@@ -103,7 +103,7 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.toolbar {
@@ -124,10 +124,10 @@
 	.chip {
 		padding: 6px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 500;
 	}
 
@@ -196,10 +196,10 @@
 
 	.gap {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 

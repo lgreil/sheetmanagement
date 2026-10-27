@@ -102,7 +102,7 @@
 		padding: 0;
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -126,10 +126,10 @@
 		width: 40px;
 		height: 40px;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 700;
 	}
 
@@ -153,7 +153,7 @@
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 	}
 
@@ -161,7 +161,7 @@
 		justify-content: center;
 		width: 40px;
 		height: 40px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 	}
 
 	.remove:hover {

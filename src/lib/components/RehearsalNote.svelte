@@ -124,7 +124,7 @@
 
 	dt {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -145,7 +145,7 @@
 	.lead {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.form .field {

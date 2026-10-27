@@ -133,17 +133,17 @@
 		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	.muted {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.on {

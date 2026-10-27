@@ -85,7 +85,7 @@
 		flex: none;
 		width: 52px;
 		padding: var(--space-1) 0;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: color-mix(in oklab, var(--tone) 12%, transparent);
 		color: var(--tone);
 		line-height: 1.1;
@@ -98,14 +98,14 @@
 
 	.weekday,
 	.month {
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 	}
 
 	.day {
-		font-size: 1.375rem;
+		font-size: var(--text-2xl);
 		font-weight: 700;
 	}
 
@@ -121,7 +121,7 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -133,7 +133,7 @@
 
 	.tentative {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
 	}
@@ -145,10 +145,10 @@
 
 	.badge {
 		padding: 0 7px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.03em;
 	}
@@ -159,12 +159,12 @@
 	}
 
 	.row.konzert .title {
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	.meta {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.sr {
@@ -184,10 +184,10 @@
 		gap: 4px;
 		margin-top: 2px;
 		padding: 1px 8px 1px 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--answer) 12%, transparent);
 		color: var(--answer);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 

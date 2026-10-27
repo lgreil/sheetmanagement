@@ -31,7 +31,7 @@
 	.secondary {
 		display: inline-block;
 		padding: var(--space-2) var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		font: inherit;
 		font-weight: 600;
 		cursor: pointer;

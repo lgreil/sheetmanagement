@@ -145,7 +145,7 @@
 	legend {
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -172,7 +172,7 @@
 		justify-content: center;
 		width: 40px;
 		height: 40px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 	}
 
 	.remove:hover {
@@ -184,7 +184,7 @@
 		justify-self: start;
 		padding: var(--space-1) 0;
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -217,9 +217,9 @@
 		height: 36px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -261,7 +261,7 @@
 		flex: none;
 		width: 42px;
 		height: 42px;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -283,16 +283,16 @@
 
 	.meta {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.pill.todo {
 		flex: none;
 		padding: 2px var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
 

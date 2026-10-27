@@ -136,7 +136,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	p {
@@ -145,11 +145,11 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.private {
@@ -157,7 +157,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--ok);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -184,14 +184,14 @@
 
 	.stage strong {
 		font-family: var(--font-display);
-		font-size: 1.5rem;
+		font-size: var(--text-2xl);
 		line-height: 1.1;
 	}
 
 	.progress {
 		height: 8px;
 		margin-top: var(--space-1);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--ok) 16%, transparent);
 		overflow: hidden;
 	}
@@ -226,7 +226,7 @@
 	.nav strong {
 		min-width: 9em;
 		text-align: center;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.icon {
@@ -235,7 +235,7 @@
 		width: 36px;
 		height: 36px;
 		border: 1px solid var(--hairline);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--surface);
 		color: var(--text);
 		cursor: pointer;
@@ -267,12 +267,12 @@
 	.fill {
 		align-self: end;
 		min-height: 2px;
-		border-radius: 6px 6px 2px 2px;
+		border-radius: var(--radius-xs) var(--radius-xs) var(--radius-hair) var(--radius-hair);
 		background: color-mix(in oklab, var(--ok) 70%, transparent);
 	}
 
 	.month .fill {
-		border-radius: 3px 3px 1px 1px;
+		border-radius: var(--radius-hair) var(--radius-hair) var(--radius-hair) var(--radius-hair);
 	}
 
 	.fill.today {
@@ -287,7 +287,7 @@
 		height: 1.4em;
 		overflow: visible;
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		text-align: center;
 		white-space: nowrap;
 	}
@@ -308,11 +308,11 @@
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: color-mix(in oklab, var(--danger) 10%, transparent);
 		color: var(--danger);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}

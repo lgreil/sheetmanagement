@@ -249,7 +249,7 @@
 		min-width: 10em;
 		margin: 0;
 		font-family: var(--font-display);
-		font-size: 1.25rem;
+		font-size: var(--text-xl);
 		text-align: center;
 	}
 
@@ -259,11 +259,11 @@
 		place-items: center;
 		height: 36px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 	}
 
@@ -299,7 +299,7 @@
 	.weekdays span {
 		padding: var(--space-2) 0;
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		text-align: center;
 		text-transform: uppercase;
@@ -350,11 +350,11 @@
 		width: 26px;
 		height: 26px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -468,7 +468,7 @@
 		bottom: 0;
 		width: 24%;
 		background:
-			linear-gradient(180deg, rgb(0 0 0 / 0.15), transparent 30%),
+			linear-gradient(180deg, color-mix(in oklab, var(--velvet-dark) 55%, transparent), transparent 30%),
 			repeating-linear-gradient(90deg, var(--velvet-dark) 0 2px, var(--velvet) 2px 6px, var(--velvet-light) 6px 8px, var(--velvet) 8px 11px);
 		transition: width 0.35s ease;
 	}
@@ -568,11 +568,12 @@
 		display: block;
 		overflow: hidden;
 		padding: 1px 4px;
-		border-left: 3px solid var(--tone);
-		border-radius: 4px;
-		background: color-mix(in oklab, var(--surface) 88%, var(--tone));
+		border-radius: var(--radius-xs);
+		/* The type shows as a tint with a hairline in its colour, not a stripe. */
+		background: color-mix(in oklab, var(--surface) 84%, var(--tone));
+		box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 35%, transparent);
 		color: var(--text);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		line-height: 1.4;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -619,7 +620,7 @@
 		width: 18px;
 		height: 18px;
 		border: 1.5px dashed var(--accent);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 	}
 
@@ -646,7 +647,7 @@
 		width: 52px;
 		height: 44px;
 		border: 1.5px dashed color-mix(in oklab, var(--accent) 60%, transparent);
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		color: var(--accent);
 	}
 
@@ -658,7 +659,7 @@
 
 	.poll-over {
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -666,7 +667,7 @@
 
 	.more {
 		color: var(--text-muted);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 	}
 
 	.legend {
@@ -676,7 +677,7 @@
 		gap: var(--space-2) var(--space-5);
 		margin: var(--space-3) 0 var(--space-4) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.legend > span {
@@ -701,7 +702,7 @@
 		width: 26px;
 		height: 20px;
 		overflow: hidden;
-		border-radius: 4px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--fringe) 25%, var(--surface));
 	}
 
@@ -716,7 +717,7 @@
 	.selected h4 {
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -739,7 +740,7 @@
 	.none {
 		margin: 0 0 0 var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	/* Phones: no titles; the stickers and stages are enough, the list below shows the day. */
@@ -754,7 +755,7 @@
 			justify-self: center;
 			width: 22px;
 			height: 22px;
-			font-size: 0.75rem;
+			font-size: var(--text-2xs);
 		}
 
 		.chips {

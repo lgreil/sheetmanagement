@@ -116,7 +116,7 @@
 		inset: 0;
 		z-index: 20;
 		border: 0;
-		background: rgb(0 0 0 / 0.22);
+		background: var(--scrim);
 		backdrop-filter: blur(2px);
 		-webkit-backdrop-filter: blur(2px);
 		cursor: default;
@@ -148,7 +148,7 @@
 	h2 {
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.07em;
 		text-transform: uppercase;
@@ -169,7 +169,7 @@
 		min-height: 40px;
 		padding: var(--space-1) var(--space-2);
 		margin: 0 calc(-1 * var(--space-2));
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		font-weight: 500;
 		transition: background var(--fast) var(--ease);
 	}
@@ -214,7 +214,7 @@
 	.who-text span {
 		overflow: hidden;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -233,11 +233,11 @@
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}

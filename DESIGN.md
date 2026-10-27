@@ -23,6 +23,8 @@ colors:
   night-ok: "#4fae78"
   night-warn: "#c98a2c"
   night-danger: "#e8695c"
+  night-surface-lifted: "#3a362f"
+  scrim: "rgb(0 0 0 / 0.35)"
   calendar-velvet: "#8c1c2b"
   calendar-paper: "#fbf7ec"
 typography:
@@ -54,7 +56,10 @@ typography:
     fontWeight: 650
     letterSpacing: "0.07em"
 rounded:
+  hair: "2px"
+  xs: "6px"
   s: "8px"
+  control: "12px"
   m: "14px"
   l: "20px"
   pill: "999px"
@@ -98,7 +103,7 @@ components:
   field-input:
     backgroundColor: "{colors.rehearsal-paper}"
     textColor: "{colors.ink}"
-    rounded: "10px"
+    rounded: "{rounded.control}"
     padding: "9px 12px"
   section-label:
     textColor: "{colors.ink-muted}"
@@ -132,7 +137,7 @@ The whole system is themeable per orchestra. Bachkreis-Gold is the Bachkreis pre
 A nearly neutral, slightly warm paper page with ink-dark text, and the orchestra's accent as the only colour that speaks.
 
 ### Primary
-- **Bachkreis-Gold** (#e6b422): the orchestra's brand colour as configured (`--brand`). It's used at full strength only where it sits on dark: as the accent in dark mode, as the heading and eyebrow on the black story card, and in the logo. On the light page it's too pale for text.
+- **Bachkreis-Gold** (#e6b422): the orchestra's brand colour as configured (`--brand`). It's used at full strength only where it sits on dark: as the accent in dark mode, as the greeting on the black story card, and in the logo. On the light page it's too pale for text.
 - **Bachkreis-Gold, deep** (#815c09): the shade derived for the light page (`--accent`), darkened just enough for 4.5:1 on paper and under white text. It's used for primary buttons, links in action rows, focus rings, the active tab, and concert date blocks.
 - **Soft gold tint** (the brand mixed at 22% light / 16% dark into transparent, `--accent-soft`): the background for the current tab's pill, secondary buttons, note boxes and the demo banner.
 
@@ -142,7 +147,7 @@ A nearly neutral, slightly warm paper page with ink-dark text, and the orchestra
 - **Stand Grey** (#eeede8): a second surface for tracks (segmented control), pressed rows and hover.
 - **Pencil Line** (#e0ded7): borders. Hairlines are this colour at 75% strength.
 - **Ink** (#161512) and **Ink, muted** (#625e55): text and secondary text. Muted text keeps 4.5:1 on the paper, on white and on the soft gold tint.
-- **Night Stage** (#0b0b0a), **Night Surface** (#161513), **Night Surface, raised** (#201e1b), **Night Line** (#2c2924), **Night Ink** (#f2eee4), **Night Ink, muted** (#a9a293): the same roles in dark mode. Poster Black (#0b0b0a) is also the ink on gold buttons in dark mode and the story card's background in both modes.
+- **Night Stage** (#0b0b0a), **Night Surface** (#161513), **Night Surface, raised** (#201e1b), **Night Line** (#2c2924), **Night Ink** (#f2eee4), **Night Ink, muted** (#a9a293): the same roles in dark mode. **Night Surface, lifted** (#3a362f, `--surface-lifted`) is for a thumb or knob that must stand off its track in dark mode; in light it's Sheet White. **Scrim** (black at 35%, `--scrim`) dims the page behind dialogs, the search sheet and menus. Poster Black (#0b0b0a) is also the ink on gold buttons in dark mode and the story card's background in both modes.
 
 ### Status
 - **OK** (#2a7548 / night #4fae78), **Warn** (#8f5c0a / night #c98a2c), **Danger** (#b8342a / night #e8695c): answers, missing parts and errors. Each keeps 4.5:1 as text on every surface in its scheme. Messages use them as a 10–12% tint behind normal text, not as large fills.
@@ -172,7 +177,9 @@ A nearly neutral, slightly warm paper page with ink-dark text, and the orchestra
 ### Named Rules
 **The Two Voices Rule.** The condensed face speaks only in page titles and the story card. Buttons, lists, labels and body text always use the system sans.
 
-**The Readable Floor Rule.** Everything is in rem so the text size setting reaches it. Text people need to read stays at 0.75rem or larger. The current 0.6875rem date-block and meta labels are below that and are meant to be raised.
+**The Readable Floor Rule.** Everything is in rem so the text size setting reaches it. Nothing anyone reads is smaller than `--text-2xs` (0.75rem). The tab bar labels are the one place held at that floor (12px) at every text size, so five still fit side by side.
+
+**The One Scale Rule.** Every font size is a token from `src/app.css`, never a literal: `--text-2xs` 0.75, `--text-xs` 0.8125, `--text-sm` 0.875, `--text-md` 0.9375, `--text-base` 1, `--text-lg` 1.125, `--text-xl` 1.25, `--text-2xl` 1.5, `--text-3xl` 2, `--text-4xl` 2.25 (rem), plus the fluid `--text-display`, `--text-headline` and `--text-date` for the condensed face. Labels and meta use 2xs–sm, body and controls md–base, card titles lg–xl, big numbers 2xl–4xl. The only exceptions are SVG text drawn in a viewBox's own units and the print programme, which is set in pt.
 
 ## Layout
 
@@ -200,7 +207,7 @@ The system is a light hybrid: a hairline border carries the shape, and a soft, w
 
 ## Shapes
 
-Generous, friendly curves throughout. There are three radii: small (8px) for focus rings and small chips, medium (14px) for messages, note boxes and inner panels, and large (20px) for cards and lists. Buttons, the active tab's pill and badges are full pills (999px). Fields sit between medium and small at 10px. Date blocks use 12px and segmented-control thumbs 9px.
+Generous, friendly curves throughout, from one scale of tokens and never a literal: hair (2px) for marks in charts, xs (6px) for small tags and swatches, s (8px) for focus rings, segmented-control thumbs and small chips, control (12px) for fields, answer buttons, date blocks and icon tiles, m (14px) for messages, note boxes and inner panels, and l (20px) for cards and lists. Buttons, the active tab's pill and badges are full pills (`--radius-pill`), and avatars and dots are circles (50%).
 
 Borders are always 1px hairlines in Pencil Line, never heavy outlines. Disclosure sections use a drawn chevron (a 2px corner rotated −45° to 45°) instead of an icon font.
 
@@ -229,7 +236,7 @@ Calm, round and thumb-sized. They're quiet until touched.
 - **Inset lists:** the same shell with hairlines between rows instead of padding. A pressed row turns Stand Grey at once, before the next page loads.
 
 ### Inputs / Fields
-- **Style:** a 1px Pencil Line border, a 10px radius, a Rehearsal Paper fill (set into the white card), and 9px × 12px padding at 0.9375rem. The label sits above in 0.8125rem 600 muted text.
+- **Style:** a 1px Pencil Line border, the control radius (12px), a Rehearsal Paper fill (set into the white card), and 9px × 12px padding at 0.9375rem. The label sits above in 0.8125rem 600 muted text.
 - **Focus:** a 2px accent outline with a 1px offset. Search boxes move the ring to their wrapper (`:focus-within`).
 - **Messages:** OK and error messages are rounded 14px bands with a 10–12% status tint. Info messages use a dashed hairline with muted text.
 
@@ -239,10 +246,13 @@ Calm, round and thumb-sized. They're quiet until touched.
 - **Segmented control:** a Stand Grey track with a white thumb that slides under the active option (a lifted tone in dark mode).
 
 ### Date block (signature)
-A 52px column with the weekday, day number and month stacked in a rounded 12px block, tinted with the event type's tone. Concerts get the full accent fill with contrast text. It's the app's most repeated mark: every list of dates starts with it.
+A 52px column with the weekday, day number and month stacked in a block with the control radius (12px), tinted with the event type's tone. Concerts get the full accent fill with contrast text. It's the app's most repeated mark: every list of dates starts with it.
 
 ### Story card (signature)
-The start page's greeting is always on Poster Black, in both schemes. The eyebrow and the greeting are in the brand colour at full strength, and the orchestra's logo sits large and dim (20% opacity) behind it, bleeding off the right edge. It's the one place the poster speaks loudly. On phones it stays short so the next date is still on the first screen.
+The start page's greeting is always on Poster Black, in both schemes, with a hairline edge so it holds its shape on the dark page. The greeting is in the brand colour at full strength, with no eyebrow above it, and the orchestra's logo sits large and dim (20% opacity) behind it, bleeding off the right edge. It's the one place the poster speaks loudly. On phones it stays short so the next date is still on the first screen.
+
+### Answer dock (signature)
+On phones the start page reads at the top and acts at the bottom. The next date's question ("Bist du am Samstag dabei?"), its three answer buttons and a full-width "Meine Noten · <instrument>" button sit in a frosted dock fixed right above the tab bar, in thumb reach. Once answered, it shrinks to one line, and the whole band takes the answer's colour (green, amber or red, at about 15% over the page), with "ändern" on the right. When the next date's card scrolls out of view, the dock slides away, because its answers belong to that date. Toasts rise above it (`--dock-height`). On desktop the same controls sit inside the card. Later dates never get their own answer buttons on the start page, only an answer line that links to the date.
 
 ### Calendar month (signature)
 The month view is a velvet board with paper stickers for rehearsals, the Generalprobe and concerts, each carrying the logo. It's the app's one skeuomorphic moment and stays inside the calendar.
@@ -263,4 +273,5 @@ The month view is a velvet board with paper stickers for rehearsals, the General
 - **Don't** add thick one-sided colour stripes to cards or chips. Use a tint, a full hairline or a small dot to mark a type.
 - **Don't** set readable text below 0.75rem, or in px where it should follow the text size setting.
 - **Don't** nest a shadowed card inside a shadowed card.
-- **Don't** use bouncy or elastic easing. The one spring in the segmented control is the exception being phased out, not a pattern.
+- **Don't** use bouncy or elastic easing. Every transition, the segmented control's thumb included, runs on the one curve.
+- **Don't** write a colour, size or radius as a literal in a component. Use the tokens in `src/app.css`; the tuner and metronome drawings, which paint their own wood, brass and dial, are the only exception.

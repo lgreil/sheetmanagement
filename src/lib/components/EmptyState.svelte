@@ -28,13 +28,13 @@
 		place-items: center;
 		width: 56px;
 		height: 56px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
 
 	.soon {
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;

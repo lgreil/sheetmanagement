@@ -33,10 +33,10 @@
 		gap: var(--space-3);
 		max-width: 32rem;
 		padding: var(--space-3) var(--space-3) var(--space-3) var(--space-4);
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--text);
 		color: var(--bg);
-		box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+		box-shadow: var(--shadow-raised);
 		pointer-events: auto;
 		animation: rise 0.2s ease-out;
 	}
@@ -46,7 +46,7 @@
 		flex: none;
 		padding: var(--space-1);
 		border: none;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: transparent;
 		color: inherit;
 		cursor: pointer;
@@ -60,7 +60,7 @@
 	/* Above the bottom navigation on phones. */
 	@media (max-width: 720px) {
 		.region {
-			bottom: calc(var(--tabbar-height) + env(safe-area-inset-bottom) + var(--space-3));
+			bottom: calc(var(--tabbar-height) + var(--dock-height, 0px) + env(safe-area-inset-bottom) + var(--space-3));
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {

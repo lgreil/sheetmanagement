@@ -27,7 +27,7 @@
 		padding: var(--space-2) var(--space-4);
 		background: var(--accent-soft);
 		color: var(--text);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.label {
@@ -47,7 +47,7 @@
 	.roles {
 		display: inline-flex;
 		padding: 2px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		box-shadow: inset 0 0 0 1px var(--border);
 	}
@@ -57,7 +57,7 @@
 		min-height: 28px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;

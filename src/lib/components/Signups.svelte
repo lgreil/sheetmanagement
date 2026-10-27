@@ -125,7 +125,7 @@
 	.coverage summary {
 		flex-wrap: wrap;
 		column-gap: var(--space-3);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.coverage[open] summary {
@@ -134,17 +134,17 @@
 
 	.summary {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 400;
 	}
 
 	h3 {
 		margin: var(--space-3) 0 var(--space-1);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.details {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.details summary {
@@ -178,7 +178,7 @@
 	.muted {
 		margin: 0 0 var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.sections,
@@ -195,7 +195,7 @@
 		grid-template-columns: minmax(90px, 140px) 1fr auto;
 		align-items: center;
 		gap: 2px var(--space-3);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.label {
@@ -214,7 +214,7 @@
 		display: flex;
 		height: 8px;
 		overflow: hidden;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 	}
 
@@ -249,7 +249,7 @@
 		gap: 0 var(--space-3);
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.kind {
@@ -262,6 +262,6 @@
 
 	.comments {
 		gap: var(--space-1);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 </style>

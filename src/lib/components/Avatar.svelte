@@ -22,7 +22,7 @@
 		flex: none;
 		width: var(--size);
 		height: var(--size);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
 		font-size: calc(var(--size) * 0.4);

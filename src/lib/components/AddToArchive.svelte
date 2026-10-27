@@ -65,12 +65,12 @@
 	}
 
 	h2 {
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.lead {
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.actions {

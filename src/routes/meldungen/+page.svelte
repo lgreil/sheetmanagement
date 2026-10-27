@@ -128,12 +128,12 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.placeholder code {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
 		user-select: all;
 	}
@@ -147,7 +147,7 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.recording {
@@ -165,7 +165,7 @@
 		gap: var(--space-2);
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -173,7 +173,7 @@
 
 	.count {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		letter-spacing: 0;
 	}
@@ -218,7 +218,7 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		overflow-wrap: anywhere;
 	}
 
@@ -233,10 +233,10 @@
 		align-items: center;
 		gap: 4px;
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--ok) 12%, transparent);
 		color: var(--ok);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 

@@ -245,7 +245,7 @@
 	.ring {
 		position: fixed;
 		z-index: 15;
-		border-radius: 14px;
+		border-radius: var(--radius-m);
 		box-shadow:
 			0 0 0 3px var(--accent),
 			0 0 0 9px var(--accent-soft);
@@ -282,7 +282,7 @@
 		gap: var(--space-1);
 		margin: 0;
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.07em;
 		text-transform: uppercase;
@@ -290,7 +290,7 @@
 
 	h2 {
 		margin: 0;
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.card:focus,
@@ -304,7 +304,7 @@
 
 	#tour-text {
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.dots {
@@ -316,7 +316,7 @@
 	.dots span {
 		width: 6px;
 		height: 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--border);
 		transition:
 			width var(--fast) var(--ease),
@@ -346,7 +346,7 @@
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-decoration: underline;
 		text-underline-offset: 3px;
 		cursor: pointer;
