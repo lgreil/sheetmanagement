@@ -441,7 +441,7 @@
 		gap: var(--space-2);
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -450,7 +450,7 @@
 	h3 {
 		grid-column: 1 / -1;
 		margin: 0;
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.section-head {
@@ -473,7 +473,7 @@
 
 	.count {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		letter-spacing: 0;
 	}
@@ -514,13 +514,13 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		overflow-wrap: anywhere;
 	}
 
 	.small {
 		margin: 0 0 var(--space-2) var(--space-1);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.tags {
@@ -531,10 +531,10 @@
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -587,10 +587,10 @@
 		gap: var(--space-1);
 		min-height: 40px;
 		padding: 0 var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		list-style: none;
 		cursor: pointer;
@@ -627,14 +627,14 @@
 	.fold > summary h2 {
 		margin: 0;
 		color: var(--text);
-		font-size: 1rem;
+		font-size: var(--text-base);
 		letter-spacing: 0;
 		text-transform: none;
 	}
 
 	.fold > summary .count {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.fold .list {
@@ -654,10 +654,10 @@
 	.hint {
 		margin-left: var(--space-2);
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -684,10 +684,10 @@
 	.status-tag {
 		justify-self: start;
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -724,7 +724,7 @@
 		align-self: auto;
 		color: var(--text);
 		font-weight: 400;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.role-add .rights {
@@ -742,7 +742,7 @@
 		margin-bottom: var(--space-1);
 		padding: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -765,7 +765,7 @@
 
 	.caption {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -777,7 +777,7 @@
 	.link-row input {
 		flex: 1;
 		font-family: ui-monospace, monospace;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.link-actions {
@@ -805,7 +805,7 @@
 	}
 
 	.erase h3 {
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.erase p {
@@ -818,7 +818,7 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.erase li {
@@ -849,7 +849,7 @@
 	}
 
 	.small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	label.check {
@@ -868,7 +868,7 @@
 		display: grid;
 		gap: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -877,11 +877,11 @@
 		height: 40px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 400;
 		min-width: 0;
 	}
@@ -901,9 +901,9 @@
 		gap: var(--space-1);
 		height: 36px;
 		padding: 0 var(--space-4);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}

@@ -109,7 +109,7 @@
 	h2 {
 		margin-left: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -120,14 +120,14 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 	}
 
 	.lead {
 		margin: 0 0 var(--space-3) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.gaps {
@@ -143,7 +143,7 @@
 
 	table {
 		border-collapse: collapse;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	th,
@@ -174,7 +174,7 @@
 	.piece .muted {
 		display: block;
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 400;
 	}
 
@@ -230,7 +230,7 @@
 		padding: 0;
 		list-style: none;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.legend li {
@@ -244,6 +244,6 @@
 		place-items: center;
 		min-width: 22px;
 		height: 22px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 	}
 </style>

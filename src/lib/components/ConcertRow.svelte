@@ -54,27 +54,27 @@
 		width: 52px;
 		min-height: 48px;
 		padding: var(--space-1) 0;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--accent-soft);
 		color: var(--accent);
 		line-height: 1.15;
 	}
 
 	.day {
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 		font-weight: 700;
 	}
 
 	.month,
 	.year {
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
 	}
 
 	.year-only .year {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 700;
 	}
 
@@ -92,7 +92,7 @@
 
 	.meta {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.meta:empty {

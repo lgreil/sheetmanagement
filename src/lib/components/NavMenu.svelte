@@ -34,8 +34,10 @@
 	 */
 	function trap(panel: HTMLElement) {
 		const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-		const focusable = () => [...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select')];
-		(panel.querySelector<HTMLElement>('[aria-current="page"]') ?? focusable()[0])?.focus({ preventScroll: true });
+		// Only what is shown: on phones the tab bar's pages are hidden here.
+		const focusable = () =>
+			[...panel.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select')].filter((item) => item.checkVisibility());
+		(focusable().find((item) => item.getAttribute('aria-current') === 'page') ?? focusable()[0])?.focus({ preventScroll: true });
 		const keep = (event: KeyboardEvent) => {
 			if (event.key !== 'Tab') return;
 			const items = focusable();
@@ -67,11 +69,12 @@
 	<div class="panel" id="nav-menu" role="dialog" aria-modal="true" aria-label={t.nav.menu} use:trap transition:fly={{ y: 10, duration: 200, opacity: 0 }}>
 		<div class="groups">
 			{#each groups as group (group.key)}
-				<section>
+				<!-- On phones the tab bar has the primary pages: the sheet lists only the others. -->
+				<section class:in-tabbar={group.items.every((item) => item.primary)}>
 					<h2>{group.label}</h2>
 					<ul>
 						{#each group.items as item (item.href)}
-							<li>
+							<li class:in-tabbar={item.primary}>
 								<a
 									href={item.href}
 									class:active={item.href === current}
@@ -116,7 +119,7 @@
 		inset: 0;
 		z-index: 20;
 		border: 0;
-		background: rgb(0 0 0 / 0.22);
+		background: var(--scrim);
 		backdrop-filter: blur(2px);
 		-webkit-backdrop-filter: blur(2px);
 		cursor: default;
@@ -148,7 +151,7 @@
 	h2 {
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.07em;
 		text-transform: uppercase;
@@ -169,7 +172,7 @@
 		min-height: 40px;
 		padding: var(--space-1) var(--space-2);
 		margin: 0 calc(-1 * var(--space-2));
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		font-weight: 500;
 		transition: background var(--fast) var(--ease);
 	}
@@ -214,7 +217,7 @@
 	.who-text span {
 		overflow: hidden;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
@@ -233,11 +236,11 @@
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -260,6 +263,10 @@
 
 		.groups {
 			gap: var(--space-4);
+		}
+
+		.in-tabbar {
+			display: none;
 		}
 	}
 </style>

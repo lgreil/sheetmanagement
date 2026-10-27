@@ -1,0 +1,611 @@
+{
+	"schemaVersion": 2,
+	"generatedAt": "2026-10-27T18:31:14.051Z",
+	"title": "Design System: Sheetmanagement",
+	"extensions": {
+		"colorMeta": {
+			"bachkreis-gold": {
+				"role": "primary",
+				"displayName": "Bachkreis-Gold",
+				"canonical": "#e6b422",
+				"tonalRamp": [
+					"#1a0500",
+					"#3e1900",
+					"#623400",
+					"#825400",
+					"#a77700",
+					"#c99e24",
+					"#e4c784",
+					"#f8eed7"
+				],
+				"purpose": "The orchestra brand colour; full strength only on dark."
+			},
+			"bachkreis-gold-deep": {
+				"role": "primary",
+				"displayName": "Bachkreis-Gold, deep",
+				"canonical": "color-mix(in oklab, #e6b422 44%, #3a1f00)",
+				"tonalRamp": [
+					"#170700",
+					"#391d00",
+					"#5b3800",
+					"#7b5600",
+					"#9f7931",
+					"#c29f62",
+					"#dfc79f",
+					"#f6eddf"
+				],
+				"purpose": "Derived for the light page: buttons, links, focus, active tab."
+			},
+			"poster-black": {
+				"role": "neutral",
+				"displayName": "Poster Black",
+				"canonical": "#0b0b0a",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#242423",
+					"#40403e",
+					"#5e5e5c",
+					"#80807f",
+					"#a5a5a3",
+					"#cacac9",
+					"#eeeeee"
+				],
+				"purpose": "Story card background; ink on gold buttons in dark."
+			},
+			"rehearsal-paper": {
+				"role": "neutral",
+				"displayName": "Rehearsal Paper",
+				"canonical": "#f4f4f1",
+				"tonalRamp": [
+					"#0b0b0a",
+					"#242422",
+					"#40403d",
+					"#5e5e5b",
+					"#80807e",
+					"#a5a5a2",
+					"#cacac9",
+					"#eeeeee"
+				],
+				"purpose": "Light page and field background."
+			},
+			"sheet-white": {
+				"role": "neutral",
+				"displayName": "Sheet White",
+				"canonical": "#ffffff",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#242424",
+					"#404040",
+					"#5d5d5d",
+					"#808080",
+					"#a4a4a4",
+					"#cacaca",
+					"#eeeeee"
+				],
+				"purpose": "Cards, lists, dialogs."
+			},
+			"stand-grey": {
+				"role": "neutral",
+				"displayName": "Stand Grey",
+				"canonical": "#eeede8",
+				"tonalRamp": [
+					"#0c0b09",
+					"#252421",
+					"#41403c",
+					"#5e5e59",
+					"#81807c",
+					"#a5a5a0",
+					"#cbcac8",
+					"#efeeed"
+				],
+				"purpose": "Tracks, pressed rows, hover."
+			},
+			"pencil-line": {
+				"role": "neutral",
+				"displayName": "Pencil Line",
+				"canonical": "#e0ded7",
+				"tonalRamp": [
+					"#0c0b09",
+					"#252420",
+					"#41403a",
+					"#5f5e58",
+					"#82807a",
+					"#a6a59f",
+					"#cccac6",
+					"#efeeed"
+				],
+				"purpose": "Borders and hairlines."
+			},
+			"ink": {
+				"role": "neutral",
+				"displayName": "Ink",
+				"canonical": "#161512",
+				"tonalRamp": [
+					"#0c0b0a",
+					"#252421",
+					"#41403c",
+					"#5f5d5a",
+					"#81807c",
+					"#a6a4a1",
+					"#cbcac8",
+					"#efeeed"
+				],
+				"purpose": "Text."
+			},
+			"ink-muted": {
+				"role": "neutral",
+				"displayName": "Ink, muted",
+				"canonical": "#625e55",
+				"tonalRamp": [
+					"#0d0b07",
+					"#27241d",
+					"#433f37",
+					"#615d54",
+					"#848076",
+					"#a8a49b",
+					"#cdcac4",
+					"#efeeec"
+				],
+				"purpose": "Secondary text."
+			},
+			"ok": {
+				"role": "status",
+				"displayName": "OK",
+				"canonical": "#2a7548",
+				"tonalRamp": [
+					"#001102",
+					"#002f0e",
+					"#004f24",
+					"#226e42",
+					"#499263",
+					"#76b68a",
+					"#add7b9",
+					"#e4f3e8"
+				],
+				"purpose": "Positive answers and success."
+			},
+			"warn": {
+				"role": "status",
+				"displayName": "Warn",
+				"canonical": "#8f5c0a",
+				"tonalRamp": [
+					"#1a0500",
+					"#3e1800",
+					"#623200",
+					"#835100",
+					"#a9742d",
+					"#cb9a5f",
+					"#e6c49d",
+					"#f9ecdf"
+				],
+				"purpose": "Missing answers and parts."
+			},
+			"danger": {
+				"role": "status",
+				"displayName": "Danger",
+				"canonical": "#b8342a",
+				"tonalRamp": [
+					"#280000",
+					"#560000",
+					"#830000",
+					"#a9241c",
+					"#d34d41",
+					"#f47c6d",
+					"#ffb2a5",
+					"#ffe6e1"
+				],
+				"purpose": "Errors and declines."
+			},
+			"night-stage": {
+				"role": "neutral",
+				"displayName": "Night Stage",
+				"canonical": "#0b0b0a",
+				"tonalRamp": [
+					"#0b0b0b",
+					"#242423",
+					"#40403e",
+					"#5e5e5c",
+					"#80807f",
+					"#a5a5a3",
+					"#cacac9",
+					"#eeeeee"
+				],
+				"purpose": "Dark page."
+			},
+			"night-surface": {
+				"role": "neutral",
+				"displayName": "Night Surface",
+				"canonical": "#161513",
+				"tonalRamp": [
+					"#0c0b0a",
+					"#252422",
+					"#41403d",
+					"#5f5d5b",
+					"#81807d",
+					"#a6a4a2",
+					"#cbcac9",
+					"#efeeee"
+				],
+				"purpose": "Dark cards."
+			},
+			"night-surface-raised": {
+				"role": "neutral",
+				"displayName": "Night Surface, raised",
+				"canonical": "#201e1b",
+				"tonalRamp": [
+					"#0c0b09",
+					"#252421",
+					"#423f3c",
+					"#605d5a",
+					"#82807c",
+					"#a6a4a1",
+					"#cccac8",
+					"#efeeed"
+				],
+				"purpose": "Dark second surface."
+			},
+			"night-line": {
+				"role": "neutral",
+				"displayName": "Night Line",
+				"canonical": "#2c2924",
+				"tonalRamp": [
+					"#0c0b09",
+					"#26241f",
+					"#423f3a",
+					"#605d57",
+					"#83807a",
+					"#a7a49e",
+					"#cccac6",
+					"#efeeed"
+				],
+				"purpose": "Dark borders."
+			},
+			"night-ink": {
+				"role": "neutral",
+				"displayName": "Night Ink",
+				"canonical": "#f2eee4",
+				"tonalRamp": [
+					"#0c0b08",
+					"#26241e",
+					"#433f37",
+					"#615d55",
+					"#838077",
+					"#a8a49c",
+					"#cdcac5",
+					"#efeeec"
+				],
+				"purpose": "Dark text."
+			},
+			"night-ink-muted": {
+				"role": "neutral",
+				"displayName": "Night Ink, muted",
+				"canonical": "#a9a293",
+				"tonalRamp": [
+					"#0e0b06",
+					"#282319",
+					"#453f32",
+					"#635d4f",
+					"#868071",
+					"#aaa497",
+					"#cecac1",
+					"#f0eeeb"
+				],
+				"purpose": "Dark secondary text."
+			},
+			"night-ok": {
+				"role": "status",
+				"displayName": "OK (night)",
+				"canonical": "#4fae78",
+				"tonalRamp": [
+					"#001201",
+					"#00310b",
+					"#005122",
+					"#00713f",
+					"#339561",
+					"#68b988",
+					"#a5d9b7",
+					"#e2f4e7"
+				],
+				"purpose": "Positive answers in dark."
+			},
+			"night-warn": {
+				"role": "status",
+				"displayName": "Warn (night)",
+				"canonical": "#c98a2c",
+				"tonalRamp": [
+					"#1c0300",
+					"#421500",
+					"#672e00",
+					"#894e00",
+					"#af7100",
+					"#d1984c",
+					"#eac393",
+					"#faecdb"
+				],
+				"purpose": "Missing answers in dark."
+			},
+			"night-danger": {
+				"role": "status",
+				"displayName": "Danger (night)",
+				"canonical": "#e8695c",
+				"tonalRamp": [
+					"#260000",
+					"#540000",
+					"#800000",
+					"#a52a24",
+					"#ce5247",
+					"#f07f71",
+					"#ffb3a8",
+					"#ffe7e2"
+				],
+				"purpose": "Errors in dark."
+			},
+			"night-surface-lifted": {
+				"role": "neutral",
+				"displayName": "Night Surface, lifted",
+				"canonical": "#3a362f",
+				"tonalRamp": [
+					"#0d0b08",
+					"#27241e",
+					"#433f38",
+					"#615d55",
+					"#848078",
+					"#a8a49d",
+					"#cdcac5",
+					"#efeeec"
+				],
+				"purpose": "A thumb or knob standing off its track in dark."
+			},
+			"scrim": {
+				"role": "neutral",
+				"displayName": "Scrim",
+				"canonical": "rgb(0 0 0 / 0.35)",
+				"purpose": "Dims the page behind dialogs, search and menus."
+			},
+			"calendar-velvet": {
+				"role": "signature",
+				"displayName": "Calendar Velvet",
+				"canonical": "#8c1c2b",
+				"tonalRamp": [
+					"#240001",
+					"#500008",
+					"#7b031d",
+					"#9f303a",
+					"#c8565c",
+					"#eb8183",
+					"#feb4b4",
+					"#ffe7e6"
+				],
+				"purpose": "Month-view board only."
+			},
+			"calendar-paper": {
+				"role": "signature",
+				"displayName": "Calendar Paper",
+				"canonical": "#fbf7ec",
+				"tonalRamp": [
+					"#0c0b07",
+					"#26241d",
+					"#434037",
+					"#615d54",
+					"#848076",
+					"#a8a49b",
+					"#cdcac4",
+					"#efeeec"
+				],
+				"purpose": "Month-view stickers only."
+			}
+		},
+		"typographyMeta": {
+			"display": {
+				"displayName": "Display",
+				"purpose": "Each page h1, in the condensed poster face."
+			},
+			"headline": {
+				"displayName": "Headline",
+				"purpose": "The greeting on the start page story card only."
+			},
+			"title": {
+				"displayName": "Title",
+				"purpose": "Section and card headings."
+			},
+			"body": {
+				"displayName": "Body",
+				"purpose": "All reading text; follows the text size setting."
+			},
+			"label": {
+				"displayName": "Label",
+				"purpose": "Uppercase section labels above lists."
+			}
+		},
+		"shadows": [
+			{
+				"name": "resting",
+				"value": "0 1px 2px rgb(0 0 0 / 0.04), 0 6px 20px rgb(0 0 0 / 0.05)",
+				"purpose": "Cards and inset lists (light)."
+			},
+			{
+				"name": "resting-dark",
+				"value": "0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px rgb(0 0 0 / 0.25)",
+				"purpose": "Cards and inset lists (dark)."
+			},
+			{
+				"name": "raised",
+				"value": "0 2px 6px rgb(0 0 0 / 0.06), 0 18px 48px rgb(0 0 0 / 0.12)",
+				"purpose": "Dialogs, search sheet, tour, menus (light)."
+			},
+			{
+				"name": "raised-dark",
+				"value": "0 2px 6px rgb(0 0 0 / 0.4), 0 18px 48px rgb(0 0 0 / 0.5)",
+				"purpose": "Dialogs and overlays (dark)."
+			}
+		],
+		"motion": [
+			{
+				"name": "ease",
+				"value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+				"purpose": "The one curve for every transition."
+			},
+			{
+				"name": "fast",
+				"value": "0.15s",
+				"purpose": "State changes: press, hover, tab pill."
+			},
+			{
+				"name": "page-out",
+				"value": "0.12s",
+				"purpose": "The old page fades out."
+			},
+			{
+				"name": "page-in",
+				"value": "0.24s",
+				"purpose": "The new page fades in and rises 8px."
+			},
+			{
+				"name": "unfold",
+				"value": "0.25s",
+				"purpose": "Details sections open to auto height."
+			}
+		],
+		"breakpoints": [
+			{
+				"name": "compact-header",
+				"value": "960px"
+			},
+			{
+				"name": "tabbar",
+				"value": "720px"
+			},
+			{
+				"name": "reflow-md",
+				"value": "640px"
+			},
+			{
+				"name": "reflow-sm",
+				"value": "560px"
+			},
+			{
+				"name": "reflow-xs",
+				"value": "480px"
+			}
+		]
+	},
+	"components": [
+		{
+			"name": "Primary Button",
+			"kind": "button",
+			"refersTo": "button-primary-touch",
+			"description": "The one main action of an area.",
+			"html": "<button class=\"ds-btn\">Ich komme</button>",
+			"css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:4px;height:44px;padding:0 24px;border:0;border-radius:999px;background:var(--accent,#815c09);color:var(--accent-contrast,#fff);font:600 0.875rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;cursor:pointer;transition:transform .15s cubic-bezier(.2,.8,.2,1),filter .15s cubic-bezier(.2,.8,.2,1)}.ds-btn:hover{filter:brightness(1.06)}.ds-btn:active{transform:scale(.97)}.ds-btn:focus-visible{outline:2px solid var(--accent,#815c09);outline-offset:2px}"
+		},
+		{
+			"name": "Secondary Button",
+			"kind": "button",
+			"refersTo": "button-secondary",
+			"description": "The quieter action next to the primary one.",
+			"html": "<button class=\"ds-btn-secondary\">Offline speichern</button>",
+			"css": ".ds-btn-secondary{display:inline-flex;align-items:center;height:44px;padding:0 24px;border:0;border-radius:999px;background:var(--accent-soft,color-mix(in oklab,#e6b422 22%,transparent));color:var(--accent,#815c09);font:600 0.875rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;cursor:pointer;transition:transform .15s cubic-bezier(.2,.8,.2,1)}.ds-btn-secondary:active{transform:scale(.97)}.ds-btn-secondary:focus-visible{outline:2px solid var(--accent,#815c09);outline-offset:2px}"
+		},
+		{
+			"name": "Ghost Button",
+			"kind": "button",
+			"refersTo": "button-ghost",
+			"description": "Neutral actions such as Abbrechen.",
+			"html": "<button class=\"ds-btn-ghost\">Abbrechen</button>",
+			"css": ".ds-btn-ghost{display:inline-flex;align-items:center;height:44px;padding:0 24px;border:1px solid var(--border,#e0ded7);border-radius:999px;background:none;color:var(--text,#161512);font:600 0.875rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;cursor:pointer;transition:background .15s cubic-bezier(.2,.8,.2,1)}.ds-btn-ghost:hover{background:var(--surface-2,#eeede8)}.ds-btn-ghost:focus-visible{outline:2px solid var(--accent,#815c09);outline-offset:2px}"
+		},
+		{
+			"name": "Field",
+			"kind": "input",
+			"refersTo": "field-input",
+			"description": "A labelled text field set into a card.",
+			"html": "<label class=\"ds-field\">Name<input value=\"Mia Muster\"></label>",
+			"css": ".ds-field{display:grid;gap:4px;color:var(--text-muted,#625e55);font:600 0.8125rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input{padding:9px 12px;border:1px solid var(--border,#e0ded7);border-radius:var(--radius-control,12px);background:var(--bg,#f4f4f1);color:var(--text,#161512);font:400 0.9375rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-field input:focus{outline:2px solid var(--accent,#815c09);outline-offset:1px}"
+		},
+		{
+			"name": "Card with label",
+			"kind": "card",
+			"refersTo": "card",
+			"description": "A section: a small uppercase label, then a white card.",
+			"html": "<section><p class=\"ds-label\">Nächste Probe</p><div class=\"ds-card\"><strong>Probe Herbstkonzert</strong><br>Sa 31. Okt · 10:00 – 13:00 · Aula</div></section>",
+			"css": ".ds-label{margin:0 0 8px 4px;color:var(--text-muted,#625e55);font:650 0.75rem ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;letter-spacing:.07em;text-transform:uppercase}.ds-card{padding:24px;border:1px solid color-mix(in oklab,var(--border,#e0ded7) 75%,transparent);border-radius:20px;background:var(--surface,#fff);box-shadow:0 1px 2px rgb(0 0 0/.04),0 6px 20px rgb(0 0 0/.05);color:var(--text,#161512);font:400 1rem/1.5 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}"
+		},
+		{
+			"name": "Date block",
+			"kind": "custom",
+			"refersTo": "date-block",
+			"description": "The signature mark at the start of every date row; concerts are filled with the accent.",
+			"html": "<div class=\"ds-dates\"><span class=\"ds-date\"><small>Sa</small><b>31</b><small>Okt</small></span><span class=\"ds-date ds-concert\"><small>So</small><b>22</b><small>Nov</small></span></div>",
+			"css": ".ds-dates{display:flex;gap:12px}.ds-date{display:grid;justify-items:center;width:52px;padding:4px 0;border-radius:12px;background:color-mix(in oklab,var(--text-muted,#625e55) 12%,transparent);color:var(--text-muted,#625e55);line-height:1.1;font-family:ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif}.ds-date small{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.04em}.ds-date b{font-size:1.375rem}.ds-concert{background:var(--accent,#815c09);color:var(--accent-contrast,#fff)}"
+		},
+		{
+			"name": "Tab bar",
+			"kind": "nav",
+			"refersTo": "tabbar",
+			"description": "Phone navigation below 720px; the current place sits on a soft gold pill.",
+			"html": "<nav class=\"ds-tabbar\"><a class=\"on\" href=\"#\" aria-current=\"page\"><span class=\"pill\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z\"/></svg></span>Übersicht</a><a href=\"#\"><span class=\"pill\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M6 3h12v18l-6-4-6 4z\"/></svg></span>Meine Noten</a><a href=\"#\"><span class=\"pill\"><svg width=\"22\" height=\"22\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M3 10h18M8 3v4M16 3v4\"/></svg></span>Kalender</a></nav>",
+			"css": ".ds-tabbar{display:grid;grid-template-columns:repeat(3,1fr);height:64px;background:color-mix(in oklab,var(--bg,#f4f4f1) 94%,transparent);backdrop-filter:saturate(1.6) blur(20px);border-top:1px solid color-mix(in oklab,var(--border,#e0ded7) 75%,transparent)}.ds-tabbar a{display:grid;justify-items:center;align-content:center;gap:2px;color:var(--text-muted,#625e55);font:500 11.5px ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;text-decoration:none}.ds-tabbar .pill{display:grid;place-items:center;width:56px;height:30px;border-radius:999px;transition:background .15s cubic-bezier(.2,.8,.2,1)}.ds-tabbar a.on{color:var(--accent,#815c09);font-weight:650}.ds-tabbar a.on .pill{background:var(--accent-soft,color-mix(in oklab,#e6b422 22%,transparent))}.ds-tabbar a:focus-visible{outline:2px solid var(--accent,#815c09);outline-offset:2px;border-radius:8px}"
+		}
+	],
+	"narrative": {
+		"northStar": "The Stand Folder",
+		"overview": "Every player has a folder on the music stand: their parts, the dates, a pencilled note from the last rehearsal. The app is that folder on the phone. It's quiet and practical, and everything for *my* part is within reach of a thumb. The orchestra's colour is the tab on the folder: it marks where to look and what to press, and it isn't wallpaper. The next date, the answer and one's own part come first. Organisers' tools sit further back and use the same materials.\n\nThe density is calm, not sparse. White cards lie on a nearly neutral paper page, lists are inset with hairlines between rows, and there's one primary action per area. The poster world of the Bachkreis (black and gold, the condensed heading face, the logo large and dim behind the greeting) shows up in a few chosen places: page titles, the dark story card on the start page, and the date blocks of concerts. The rest stays out of the way.\n\nThe whole system is themeable per orchestra. Bachkreis-Gold is the Bachkreis preset's accent. Another orchestra sets its own colour, and the light and dark shades are derived from it so that text and buttons keep 4.5:1. The \"plain\" look swaps the condensed display face for a classic serif and drops the watermark.",
+		"keyCharacteristics": [
+			"One accent colour per orchestra, used sparingly for actions, the current place and concerts.",
+			"Condensed bold display headings over a system sans for everything you read or tap.",
+			"White cards with a hairline border and a soft, wide shadow on a warm paper-grey page. In dark mode the page is near-black.",
+			"Pill buttons, generous radii, and touch targets of 44px on touch screens.",
+			"Short, soft motion with one curve. Pages rise in, sections unfold, and pressed things give way slightly.",
+			"On phones, a bottom tab bar with five places. On desktop, a top bar."
+		],
+		"rules": [
+			{
+				"name": "The Folder Tab Rule",
+				"body": "The accent marks where to act or where you are: the primary button, the current tab, a concert. If a screen has more gold than that, something is decorating.",
+				"section": "colors"
+			},
+			{
+				"name": "The Derived Shade Rule",
+				"body": "Never put the raw brand colour on the light page as text or as a button fill. Use the derived deep shade, which `src/lib/branding.ts` computes per orchestra so it always reaches 4.5:1.",
+				"section": "colors"
+			},
+			{
+				"name": "The Two Voices Rule",
+				"body": "The condensed face speaks only in page titles and the story card. Buttons, lists, labels and body text always use the system sans.",
+				"section": "typography"
+			},
+			{
+				"name": "The Readable Floor Rule",
+				"body": "Everything is in rem so the text size setting reaches it. Nothing anyone reads is smaller than `--text-2xs` (0.75rem). The tab bar labels are the one place held at that floor (12px) at every text size, so five still fit side by side.",
+				"section": "typography"
+			},
+			{
+				"name": "The One Scale Rule",
+				"body": "Every font size is a token from `src/app.css`, never a literal: `--text-2xs` 0.75, `--text-xs` 0.8125, `--text-sm` 0.875, `--text-md` 0.9375, `--text-base` 1, `--text-lg` 1.125, `--text-xl` 1.25, `--text-2xl` 1.5, `--text-3xl` 2, `--text-4xl` 2.25 (rem), plus the fluid `--text-display`, `--text-headline` and `--text-date` for the condensed face. Labels and meta use 2xs–sm, body and controls md–base, card titles lg–xl, big numbers 2xl–4xl. The only exceptions are SVG text drawn in a viewBox's own units and the print programme, which is set in pt.",
+				"section": "typography"
+			},
+			{
+				"name": "The Paper On Paper Rule",
+				"body": "There are only two levels: resting cards and raised overlays. Don't stack a shadowed card inside a shadowed card. Inner groups use Stand Grey or a hairline instead.",
+				"section": "elevation & depth"
+			}
+		],
+		"dos": [
+			"**Do** build every page from the tokens in `src/app.css`. A theme is one block there, and another orchestra's accent must flow through untouched.",
+			"**Do** use the derived deep accent (`--accent`) for text and fills on light pages, and keep `--brand` for dark backgrounds.",
+			"**Do** give every tappable thing at least 44px on touch screens (`--tap`), and 32px minimum for text actions.",
+			"**Do** put the next date, the answer and the member's own part on the first phone screen before anything else.",
+			"**Do** use the one motion curve (`cubic-bezier(0.2, 0.8, 0.2, 1)`) at 0.15s for state changes and about 0.25s for page and section transitions.",
+			"**Do** check both schemes and the 125% text size before calling a screen done."
+		],
+		"donts": [
+			"**Don't** use the condensed display face for buttons, labels or body text.",
+			"**Don't** put the raw brand colour as text on the light page, or hard-code Bachkreis-Gold outside the preset.",
+			"**Don't** add thick one-sided colour stripes to cards or chips. Use a tint, a full hairline or a small dot to mark a type.",
+			"**Don't** set readable text below 0.75rem, or in px where it should follow the text size setting.",
+			"**Don't** nest a shadowed card inside a shadowed card.",
+			"**Don't** use bouncy or elastic easing. Every transition, the segmented control's thumb included, runs on the one curve.",
+			"**Don't** write a colour, size or radius as a literal in a component. Use the tokens in `src/app.css`; the tuner and metronome drawings, which paint their own wood, brass and dial, are the only exception."
+		]
+	}
+}

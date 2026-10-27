@@ -170,7 +170,7 @@
 	}
 
 	.head h2 {
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	.close {
@@ -179,7 +179,7 @@
 		width: 36px;
 		height: 36px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;
@@ -198,7 +198,7 @@
 	.hint {
 		margin-top: calc(-1 * var(--space-2));
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.type :global(.segmented) {
@@ -219,7 +219,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		list-style: none;
 		cursor: pointer;
@@ -268,7 +268,7 @@
 		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.check input {

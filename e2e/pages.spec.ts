@@ -7,7 +7,9 @@ test('start page: greeting, open work and the next dates', async ({ page }) => {
 	await open(page, '/');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Hallo');
 	await expect(page.getByRole('region', { name: 'Wartet auf dich' })).toContainText('Dinge warten auf dich');
-	await expect(page.getByText('Nächste Probe')).toBeVisible();
+	// The next date is the heading; what follows comes after it.
+	await expect(page.getByRole('region', { name: 'Als Nächstes' }).getByRole('heading', { level: 2 })).toBeVisible();
+	await expect(page.getByRole('heading', { name: 'Danach' })).toBeVisible();
 	await expectAccessible(page);
 });
 

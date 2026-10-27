@@ -92,7 +92,7 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.pages {
@@ -107,7 +107,7 @@
 		width: 30px;
 		height: 30px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		color: var(--text);
 		cursor: pointer;
@@ -135,7 +135,7 @@
 		max-height: 70vh;
 		overflow: auto;
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: #fff;
 	}
 
@@ -146,13 +146,14 @@
 	.note {
 		margin: 0;
 		padding: var(--space-4);
-		color: #555;
-		font-size: 0.875rem;
+		/* On the white sheet in both schemes, so the light muted ink. */
+		color: #625e55;
+		font-size: var(--text-sm);
 	}
 
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 </style>

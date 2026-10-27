@@ -248,7 +248,7 @@
 	.unit {
 		color: var(--text-muted);
 		font-family: 'Noto Music', 'Segoe UI Symbol', 'Apple Symbols', var(--font);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.bpm input {
@@ -258,7 +258,7 @@
 		background: none;
 		color: var(--text);
 		font-family: var(--font-display);
-		font-size: 2.25rem;
+		font-size: var(--text-4xl);
 		font-weight: 600;
 		line-height: 1;
 		text-align: center;
@@ -275,7 +275,7 @@
 	.name {
 		color: var(--accent);
 		font-family: Georgia, 'Times New Roman', serif;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-style: italic;
 		font-weight: 600;
 	}
@@ -293,7 +293,7 @@
 		border-radius: 50%;
 		background: var(--surface);
 		color: var(--text);
-		font-size: 1.25rem;
+		font-size: var(--text-xl);
 		line-height: 1;
 		cursor: pointer;
 	}
@@ -311,7 +311,7 @@
 		grid-column: 1 / -1;
 		gap: 2px;
 		padding: 2px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--text) 6%, transparent);
 	}
 
@@ -319,11 +319,11 @@
 		flex: 1;
 		min-height: 30px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		cursor: pointer;
 	}
 
@@ -351,7 +351,7 @@
 		border-radius: 50%;
 		background: color-mix(in oklab, var(--text) 10%, transparent);
 		color: var(--text-muted);
-		font-size: 0.625rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		transition:
 			background 0.06s,
@@ -361,7 +361,7 @@
 	.beat.a2 {
 		width: 22px;
 		height: 22px;
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 	}
 
 	.beat.a1 {

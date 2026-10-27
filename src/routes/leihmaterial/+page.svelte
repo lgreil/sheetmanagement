@@ -156,7 +156,7 @@
 	.muted,
 	.notes {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.notes {
@@ -168,7 +168,7 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.overdue .due {

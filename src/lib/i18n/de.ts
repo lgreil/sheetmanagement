@@ -64,6 +64,12 @@ export const de = {
 		pieces: (n: number) => (n === 1 ? '1 Stück' : `${n} Stücke`),
 		morePieces: (n: number) => `+ ${n} weitere`,
 		nextRehearsal: 'Nächste Probe',
+		/** Over the answer buttons docked above the tab bar: "Bist du am Samstag dabei?". */
+		areYouIn: (day: string) => `Bist du am ${day} dabei?`,
+		/** The dates after the next one. */
+		later: 'Danach',
+		/** After "Antwort fehlt" on a later date: opens it to answer. */
+		answerNow: 'Jetzt antworten',
 		quickLinks: 'Alle Bereiche',
 		work: 'Aufgaben im Orchester',
 		/** In the greeting: the next concert, "Herbstkonzert in 25 Tagen" (#221). */

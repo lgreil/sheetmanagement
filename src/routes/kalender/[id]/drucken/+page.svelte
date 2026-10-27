@@ -152,9 +152,9 @@
 	.tab {
 		padding: 6px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -172,7 +172,7 @@
 		flex: 1;
 		min-width: 200px;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.buttons {
@@ -221,7 +221,7 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.total {
@@ -236,7 +236,7 @@
 
 	.setlist .time {
 		color: var(--text-muted);
-		font-size: 1.25rem;
+		font-size: var(--text-xl);
 		font-variant-numeric: tabular-nums;
 	}
 
@@ -257,7 +257,7 @@
 
 	.report dt {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -278,7 +278,7 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	th,
@@ -290,7 +290,7 @@
 	}
 
 	th {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	td.empty {
@@ -320,7 +320,7 @@
 
 	.orchestra {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		letter-spacing: 0.12em;
 		text-transform: uppercase;
 	}
@@ -336,7 +336,7 @@
 	.handout h2 {
 		margin-bottom: var(--space-3);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		letter-spacing: 0.12em;
 		text-align: center;
 		text-transform: uppercase;
@@ -363,7 +363,7 @@
 
 	.handout .piece {
 		font-family: var(--font-display);
-		font-size: 1.25rem;
+		font-size: var(--text-xl);
 		font-weight: 600;
 	}
 
@@ -373,14 +373,14 @@
 
 	.note {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-style: italic;
 	}
 
 	.setlist-head {
 		margin-bottom: var(--space-4);
 		color: var(--text-muted);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.setlist li {
@@ -395,14 +395,14 @@
 
 	.number {
 		min-width: 2ch;
-		font-size: 1.75rem;
+		font-size: var(--text-3xl);
 		font-weight: 800;
 		text-align: right;
 	}
 
 	.setlist .piece {
 		flex: 1;
-		font-size: 1.75rem;
+		font-size: var(--text-3xl);
 		font-weight: 700;
 		line-height: 1.2;
 	}
@@ -410,7 +410,7 @@
 	.setlist .note {
 		flex-basis: 100%;
 		padding-left: calc(2ch + var(--space-4));
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	@media print {

@@ -445,12 +445,12 @@
 	.loan-hint {
 		display: block;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.loan a {
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -481,7 +481,7 @@
 		right: 0;
 		bottom: 0;
 		pointer-events: none;
-		mask-image: linear-gradient(to right, transparent, #000 50%);
+		mask-image: linear-gradient(to right, transparent, var(--brand-ink) 50%);
 	}
 
 	/* The portrait takes the banner's colour (luminosity blend), so any portrait suits any orchestra. */
@@ -509,10 +509,10 @@
 		right: var(--space-3);
 		bottom: var(--space-2);
 		padding: 1px 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--hero-to) 80%, transparent);
 		color: var(--hero-ink);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 	}
 
 	.credit:hover {
@@ -556,7 +556,7 @@
 		align-items: center;
 		gap: var(--space-2) var(--space-3);
 		margin-top: var(--space-1);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.pill {
@@ -564,18 +564,18 @@
 		align-items: center;
 		gap: 6px;
 		padding: 3px 12px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: color-mix(in oklab, var(--hero-ink) 16%, transparent);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 650;
 	}
 
 	.tag {
 		padding: 1px var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 	}
 
@@ -616,14 +616,14 @@
 		flex: none;
 		width: 36px;
 		height: 36px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
 
 	.detail dt {
 		color: var(--text-muted);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.05em;
 		text-transform: uppercase;
@@ -644,8 +644,9 @@
 	.piece-note {
 		max-width: 62ch;
 		margin: 0;
-		padding-left: var(--space-3);
-		border-left: 3px solid var(--accent-soft);
+		padding: var(--space-2) var(--space-3);
+		border-radius: var(--radius-m);
+		background: var(--surface-2);
 		color: var(--text-muted);
 		white-space: pre-line;
 		overflow-wrap: anywhere;
@@ -656,7 +657,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--warn);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	/* The piece's actions as equal tiles, like on a contact card. */
@@ -681,7 +682,7 @@
 		box-shadow: var(--shadow);
 		color: var(--accent);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 		transition:
@@ -726,11 +727,11 @@
 		min-height: 38px;
 		padding: 0 14px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 		font-weight: 600;
 		cursor: pointer;
 		transition:
@@ -750,10 +751,10 @@
 
 	.badge {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--ok) 18%, transparent);
 		color: var(--ok);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		text-transform: uppercase;
 		letter-spacing: 0.04em;
@@ -766,7 +767,7 @@
 
 	.count {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 500;
 	}
 
@@ -781,7 +782,7 @@
 		gap: var(--space-1) var(--space-3);
 		margin: 0 0 var(--space-5) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.section-hint a {
@@ -840,7 +841,7 @@
 		width: 34px;
 		height: 34px;
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;
@@ -879,7 +880,7 @@
 		flex: none;
 		width: 32px;
 		height: 32px;
-		border-radius: 9px;
+		border-radius: var(--radius-s);
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -909,10 +910,10 @@
 
 	.note {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	.my-parts {
@@ -926,10 +927,10 @@
 	.yours {
 		margin-left: var(--space-2);
 		padding: 1px var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		vertical-align: 1px;
 	}
@@ -937,8 +938,8 @@
 	.status {
 		flex: none;
 		padding: 1px var(--space-2);
-		border-radius: 999px;
-		font-size: 0.75rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		color: var(--warn);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
@@ -981,7 +982,7 @@
 	.hint {
 		margin: calc(-1 * var(--space-4)) var(--space-1) var(--space-7);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.played-head {
@@ -1004,11 +1005,11 @@
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 		transition:
@@ -1036,7 +1037,7 @@
 		gap: var(--space-1);
 		margin-bottom: var(--space-2);
 		color: var(--ok);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.more-list {
@@ -1072,7 +1073,7 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 400;
 	}
 

@@ -214,7 +214,7 @@
 		place-items: center;
 		width: 44px;
 		height: 44px;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: color-mix(in oklab, var(--ok) 15%, transparent);
 		color: var(--ok);
 	}
@@ -227,7 +227,7 @@
 
 	.over {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -265,7 +265,7 @@
 		flex: none;
 		width: 54px;
 		padding: var(--space-1) 0;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--surface-2);
 		line-height: 1.1;
 	}
@@ -277,14 +277,14 @@
 
 	.weekday,
 	.month {
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		text-transform: uppercase;
 	}
 
 	.day {
 		font-family: var(--font-display);
-		font-size: 1.5rem;
+		font-size: var(--text-2xl);
 		font-weight: 700;
 	}
 
@@ -308,8 +308,8 @@
 		align-items: center;
 		gap: 3px;
 		padding: 1px var(--space-2);
-		border-radius: 999px;
-		font-size: 0.6875rem;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
 
@@ -327,7 +327,7 @@
 		display: flex;
 		height: 8px;
 		overflow: hidden;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 	}
 
@@ -343,7 +343,7 @@
 
 	.counts {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.mine {
@@ -352,7 +352,7 @@
 		margin: 0;
 		padding: 3px;
 		border: 0;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--surface-2);
 	}
 
@@ -375,9 +375,9 @@
 		gap: 4px;
 		height: 34px;
 		padding: 0 var(--space-3);
-		border-radius: 9px;
+		border-radius: var(--radius-s);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 650;
 		transition:
 			background var(--fast) var(--ease),
@@ -411,7 +411,7 @@
 		background: none;
 		color: var(--accent);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 650;
 		cursor: pointer;
 	}
@@ -454,7 +454,7 @@
 	table {
 		width: 100%;
 		border-collapse: collapse;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	th,
@@ -481,7 +481,7 @@
 
 	.col {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 	}
 
@@ -504,7 +504,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.manage {

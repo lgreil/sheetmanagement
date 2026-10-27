@@ -205,7 +205,7 @@
 		align-items: center;
 		gap: var(--space-2);
 		margin: 0;
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	.feed-actions {
@@ -218,11 +218,11 @@
 		width: 100%;
 		padding: 8px var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.stack {
@@ -245,13 +245,13 @@
 	}
 
 	.who strong {
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.who span {
 		overflow: hidden;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-overflow: ellipsis;
 	}
 
@@ -271,21 +271,21 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	/* Hints, not the small buttons in the settings. */
 	.muted.small {
 		flex-basis: 100%;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -300,7 +300,7 @@
 		align-items: center;
 		gap: var(--space-1);
 		color: var(--ok);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -322,7 +322,7 @@
 	}
 
 	.setting small {
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.setting + .setting {
@@ -335,7 +335,7 @@
 
 	form.setting span {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.logout {
@@ -345,11 +345,11 @@
 		min-height: 36px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: color-mix(in oklab, var(--danger) 10%, transparent);
 		color: var(--danger);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 	}

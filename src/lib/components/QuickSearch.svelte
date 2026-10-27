@@ -248,7 +248,7 @@
 	}
 
 	.quick::backdrop {
-		background: rgb(0 0 0 / 0.4);
+		background: var(--scrim);
 		backdrop-filter: blur(3px);
 	}
 
@@ -283,16 +283,16 @@
 		background: none;
 		color: var(--text);
 		font: inherit;
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 
 	kbd {
 		padding: 2px 6px;
 		border: 1px solid var(--border);
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -305,7 +305,7 @@
 	.heading {
 		margin: var(--space-2) var(--space-3) var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.08em;
 		text-transform: uppercase;
@@ -316,7 +316,7 @@
 		align-items: center;
 		gap: var(--space-3);
 		padding: var(--space-2) var(--space-3);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		cursor: pointer;
 	}
 
@@ -330,7 +330,7 @@
 		flex: none;
 		width: 34px;
 		height: 34px;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text-muted);
 	}
@@ -359,7 +359,7 @@
 
 	.sub {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.enter {
@@ -384,7 +384,7 @@
 		padding: var(--space-2) var(--space-4);
 		border-top: 1px solid var(--hairline);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	/* On a phone it fills the top of the screen, above the keyboard. */

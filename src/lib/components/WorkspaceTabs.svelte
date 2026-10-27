@@ -48,7 +48,7 @@
 	.label {
 		margin-left: var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 650;
 		letter-spacing: 0.07em;
 		text-transform: uppercase;
@@ -75,10 +75,10 @@
 		height: 36px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		white-space: nowrap;
 		transition:
@@ -107,10 +107,10 @@
 		height: 20px;
 		margin-right: -4px;
 		padding: 0 6px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--warn);
 		color: var(--bg);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		font-variant-numeric: tabular-nums;
 	}

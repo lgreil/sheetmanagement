@@ -66,7 +66,7 @@
 	}
 
 	.seed {
-		fill: color-mix(in oklab, var(--warn) 70%, #3a2412);
+		fill: oklch(from var(--warn) calc(l - 0.12) c h);
 	}
 
 	.sprout,
@@ -78,7 +78,7 @@
 	}
 
 	.bark {
-		fill: color-mix(in oklab, var(--warn) 55%, #3a2412);
+		fill: oklch(from var(--warn) calc(l - 0.2) calc(c * 0.7) h);
 	}
 
 	.leaf {
@@ -86,6 +86,6 @@
 	}
 
 	.leaf.light {
-		fill: color-mix(in oklab, var(--ok) 72%, #d8f0c0);
+		fill: oklch(from var(--ok) calc(l + 0.1) calc(c * 0.8) h);
 	}
 </style>

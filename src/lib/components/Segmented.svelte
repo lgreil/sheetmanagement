@@ -74,7 +74,7 @@
 		grid-auto-columns: 1fr;
 		max-width: 100%;
 		padding: 3px;
-		border-radius: 12px;
+		border-radius: var(--radius-control);
 		background: var(--surface-2);
 	}
 
@@ -87,11 +87,11 @@
 		min-height: 34px;
 		padding: 0 var(--space-3);
 		border: 0;
-		border-radius: 9px;
+		border-radius: var(--radius-s);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		white-space: nowrap;
 		cursor: pointer;
@@ -119,7 +119,7 @@
 	}
 
 	button :global(svg) {
-		transition: transform 0.3s cubic-bezier(0.34, 1.36, 0.64, 1);
+		transition: transform var(--fast) var(--ease);
 	}
 
 	button.active :global(svg) {
@@ -133,16 +133,16 @@
 		left: 3px;
 		z-index: -1;
 		width: calc((100% - 6px) / var(--count));
-		border-radius: 9px;
+		border-radius: var(--radius-s);
 		/* In dark mode the surface is barely lighter than the track: a lifted tone instead. */
-		background: light-dark(var(--surface), #3a362f);
+		background: var(--surface-lifted);
 		box-shadow:
 			0 1px 3px rgb(0 0 0 / 0.12),
 			0 0 0 0.5px rgb(0 0 0 / 0.04);
 		transform: translateX(calc(var(--index) * 100%));
-		/* A little spring: it overshoots a touch and settles, like a physical switch. */
+		/* Glides to the chosen option on the app's one curve, like a switch settling. */
 		transition:
-			transform 0.42s cubic-bezier(0.34, 1.36, 0.64, 1),
+			transform 0.28s var(--ease),
 			scale var(--fast) var(--ease),
 			background 0.35s var(--ease);
 	}

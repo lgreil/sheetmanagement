@@ -229,7 +229,7 @@
 		height: 46px;
 		padding: 0 var(--space-2) 0 var(--space-4);
 		border: 1px solid transparent;
-		border-radius: 14px;
+		border-radius: var(--radius-m);
 		background: var(--surface-2);
 		color: var(--text-muted);
 		transition:
@@ -253,7 +253,7 @@
 		background: none;
 		color: var(--text);
 		font: inherit;
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.search input::-webkit-search-cancel-button {
@@ -266,7 +266,7 @@
 		width: 32px;
 		height: 32px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text-muted);
 		cursor: pointer;
@@ -290,11 +290,11 @@
 		min-height: 34px;
 		padding: 0 14px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 		color: var(--text-muted);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		cursor: pointer;
 		transition:
@@ -317,10 +317,10 @@
 		justify-self: start;
 		gap: var(--space-2);
 		padding: 6px 12px 6px 14px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -338,12 +338,12 @@
 		border: 1px solid var(--hairline);
 		border-radius: var(--radius-l);
 		background: var(--surface);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.category-files .label {
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -360,7 +360,7 @@
 	.count {
 		margin: var(--space-3) 0 var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.group {
@@ -371,7 +371,7 @@
 		margin: 0 0 var(--space-2) var(--space-1);
 		color: var(--accent);
 		font-family: var(--font-display);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.row {
@@ -405,22 +405,23 @@
 		align-items: center;
 		gap: var(--space-2);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
-		background: var(--accent-soft);
-		color: var(--accent);
-		font-size: 0.75rem;
+		border-radius: var(--radius-pill);
+		background: var(--surface-2);
+		color: var(--text-muted);
+		font-size: var(--text-2xs);
 		font-weight: 600;
+		white-space: nowrap;
 	}
 
-	/* Pieces in a current programme stand out. */
+	/* Pieces in a current programme stand out, softly. */
 	.tag.program {
-		background: var(--accent);
-		color: var(--accent-contrast);
+		background: var(--accent-soft);
+		color: var(--accent);
 	}
 
 	.side {
@@ -429,13 +430,14 @@
 		gap: var(--space-3);
 		flex: none;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.status {
 		padding: 1px var(--space-2);
-		border-radius: 999px;
-		font-size: 0.75rem;
+		white-space: nowrap;
+		border-radius: var(--radius-pill);
+		font-size: var(--text-2xs);
 		font-weight: 600;
 		color: var(--warn);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);

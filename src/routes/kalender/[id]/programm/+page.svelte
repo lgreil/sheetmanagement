@@ -416,7 +416,7 @@
 	}
 
 	.muted {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.search {
@@ -431,7 +431,7 @@
 		height: 48px;
 		padding: 0 var(--space-4);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text-muted);
 	}
@@ -474,7 +474,7 @@
 		width: 100%;
 		padding: var(--space-2) var(--space-3);
 		border: 0;
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text);
 		font: inherit;
@@ -502,7 +502,7 @@
 		gap: var(--space-2);
 		margin: calc(-1 * var(--space-2)) var(--space-1) var(--space-4);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.entries {
@@ -540,7 +540,7 @@
 		width: 1.5rem;
 		color: var(--accent);
 		font-family: var(--font-display);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 		font-weight: 700;
 		text-align: right;
 	}
@@ -562,11 +562,11 @@
 		margin-top: var(--space-1);
 		padding: 0 var(--space-2);
 		border: 1px solid var(--border);
-		border-radius: 8px;
+		border-radius: var(--radius-s);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.actions {
@@ -580,7 +580,7 @@
 		width: 34px;
 		height: 34px;
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: none;
 		color: var(--text-muted);
 		cursor: pointer;
@@ -613,7 +613,7 @@
 		gap: var(--space-2);
 		padding: var(--space-2) var(--space-5);
 		border: 0;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		color: var(--accent-contrast);
 		font: inherit;
@@ -660,9 +660,9 @@
 		gap: var(--space-1);
 		padding: 6px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -675,7 +675,7 @@
 	.joint-hint {
 		margin: calc(-1 * var(--space-2)) 0 var(--space-4);
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.shared {
@@ -733,7 +733,7 @@
 		height: 40px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
@@ -769,16 +769,16 @@
 
 	.suggestions .count {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 	}
 
 	.suggestions h3 {
 		margin: var(--space-3) 0 var(--space-1);
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		letter-spacing: 0.06em;
 		text-transform: uppercase;
@@ -786,7 +786,7 @@
 
 	.small {
 		margin: var(--space-2) 0 0;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.suggestion-list {
@@ -823,10 +823,10 @@
 
 	.tag {
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface-2);
 		color: var(--text-muted);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -847,11 +847,11 @@
 		height: 32px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--bg);
 		color: var(--accent);
 		font: inherit;
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 		font-weight: 600;
 		cursor: pointer;
 	}
@@ -892,7 +892,7 @@
 	}
 
 	.new-piece h2 {
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.new-piece .message {
@@ -902,7 +902,7 @@
 	.input {
 		display: grid;
 		gap: var(--space-1);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -910,7 +910,7 @@
 		height: 40px;
 		padding: 0 var(--space-3);
 		border: 1px solid var(--border);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--bg);
 		color: var(--text);
 		font: inherit;
@@ -925,7 +925,7 @@
 
 	.similar h3 {
 		margin-bottom: var(--space-2);
-		font-size: 0.9375rem;
+		font-size: var(--text-md);
 	}
 
 	.similar ul {

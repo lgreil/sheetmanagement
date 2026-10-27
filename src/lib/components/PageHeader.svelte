@@ -16,6 +16,6 @@
 
 	p {
 		color: var(--text-muted);
-		font-size: 1.0625rem;
+		font-size: var(--text-lg);
 	}
 </style>

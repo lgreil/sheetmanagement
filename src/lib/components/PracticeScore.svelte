@@ -582,7 +582,7 @@
 		border-radius: 50%;
 		background: color-mix(in oklab, var(--text) 8%, transparent);
 		color: var(--text-muted);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 		line-height: 1;
 		cursor: pointer;
 	}
@@ -605,7 +605,7 @@
 	.pages {
 		min-width: 7.5em;
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		text-align: center;
 	}
 
@@ -619,11 +619,11 @@
 		height: 40px;
 		padding: 0 var(--space-2);
 		border: 1px solid var(--hairline);
-		border-radius: 10px;
+		border-radius: var(--radius-control);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		cursor: pointer;
 	}
 
@@ -660,7 +660,7 @@
 
 	.state {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.state.failed {
@@ -723,7 +723,7 @@
 	.hint {
 		margin: 0;
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	@media (max-width: 560px) {
@@ -737,12 +737,12 @@
 			min-width: 34px;
 			height: 34px;
 			padding: 0 var(--space-2);
-			font-size: 0.8125rem;
+			font-size: var(--text-xs);
 		}
 
 		.pages {
 			min-width: 6em;
-			font-size: 0.8125rem;
+			font-size: var(--text-xs);
 		}
 	}
 </style>

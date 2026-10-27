@@ -250,7 +250,7 @@
 	.bar {
 		height: 8px;
 		overflow: hidden;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
 	}
 
@@ -277,11 +277,11 @@
 	.filter {
 		padding: 6px 14px;
 		border: 1px solid var(--border);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface);
 		color: var(--text);
 		font: inherit;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 		white-space: nowrap;
 		cursor: pointer;
@@ -330,7 +330,7 @@
 		gap: 4px;
 		margin-left: auto;
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -340,10 +340,10 @@
 
 	.tag {
 		padding: 0 var(--space-2);
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent-soft);
 		color: var(--accent);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 600;
 	}
 
@@ -357,7 +357,7 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-2);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -375,7 +375,7 @@
 
 	.warn {
 		color: var(--warn);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.files {
@@ -384,7 +384,7 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.file {
@@ -454,10 +454,10 @@
 	.badge {
 		flex: none;
 		padding: 0 6px;
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: color-mix(in oklab, var(--warn) 14%, transparent);
 		color: var(--warn);
-		font-size: 0.75rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
 

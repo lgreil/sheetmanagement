@@ -65,6 +65,9 @@ export const en: Texts = {
 		pieces: (n: number) => (n === 1 ? '1 piece' : `${n} pieces`),
 		morePieces: (n: number) => `+ ${n} more`,
 		nextRehearsal: 'Next rehearsal',
+		areYouIn: (day: string) => `Are you coming on ${day}?`,
+		later: 'After that',
+		answerNow: 'Answer now',
 		quickLinks: 'All areas',
 		work: 'Jobs in the orchestra',
 		/** In the greeting: the next concert, "Autumn concert in 25 days" (#221). */

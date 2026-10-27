@@ -220,13 +220,13 @@
 	.tile strong {
 		color: var(--accent);
 		font-family: var(--font-display);
-		font-size: 2rem;
+		font-size: var(--text-3xl);
 		line-height: 1.1;
 	}
 
 	.tile-label {
 		color: var(--text-muted);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -256,7 +256,7 @@
 
 	.decade-name {
 		font-family: var(--font-display);
-		font-size: 1.375rem;
+		font-size: var(--text-2xl);
 	}
 
 	.year {
@@ -270,7 +270,7 @@
 		position: relative;
 		margin: 0 0 var(--space-2);
 		color: var(--accent);
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	/* A dot on the line, where the year begins. */
@@ -323,9 +323,9 @@
 		align-items: center;
 		gap: 6px;
 		padding: 2px 10px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--surface-2);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.program a:hover {
@@ -337,10 +337,10 @@
 	.debut {
 		padding: 0 6px;
 		border: 1px solid color-mix(in oklab, var(--ok) 45%, transparent);
-		border-radius: 6px;
+		border-radius: var(--radius-xs);
 		background: var(--surface);
 		color: var(--ok);
-		font-size: 0.6875rem;
+		font-size: var(--text-2xs);
 		font-weight: 700;
 		letter-spacing: 0.04em;
 		text-transform: uppercase;
@@ -359,7 +359,7 @@
 
 	.card-title {
 		margin: 0 0 var(--space-3);
-		font-size: 1.125rem;
+		font-size: var(--text-lg);
 	}
 
 	.lead {
@@ -407,7 +407,7 @@
 	.bar {
 		display: block;
 		height: 8px;
-		border-radius: 999px;
+		border-radius: var(--radius-pill);
 		background: var(--accent);
 		opacity: 0.75;
 	}
@@ -444,6 +444,6 @@
 	}
 
 	.small {
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 </style>

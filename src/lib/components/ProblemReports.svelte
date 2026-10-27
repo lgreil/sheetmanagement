@@ -194,7 +194,7 @@
 		gap: var(--space-2);
 		margin-bottom: var(--space-2);
 		color: var(--warn);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 	}
 
 	.known ul {
@@ -206,14 +206,14 @@
 
 	.muted {
 		color: var(--text-muted);
-		font-size: 0.8125rem;
+		font-size: var(--text-xs);
 	}
 
 	.manage {
 		display: inline-block;
 		margin-top: var(--space-2);
 		color: var(--accent);
-		font-size: 0.875rem;
+		font-size: var(--text-sm);
 		font-weight: 600;
 	}
 
@@ -241,7 +241,7 @@
 	}
 
 	.form h3 {
-		font-size: 1rem;
+		font-size: var(--text-base);
 	}
 
 	.actions {
