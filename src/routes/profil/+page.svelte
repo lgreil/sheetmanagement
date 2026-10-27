@@ -8,6 +8,7 @@
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import PracticeTime from '#lib/components/PracticeTime.svelte';
 	import PushSettings from '#lib/components/PushSettings.svelte';
+	import TextSize from '#lib/components/TextSize.svelte';
 	import ThemeToggle from '#lib/components/ThemeToggle.svelte';
 	import Title from '#lib/components/Title.svelte';
 	import { startTour } from '#lib/tour/state.svelte.ts';
@@ -168,6 +169,10 @@
 			<div class="setting" data-tour="theme">
 				<span>{t.theme.label}</span>
 				<ThemeToggle />
+			</div>
+			<div class="setting">
+				<span>{t.textSize.label}<small class="muted">{t.textSize.hint}</small></span>
+				<TextSize />
 			</div>
 			<!-- The tour for new members, once more from the start. -->
 			<div class="setting" data-tour="retake">

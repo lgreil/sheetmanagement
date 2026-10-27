@@ -367,10 +367,34 @@
 		color: var(--accent);
 	}
 
+	/* The two buttons side by side, the count under them. */
 	.merge {
-		display: grid;
-		justify-items: end;
-		gap: var(--space-1);
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: flex-end;
+		gap: var(--space-2);
+	}
+
+	.merge .small {
+		flex-basis: 100%;
+		text-align: right;
+	}
+
+	/* On phones under the title, full width: two equal buttons instead of a ragged column. */
+	@media (max-width: 560px) {
+		.merge {
+			width: 100%;
+		}
+
+		.merge .btn {
+			flex: 1 1 0;
+			justify-content: center;
+		}
+
+		.merge .small {
+			text-align: left;
+		}
 	}
 
 	.msg {

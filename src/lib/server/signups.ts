@@ -3,6 +3,9 @@ import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { eventDay } from '#lib/repertoire/dates.ts';
 import type { Answer } from '#lib/signups/signups.ts';
+import { isOn } from './env.ts';
+import { feedbackUser } from './feedback.ts';
+import { getSignups } from './repertoire.ts';
 import { appendRecords, deleteRows, readTab, refreshAfterWrite, updateRecord, withSheetLock } from './sheet-writes.ts';
 
 /**
@@ -56,4 +59,25 @@ export async function withdrawSignup(eventId: string, user: User): Promise<void>
 		);
 	});
 	await refreshAfterWrite();
+}
+
+/**
+ * The viewer's own answers by event id, for the start page and the calendar list: which dates
+ * still wait for an answer. Null when sign-ups are off, not set up, or nobody is signed in.
+ */
+export async function myAnswers(locals: App.Locals): Promise<Record<string, Answer> | null> {
+	const user = feedbackUser(locals);
+	if (!user || !isOn('signups')) return null;
+	const list = await getSignups().catch((error) => {
+		console.error('Loading the sign-ups failed:', error);
+		return null;
+	});
+	if (!list) return null;
+	const email = normalizeEmail(user.email);
+	const mine: Record<string, Answer> = {};
+	for (const [id, answers] of list.byEvent) {
+		const found = answers.find((signup) => signup.email === email);
+		if (found) mine[id] = found.answer;
+	}
+	return mine;
 }

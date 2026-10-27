@@ -45,6 +45,13 @@ export const en: Texts = {
 		light: 'Light',
 		dark: 'Dark'
 	},
+	textSize: {
+		label: 'Text size',
+		hint: 'For this device.',
+		normal: 'Normal',
+		large: 'Large',
+		larger: 'Larger'
+	},
 	home: {
 		title: (orchestra: string) => `${orchestra} music library`,
 		hello: (name: string) => `Hello ${name}`,
@@ -60,8 +67,12 @@ export const en: Texts = {
 		nextRehearsal: 'Next rehearsal',
 		quickLinks: 'All areas',
 		work: 'Jobs in the orchestra',
+		/** In the greeting: the next concert, "Autumn concert in 25 days" (#221). */
+		countdown: (concert: string, when: string) => `${concert} ${when}`,
 		todo: {
 			title: 'Waiting for you',
+			/** All open work as one row after its count ("6 things are waiting for you"); it opens to the list (#220). */
+			summary: (n: number) => (n === 1 ? 'thing is waiting for you' : 'things are waiting for you'),
 			reports: (n: number) => (n === 1 ? 'open report' : 'open reports'),
 			wishes: (n: number) => (n === 1 ? 'open wish' : 'open wishes'),
 			requests: (n: number) => (n === 1 ? 'access request' : 'access requests'),
@@ -119,6 +130,10 @@ export const en: Texts = {
 	},
 	piece: {
 		details: 'Details',
+		/** The member's own parts at the top of the page (#216). */
+		yourPart: (part: string) => `Your part: ${part}`,
+		alsoPart: (part: string) => `Also: ${part}`,
+		yours: 'yours',
 		reportedMissing: 'Reported missing',
 		reportedMissingHint: 'Reported but not confirmed yet. Once confirmed, there is a placeholder in the folder.',
 		folder: 'Drive folder',
@@ -907,6 +922,9 @@ export const en: Texts = {
 		answers: { yes: "I'm coming", maybe: 'Maybe', no: "I can't" } as Record<string, string>,
 		answerValues: { yes: 'Yes', maybe: 'Maybe', no: 'No' } as Record<string, string>,
 		yourAnswer: 'Your answer',
+		/** On the start page, after the short line "You're coming" (#214): shows the buttons again. */
+		change: 'change',
+		status: { yes: "You're coming", maybe: 'Maybe', no: "Can't come", open: 'Not answered' } as Record<string, string>,
 		instrument: 'Instrument for this date',
 		ownInstrument: (instrument: string) => (instrument ? `as on your profile (${instrument})` : 'as on your profile'),
 		comment: 'Comment (optional)',

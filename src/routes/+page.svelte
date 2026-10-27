@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
+	import SignupAnswers from '#lib/components/SignupAnswers.svelte';
 	import Title from '#lib/components/Title.svelte';
 	import { navGroups } from '#lib/nav.ts';
+	import { SvelteSet } from 'svelte/reactivity';
 	import type { ShownEvent } from '#lib/events/schedule.ts';
+	import { splitTrailingEmoji } from '#lib/events/format.ts';
 
 	let { data } = $props();
 
@@ -12,6 +15,9 @@
 	/** "Städtisches Gymnasium Bergkamen, Hubert-Biernat-Straße 1, …" → the venue's name. */
 	const venue = (location: string) => location.split(',')[0].trim();
 	const eventUrl = (event: ShownEvent) => `/kalender/${encodeURIComponent(event.id)}`;
+
+	/** Answered dates show one short line (#214); "ändern" brings the buttons back for that date. */
+	const changing = new SvelteSet<string>();
 
 	const firstName = $derived(data.user?.name.split(' ')[0] ?? '');
 
@@ -76,6 +82,7 @@
 				].filter((item) => item.count > 0)
 			: []
 	);
+	const todoCount = $derived(todo.reduce((sum, item) => sum + item.count, 0));
 </script>
 
 <Title />
@@ -85,21 +92,16 @@
 	{#if data.brand.look === 'bold'}<img class="watermark" src={data.logo} alt="" />{/if}
 	<p class="eyebrow">{data.orchestraName}</p>
 	<h1>{firstName ? t.home.hello(firstName) : t.home.title(data.orchestraName)}</h1>
+	<!-- One useful line instead of a greeting alone (#221): what the rehearsals lead up to. -->
+	{#if data.nextConcert}
+		<p class="countdown-line">{t.home.countdown(data.nextConcert.displayTitle, t.concerts.relative(data.nextConcert.daysUntil))}</p>
+	{/if}
 </header>
 
-{#if todo.length}
-	<section class="todo" aria-label={t.home.todo.title}>
-		<span class="ui-label">{t.home.todo.title}</span>
-		<ul>
-			{#each todo as item (item.href)}
-				<li><a href={item.href}><strong>{item.count}</strong> {item.text(item.count)}<Icon name="chevron" size={16} /></a></li>
-			{/each}
-		</ul>
-	</section>
-{/if}
-
+<!-- The next date comes first for everyone, organisers too; their open work follows as one row (#220). -->
 <section class="up-next" aria-label={t.home.upNext}>
 	{#each upNext as card (card.kind)}
+		{@const [titleStart, titleEnd] = splitTrailingEmoji(card.event.displayTitle)}
 		<article class="ui-card next {card.kind}">
 			<div class="next-head">
 				<span class="ui-label">{card.label}</span>
@@ -112,12 +114,32 @@
 					<span class="month">{card.event.date.month}</span>
 				</span>
 				<span class="event-body">
-					<strong>{card.event.displayTitle}</strong>
+					<strong>{titleStart}{#if titleEnd}<span class="keep">{titleEnd}</span>{/if}</strong>
 					<span>{card.event.date.time || t.concerts.allDay}{card.note ? ` · ${card.note}` : ''}</span>
 					{#if card.event.location}<span class="venue" title={card.event.location}>{venue(card.event.location)}</span>{/if}
 				</span>
 				<span class="chevron"><Icon name="chevron" size={16} /></span>
 			</a>
+			{#if data.answers}
+				<!-- Answered right here, without opening the date first. -->
+				{@const answer = data.answers[card.event.id]}
+				{#if answer && !changing.has(card.event.id)}
+					<p class="answered">
+						<span class="answer-mark {answer}">{t.signups.status[answer]}</span>
+						<button class="link" onclick={() => changing.add(card.event.id)} aria-label="{t.signups.change}: {t.signups.question} {card.event.displayTitle}">{t.signups.change}</button>
+					</p>
+				{:else}
+					<div class="rsvp" class:open={!answer}>
+						<span class="pieces-label">{answer ? t.signups.yourAnswer : t.signups.question}</span>
+						<SignupAnswers
+							action="/kalender/{encodeURIComponent(card.event.id)}?/answer"
+							{answer}
+							label="{t.signups.question} {card.event.displayTitle}"
+							toastErrors
+						/>
+					</div>
+				{/if}
+			{/if}
 			{#if card.pieces.length}
 				<div class="pieces">
 					<span class="pieces-label">{card.piecesLabel}</span>
@@ -161,14 +183,32 @@
 	{/each}
 </section>
 
+{#if todo.length}
+	<section class="todo" aria-label={t.home.todo.title}>
+		<details>
+			<summary>
+				<strong>{todoCount}</strong>
+				<span>{t.home.todo.summary(todoCount)}</span>
+				<span class="chevron"><Icon name="chevron" size={16} /></span>
+			</summary>
+			<ul>
+				{#each todo as item (item.href)}
+					<li><a href={item.href}><strong>{item.count}</strong> {item.text(item.count)}<Icon name="chevron" size={16} /></a></li>
+				{/each}
+			</ul>
+		</details>
+	</section>
+{/if}
+
 <h2 class="section-title">{t.home.quickLinks}</h2>
 <div class="groups">
 	{#each sections as group (group.key)}
-		<section>
+		<!-- On phones the tab bar already has the primary pages: only the others are listed (#222). -->
+		<section class:in-tabbar={group.items.every((item) => item.primary)}>
 			<h3 class="ui-label">{group.label}</h3>
 			<ul class="ui-list">
 				{#each group.items as item (item.href)}
-					<li>
+					<li class:in-tabbar={item.primary}>
 						<a href={item.href} class="row">
 							<span class="row-icon"><Icon name={item.icon} size={18} /></span>
 							<span class="row-body">
@@ -225,6 +265,45 @@
 		pointer-events: none;
 	}
 
+	.countdown-line {
+		position: relative;
+		color: var(--text-muted);
+		font-weight: 600;
+	}
+
+	.story .countdown-line {
+		color: #f2eee4;
+	}
+
+	/* On phones the greeting stays low (#221): the next date belongs on the first screen. */
+	@media (max-width: 720px) {
+		.hero {
+			margin-bottom: var(--space-4);
+		}
+
+		.story {
+			padding: var(--space-4);
+		}
+
+		.story h1 {
+			font-size: 2rem;
+		}
+
+		.watermark {
+			width: min(55%, 220px);
+		}
+
+		/* The tab bar has these already. */
+		.groups .in-tabbar {
+			display: none;
+		}
+
+		/* The tab bar's pages come first in their group: the next one is now on top. */
+		.groups li.in-tabbar + li:not(.in-tabbar) {
+			border-top: none;
+		}
+	}
+
 	.eyebrow {
 		color: var(--accent);
 		font-size: 0.8125rem;
@@ -234,80 +313,88 @@
 	}
 
 	.todo {
-		margin-bottom: var(--space-5);
+		margin-bottom: var(--space-7);
+	}
+
+	/* Open work as one row that opens to the list, so it never pushes the next date down. */
+	.todo details {
+		overflow: hidden;
+		border-radius: var(--radius-m);
+		background: var(--surface);
+		box-shadow: 0 0 0 1px var(--border);
+	}
+
+	.todo summary {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+		min-height: var(--tap);
+		padding: 0 var(--space-4);
+		cursor: pointer;
+		font-weight: 600;
+		list-style: none;
+		transition: background var(--fast) var(--ease);
+	}
+
+	.todo summary::-webkit-details-marker {
+		display: none;
+	}
+
+	.todo summary:hover {
+		background: var(--surface-2);
+	}
+
+	.todo summary .chevron {
+		margin-left: auto;
+		rotate: 90deg;
+		transition: rotate var(--fast) var(--ease);
+	}
+
+	.todo details[open] summary .chevron {
+		rotate: -90deg;
 	}
 
 	.todo ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--space-2);
+		display: grid;
 		margin: 0;
 		padding: 0;
+		border-top: 1px solid var(--border);
 		list-style: none;
 	}
 
+	.todo li + li {
+		border-top: 1px solid var(--border);
+	}
+
 	.todo a {
-		display: inline-flex;
+		display: flex;
 		align-items: center;
 		gap: var(--space-2);
-		min-height: 40px;
-		padding: 0 var(--space-3) 0 var(--space-4);
-		border-radius: 999px;
-		background: color-mix(in oklab, var(--warn) 10%, var(--surface));
+		min-height: var(--tap);
+		padding: 0 var(--space-4);
 		font-size: 0.9375rem;
 		transition: background var(--fast) var(--ease);
 	}
 
 	.todo a:hover {
-		background: color-mix(in oklab, var(--warn) 18%, var(--surface));
+		background: var(--surface-2);
+	}
+
+	.todo a :global(svg) {
+		margin-left: auto;
+		color: var(--text-muted);
 	}
 
 	.todo strong {
+		display: grid;
+		place-items: center;
+		min-width: 24px;
+		height: 24px;
+		padding: 0 6px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--warn) 16%, transparent);
 		color: var(--warn);
-	}
-
-	/* On phones the pills would stack one per line; one grouped card with rows reads calmer. */
-	@media (max-width: 640px) {
-		.todo ul {
-			display: grid;
-			gap: 0;
-			overflow: hidden;
-			border-radius: var(--radius-m);
-			background: var(--surface);
-			box-shadow: 0 0 0 1px var(--border);
-		}
-
-		.todo li + li {
-			border-top: 1px solid var(--border);
-		}
-
-		.todo a {
-			display: flex;
-			min-height: var(--tap);
-			padding: 0 var(--space-4);
-			border-radius: 0;
-			background: none;
-		}
-
-		.todo a:hover {
-			background: var(--surface-2);
-		}
-
-		.todo strong {
-			display: grid;
-			place-items: center;
-			min-width: 24px;
-			height: 24px;
-			padding: 0 6px;
-			border-radius: 999px;
-			background: color-mix(in oklab, var(--warn) 16%, transparent);
-			font-size: 0.8125rem;
-		}
-
-		.todo a :global(svg) {
-			margin-left: auto;
-			color: var(--text-muted);
-		}
+		font-size: 0.8125rem;
 	}
 
 	.up-next {
@@ -315,6 +402,10 @@
 		grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr));
 		gap: var(--space-4);
 		margin-bottom: var(--space-7);
+	}
+
+	.up-next:has(+ .todo) {
+		margin-bottom: var(--space-4);
 	}
 
 	.next {
@@ -410,6 +501,13 @@
 		font-size: 0.9375rem;
 	}
 
+	/* Part of the title, not one of the lines under it. */
+	.event-body .keep {
+		color: inherit;
+		font-size: inherit;
+		white-space: nowrap;
+	}
+
 	.venue {
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -434,6 +532,55 @@
 	.pieces {
 		display: grid;
 		gap: var(--space-2);
+	}
+
+	.rsvp {
+		display: grid;
+		gap: var(--space-2);
+	}
+
+	/* Answered: one quiet line in the answer's colour, the buttons one tap away. */
+	.answered {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-2) var(--space-3);
+		margin: 0;
+		font-size: 0.9375rem;
+	}
+
+	.answer-mark {
+		--tone: var(--ok);
+		padding: 2px 10px;
+		border-radius: 999px;
+		background: color-mix(in oklab, var(--tone) 14%, transparent);
+		color: color-mix(in oklab, var(--tone) 80%, var(--text));
+		font-weight: 600;
+	}
+
+	.answer-mark.maybe {
+		--tone: var(--warn);
+	}
+
+	.answer-mark.no {
+		--tone: var(--danger);
+	}
+
+	.answered .link {
+		min-height: var(--tap);
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+
+	/* Not answered yet: the question stands out a little, it's what the card asks of you. */
+	.rsvp.open .pieces-label {
+		color: var(--text);
+		font-size: 0.9375rem;
 	}
 
 	.pieces-label {

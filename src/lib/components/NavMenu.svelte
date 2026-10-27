@@ -4,6 +4,7 @@
 	import type { NavGroup } from '#lib/nav.ts';
 	import Avatar from './Avatar.svelte';
 	import Icon from './Icon.svelte';
+	import TextSize from './TextSize.svelte';
 	import ThemeToggle from './ThemeToggle.svelte';
 
 	/**
@@ -98,6 +99,7 @@
 			{/if}
 			<div class="settings">
 				<ThemeToggle wide />
+				<TextSize wide />
 				{#if user}
 					<form method="POST" action="/auth/logout">
 						<button class="logout"><Icon name="logout" size={16} />{t.auth.logout}</button>

@@ -79,3 +79,12 @@ export function isPast(event: { end: string; allDay: boolean }, now: number): bo
 export function formatDay(day: string, locale: string): string {
 	return dateFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${day}T00:00:00Z`));
 }
+
+/**
+ * "Probe Herbstkonzert 🎶" → ["Probe ", "Herbstkonzert 🎶"]: a title's last word with the emoji
+ * after it, to keep on one line, so the emoji never wraps alone (#215). Empty without one.
+ */
+export function splitTrailingEmoji(title: string): [string, string] {
+	const parts = title.match(/^(.*?)(\S+\s+[\p{Extended_Pictographic}\u200d\ufe0f\s]+)$/u);
+	return parts ? [parts[1], parts[2]] : [title, ''];
+}
