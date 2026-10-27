@@ -66,8 +66,12 @@ export const de = {
 		nextRehearsal: 'Nächste Probe',
 		quickLinks: 'Alle Bereiche',
 		work: 'Aufgaben im Orchester',
+		/** In the greeting: the next concert, "Herbstkonzert in 25 Tagen" (#221). */
+		countdown: (concert: string, when: string) => `${concert} ${when}`,
 		todo: {
 			title: 'Wartet auf dich',
+			/** All open work as one row after its count ("6 Dinge warten auf dich"); it opens to the list (#220). */
+			summary: (n: number) => (n === 1 ? 'Sache wartet auf dich' : 'Dinge warten auf dich'),
 			reports: (n: number) => (n === 1 ? 'offene Meldung' : 'offene Meldungen'),
 			wishes: (n: number) => (n === 1 ? 'offener Wunsch' : 'offene Wünsche'),
 			requests: (n: number) => (n === 1 ? 'Zugangsanfrage' : 'Zugangsanfragen'),
@@ -125,6 +129,10 @@ export const de = {
 	},
 	piece: {
 		details: 'Details',
+		/** The member's own parts at the top of the page (#216). */
+		yourPart: (part: string) => `Deine Stimme: ${part}`,
+		alsoPart: (part: string) => `Auch: ${part}`,
+		yours: 'deine',
 		reportedMissing: 'Als fehlend gemeldet',
 		reportedMissingHint: 'Gemeldet, aber noch nicht bestätigt. Nach der Bestätigung steht ein Platzhalter im Ordner.',
 		folder: 'Drive-Ordner',
@@ -914,6 +922,8 @@ export const de = {
 		answers: { yes: 'Ich komme', maybe: 'Vielleicht', no: 'Ich kann nicht' } as Record<string, string>,
 		answerValues: { yes: 'Zusage', maybe: 'Vielleicht', no: 'Absage' } as Record<string, string>,
 		yourAnswer: 'Deine Antwort',
+		/** On the start page, after the short line "Du kommst" (#214): shows the buttons again. */
+		change: 'ändern',
 		/** In the calendar list: what you answered, or that the date still waits for it. */
 		status: { yes: 'Du kommst', maybe: 'Vielleicht', no: 'Abgesagt', open: 'Antwort fehlt' } as Record<string, string>,
 		instrument: 'Instrument bei diesem Termin',

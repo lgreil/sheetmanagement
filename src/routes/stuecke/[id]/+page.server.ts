@@ -2,11 +2,12 @@ import { error, fail, isHttpError, redirect } from '@sveltejs/kit';
 import { newId, REPORT_KINDS, type ReportKind } from '#lib/feedback/feedback.ts';
 import { config } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
-import { commonInstruments, formatInstrument, playableInstruments } from '#lib/music/my-parts.ts';
+import { normalizeEmail } from '#lib/access/access.ts';
+import { commonInstruments, formatInstrument, matchParts, parseInstruments, playableInstruments, playedParts } from '#lib/music/my-parts.ts';
 import { addReport, feedbackUser, formText, playAgain } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
-import { getFeedback, getLoans, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
+import { getAccessList, getFeedback, getLoans, getMusicConfig, getPieceNotes, getRehearsalPlan } from '#lib/server/repertoire.ts';
 import { checkNote, notesOf, sectionOptions } from '#lib/notes/piece-notes.ts';
 import { today } from '#lib/server/members.ts';
 import { normalize } from '#lib/repertoire/sheet.ts';
@@ -26,12 +27,14 @@ import type { Actions, PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const on = features();
-	const [library, feedback, plan, loans, pieceNotes] = await Promise.all([
+	const [library, feedback, plan, loans, pieceNotes, access, music] = await Promise.all([
 		getLibrary(),
 		getFeedback(),
 		getRehearsalPlan(),
 		on.loans ? getLoans() : null,
-		getPieceNotes()
+		getPieceNotes(),
+		locals.access.user ? getAccessList() : null,
+		getMusicConfig()
 	]);
 	const piece = library.piecesById.get(params.id);
 	if (!piece) {
@@ -50,6 +53,14 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 	const againWish = (feedback?.wishes ?? []).find((wish) => wish.pieceId === piece.id && (wish.status === 'open' || wish.status === 'planned'));
 	// The banner's picture: the composer's portrait, else a drawing for the genre or the title.
 	const portrait = await portraitFor(piece.composer);
+	// The member's own parts (#216), matched like "Meine Noten": from their instruments in "Mitglieder".
+	const member = locals.access.user ? access?.membersByEmail.get(normalizeEmail(locals.access.user.email)) : undefined;
+	const played = detail && member?.instrument ? playedParts(detail) : [];
+	const viewer = locals.auth === 'on' && !!member;
+	const mine = parseInstruments(member?.instrument ?? '', config).flatMap((choice) => {
+		const { own, shared } = matchParts(played, choice, music);
+		return [...own.map((part) => ({ part, shared: false })), ...shared.map((part) => ({ part, shared: true }))];
+	});
 	return {
 		banner: {
 			art: pieceArt({ genre: sheet?.genre, title: piece.title }),
@@ -92,6 +103,17 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			common: commonInstruments(config),
 			present: [...new Set((detail?.parts ?? []).filter((part) => part.status !== 'missing').flatMap((part) => part.instruments))]
 		},
+		// Own parts first, then the shared ones they may play from; PDFs open in the practice viewer, as in "Meine Noten".
+		mine: mine
+			.filter(({ part }, i) => mine.findIndex((other) => other.part.id === part.id) === i)
+			.sort((a, b) => Number(a.shared) - Number(b.shared))
+			.map(({ part, shared }) => ({
+				id: part.id,
+				label: part.label,
+				shared,
+				status: part.status,
+				url: viewer && part.mimeType === 'application/pdf' ? `/ueben/${encodeURIComponent(part.id)}` : partUrl(part.id, part.mimeType, locals.access.viaLink)
+			})),
 		piece: {
 			id: piece.id,
 			title: piece.title,

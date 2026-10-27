@@ -18,8 +18,13 @@ test('answering from the start page', async ({ page }) => {
 	await open(page, '/');
 	const card = page.getByRole('form', { name: /^Bist du dabei\?/ }).first();
 	await card.getByRole('button', { name: 'Ich komme' }).click();
-	await expect(card.getByRole('button', { name: 'Ich komme' })).toHaveAttribute('aria-pressed', 'true');
+	// Once answered, the card says so in one line; "ändern" brings the buttons back (#214).
+	const change = page.getByRole('button', { name: /^ändern: Bist du dabei\?/ }).first();
+	await expect(change).toBeVisible();
+	await expect(page.getByText('Du kommst').first()).toBeVisible();
 	await expect(page).toHaveURL(/\/$/);
+	await change.click();
+	await expect(page.getByRole('form', { name: /^Bist du dabei\?/ }).first().getByRole('button', { name: 'Ich komme' })).toHaveAttribute('aria-pressed', 'true');
 	// The calendar list says which dates are answered and which still wait.
 	await open(page, '/kalender');
 	await expect(page.getByText('Du kommst').first()).toBeVisible();

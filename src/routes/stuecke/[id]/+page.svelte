@@ -93,6 +93,10 @@
 	let portraitFailed = $state<string | null>(null);
 	const portrait = $derived(portraitFailed === piece.id ? null : data.banner.portrait);
 
+	// The member's own parts (#216): one tap from the top, and marked in the list.
+	const mine = $derived(data.mine.filter((part) => part.status !== 'missing'));
+	const mineIds = $derived(new Set(data.mine.map((part) => part.id)));
+
 	const gaps = $derived(
 		piece.parts.filter((part) => part.status !== 'ok' && part.kind !== 'sonstiges' && part.kind !== 'audio').length
 	);
@@ -140,6 +144,22 @@
 			</div>
 		{/each}
 	</dl>
+{/if}
+{#if mine.length}
+	<div class="my-parts">
+		{#each mine as part (part.id)}
+			{@const external = !part.url.startsWith('/')}
+			<a
+				class="btn"
+				class:secondary={part.shared}
+				href={part.url}
+				target={external ? '_blank' : undefined}
+				rel={external ? 'noopener noreferrer' : undefined}
+			>
+				<Icon name="parts" size={18} />{part.shared ? t.piece.alsoPart(part.label) : t.piece.yourPart(part.label)}
+			</a>
+		{/each}
+	</div>
 {/if}
 </div>
 
@@ -278,7 +298,7 @@
 							{#if part.kind === 'audio'}<Icon name="headphones" size={16} />{:else}<InstrumentGlyph glyph={partGlyph(part)} size={20} />{/if}
 						</span>
 						<span class="label">
-							<span class="name">{part.label}</span>
+							<span class="name">{part.label}{#if mineIds.has(part.id)}<span class="yours">{t.piece.yours}</span>{/if}</span>
 							{#if part.notes.length || (part.subfolder && sections.length < 2)}
 								<span class="notes">
 									{#each part.notes as note (note)}<span class="note">{note}</span>{/each}
@@ -893,6 +913,25 @@
 		background: var(--surface-2);
 		color: var(--text-muted);
 		font-size: 0.75rem;
+	}
+
+	.my-parts {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2);
+		padding: var(--space-4);
+		border-top: 1px solid var(--hairline);
+	}
+
+	.yours {
+		margin-left: var(--space-2);
+		padding: 1px var(--space-2);
+		border-radius: 999px;
+		background: var(--accent-soft);
+		color: var(--accent);
+		font-size: 0.75rem;
+		font-weight: 650;
+		vertical-align: 1px;
 	}
 
 	.status {

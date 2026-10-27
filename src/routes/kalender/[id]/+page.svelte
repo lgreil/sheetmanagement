@@ -14,6 +14,7 @@
 	import Signups from '#lib/components/Signups.svelte';
 	import Title from '#lib/components/Title.svelte';
 	import { concertOrchestras, programLabel } from '#lib/repertoire/orchestras.ts';
+	import { splitTrailingEmoji } from '#lib/events/format.ts';
 
 	let { data, form } = $props();
 	/** The orchestra whose Drive folder is being synced. */
@@ -23,6 +24,7 @@
 	const title = $derived(data.kind === 'event' ? data.event.displayTitle : data.archive.title);
 	const location = $derived(data.kind === 'event' ? data.event.location : data.archive.location);
 	const isConcert = $derived(data.kind === 'archive' || data.event.type === 'konzert');
+	const [titleStart, titleEnd] = $derived(splitTrailingEmoji(title));
 
 	/** A rehearsal sits below its concert: "Konzerte › Herbstkonzert › Probe". */
 	const crumbs = $derived([
@@ -103,7 +105,7 @@
 			{#if data.kind === 'event' && data.event.tentative}<span class="tentative">{t.concerts.tentative}</span>{/if}
 			{#if data.kind === 'event' && !data.event.past}<span class="relative">{t.concerts.relative(data.event.daysUntil)}</span>{/if}
 		</p>
-		<h1>{title}</h1>
+		<h1>{titleStart}{#if titleEnd}<span class="keep">{titleEnd}</span>{/if}</h1>
 		{#if data.kind === 'event'}
 			<p class="when">{data.event.date.long} · {data.event.date.time || t.concerts.allDay}</p>
 		{/if}
@@ -131,6 +133,15 @@
 {/if}
 
 {#if overview}
+<!-- The one thing every member does here, right below the date (#215): visible without scrolling on a phone. -->
+{#if data.kind === 'event' && data.signups}
+	{#if data.signups.state === 'ready'}
+		<Signups signups={data.signups} result={form} />
+	{:else}
+		<p class="placeholder block">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
+	{/if}
+{/if}
+
 <!-- The facts as one calm list: when, where, what it belongs to. -->
 <ul class="ui-list facts">
 	{#if data.kind === 'archive'}
@@ -183,15 +194,6 @@
 		</li>
 	{/if}
 </ul>
-
-<!-- The one thing every member does here, right below when and where. -->
-{#if data.kind === 'event' && data.signups}
-	{#if data.signups.state === 'ready'}
-		<Signups signups={data.signups} result={form} />
-	{:else}
-		<p class="placeholder block">{data.signups.state === 'sign-in' ? t.signups.signInNeeded : t.signups.notSetUp}</p>
-	{/if}
-{/if}
 
 {#if data.kind === 'event' && data.event.description}
 	<section class="block">
@@ -523,6 +525,11 @@
 
 	.head h1 {
 		overflow-wrap: anywhere;
+		text-wrap: balance;
+	}
+
+	.head h1 .keep {
+		white-space: nowrap;
 	}
 
 	.when {

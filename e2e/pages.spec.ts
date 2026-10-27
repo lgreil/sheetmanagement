@@ -6,7 +6,7 @@ test.beforeEach(async ({ page }) => resetDemo(page));
 test('start page: greeting, open work and the next dates', async ({ page }) => {
 	await open(page, '/');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Hallo');
-	await expect(page.getByText('Wartet auf dich')).toBeVisible();
+	await expect(page.getByRole('region', { name: 'Wartet auf dich' })).toContainText('Dinge warten auf dich');
 	await expect(page.getByText('Nächste Probe')).toBeVisible();
 	await expectAccessible(page);
 });
