@@ -240,8 +240,13 @@ test('a date poll from start to calendar (#95)', async ({ page }) => {
 	await expect(page.getByText('Antwort gespeichert.')).toBeVisible();
 	await expect(page.getByText('Bester Termin')).toBeVisible();
 
-	await page.getByRole('button', { name: /Diesen nehmen \(Samstag, 10\. Juli 2027/ }).click();
-	await expect(page.getByRole('link', { name: 'In Google Kalender eintragen' })).toHaveAttribute('href', /dates=20270710T180000/);
+	// The best date is ticked; a second one can join it (#209).
+	await expect(page.getByRole('checkbox', { name: /Nehmen \(Samstag, 10\. Juli 2027/ })).toBeChecked();
+	await page.getByRole('checkbox', { name: /Nehmen \(Samstag, 3\. Juli 2027/ }).check();
+	await page.getByRole('button', { name: 'Mit 2 Terminen abschließen' }).click();
+	const links = page.getByRole('link', { name: /In Google Kalender eintragen/ });
+	await expect(links).toHaveCount(2);
+	await expect(links.nth(1)).toHaveAttribute('href', /dates=20270710T180000/);
 });
 
 test('a note on a piece reaches the section’s Meine Noten (#125)', async ({ page }) => {

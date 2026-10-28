@@ -19,9 +19,14 @@
 	// Your answers, changed here until saved; a date you haven't answered starts empty.
 	// svelte-ignore state_referenced_locally
 	let choices = $state<Record<string, PollAnswer | undefined>>({ ...(data.mine?.choices ?? {}) });
-	// The dates an organiser will close it with (#209); the best one is ticked to begin with.
-	// svelte-ignore state_referenced_locally
-	let picked = $state<string[]>(data.best ? [data.best] : []);
+	// The dates an organiser will close it with (#209): the best one ticked, following the
+	// answers as they come in, until the organiser ticks or unticks one themselves.
+	let picked = $state<string[]>([]);
+	let touched = $state(false);
+	$effect.pre(() => {
+		const best = data.best;
+		if (!touched) picked = best ? [best] : [];
+	});
 	const deadline = $derived(poll.deadline ? optionLabel({ date: poll.deadline }, config.locale) : null);
 </script>
 
@@ -107,7 +112,7 @@
 				{/if}
 				{#if data.manage && !poll.closedAt}
 					<label class="take">
-						<input type="checkbox" name="option" value={option.id} bind:group={picked} />
+						<input type="checkbox" name="option" value={option.id} bind:group={picked} onchange={() => (touched = true)} />
 						{t.polls.choose}<span class="sr-only"> ({when.long})</span>
 					</label>
 				{/if}
