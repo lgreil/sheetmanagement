@@ -14,6 +14,41 @@ export function orchestraLinks(links: OrchestraLink[] = []): { label: string; ur
 	});
 }
 
+/** The icon for a link's site; anything not known is a website. */
+function iconFor(url: string): LinkIcon {
+	const host = new URL(url).hostname.replace(/^(www|m)\./, '');
+	if (host === 'instagram.com') return 'instagram';
+	if (host === 'facebook.com' || host === 'fb.com') return 'facebook';
+	if (host === 'youtube.com' || host === 'youtu.be') return 'youtube';
+	return 'globe';
+}
+
+const SITE_NAMES: Partial<Record<LinkIcon, string>> = { instagram: 'Instagram', facebook: 'Facebook', youtube: 'YouTube' };
+
+/**
+ * The orchestra's links as typed on /einstellungen or into ORCHESTRA_LINKS: each a web link,
+ * with an optional name before it, one per line or separated by ";":
+ * "Website https://example.org; Instagram https://www.instagram.com/orchester/".
+ * Without a name, a known site is named after itself, any other after its host.
+ */
+export function parseLinks(text: string | undefined): OrchestraLink[] {
+	const links: OrchestraLink[] = [];
+	let rest = text ?? '';
+	for (const match of rest.matchAll(/https?:\/\/[^\s;,<>"']+/g)) {
+		const before = rest.slice(0, rest.indexOf(match[0]));
+		rest = rest.slice(before.length + match[0].length);
+		const url = safeLink(match[0]);
+		if (!url) continue;
+		const icon = iconFor(url);
+		const named = before.replace(/^[\s;,]+|[\s;,:=|–-]+$/g, '').trim();
+		links.push({ label: named || SITE_NAMES[icon] || new URL(url).hostname.replace(/^www\./, ''), url, icon });
+	}
+	return links;
+}
+
+/** The links as one line each, "Name https://…", for the field on /einstellungen. */
+export const linksText = (links: OrchestraLink[]) => links.map((link) => `${link.label} ${link.url}`).join('\n');
+
 /** "https://…" stays, anything else (javascript:, mailto:, plain text) is undefined. */
 export function safeLink(text: string): string | undefined {
 	const value = text.trim();

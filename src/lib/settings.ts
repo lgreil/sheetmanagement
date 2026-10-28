@@ -1,11 +1,12 @@
 import { LOOKS, parseColour, type Look } from '#lib/branding.ts';
 import { FEATURES, type Feature } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
-import type { InstrumentOverride } from '#lib/config/index.ts';
+import type { InstrumentOverride, OrchestraLink } from '#lib/config/index.ts';
+import { linksText, parseLinks } from '#lib/links.ts';
 import type { Table } from '#lib/repertoire/sheet.ts';
 
 /**
- * What an admin sets on /einstellungen: name, logo, colour, look and the parts of the app in use.
+ * What an admin sets on /einstellungen: name, logo, colour, look, the orchestra's links and the parts of the app in use.
  * Kept in the sheet's "Einstellungen" tab, one row per setting, so a deployment changes them
  * without a variable or a code change. They win over the variables, which win over the preset.
  */
@@ -31,11 +32,14 @@ export interface StoredSettings {
 	featuresOff?: Feature[];
 	/** Sign-ups and attendance keep names for this many seasons (#158); unset keeps them. */
 	retention?: number;
+	/** Website and social media in the footer; unset falls back to ORCHESTRA_LINKS. */
+	links?: OrchestraLink[];
 }
 
 const MAX_NAME = 80;
 const MAX_SHORT_NAME = 24;
 const MAX_SEASONS = 20;
+const MAX_LINKS = 8;
 
 /** "3" → 3; anything but a whole number from 1 to 20 is no retention. */
 const seasonsOf = (text: string) => (/^\d{1,2}$/.test(text.trim()) && Number(text) >= 1 && Number(text) <= MAX_SEASONS ? Number(text) : undefined);
@@ -61,6 +65,7 @@ export function readSettings(rows: { values: { key: string; value: string } }[])
 		else if (key === 'accent') settings.accent = parseColour(value);
 		else if (key === 'look') settings.look = lookOf(value);
 		else if (key === 'retention') settings.retention = seasonsOf(value);
+		else if (key === 'links' && value) settings.links = parseLinks(value).slice(0, MAX_LINKS);
 		else if (key === 'featuresOff') settings.featuresOff = FEATURES.filter((feature) => value.split(/[,;\s]+/).includes(feature));
 	}
 	return Object.fromEntries(Object.entries(settings).filter(([, value]) => value !== undefined)) as StoredSettings;
@@ -77,6 +82,9 @@ export function checkSettings(form: SettingsForm): { ok: true } | { ok: false; f
 	if (form.accent.trim() && !parseColour(form.accent)) return { ok: false, field: 'accent' };
 	if (form.look.trim() && !lookOf(form.look.trim())) return { ok: false, field: 'look' };
 	if (form.retention.trim() && !seasonsOf(form.retention)) return { ok: false, field: 'retention' };
+	// Every line needs a web link, and not too many of them.
+	const lines = form.links.split(/[\n;]/).filter((line) => line.trim());
+	if (lines.some((line) => !parseLinks(line).length) || lines.length > MAX_LINKS) return { ok: false, field: 'links' };
 	return { ok: true };
 }
 
@@ -90,7 +98,8 @@ export function planSettingsSave(table: Table<'key' | 'value'>, form: SettingsFo
 		accent: parseColour(form.accent) ?? '',
 		look: look ? LOOK_WORDS[look] : '',
 		featuresOff: form.featuresOff.join(', '),
-		retention: String(seasonsOf(form.retention) ?? '')
+		retention: String(seasonsOf(form.retention) ?? ''),
+		links: linksText(parseLinks(form.links))
 	};
 	const updates: { row: number; values: { value: string } }[] = [];
 	const append: { key: string; value: string }[] = [];

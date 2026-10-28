@@ -538,6 +538,9 @@ export const en: Texts = {
 		logoField: 'Link to the logo',
 		logoHint: "A square image as an https link, e.g. from the orchestra's website, or a file of the app such as /logo.png.",
 		logoPreview: 'Preview',
+		links: 'Website and social media',
+		linksField: 'Links at the bottom of every page',
+		linksHint: 'One link per line with a name before it, e.g. “Instagram https://www.instagram.com/orchestra/”. Instagram, Facebook and YouTube get their sign. Empty shows none.',
 		colour: 'Colour',
 		accent: 'Accent colour',
 		accentDefault: (colour: string) => `Default colour (${colour})`,
@@ -595,7 +598,8 @@ export const en: Texts = {
 			accent: 'The colour must look like #rrggbb.',
 			look: 'Please choose one of the looks.',
 			featuresOff: '',
-			retention: 'Retention is a number of seasons, 1 to 20, or empty.'
+			retention: 'Retention is a number of seasons, 1 to 20, or empty.',
+			links: 'Every line needs a link starting with https://; at most 8.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -2034,7 +2038,8 @@ export const en: Texts = {
 				accent: 'Accent colour',
 				look: 'Look',
 				featuresOff: 'Turned off',
-				retention: 'Retention (seasons)'
+				retention: 'Retention (seasons)',
+				links: 'Links'
 			},
 			lookValues: {
 				bold: 'bold',

@@ -7,6 +7,7 @@ import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 import { appendRecords, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecords } from '#lib/server/sheet-writes.ts';
 import { NotConfiguredError } from '#lib/server/services.ts';
 import { PRESET_INSTRUMENTS, type InstrumentOverride } from '#lib/config/index.ts';
+import { linksText } from '#lib/links.ts';
 import { instrumentLabel } from '#lib/music/instrument-label.ts';
 import {
 	checkInstruments,
@@ -21,7 +22,7 @@ import {
 import type { Actions, PageServerLoad } from './$types';
 
 /**
- * Name, logo, colour, look and the parts of the app in use, set by an admin (#75, #134, #163). Saved in the
+ * Name, logo, colour, look, links and the parts of the app in use, set by an admin (#75, #134, #163). Saved in the
  * sheet's "Einstellungen" tab; an empty field falls back to the variable or the preset.
  */
 
@@ -56,7 +57,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			logo: stored.logo ?? '',
 			accent: stored.accent ?? '',
 			look: stored.look ?? '',
-			retention: stored.retention ? String(stored.retention) : ''
+			retention: stored.retention ? String(stored.retention) : '',
+			links: linksText(stored.links ?? [])
 		},
 		defaults: {
 			name: defaults.name,
@@ -64,7 +66,8 @@ export const load: PageServerLoad = async ({ locals }) => {
 			logo: defaults.logo,
 			accent: defaults.accent,
 			accentLight: defaults.accentLight,
-			look: defaults.look
+			look: defaults.look,
+			links: linksText(defaults.links)
 		},
 		features: FEATURES.map((feature) => ({ key: feature, on: on[feature], default: defaults.features[feature] })),
 		/** Whether the page decides the features, or FEATURES_OFF and the preset still do. */
@@ -94,7 +97,8 @@ export const actions: Actions = {
 			accent: data.has('accentDefault') ? '' : text('accent'),
 			look: text('look'),
 			featuresOff: FEATURES.filter((feature: Feature) => !on.has(feature)),
-			retention: text('retention')
+			retention: text('retention'),
+			links: text('links')
 		};
 		const check = checkSettings(form);
 		// What was typed comes back, so nothing is lost when the page reloads without JavaScript.
@@ -102,7 +106,7 @@ export const actions: Actions = {
 			return fail(400, {
 				field: check.field,
 				message: t.settings.invalid[check.field],
-				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent, look: form.look, retention: form.retention }
+				values: { name: form.name, shortName: form.shortName, logo: form.logo, accent: form.accent, look: form.look, retention: form.retention, links: form.links }
 			});
 		}
 		try {

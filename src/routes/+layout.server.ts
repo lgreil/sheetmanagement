@@ -33,7 +33,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 	const member = access.user ? (await getAccessList().catch(() => null))?.membersByEmail.get(normalizeEmail(access.user.email)) : undefined;
 	const instrument = member?.instrument ? parseInstruments(member.instrument, config)[0]?.instrument : undefined;
 
-	const { name, shortName, logo, colours, style, look } = orchestra();
+	const { name, shortName, logo, links, colours, style, look } = orchestra();
 	// The tour for new members, until they finish or skip it; not on sign-in or legal pages.
 	const tour = isPublicPath(url.pathname) ? ('seen' as const) : await tourState(access.user?.email);
 	return {
@@ -41,6 +41,7 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		orchestraShortName: shortName,
 		// Sharp on the page: the built-in PNG's SVG twin.
 		logo: shownLogo(logo),
+		links,
 		brand: { colour: colours.brand, style, look },
 		features: on,
 		// The drawing for the season in a few quiet corners (#202), unless the orchestra turned it off.

@@ -4,7 +4,7 @@ import { checkInstruments, checkSettings, planInstrumentSave, planSettingsSave, 
 
 const columns = { key: 'Einstellung', value: 'Wert' };
 const table = (rows: string[][]) => readTable([['Einstellung', 'Wert'], ...rows], columns);
-const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', look: '', featuresOff: [], retention: '' };
+const form: SettingsForm = { name: '', shortName: '', logo: '', accent: '', look: '', featuresOff: [], retention: '', links: '' };
 
 describe('readSettings', () => {
 	it('reads the rows by their German names, in any case', () => {
@@ -69,6 +69,25 @@ describe('retention', () => {
 	});
 });
 
+describe('links', () => {
+	it('reads the footer links from their row, with an icon each', () => {
+		expect(readSettings(table([['Links', 'Website https://example.org\nInstagram https://www.instagram.com/orchester/']]).rows)).toEqual({
+			links: [
+				{ label: 'Website', url: 'https://example.org/', icon: 'globe' },
+				{ label: 'Instagram', url: 'https://www.instagram.com/orchester/', icon: 'instagram' }
+			]
+		});
+		// An empty row is no links of its own: the variable's, or none.
+		expect(readSettings(table([['Links', '']]).rows)).toEqual({});
+	});
+
+	it('wants a web link on every line', () => {
+		expect(checkSettings({ ...form, links: 'Website https://example.org\nInstagram' })).toEqual({ ok: false, field: 'links' });
+		expect(checkSettings({ ...form, links: 'Website javascript:alert(1)' })).toEqual({ ok: false, field: 'links' });
+		expect(checkSettings({ ...form, links: 'Website https://example.org; https://facebook.com/orchester' })).toEqual({ ok: true });
+	});
+});
+
 describe('planSettingsSave', () => {
 	it('adds every setting to an empty tab', () => {
 		const plan = planSettingsSave(table([]), { ...form, name: 'Muster', featuresOff: ['loans'], retention: '3' });
@@ -80,7 +99,8 @@ describe('planSettingsSave', () => {
 			{ key: 'Akzentfarbe', value: '' },
 			{ key: 'Stil', value: '' },
 			{ key: 'Ausgeschaltet', value: 'loans' },
-			{ key: 'Aufbewahrung (Saisons)', value: '3' }
+			{ key: 'Aufbewahrung (Saisons)', value: '3' },
+			{ key: 'Links', value: '' }
 		]);
 	});
 
@@ -92,7 +112,8 @@ describe('planSettingsSave', () => {
 			['Akzentfarbe', '#e6b422'],
 			['Stil', ''],
 			['Ausgeschaltet', ''],
-			['Aufbewahrung (Saisons)', '']
+			['Aufbewahrung (Saisons)', ''],
+			['Links', '']
 		]);
 		const plan = planSettingsSave(existing, { ...form, name: 'Muster', accent: '#1D4ED8' });
 		expect(plan).toEqual({ updates: [{ row: 5, values: { value: '#1d4ed8' } }], append: [] });

@@ -85,6 +85,23 @@
 			</div>
 		</section>
 
+		<section class="ui-card card" aria-labelledby="links">
+			<h2 id="links"><Icon name="globe" size={18} />{t.settings.links}</h2>
+			<label class="field"
+				>{t.settings.linksField}
+				<textarea
+					name="links"
+					rows="3"
+					value={values.links}
+					placeholder={data.defaults.links}
+					spellcheck="false"
+					aria-describedby="links-hint"
+					aria-invalid={invalid('links')}
+				></textarea>
+				<span id="links-hint" class="hint">{t.settings.linksHint}</span>
+			</label>
+		</section>
+
 		<section class="ui-card card" aria-labelledby="colour">
 			<h2 id="colour"><Icon name="palette" size={18} />{t.settings.colour}</h2>
 			<label class="check">
