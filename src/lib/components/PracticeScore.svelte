@@ -78,6 +78,9 @@
 				const { openScore } = await import('#lib/music/score-reader.ts');
 				opened = await openScore(id);
 				if (cancelled) return void opened.destroy();
+				// The concert mode turns on into the next part: its pages, not the last part's.
+				drawn.clear();
+				sizes.clear();
 				score = opened;
 				pages = opened.doc.numPages;
 				page = startAt === 'last' ? pages : 1;
@@ -101,7 +104,7 @@
 		if (!found) {
 			const { pageSize } = await import('#lib/music/score-reader.ts');
 			found = await pageSize(current, number);
-			sizes.set(number, found);
+			if (current === score) sizes.set(number, found);
 		}
 		return found;
 	}
@@ -122,6 +125,8 @@
 			const { renderPage } = await import('#lib/music/score-reader.ts');
 			const canvas = document.createElement('canvas');
 			await renderPage(current, number, canvas, width);
+			// A page still drawing from the part before isn't kept for this one.
+			if (current !== score) return canvas;
 			drawn.set(key, canvas);
 			// Phones have little memory for canvases: only the last few.
 			while (drawn.size > 4) drawn.delete(drawn.keys().next().value!);
@@ -379,6 +384,21 @@
 	 */
 	const PANEL = 260;
 	const GAP = 12;
+
+	/**
+	 * In full screen the floating controls would cover the page's head (a phone held upright
+	 * has height to spare): the page moves down below them, centred when there's room for that,
+	 * and only where the screen is too short does it still go under them.
+	 */
+	let controlsHeight = $state(0);
+	const pageTop = $derived.by(() => {
+		if (!full) return 0;
+		const clear = controlsHeight + 2 * GAP;
+		if (fit === 'width') return clear;
+		if (!size) return 0;
+		const free = stageHeight - size.height;
+		return Math.max(0, Math.min(free, active ? clear : Math.max(free / 2, clear)));
+	});
 	const dock = $derived.by(() => {
 		const width = size?.width ?? stageWidth;
 		const height = size?.height ?? stageHeight;
@@ -389,10 +409,10 @@
 			const left = Math.max(0, Math.min((stageWidth - width) / 2, stageWidth - PANEL - GAP - width));
 			return { place: 'side', page: left, left: `${left + width + GAP}px`, top: `${top}px`, width: `${Math.min(PANEL + 40, stageWidth - left - width - GAP)}px`, height: `calc(100% - ${top}px)` };
 		}
-		const below = stageHeight - height - GAP;
+		const below = stageHeight - pageTop - height - GAP;
 		if (fit === 'page' && size && below >= 150) {
 			const left = (stageWidth - width) / 2;
-			return { place: 'below', page: left, left: `${left}px`, top: `${height + GAP}px`, width: `${width}px`, height: `${below}px` };
+			return { place: 'below', page: left, left: `${left}px`, top: `${pageTop + height + GAP}px`, width: `${width}px`, height: `${below}px` };
 		}
 		const centred = Math.max(0, (stageWidth - width) / 2);
 		return { place: full ? 'over' : 'above', page: centred, left: undefined, top: undefined, width: undefined, height: undefined };
@@ -408,7 +428,7 @@
 
 <!-- In full screen the page takes the whole height; the controls float over its corner, faded until touched. -->
 <div class="score" class:full class:night bind:this={root}>
-	<div class="controls" class:awake>
+	<div class="controls" class:awake bind:offsetHeight={controlsHeight}>
 	<div class="bar">
 		{#if extra}<div class="group">{@render extra()}</div>{/if}
 		<div class="group">
@@ -481,6 +501,7 @@
 			style:width={size ? `${size.width}px` : undefined}
 			style:height={size ? `${size.height}px` : undefined}
 			style:margin-left={size ? `${pageLeft}px` : undefined}
+			style:margin-top={pageTop ? `${pageTop}px` : undefined}
 			hidden={!score || failed}
 		>
 			<div class="slot" bind:this={slot}></div>
