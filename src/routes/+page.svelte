@@ -129,9 +129,8 @@
 <header class="hero" class:story={data.brand.look === 'bold'}>
 	{#if data.brand.look === 'bold'}
 		<img class="watermark" src={data.logo} alt="" />
-		<!-- The season's drawing, twice, drifting slowly behind the greeting (#202). -->
-		<span class="season-mark one"><SeasonMark size={22} /></span>
-		<span class="season-mark two"><SeasonMark size={14} /></span>
+		<!-- The season moving behind the greeting (#202): snow falling, a bat flying past the pumpkins. -->
+		<SeasonMark variant="scene" />
 	{/if}
 	<h1>{firstName ? t.home.hello(firstName) : t.home.title(data.orchestraName)}</h1>
 	<!-- One useful line instead of a greeting alone (#221): what the rehearsals lead up to. -->
@@ -342,34 +341,6 @@
 		translate: 0 -50%;
 		opacity: 0.2;
 		pointer-events: none;
-	}
-
-	.season-mark {
-		position: absolute;
-		display: grid;
-		color: var(--accent-dark, var(--brand));
-		opacity: 0.6;
-		pointer-events: none;
-		animation: drift 9s var(--ease) infinite alternate;
-	}
-
-	.season-mark.one {
-		top: 14%;
-		left: 58%;
-	}
-
-	.season-mark.two {
-		bottom: 18%;
-		left: 70%;
-		opacity: 0.4;
-		animation-delay: -4s;
-	}
-
-	@keyframes drift {
-		to {
-			translate: -6px 8px;
-			rotate: 20deg;
-		}
 	}
 
 	.countdown-line {

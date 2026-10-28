@@ -195,7 +195,7 @@
 			{/if}
 			<!-- The instrument drawings are CC BY: credited where everyone sees them. -->
 			<p class="source"><a href="/licenses/game-icons-CC-BY-3.0.txt">{t.footer.instruments}</a></p>
-			<span class="season-mark"><SeasonMark size={18} /></span>
+			<span class="season-mark"><SeasonMark variant="pair" size={22} /></span>
 		</footer>
 	</main>
 

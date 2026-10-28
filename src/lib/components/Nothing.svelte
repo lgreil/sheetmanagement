@@ -16,7 +16,7 @@
 		{#each glyphs as glyph, i (i)}
 			<span class="glyph" style:--i={i}>
 				<InstrumentGlyph {glyph} size={28} />
-				{#if i === 1}<span class="season-mark"><SeasonMark size={16} /></span>{/if}
+				{#if i === 1}<span class="season-mark"><SeasonMark variant="companion" size={20} /></span>{/if}
 			</span>
 		{/each}
 	</span>
@@ -62,8 +62,8 @@
 	/* The season's drawing on the middle one's shoulder (#202). */
 	.season-mark {
 		position: absolute;
-		top: -6px;
-		right: -8px;
+		top: -10px;
+		right: -12px;
 		display: grid;
 		color: var(--accent);
 		rotate: 12deg;
