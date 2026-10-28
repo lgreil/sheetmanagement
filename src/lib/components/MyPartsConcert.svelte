@@ -4,6 +4,7 @@
 	import { mergedFileName } from '#lib/music/my-parts.ts';
 	import type { Stroke } from '#lib/practice/marks.ts';
 	import type { PageData } from '../../routes/meine-noten/$types';
+	import ConcertMode from './ConcertMode.svelte';
 	import Icon from './Icon.svelte';
 	import InstrumentGlyph from './InstrumentGlyph.svelte';
 
@@ -37,6 +38,14 @@
 	);
 	const found = $derived(concert.pieces.filter((piece) => piece.matches.some(hasPart)).length);
 	const several = $derived(concert.pieces.some((piece) => piece.matches.length > 1));
+
+	// The concert mode (#194), opened by a tap so it may go full screen; the member's marks come along.
+	let performing = $state<Record<string, Record<number, Stroke[]>> | null>(null);
+	async function perform() {
+		performing = {};
+		const marks = await ownMarks(files.map((file) => file.id));
+		if (performing) performing = marks;
+	}
 
 	let progress = $state<string | null>(null);
 	let mergeError = $state<string | null>(null);
@@ -188,6 +197,8 @@
 	}
 </script>
 
+{#if performing}<ConcertMode {files} marks={performing} onclose={() => (performing = null)} />{/if}
+
 <section class="concert" id="konzert-{concert.id}">
 	<div class="concert-head">
 		<div>
@@ -197,6 +208,9 @@
 		</div>
 		{#if label && concert.pieces.length}
 			<div class="merge">
+				{#if canMerge && files.length}
+					<button class="btn" onclick={perform} title={t.myParts.concertMode.hint}><Icon name="eye" size={16} />{t.myParts.concertMode.open}</button>
+				{/if}
 				{#if canMerge}
 					<button class="btn secondary" onclick={merge} disabled={!!progress || !files.length} title={t.myParts.mergeHint}>
 						<Icon name="file" size={16} />{progress ?? t.myParts.merge}

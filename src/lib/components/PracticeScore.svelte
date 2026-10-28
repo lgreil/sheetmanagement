@@ -15,7 +15,14 @@
 		file,
 		marks: saved,
 		tools = [],
-		panel
+		panel,
+		pen: penAllowed = true,
+		onpast,
+		startAt = 'first',
+		startFull = false,
+		onleave,
+		night = false,
+		extra
 	}: {
 		file: string;
 		marks: Record<number, Stroke[]>;
@@ -23,6 +30,20 @@
 		tools?: { value: string; label: string }[];
 		/** One tool's panel, shown beside the page where there's room (see `dock`). */
 		panel?: Snippet<[tool: string]>;
+		/** Off in the concert mode (#194): marks show, nothing is drawn or saved. */
+		pen?: boolean;
+		/** Turning past the last page (1) or before the first (-1): the next or previous piece. */
+		onpast?: (step: 1 | -1) => void;
+		/** Where a newly opened part starts: at its end when coming back from the next piece. */
+		startAt?: 'first' | 'last';
+		/** Opens in full screen (needs the tap that opened it). */
+		startFull?: boolean;
+		/** Called when full screen ends, by the button, Escape or the browser. */
+		onleave?: () => void;
+		/** Light notes on black, for a dark stage. */
+		night?: boolean;
+		/** More controls at the start of the toolbar. */
+		extra?: Snippet;
 	} = $props();
 
 	/** The tool shown; tools once opened stay mounted, so a metronome or drone keeps going. */
@@ -59,7 +80,7 @@
 				if (cancelled) return void opened.destroy();
 				score = opened;
 				pages = opened.doc.numPages;
-				page = 1;
+				page = startAt === 'last' ? pages : 1;
 			} catch {
 				if (!cancelled) failed = true;
 			}
@@ -140,7 +161,7 @@
 		if (next !== page) {
 			finishStroke();
 			page = next;
-		}
+		} else if (onpast && pages && Math.abs(step) === 1) onpast(step as 1 | -1);
 	}
 
 	/** With the page at its width: down the page first, then to the next one. */
@@ -191,10 +212,17 @@
 	function leaveFull() {
 		full = false;
 		if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+		onleave?.();
 	}
 	$effect(() => {
+		if (startFull) enterFull();
+	});
+	$effect(() => {
 		const changed = () => {
-			if (!document.fullscreenElement) full = false;
+			if (!document.fullscreenElement && full) {
+				full = false;
+				onleave?.();
+			}
 		};
 		document.addEventListener('fullscreenchange', changed);
 		return () => document.removeEventListener('fullscreenchange', changed);
@@ -379,21 +407,24 @@
 <svelte:window {onkeydown} />
 
 <!-- In full screen the page takes the whole height; the controls float over its corner, faded until touched. -->
-<div class="score" class:full bind:this={root}>
+<div class="score" class:full class:night bind:this={root}>
 	<div class="controls" class:awake>
 	<div class="bar">
+		{#if extra}<div class="group">{@render extra()}</div>{/if}
 		<div class="group">
-			<button type="button" class="tool" onclick={back} disabled={page <= 1 && fit === 'page'} aria-label={t.viewer.previous}><Icon name="back" size={16} /></button>
+			<button type="button" class="tool" onclick={back} disabled={page <= 1 && fit === 'page' && !onpast} aria-label={t.viewer.previous}><Icon name="back" size={16} /></button>
 			<span class="pages">{t.viewer.page(page, pages || 1)}</span>
-			<button type="button" class="tool" onclick={forward} disabled={page >= pages && fit === 'page'} aria-label={t.viewer.next}><Icon name="chevron" size={16} /></button>
+			<button type="button" class="tool" onclick={forward} disabled={page >= pages && fit === 'page' && !onpast} aria-label={t.viewer.next}><Icon name="chevron" size={16} /></button>
 		</div>
 		<div class="group">
 			<button type="button" class="tool text" onclick={() => (fit = fit === 'page' ? 'width' : 'page')}>
 				{fit === 'page' ? t.practice.viewer.fitWidth : t.practice.viewer.fitPage}
 			</button>
-			<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
-				<Icon name="edit" size={15} />{t.practice.marks.pen}
-			</button>
+			{#if penAllowed}
+				<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
+					<Icon name="edit" size={15} />{t.practice.marks.pen}
+				</button>
+			{/if}
 			{#each tools as each (each.value)}
 				<button type="button" class="tool text" class:on={active === each.value} aria-expanded={active === each.value} onclick={() => chooseTool(each.value)}>
 					{each.label}
@@ -497,6 +528,15 @@
 		z-index: 1000;
 		display: block;
 		background: var(--bg);
+	}
+
+	/* Night: the page inverted, light notes on black, for a dark stage. */
+	.score.night.full {
+		background: var(--brand-ink);
+	}
+
+	.night .sheet {
+		filter: invert(1) hue-rotate(180deg);
 	}
 
 	.full .controls {

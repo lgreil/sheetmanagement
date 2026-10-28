@@ -800,6 +800,14 @@ export const de = {
 		missing: 'fehlt im Archiv',
 		summary: (found: number, total: number) => `${found} von ${total} Stücken mit Stimme`,
 		merge: 'Als eine PDF',
+		/** Playing a concert from a tablet (#194). */
+		concertMode: {
+			open: 'Auftrittsmodus',
+			hint: 'Deine Stimmen in Programmfolge im Vollbild. Blättern mit Tippen oder Pedal geht gleich ins nächste Stück, der Bildschirm bleibt an.',
+			title: 'Auftrittsmodus',
+			piece: 'Stück',
+			night: 'Nacht'
+		},
 		merging: (done: number, total: number) => `Lade Stimme ${done} von ${total} …`,
 		mergeFailed: 'Die PDF konnte nicht erstellt werden. Die einzelnen Stimmen lassen sich weiter öffnen.',
 		skipped: (n: number) =>

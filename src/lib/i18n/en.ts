@@ -797,6 +797,13 @@ export const en: Texts = {
 		missing: 'missing from the library',
 		summary: (found: number, total: number) => `${found} of ${total} pieces with a part`,
 		merge: 'As one PDF',
+		concertMode: {
+			open: 'Concert mode',
+			hint: 'Your parts in programme order, full screen. Turning by tap or pedal goes straight on into the next piece, and the screen stays on.',
+			title: 'Concert mode',
+			piece: 'Piece',
+			night: 'Night'
+		},
 		merging: (done: number, total: number) => `Loading part ${done} of ${total} …`,
 		mergeFailed: "The PDF couldn't be made. The single parts can still be opened.",
 		skipped: (n: number) =>
