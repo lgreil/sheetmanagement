@@ -3,6 +3,7 @@ import { env, waitUntil } from 'cloudflare:workers';
 import { brandColours, brandStyle, DEFAULT_LOGO, lookStyle, parseColour } from '#lib/branding.ts';
 import { config } from '#lib/config/index.ts';
 import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
+import { parseLinks } from '#lib/links.ts';
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
 import type { KvStore } from './cache.ts';
 import { t } from '#lib/i18n/index.ts';
@@ -20,6 +21,8 @@ export interface AppEnv {
 	ORCHESTRA_LOGO?: string;
 	/** Accent colour as #rrggbb, e.g. "#1d4ed8"; the shades for light and dark are derived from it (#75). Default: the preset's. */
 	ORCHESTRA_ACCENT?: string;
+	/** Website and social media for the footer, "Name https://…" separated by ";" or new lines. Default: none. */
+	ORCHESTRA_LINKS?: string;
 	/** Parts of the app this orchestra doesn't use, comma-separated: "leihmaterial, gema, anwesenheit" (#134); see src/lib/features.ts. */
 	FEATURES_OFF?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
@@ -92,11 +95,12 @@ export function defaultSettings() {
 		/** The preset's own light shade, used with the default colour. */
 		accentLight: parseColour(env.ORCHESTRA_ACCENT) ? undefined : config.accentLight,
 		look: config.look ?? 'bold',
+		links: parseLinks(env.ORCHESTRA_LINKS),
 		features: resolveFeatures(config.features, env.FEATURES_OFF).features
 	};
 }
 
-/** Name, short name, logo, colours and look of this deployment: /einstellungen, else the variables, else the preset. */
+/** Name, short name, logo, links, colours and look of this deployment: /einstellungen, else the variables, else the preset. */
 export function orchestra() {
 	const env = appEnv();
 	const name = stored.name ?? env.ORCHESTRA_NAME?.trim();
@@ -112,6 +116,8 @@ export function orchestra() {
 		/** The theme's custom properties for a <style> on :root; the preset's light shade unless the variable sets a colour. */
 		style: brandStyle(colours, accent ? undefined : config.accentLight) + lookStyle(look),
 		look,
+		/** Website and social media for the footer; none unless the orchestra set them. */
+		links: stored.links ?? parseLinks(env.ORCHESTRA_LINKS),
 		/** The light shade is the preset's own (`accentLight`), not the derived one. */
 		presetLight: !accent && !!config.accentLight,
 		/** ORCHESTRA_ACCENT was set but isn't a colour; /status says so. */

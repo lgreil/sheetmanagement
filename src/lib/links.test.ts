@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { bachkreis } from '#lib/config/presets/bachkreis.ts';
-import { cleanLink, orchestraLinks, youtubeId } from './links.ts';
+import { cleanLink, linksText, orchestraLinks, parseLinks, youtubeId } from './links.ts';
 
 describe('orchestraLinks', () => {
 	it('keeps set web links with a label, defaulting the icon to a globe', () => {
@@ -24,6 +24,30 @@ describe('orchestraLinks', () => {
 
 	it('never links the source code for the Bachkreis', () => {
 		expect(bachkreis.sourceUrl).toBeUndefined();
+	});
+});
+
+describe('parseLinks', () => {
+	it('reads names and links separated by ";" or new lines, with the icon from the site', () => {
+		expect(parseLinks('Website https://example.org; Instagram https://www.instagram.com/orchester/\nFacebook: https://de-de.facebook.com/x')).toEqual([
+			{ label: 'Website', url: 'https://example.org/', icon: 'globe' },
+			{ label: 'Instagram', url: 'https://www.instagram.com/orchester/', icon: 'instagram' },
+			{ label: 'Facebook', url: 'https://de-de.facebook.com/x', icon: 'globe' }
+		]);
+	});
+
+	it('names a link without a name after its site', () => {
+		expect(parseLinks('https://youtu.be/x https://www.example.org/a').map((link) => link.label)).toEqual(['YouTube', 'example.org']);
+	});
+
+	it('is nothing when nothing is set', () => {
+		expect(parseLinks(undefined)).toEqual([]);
+		expect(parseLinks('  ')).toEqual([]);
+	});
+
+	it('writes them back as the field shows them', () => {
+		const links = parseLinks('Website https://example.org; Instagram https://www.instagram.com/orchester/');
+		expect(parseLinks(linksText(links))).toEqual(links);
 	});
 });
 

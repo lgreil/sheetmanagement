@@ -13,6 +13,10 @@ ORCHESTRA_NAME="Mein Orchester"
 # Accent colour as #rrggbb. The shades for the light and the dark scheme are derived from it,
 # darkened or lightened just enough to stay readable; /status shows them. Optional.
 # ORCHESTRA_ACCENT="#1d4ed8"
+# Website and social media at the bottom of every page: a name and a web link each, separated
+# by ";". Instagram, Facebook and YouTube get their icon. Optional; without it there are none.
+# /einstellungen can set them too, and wins.
+# ORCHESTRA_LINKS="Website https://example.org; Instagram https://www.instagram.com/mein_orchester/"
 # Parts of the app this orchestra doesn't use, comma-separated. Their pages, menu entries and
 # sheet tabs go away. Any of: leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline
 # FEATURES_OFF="leihmaterial, gema"

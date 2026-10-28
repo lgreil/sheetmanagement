@@ -158,8 +158,6 @@ export interface OrchestraConfig {
 	 * are in the texts, so another country's society only needs a translation.
 	 */
 	features?: Partial<Features>;
-	/** The orchestra's website, socials and newsletter, in the footer and on the start page. */
-	links?: OrchestraLink[];
 	/**
 	 * Link to the app's source code, shown as a quiet line in the footer. Off when unset:
 	 * a deployment for children and teens may not want to point to a personal profile.

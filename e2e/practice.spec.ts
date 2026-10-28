@@ -168,12 +168,13 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Mikrofon einschalten' })).toBeVisible();
 	await page.getByRole('button', { name: 'Vollbild' }).click();
 	await expect(page.locator('.score.full')).toBeVisible();
-	// The page fills the screen: its whole height, or its whole width on a narrow screen.
+	// The page fills the screen: its whole height, or its whole width on a narrow screen, there below the controls.
 	await expect
 		.poll(() =>
 			page.locator('.sheet').evaluate((sheet) => {
 				const { top, height, width } = sheet.getBoundingClientRect();
-				return Math.round(top) === 0 && (Math.round(height) === innerHeight || Math.round(width) === innerWidth);
+				const controls = document.querySelector('.full .controls')!.getBoundingClientRect();
+				return (Math.round(top) === 0 && Math.round(height) === innerHeight) || (Math.round(width) === innerWidth && top >= controls.bottom);
 			})
 		)
 		.toBe(true);
@@ -218,6 +219,27 @@ test('the member’s notes are in the concert’s merged PDF', async ({ page }) 
 	};
 	expect(merged.getPageCount()).toBeGreaterThan(1);
 	expect(streams(0)).toBeGreaterThan(streams(1));
+});
+
+test('the concert mode turns on into the next piece, its head clear of the controls', async ({ page }) => {
+	await open(page, '/meine-noten');
+	await page.locator('section.concert').first().getByRole('button', { name: 'Auftrittsmodus' }).click();
+	const piece = page.locator('.concert-mode select');
+	const canvas = page.locator('.concert-mode .slot canvas');
+	await expect(canvas).toHaveCount(1);
+	const first = await canvas.evaluate((each: HTMLCanvasElement) => each.toDataURL());
+
+	// The parts here are one page each: the next turn is the next piece, drawn anew.
+	await page.keyboard.press('ArrowRight');
+	await expect(piece).toHaveValue('1');
+	await expect.poll(() => canvas.evaluate((each: HTMLCanvasElement) => each.toDataURL())).not.toBe(first);
+
+	// A phone held upright has height to spare: the page starts below the floating controls.
+	if (test.info().project.name === 'phone') {
+		const controls = (await page.locator('.concert-mode .controls').boundingBox())!;
+		const sheet = (await page.locator('.concert-mode .sheet').boundingBox())!;
+		expect(sheet.y).toBeGreaterThanOrEqual(controls.y + controls.height);
+	}
 });
 
 test('the metronome’s weight sets the tempo when dragged', async ({ page }) => {

@@ -43,7 +43,7 @@
 		mac = /Mac|iPhone|iPad/.test(navigator.platform);
 	});
 
-	const links = orchestraLinks(config.links);
+	const links = $derived(orchestraLinks(data.links));
 	const sourceUrl = safeLink(config.sourceUrl ?? '');
 
 	afterNavigate(() => (menuOpen = false));

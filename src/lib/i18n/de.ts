@@ -541,6 +541,9 @@ export const de = {
 		logoField: 'Link zum Logo',
 		logoHint: 'Ein quadratisches Bild als https-Link, z. B. von der Website des Orchesters, oder eine Datei der App wie /logo.png.',
 		logoPreview: 'Vorschau',
+		links: 'Website und Social Media',
+		linksField: 'Links unten auf jeder Seite',
+		linksHint: 'Ein Link pro Zeile, davor ein Name, z. B. „Instagram https://www.instagram.com/orchester/“. Instagram, Facebook und YouTube bekommen ihr Zeichen. Leer zeigt keine.',
 		colour: 'Farbe',
 		accent: 'Akzentfarbe',
 		accentDefault: (colour: string) => `Standardfarbe (${colour})`,
@@ -597,7 +600,8 @@ export const de = {
 			accent: 'Die Farbe muss die Form #rrggbb haben.',
 			look: 'Bitte einen der Stile wählen.',
 			featuresOff: '',
-			retention: 'Die Aufbewahrung ist eine Zahl von Saisons, 1 bis 20, oder leer.'
+			retention: 'Die Aufbewahrung ist eine Zahl von Saisons, 1 bis 20, oder leer.',
+			links: 'Jede Zeile braucht einen Link, der mit https:// beginnt; höchstens 8.'
 		}
 	},
 	/** Parts of the app that can be turned off (#134), by their key in src/lib/features.ts. */
@@ -2064,7 +2068,8 @@ export const de = {
 				accent: 'Akzentfarbe',
 				look: 'Stil',
 				featuresOff: 'Ausgeschaltet',
-				retention: 'Aufbewahrung (Saisons)'
+				retention: 'Aufbewahrung (Saisons)',
+				links: 'Links'
 			},
 			/** The words for the look in the "Wert" column (#163). */
 			lookValues: {
