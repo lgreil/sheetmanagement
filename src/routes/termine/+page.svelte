@@ -83,11 +83,11 @@
 						<span class="badge" class:done={!open}><Icon name="poll" size={20} /></span>
 						<span class="body">
 							<span class="title">{poll.title}</span>
-							<span class="meta">
-								{range(poll)} · {t.polls.answers(poll.answers)} · {t.polls.forGroups(poll.groups.join(', '))}
-							</span>
+							<span class="when">{range(poll)}</span>
+							<span class="meta">{t.polls.answers(poll.answers)} · {t.polls.forGroups(poll.groups.join(', '))}</span>
+							<!-- Under the text, not beside it: on a phone a badge in the row squeezes the title to a word per line. -->
+							{#if open && !poll.answered}<span class="pill todo"><Icon name="alert" size={12} />{t.polls.yourTurn}</span>{/if}
 						</span>
-						{#if open && !poll.answered}<span class="pill todo">{t.polls.yourTurn}</span>{/if}
 						<span class="chevron"><Icon name="chevron" size={16} /></span>
 					</a>
 				</li>
@@ -245,7 +245,7 @@
 
 	.poll {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		gap: var(--space-3);
 		padding: var(--space-3) var(--space-4);
 		transition: background var(--fast) var(--ease);
@@ -274,7 +274,12 @@
 	.body {
 		display: grid;
 		flex: 1;
+		gap: 2px;
 		min-width: 0;
+	}
+
+	.when {
+		font-size: var(--text-md);
 	}
 
 	.title {
@@ -287,11 +292,15 @@
 	}
 
 	.pill.todo {
-		flex: none;
+		display: inline-flex;
+		align-items: center;
+		justify-self: start;
+		gap: var(--space-1);
+		margin-top: var(--space-1);
 		padding: 2px var(--space-2);
 		border-radius: var(--radius-pill);
-		background: var(--accent);
-		color: var(--accent-contrast);
+		background: var(--accent-soft);
+		color: var(--accent);
 		font-size: var(--text-2xs);
 		font-weight: 700;
 	}
@@ -299,6 +308,7 @@
 	.chevron {
 		display: grid;
 		flex: none;
+		align-self: center;
 		color: var(--text-muted);
 	}
 

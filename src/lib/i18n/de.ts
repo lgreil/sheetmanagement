@@ -2185,6 +2185,7 @@ export const de = {
 		answer: 'Antwort',
 		status: 'Status',
 		setStatus: 'Speichern',
+		manage: 'Status und Antwort',
 		submittedBy: (name: string, date: string) => `Von ${name} · ${date}`,
 		anonymous: 'anonym',
 		anonymousLabel: 'Anonym einreichen',
@@ -2260,6 +2261,7 @@ export const de = {
 	error: {
 		title: 'Da ist etwas schiefgelaufen',
 		notFound: 'Diese Seite gibt es nicht.',
+		notFoundLead: 'Vielleicht ist der Link alt oder ein Stück wurde umbenannt. Von hier aus geht es weiter:',
 		unavailableTitle: 'Gerade nicht erreichbar',
 		unavailable: 'Google antwortet gerade nicht. Gleich noch einmal versuchen.',
 		retry: 'Noch einmal versuchen'

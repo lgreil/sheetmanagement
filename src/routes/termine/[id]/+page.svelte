@@ -446,7 +446,9 @@
 		margin-bottom: var(--space-5);
 	}
 
+	/* Positioned, so the hidden answer labels in far columns stay inside it instead of widening the page. */
 	.scroll {
+		position: relative;
 		overflow-x: auto;
 		padding: 0;
 	}

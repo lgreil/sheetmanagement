@@ -2157,6 +2157,7 @@ export const en: Texts = {
 		answer: 'Answer',
 		status: 'Status',
 		setStatus: 'Save',
+		manage: 'Status and answer',
 		submittedBy: (name: string, date: string) => `By ${name} · ${date}`,
 		anonymous: 'anonymous',
 		anonymousLabel: 'Submit anonymously',
@@ -2230,6 +2231,7 @@ export const en: Texts = {
 	error: {
 		title: 'Something went wrong',
 		notFound: "This page doesn't exist.",
+		notFoundLead: 'Maybe the link is old or a piece was renamed. You can carry on from here:',
 		unavailableTitle: "Can't be reached just now",
 		unavailable: "Google isn't answering just now. Try again in a moment.",
 		retry: 'Try again'
