@@ -17,11 +17,12 @@
 	let next = 4;
 	let adding = $state(false);
 
-	const day = (date: string) => optionLabel({ id: '', date }, config.locale);
+	const day = (date: string) => optionLabel({ date }, config.locale);
 	const range = (poll: Poll) => {
 		const first = day(poll.options[0].date);
-		const last = day(poll.options[poll.options.length - 1].date);
-		return poll.options.length > 1 ? `${first.day}. ${first.month} – ${last.day}. ${last.month}` : `${first.day}. ${first.month}`;
+		const end = poll.options.at(-1)!;
+		const last = day(end.until ?? end.date);
+		return poll.options.length > 1 || end.until ? `${first.day}. ${first.month} – ${last.day}. ${last.month}` : `${first.day}. ${first.month}`;
 	};
 </script>
 
@@ -42,10 +43,12 @@
 				</label>
 				<fieldset class="dates">
 					<legend>{t.polls.fields.dates}</legend>
+					<p class="hint">{t.polls.fields.datesHint}</p>
 					{#each rows as row, i (row.key)}
 						<div class="date-row">
 							<!-- The first row says what the fields are; the others only to screen readers. -->
 							<label class="field"><span class:sr-only={i > 0}>{t.polls.fields.date}</span><input type="date" name="date" /></label>
+							<label class="field"><span class:sr-only={i > 0}>{t.polls.fields.until}</span><input type="date" name="until" /></label>
 							<label class="field"><span class:sr-only={i > 0}>{t.polls.fields.start}</span><input type="time" name="start" step="900" /></label>
 							<label class="field"><span class:sr-only={i > 0}>{t.polls.fields.end}</span><input type="time" name="end" step="900" /></label>
 							{#if rows.length > 2}
@@ -142,6 +145,12 @@
 		border: 0;
 	}
 
+	.hint {
+		margin: 0 0 var(--space-1);
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
 	legend {
 		margin-bottom: var(--space-1);
 		color: var(--text-muted);
@@ -151,7 +160,7 @@
 
 	.date-row {
 		display: grid;
-		grid-template-columns: minmax(140px, 2fr) minmax(96px, 1fr) minmax(96px, 1fr) 40px;
+		grid-template-columns: minmax(140px, 2fr) minmax(140px, 2fr) minmax(96px, 1fr) minmax(96px, 1fr) 40px;
 		align-items: end;
 		gap: var(--space-2);
 	}
@@ -312,13 +321,25 @@
 		color: var(--text-muted);
 	}
 
-	@media (max-width: 560px) {
+	/* On a phone: the days on one line, the times and the remove button below. */
+	@media (max-width: 720px) {
 		.date-row {
 			grid-template-columns: 1fr 1fr 40px;
+			padding-bottom: var(--space-2);
+			border-bottom: 1px solid var(--hairline);
 		}
 
-		.date-row .field:first-child {
-			grid-column: 1 / -1;
+		.date-row .field:nth-child(2) {
+			grid-column: 2 / -1;
+		}
+
+		/* Each row is a new pair of days, so its labels show again. */
+		.date-row .field :global(.sr-only) {
+			position: static;
+			width: auto;
+			height: auto;
+			margin: 0;
+			clip-path: none;
 		}
 	}
 </style>

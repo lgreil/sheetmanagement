@@ -22,7 +22,7 @@
 	// The dates an organiser will close it with (#209); the best one is ticked to begin with.
 	// svelte-ignore state_referenced_locally
 	let picked = $state<string[]>(data.best ? [data.best] : []);
-	const deadline = $derived(poll.deadline ? optionLabel({ id: '', date: poll.deadline }, config.locale) : null);
+	const deadline = $derived(poll.deadline ? optionLabel({ date: poll.deadline }, config.locale) : null);
 </script>
 
 <Title title={poll.title} />
@@ -77,7 +77,7 @@
 			{@const when = label(option.id)}
 			{@const s = score(option.id)}
 			<li class="ui-card option" class:best={data.best === option.id && !poll.closedAt} class:chosen={poll.chosen.includes(option.id)}>
-				<span class="date" aria-hidden="true">
+				<span class="date" class:span={!!option.until} aria-hidden="true">
 					<span class="weekday">{when.weekday}</span>
 					<span class="day">{when.day}</span>
 					<span class="month">{when.month}</span>
@@ -139,7 +139,7 @@
 						<th></th>
 						{#each poll.options as option (option.id)}
 							{@const when = label(option.id)}
-							<th scope="col"><span class="col">{when.weekday} {when.day}. {when.month}</span></th>
+							<th scope="col"><span class="col">{when.short}</span></th>
 						{/each}
 					</tr>
 				</thead>
@@ -320,6 +320,15 @@
 		font-family: var(--font-display);
 		font-size: var(--text-2xl);
 		font-weight: 700;
+	}
+
+	/* "18–19" in the same block: a wider block, a little smaller. */
+	.date.span {
+		width: 72px;
+	}
+
+	.date.span .day {
+		font-size: var(--text-xl);
 	}
 
 	.info {

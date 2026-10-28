@@ -13,6 +13,8 @@ export interface PollOption {
 	id: string;
 	/** "2026-11-03" */
 	date: string;
+	/** The last day when the option spans several, e.g. a rehearsal weekend Fr–Sa: "2026-11-04". */
+	until?: string;
 	/** "19:00", empty for a whole day. */
 	start?: string;
 	/** "21:30" */
@@ -88,13 +90,14 @@ export type NewPoll = Pick<Poll, 'title' | 'note' | 'options' | 'groups' | 'dead
 
 /**
  * A poll from the form: "title", "note", "deadline", "groups" (repeated), and per option
- * "date", "start" and "end" (repeated in the same order). Empty option rows are skipped.
+ * "date", "until", "start" and "end" (repeated in the same order). Empty option rows are skipped.
  */
 export function pollFromForm(data: FormData): { poll: NewPoll } | { error: 'title' | 'options' | 'groups' | 'time' } {
 	const text = (name: string, max: number) => String(data.get(name) ?? '').trim().slice(0, max);
 	const title = text('title', 120);
 	if (!title) return { error: 'title' };
 	const dates = data.getAll('date').map(String);
+	const untils = data.getAll('until').map(String);
 	const starts = data.getAll('start').map(String);
 	const ends = data.getAll('end').map(String);
 	const options: PollOption[] = [];
@@ -102,8 +105,10 @@ export function pollFromForm(data: FormData): { poll: NewPoll } | { error: 'titl
 		if (!date.trim()) continue;
 		const start = starts[i]?.trim() || undefined;
 		const end = ends[i]?.trim() || undefined;
-		if (!DAY.test(date) || (start && !TIME.test(start)) || (end && (!TIME.test(end) || !start || end <= start))) return { error: 'time' };
-		options.push({ id: `o${options.length + 1}`, date, start, end });
+		// A last day on or before the first one means a single day.
+		const until = untils[i]?.trim() || undefined;
+		if (!DAY.test(date) || (until && !DAY.test(until)) || (start && !TIME.test(start)) || (end && (!TIME.test(end) || !start || end <= start))) return { error: 'time' };
+		options.push({ id: `o${options.length + 1}`, date, ...(until && until > date ? { until } : {}), start, end });
 	}
 	if (options.length < 2 || options.length > 30) return { error: 'options' };
 	const groups = [...new Set(data.getAll('groups').map((group) => String(group).trim()).filter(Boolean))].slice(0, 10);
@@ -137,15 +142,15 @@ export function choicesFromForm(poll: Poll, data: FormData): { choices: Record<s
  */
 export function calendarLink(title: string, option: PollOption, timeZone: string, details?: string): string {
 	const day = option.date.replace(/-/g, '');
-	const at = (time: string) => `${day}T${time.replace(':', '')}00`;
+	const last = (option.until ?? option.date).replace(/-/g, '');
 	let dates: string;
 	if (option.start) {
-		// Without an end, two hours: about a rehearsal.
+		// Without an end, two hours: about a rehearsal. Over several days, from the first day's start to the last day's end.
 		const [h, m] = option.start.split(':').map(Number);
 		const end = option.end ?? `${String(Math.min(h + 2, 23)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
-		dates = `${at(option.start)}/${at(end)}`;
+		dates = `${day}T${option.start.replace(':', '')}00/${last}T${end.replace(':', '')}00`;
 	} else {
-		const next = new Date(`${option.date}T00:00:00Z`);
+		const next = new Date(`${option.until ?? option.date}T00:00:00Z`);
 		next.setUTCDate(next.getUTCDate() + 1);
 		dates = `${day}/${next.toISOString().slice(0, 10).replace(/-/g, '')}`;
 	}
@@ -154,17 +159,26 @@ export function calendarLink(title: string, option: PollOption, timeZone: string
 	return `https://calendar.google.com/calendar/render?${params}`;
 }
 
-/** How an option reads: "Sa", "6", "März", "10:00–17:00", and all of it in one line. */
-export function optionLabel(option: PollOption, locale: string) {
-	const date = new Date(`${option.date}T12:00:00Z`);
-	const part = (options: Intl.DateTimeFormatOptions) => dateFormat(locale, { timeZone: 'UTC', ...options }).format(date);
+/**
+ * How an option reads: "Sa", "6", "März", "10:00–17:00", a short "Sa 6. März" for narrow
+ * columns, and all of it in one line. Over several days (#209): "Fr–Sa", "6–7", "Fr 6. – Sa 7. März".
+ */
+export function optionLabel(option: Pick<PollOption, 'date' | 'until' | 'start' | 'end'>, locale: string) {
+	const first = new Date(`${option.date}T12:00:00Z`);
+	const last = new Date(`${option.until ?? option.date}T12:00:00Z`);
+	const format = (options: Intl.DateTimeFormatOptions) => dateFormat(locale, { timeZone: 'UTC', ...options });
+	// One date, or the range the way the locale writes it ("18.–19. Dez.", "31. Dez. – 1. Jan.").
+	const span = (options: Intl.DateTimeFormatOptions) => (option.until ? format(options).formatRange(first, last) : format(options).format(first));
+	const weekday = (date: Date) => format({ weekday: 'short' }).format(date).replace('.', '');
+	const day = (date: Date) => format({ day: 'numeric' }).format(date);
 	const time = option.start ? (option.end ? `${option.start}–${option.end}` : option.start) : '';
-	const long = part({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+	const long = span({ weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 	return {
-		weekday: part({ weekday: 'short' }).replace('.', ''),
-		day: part({ day: 'numeric' }),
-		month: part({ month: 'short' }).replace('.', ''),
+		weekday: option.until ? `${weekday(first)}–${weekday(last)}` : weekday(first),
+		day: option.until ? `${day(first)}–${day(last)}` : day(first),
+		month: span({ month: 'short' }).replace(/\./g, ''),
 		time,
+		short: span({ weekday: 'short', day: 'numeric', month: 'short' }),
 		long: time ? `${long}, ${time}` : long
 	};
 }
@@ -182,7 +196,7 @@ export interface PollDate {
 export function pollDatesByMonth(polls: Pick<Poll, 'id' | 'title' | 'options'>[], today: string): Map<string, PollDate[]> {
 	const months = new Map<string, PollDate[]>();
 	for (const poll of polls) {
-		const days = [...new Set(poll.options.map((option) => option.date).filter((date) => date >= today))].sort();
+		const days = [...new Set(poll.options.flatMap(daysOf).filter((date) => date >= today))].sort();
 		for (const day of days) {
 			const month = months.get(day.slice(0, 7)) ?? [];
 			const entry = month.find((item) => item.poll.id === poll.id) ?? month[month.push({ poll: { id: poll.id, title: poll.title }, days: [] }) - 1];
@@ -191,4 +205,18 @@ export function pollDatesByMonth(polls: Pick<Poll, 'id' | 'title' | 'options'>[]
 		}
 	}
 	return new Map([...months].sort(([a], [b]) => a.localeCompare(b)));
+}
+
+/** Every day an option covers, from its first to its last ("2026-11-03", "2026-11-04"). */
+export function daysOf(option: Pick<PollOption, 'date' | 'until'>): string[] {
+	const days = [option.date];
+	const day = new Date(`${option.date}T00:00:00Z`);
+	// At most a fortnight: an option is a weekend or a short tour, not a season.
+	while (option.until && days.length < 15) {
+		day.setUTCDate(day.getUTCDate() + 1);
+		const next = day.toISOString().slice(0, 10);
+		if (next > option.until) break;
+		days.push(next);
+	}
+	return days;
 }

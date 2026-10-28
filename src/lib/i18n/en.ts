@@ -868,6 +868,8 @@ export const en: Texts = {
 			note: 'Note (optional)',
 			dates: 'Dates to choose from',
 			date: 'Date',
+			until: 'last day (optional)',
+			datesHint: 'For a weekend, give a last day: Fri–Sat is then one choice.',
 			start: 'from',
 			end: 'to',
 			addDate: 'Another date',

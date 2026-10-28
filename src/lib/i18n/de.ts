@@ -871,6 +871,8 @@ export const de = {
 			note: 'Notiz (optional)',
 			dates: 'Termine zur Auswahl',
 			date: 'Datum',
+			until: 'letzter Tag (optional)',
+			datesHint: 'Für ein Wochenende einen letzten Tag angeben: dann steht Fr–Sa als eine Wahl.',
 			start: 'von',
 			end: 'bis',
 			addDate: 'Weiterer Termin',
