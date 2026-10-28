@@ -310,6 +310,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 				: null
 		})),
 		canEdit: locals.access.rights.has('programme.bearbeiten') && !!concert?.sheet,
+		// The full set of parts to print (#195), for whoever looks after the music.
+		canPrintSet: locals.access.rights.has('stuecke.bearbeiten'),
 		// Where to add pieces the orchestras play together, while there are none yet.
 		jointUrl: together && !concert!.program.some((item) => sameOrchestra(item.orchestra, together)) ? editUrl(together) : undefined,
 		jointLabel: together ?? '',
