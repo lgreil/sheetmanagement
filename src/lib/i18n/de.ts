@@ -569,7 +569,8 @@ export const de = {
 			signups: 'Zu- und Absagen für Proben und Konzerte.',
 			wishes: 'Stücke und Ideen vorschlagen, mit +1.',
 			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
-			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.'
+			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.',
+			seasons: 'Kleine Zeichnungen zur Jahreszeit: Schneeflocke, Blüte, Kürbis.'
 		} as Record<string, string>,
 		instruments: 'Instrumente',
 		instrumentsLead:
@@ -607,7 +608,8 @@ export const de = {
 		signups: 'Anmeldungen',
 		wishes: 'Wünsche',
 		calendarFeed: 'Kalender-Abo',
-		offline: 'Noten offline speichern'
+		offline: 'Noten offline speichern',
+		seasons: 'Jahreszeiten'
 	},
 	pwa: {
 		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
@@ -798,6 +800,14 @@ export const de = {
 		missing: 'fehlt im Archiv',
 		summary: (found: number, total: number) => `${found} von ${total} Stücken mit Stimme`,
 		merge: 'Als eine PDF',
+		/** Playing a concert from a tablet (#194). */
+		concertMode: {
+			open: 'Auftrittsmodus',
+			hint: 'Deine Stimmen in Programmfolge im Vollbild. Blättern mit Tippen oder Pedal geht gleich ins nächste Stück, der Bildschirm bleibt an.',
+			title: 'Auftrittsmodus',
+			piece: 'Stück',
+			night: 'Nacht'
+		},
 		merging: (done: number, total: number) => `Lade Stimme ${done} von ${total} …`,
 		mergeFailed: 'Die PDF konnte nicht erstellt werden. Die einzelnen Stimmen lassen sich weiter öffnen.',
 		skipped: (n: number) =>
@@ -871,6 +881,8 @@ export const de = {
 			note: 'Notiz (optional)',
 			dates: 'Termine zur Auswahl',
 			date: 'Datum',
+			until: 'letzter Tag (optional)',
+			datesHint: 'Für ein Wochenende einen letzten Tag angeben: dann steht Fr–Sa als eine Wahl.',
 			start: 'von',
 			end: 'bis',
 			addDate: 'Weiterer Termin',
@@ -896,8 +908,9 @@ export const de = {
 		saved: 'Antwort gespeichert.',
 		best: 'Bester Termin',
 		chosen: 'Gewählt',
-		choose: 'Diesen nehmen',
-		closeWithout: 'Ohne Termin abschließen',
+		choose: 'Nehmen',
+		/** Closing with the ticked dates (#209): none, one, or several (a weekend). */
+		closeWith: (n: number) => (n === 0 ? 'Ohne Termin abschließen' : n === 1 ? 'Mit 1 Termin abschließen' : `Mit ${n} Terminen abschließen`),
 		reopen: 'Wieder öffnen',
 		remove: 'Umfrage löschen',
 		removeConfirm: 'Diese Umfrage mit allen Antworten löschen?',
@@ -1439,6 +1452,21 @@ export const de = {
 		dataPage: 'Seite',
 		dataStrokes: 'Striche'
 	},
+	/** A full set of parts to print for a concert (#195). */
+	partSet: {
+		link: 'Stimmensatz',
+		title: 'Stimmensatz',
+		lead: (players: number) =>
+			`Wie viele Ausdrucke jede Stimme braucht, aus ${players === 1 ? '1 aktiven Mitglied' : `${players} aktiven Mitgliedern`} und ihren Instrumenten: eine pro Person, bei Streichern eine pro Pult, die Partitur einmal. Zum Prüfen und Ändern, dann als eine PDF zum Drucken.`,
+		players: (n: number) => (n === 1 ? '1 spielt' : n ? `${n} spielen` : 'niemand'),
+		copies: (part: string) => `Ausdrucke von ${part}`,
+		noMusic: 'Keine Noten im Archiv.',
+		total: (copies: number, parts: number) => `${copies} ${copies === 1 ? 'Ausdruck' : 'Ausdrucke'} von ${parts} ${parts === 1 ? 'Stimme' : 'Stimmen'}`,
+		build: 'Als eine PDF',
+		building: (i: number, n: number) => `Stimme ${i} von ${n} …`,
+		notPdf: 'keine PDF',
+		fileName: 'Stimmensatz'
+	},
 	print: {
 		link: 'Drucken',
 		title: (concert: string) => 'Drucken: ' + concert,
@@ -1611,7 +1639,7 @@ export const de = {
 		featuresOff: (names: string) => `Ausgeschaltet: ${names}`,
 		allFeatures: 'Alle Funktionen sind eingeschaltet.',
 		unknownFeatures: (words: string) => `FEATURES_OFF enthält unbekannte Wörter: ${words}.`,
-		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender und offline.',
+		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline und jahreszeiten.',
 		ok: 'Verbunden',
 		error: 'Fehler',
 		missing: 'Nicht eingerichtet',
@@ -2185,6 +2213,7 @@ export const de = {
 		answer: 'Antwort',
 		status: 'Status',
 		setStatus: 'Speichern',
+		manage: 'Status und Antwort',
 		submittedBy: (name: string, date: string) => `Von ${name} · ${date}`,
 		anonymous: 'anonym',
 		anonymousLabel: 'Anonym einreichen',
@@ -2260,6 +2289,7 @@ export const de = {
 	error: {
 		title: 'Da ist etwas schiefgelaufen',
 		notFound: 'Diese Seite gibt es nicht.',
+		notFoundLead: 'Vielleicht ist der Link alt oder ein Stück wurde umbenannt. Von hier aus geht es weiter:',
 		unavailableTitle: 'Gerade nicht erreichbar',
 		unavailable: 'Google antwortet gerade nicht. Gleich noch einmal versuchen.',
 		retry: 'Noch einmal versuchen'

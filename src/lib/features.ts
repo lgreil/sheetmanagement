@@ -6,7 +6,7 @@
 
 import type { TabKey } from '#lib/repertoire/sheet.ts';
 
-export const FEATURES = ['loans', 'musicReport', 'attendance', 'signups', 'wishes', 'calendarFeed', 'offline'] as const;
+export const FEATURES = ['loans', 'musicReport', 'attendance', 'signups', 'wishes', 'calendarFeed', 'offline', 'seasons'] as const;
 
 export type Feature = (typeof FEATURES)[number];
 export type Features = Record<Feature, boolean>;
@@ -21,7 +21,8 @@ const ALIASES: Record<string, Feature> = {
 	wuensche: 'wishes',
 	wünsche: 'wishes',
 	kalender: 'calendarFeed',
-	kalenderabo: 'calendarFeed'
+	kalenderabo: 'calendarFeed',
+	jahreszeiten: 'seasons'
 };
 
 const byName = new Map<string, Feature>([...FEATURES.map((feature) => [feature.toLowerCase(), feature] as const), ...Object.entries(ALIASES)]);

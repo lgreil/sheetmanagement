@@ -287,6 +287,7 @@
 			<div class="ui-actions">
 				{#if data.program.items.length}
 					<a href="/kalender/{id}/drucken"><Icon name="print" size={16} />{t.print.link}</a>
+					{#if data.program.canPrintSet}<a href="/kalender/{id}/stimmensatz"><Icon name="file" size={16} />{t.partSet.link}</a>{/if}
 				{/if}
 				{#if data.program.canEdit && !several}
 					<a href={data.program.groups[0].editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>

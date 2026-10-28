@@ -2,6 +2,7 @@
 	import type { Snippet } from 'svelte';
 	import type { Glyph } from '#lib/music/instrument-glyph.ts';
 	import InstrumentGlyph from './InstrumentGlyph.svelte';
+	import SeasonMark from './SeasonMark.svelte';
 
 	/**
 	 * When a search or a list comes up empty: a few instruments waiting, the reason, and what to
@@ -12,7 +13,12 @@
 
 <div class="nothing">
 	<span class="trio" aria-hidden="true">
-		{#each glyphs as glyph, i (i)}<span class="glyph" style:--i={i}><InstrumentGlyph {glyph} size={28} /></span>{/each}
+		{#each glyphs as glyph, i (i)}
+			<span class="glyph" style:--i={i}>
+				<InstrumentGlyph {glyph} size={28} />
+				{#if i === 1}<span class="season-mark"><SeasonMark variant="companion" size={20} /></span>{/if}
+			</span>
+		{/each}
 	</span>
 	<p>{text}</p>
 	{@render children?.()}
@@ -34,6 +40,7 @@
 	}
 
 	.glyph {
+		position: relative;
 		display: grid;
 		place-items: center;
 		width: 48px;
@@ -50,6 +57,16 @@
 		transform: translateY(-6px);
 		background: var(--accent-soft);
 		color: var(--accent);
+	}
+
+	/* The season's drawing on the middle one's shoulder (#202). */
+	.season-mark {
+		position: absolute;
+		top: -10px;
+		right: -12px;
+		display: grid;
+		color: var(--accent);
+		rotate: 12deg;
 	}
 
 	@keyframes bob {

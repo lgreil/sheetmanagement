@@ -1,4 +1,5 @@
 <script lang="ts">
+	import SeasonMark from '#lib/components/SeasonMark.svelte';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from '#lib/components/Icon.svelte';
 	import SignupAnswers from '#lib/components/SignupAnswers.svelte';
@@ -126,7 +127,11 @@
 
 <!-- In the bold look, like the orchestra's stories: dark, the logo large and dim behind the greeting (#163). -->
 <header class="hero" class:story={data.brand.look === 'bold'}>
-	{#if data.brand.look === 'bold'}<img class="watermark" src={data.logo} alt="" />{/if}
+	{#if data.brand.look === 'bold'}
+		<img class="watermark" src={data.logo} alt="" />
+		<!-- The season moving behind the greeting (#202): snow falling, a bat flying past the pumpkins. -->
+		<SeasonMark variant="scene" />
+	{/if}
 	<h1>{firstName ? t.home.hello(firstName) : t.home.title(data.orchestraName)}</h1>
 	<!-- One useful line instead of a greeting alone (#221): what the rehearsals lead up to. -->
 	{#if data.nextConcert}

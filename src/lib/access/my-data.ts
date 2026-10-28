@@ -123,7 +123,7 @@ export function pollData(answers: { poll: Poll; response: PollResponse }[]): MyD
 			.filter((option) => response.choices[option.id])
 			.map((option) => ({
 				[t.myData.poll]: poll.title,
-				[t.myData.pollDate]: [option.date, option.start && `${option.start}${option.end ? `–${option.end}` : ''}`].filter(Boolean).join(' '),
+				[t.myData.pollDate]: [option.until ? `${option.date}–${option.until}` : option.date, option.start && `${option.start}${option.end ? `–${option.end}` : ''}`].filter(Boolean).join(' '),
 				[t.myData.pollAnswer]: t.polls.answer[response.choices[option.id]],
 				[t.myData.pollComment]: response.comment ?? '',
 				[t.myData.pollAnsweredAt]: response.updatedAt

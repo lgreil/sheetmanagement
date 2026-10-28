@@ -65,6 +65,9 @@ const saturday = (weeks: number) => {
 	return day(weeks * 7 + ((6 - date.getUTCDay() + 7) % 7));
 };
 
+/** The day after that Saturday. */
+const sunday = (weeks: number) => new Date(Date.parse(saturday(weeks)) + DAY_MS).toISOString().slice(0, 10);
+
 /** A rehearsal weekend the orga team is still deciding on, with a few answers in. */
 function demoPolls(): MemoryPollStore {
 	const store = new MemoryPollStore();
@@ -74,12 +77,8 @@ function demoPolls(): MemoryPollStore {
 			{
 				title: 'Probenwochenende',
 				note: 'Samstag und Sonntag in der Aula; wir brauchen den Termin bis Ende des Monats für die Raumbuchung.',
-				options: [
-					{ id: 'o1', date: saturday(6), start: '10:00', end: '17:00' },
-					{ id: 'o2', date: saturday(7), start: '10:00', end: '17:00' },
-					{ id: 'o3', date: saturday(8), start: '10:00', end: '17:00' },
-					{ id: 'o4', date: saturday(9), start: '10:00', end: '17:00' }
-				],
+				// Each choice a whole weekend, Saturday and Sunday.
+				options: [6, 7, 8, 9].map((weeks, i) => ({ id: `o${i + 1}`, date: saturday(weeks), until: sunday(weeks), start: '10:00', end: '17:00' })),
 				groups: ['Orga', 'Dirigat', 'Vorstand'],
 				deadline: day(9)
 			},

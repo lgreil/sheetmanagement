@@ -566,6 +566,7 @@ export const en: Texts = {
 			signups: 'Yes and no for rehearsals and concerts.',
 			wishes: 'Suggest pieces and ideas, with +1.',
 			calendarFeed: 'A personal calendar to subscribe to, on the profile.',
+			seasons: 'Small drawings for the season: a snowflake, a blossom, a pumpkin.',
 			offline: 'Save parts in “My parts” for rehearsals without a connection.'
 		} as Record<string, string>,
 		instruments: 'Instruments',
@@ -605,6 +606,7 @@ export const en: Texts = {
 		signups: 'Sign-ups',
 		wishes: 'Wishes',
 		calendarFeed: 'Calendar feed',
+		seasons: 'Seasons',
 		offline: 'Save parts offline'
 	},
 	pwa: {
@@ -795,6 +797,13 @@ export const en: Texts = {
 		missing: 'missing from the library',
 		summary: (found: number, total: number) => `${found} of ${total} pieces with a part`,
 		merge: 'As one PDF',
+		concertMode: {
+			open: 'Concert mode',
+			hint: 'Your parts in programme order, full screen. Turning by tap or pedal goes straight on into the next piece, and the screen stays on.',
+			title: 'Concert mode',
+			piece: 'Piece',
+			night: 'Night'
+		},
 		merging: (done: number, total: number) => `Loading part ${done} of ${total} …`,
 		mergeFailed: "The PDF couldn't be made. The single parts can still be opened.",
 		skipped: (n: number) =>
@@ -868,6 +877,8 @@ export const en: Texts = {
 			note: 'Note (optional)',
 			dates: 'Dates to choose from',
 			date: 'Date',
+			until: 'last day (optional)',
+			datesHint: 'For a weekend, give a last day: Fri–Sat is then one choice.',
 			start: 'from',
 			end: 'to',
 			addDate: 'Another date',
@@ -893,8 +904,8 @@ export const en: Texts = {
 		saved: 'Answer saved.',
 		best: 'Best date',
 		chosen: 'Chosen',
-		choose: 'Take this one',
-		closeWithout: 'Close without a date',
+		choose: 'Take',
+		closeWith: (n: number) => (n === 0 ? 'Close without a date' : n === 1 ? 'Close with 1 date' : `Close with ${n} dates`),
 		reopen: 'Reopen',
 		remove: 'Delete poll',
 		removeConfirm: 'Delete this poll with all its answers?',
@@ -1427,6 +1438,20 @@ export const en: Texts = {
 		dataPage: 'Page',
 		dataStrokes: 'Strokes'
 	},
+	partSet: {
+		link: 'Set of parts',
+		title: 'Set of parts',
+		lead: (players: number) =>
+			`How many prints each part needs, from ${players === 1 ? '1 active member' : `${players} active members`} and their instruments: one per person, one per desk for strings, the score once. Check and change them, then print as one PDF.`,
+		players: (n: number) => (n === 1 ? '1 plays' : n ? `${n} play` : 'nobody'),
+		copies: (part: string) => `Prints of ${part}`,
+		noMusic: 'No music in the library.',
+		total: (copies: number, parts: number) => `${copies} ${copies === 1 ? 'print' : 'prints'} of ${parts} ${parts === 1 ? 'part' : 'parts'}`,
+		build: 'As one PDF',
+		building: (i: number, n: number) => `Part ${i} of ${n} …`,
+		notPdf: 'not a PDF',
+		fileName: 'Set of parts'
+	},
 	print: {
 		link: 'Print',
 		title: (concert: string) => 'Print: ' + concert,
@@ -1599,7 +1624,7 @@ export const en: Texts = {
 		featuresOff: (names: string) => `Turned off: ${names}`,
 		allFeatures: 'Every feature is on.',
 		unknownFeatures: (words: string) => `FEATURES_OFF contains unknown words: ${words}.`,
-		featuresHint: 'Allowed are loans, musicReport, attendance, signups, wishes, calendarFeed and offline.',
+		featuresHint: 'Allowed are loans, musicReport, attendance, signups, wishes, calendarFeed, offline and seasons.',
 		ok: 'Connected',
 		error: 'Error',
 		missing: 'Not set up',
@@ -2157,6 +2182,7 @@ export const en: Texts = {
 		answer: 'Answer',
 		status: 'Status',
 		setStatus: 'Save',
+		manage: 'Status and answer',
 		submittedBy: (name: string, date: string) => `By ${name} · ${date}`,
 		anonymous: 'anonymous',
 		anonymousLabel: 'Submit anonymously',
@@ -2230,6 +2256,7 @@ export const en: Texts = {
 	error: {
 		title: 'Something went wrong',
 		notFound: "This page doesn't exist.",
+		notFoundLead: 'Maybe the link is old or a piece was renamed. You can carry on from here:',
 		unavailableTitle: "Can't be reached just now",
 		unavailable: "Google isn't answering just now. Try again in a moment.",
 		retry: 'Try again'

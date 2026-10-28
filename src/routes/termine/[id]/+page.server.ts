@@ -25,7 +25,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const { viewer, poll, responses } = await open(locals, params.id);
 	const scores = scoreOptions(poll, responses);
 	const best = bestOption(poll, responses);
-	const chosen = poll.options.find((option) => option.id === poll.chosen);
+	const chosen = poll.options.filter((option) => poll.chosen.includes(option.id));
 	// Who the poll is for but hasn't answered yet: worth a nudge in the group chat.
 	const access = await getAccessList().catch(() => null);
 	const wanted = new Set(poll.groups.map((group) => group.toLowerCase()));
@@ -43,7 +43,8 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 		manage: mayManage(poll, viewer),
 		waiting,
 		saved: url.searchParams.has('gespeichert'),
-		calendarUrl: chosen ? calendarLink(poll.title, chosen, config.timeZone, poll.note) : undefined
+		// One calendar entry per chosen date: a weekend is two events.
+		calendarUrls: Object.fromEntries(chosen.map((option) => [option.id, calendarLink(poll.title, option, config.timeZone, poll.note)]))
 	};
 };
 
@@ -64,8 +65,12 @@ export const actions: Actions = {
 	close: async ({ locals, params, request }) => {
 		const { store, viewer, poll } = await open(locals, params.id);
 		if (!mayManage(poll, viewer)) error(403, t.messages.noRight);
-		const option = String((await request.formData()).get('option') ?? '');
-		await store.close(poll.id, poll.options.some((other) => other.id === option) ? option : undefined);
+		// Ticked dates, in the poll's order; none closes it without a date.
+		const ticked = new Set((await request.formData()).getAll('option').map(String));
+		await store.close(
+			poll.id,
+			poll.options.filter((option) => ticked.has(option.id)).map((option) => option.id)
+		);
 		return { closed: true };
 	},
 

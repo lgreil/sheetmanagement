@@ -57,7 +57,7 @@
 	{/if}
 
 	{#if adding}
-		<form class="add" method="POST" action="?/add" use:enhance={submit}>
+		<form class="add ui-card" method="POST" action="?/add" use:enhance={submit}>
 			<input type="hidden" name="kind" value={kind} />
 			{#if kind === 'piece'}
 				<label class="field">
@@ -101,7 +101,7 @@
 	{/if}
 
 	{#if shown.length}
-		<ul class="wishes">
+		<ul class="wishes ui-list">
 			{#each shown as wish (wish.id)}
 				<li class="wish" class:closed={wish.status === 'done' || wish.status === 'declined'}>
 					<form class="vote" method="POST" action="?/vote" use:enhance={submit}>
@@ -140,7 +140,7 @@
 						</div>
 						{#if wish.answer}<p class="answer"><strong>{t.wishes.answer}:</strong> {wish.answer}</p>{/if}
 						<div class="meta">
-							<p class="muted small">
+							<p class="muted small" title={wish.submitterEmail}>
 								{wish.submittedBy ? t.wishes.submittedBy(wish.submittedBy, wish.submittedAt) : wish.submittedAt}
 							</p>
 							{#if wish.canDelete}
@@ -153,22 +153,26 @@
 							{/if}
 						</div>
 						{#if data.canManage}
-							<form class="manage" method="POST" action="?/status" use:enhance={submit}>
-								<input type="hidden" name="id" value={wish.id} />
-								<label class="field">
-									{t.wishes.status}
-									<select name="status" value={wish.status}>
-										{#each WISH_STATUSES as status (status)}
-											<option value={status}>{t.feedbackValues.wishStatus[status]}</option>
-										{/each}
-									</select>
-								</label>
-								<label class="field grow">
-									{t.wishes.answer}
-									<input name="answer" value={wish.answer} maxlength="1000" autocomplete="off" />
-								</label>
-								<button class="btn small ghost" disabled={saving.busy}>{t.wishes.setStatus}</button>
-							</form>
+							<!-- Folded, so the list reads like everyone else's; one tap opens the answer for this wish. -->
+							<details class="manage">
+								<summary>{t.wishes.manage}</summary>
+								<form method="POST" action="?/status" use:enhance={submit}>
+									<input type="hidden" name="id" value={wish.id} />
+									<label class="field">
+										{t.wishes.status}
+										<select name="status" value={wish.status}>
+											{#each WISH_STATUSES as status (status)}
+												<option value={status}>{t.feedbackValues.wishStatus[status]}</option>
+											{/each}
+										</select>
+									</label>
+									<label class="field grow">
+										{t.wishes.answer}
+										<input name="answer" value={wish.answer} maxlength="1000" autocomplete="off" />
+									</label>
+									<button class="btn small" disabled={saving.busy}>{t.wishes.setStatus}</button>
+								</form>
+							</details>
 						{/if}
 					</div>
 				</li>
@@ -241,10 +245,6 @@
 		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 		gap: var(--space-3);
 		margin-bottom: var(--space-5);
-		padding: var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
 	}
 
 	.wide,
@@ -258,25 +258,10 @@
 		gap: var(--space-2);
 	}
 
-	.wishes {
-		display: grid;
-		gap: var(--space-2);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-
 	.wish {
 		display: flex;
 		gap: var(--space-3);
-		padding: var(--space-3) var(--space-4);
-		border: 1px solid var(--border);
-		border-radius: var(--radius-m);
-		background: var(--surface);
-	}
-
-	.wish.closed {
-		background: transparent;
+		padding: var(--space-4);
 	}
 
 	.wish.closed .title {
@@ -286,21 +271,35 @@
 	.vote-button {
 		display: grid;
 		justify-items: center;
+		align-content: center;
 		gap: 2px;
 		width: 52px;
+		min-height: 56px;
 		padding: var(--space-2) 0;
 		border: 1px solid var(--border);
-		border-radius: var(--radius-s);
+		border-radius: var(--radius-control);
 		background: none;
 		color: var(--text-muted);
 		font: inherit;
-		font-size: var(--text-xs);
+		font-size: var(--text-sm);
 		font-weight: 700;
 		cursor: pointer;
+		transition:
+			background var(--fast) var(--ease),
+			color var(--fast) var(--ease),
+			transform var(--fast) var(--ease);
+	}
+
+	.vote-button:hover {
+		background: var(--surface-2);
+	}
+
+	.vote-button:active {
+		transform: scale(0.95);
 	}
 
 	.vote-button.voted {
-		border-color: var(--accent);
+		border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
 		background: var(--accent-soft);
 		color: var(--accent);
 	}
@@ -422,13 +421,48 @@
 	}
 
 	.manage {
+		margin-top: var(--space-1);
+		padding-top: var(--space-2);
+		border-top: 1px solid var(--hairline);
+	}
+
+	.manage summary {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 32px;
+		color: var(--accent);
+		font-size: var(--text-sm);
+		font-weight: 600;
+		cursor: pointer;
+		list-style: none;
+	}
+
+	.manage summary::-webkit-details-marker {
+		display: none;
+	}
+
+	/* The drawn chevron the other disclosures use, turning down when open. */
+	.manage summary::after {
+		width: 6px;
+		height: 6px;
+		border-right: 2px solid currentColor;
+		border-bottom: 2px solid currentColor;
+		content: '';
+		transform: rotate(-45deg);
+		transition: transform var(--fast) var(--ease);
+	}
+
+	.manage[open] summary::after {
+		transform: rotate(45deg);
+	}
+
+	.manage form {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: end;
 		gap: var(--space-2);
 		margin-top: var(--space-2);
-		padding-top: var(--space-2);
-		border-top: 1px dashed var(--border);
 	}
 
 	.manage .grow {

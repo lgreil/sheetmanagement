@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { bestOption, calendarLink, canSeePoll, choicesFromForm, isOpen, pollDatesByMonth, pollFromForm, scoreOptions, type Poll, type PollResponse } from './polls.ts';
+import { bestOption, calendarLink, canSeePoll, choicesFromForm, daysOf, isOpen, optionLabel, pollDatesByMonth, pollFromForm, scoreOptions, type Poll, type PollResponse } from './polls.ts';
 
 const poll: Poll = {
 	id: 'p1',
@@ -12,7 +12,8 @@ const poll: Poll = {
 	groups: ['Orga'],
 	createdBy: 'vera@example.org',
 	createdByName: 'Vera',
-	createdAt: '2027-01-01T10:00:00Z'
+	createdAt: '2027-01-01T10:00:00Z',
+	chosen: []
 };
 const answer = (name: string, choices: PollResponse['choices']): PollResponse => ({ email: `${name}@example.org`, name, choices, updatedAt: '' });
 
@@ -123,6 +124,61 @@ describe('pollDatesByMonth', () => {
 				]
 			],
 			['2026-12', [{ poll: { id: 'p1', title: 'Probenwochenende' }, days: ['2026-12-05'] }]]
+		]);
+	});
+});
+
+describe('options over several days', () => {
+	const weekend = { id: 'a', date: '2026-12-18', until: '2026-12-19', start: '10:00', end: '17:00' };
+
+	it('are read from the form with their last day; one on or before the first is a single day', () => {
+		const data = new FormData();
+		data.set('title', 'Probenwochenende');
+		for (const [date, until] of [
+			['2026-12-18', '2026-12-19'],
+			['2026-12-20', '2026-12-20'],
+			['2026-12-27', '']
+		]) {
+			data.append('date', date);
+			data.append('until', until);
+			data.append('start', '');
+			data.append('end', '');
+		}
+		data.append('groups', 'Orga');
+		const result = pollFromForm(data);
+		expect('poll' in result && result.poll.options.map((option) => [option.date, option.until])).toEqual([
+			['2026-12-18', '2026-12-19'],
+			['2026-12-20', undefined],
+			['2026-12-27', undefined]
+		]);
+		data.set('until', 'morgen');
+		expect(pollFromForm(data)).toEqual({ error: 'time' });
+	});
+
+	it('cover every day from the first to the last, at most a fortnight', () => {
+		expect(daysOf(weekend)).toEqual(['2026-12-18', '2026-12-19']);
+		expect(daysOf({ date: '2026-12-31', until: '2027-01-01' })).toEqual(['2026-12-31', '2027-01-01']);
+		expect(daysOf({ date: '2026-12-18' })).toEqual(['2026-12-18']);
+		expect(daysOf({ date: '2026-01-01', until: '2026-12-31' })).toHaveLength(15);
+	});
+
+	it('read as one range', () => {
+		const label = optionLabel(weekend, 'de-DE');
+		expect([label.weekday, label.day, label.month]).toEqual(['Fr–Sa', '18–19', 'Dez']);
+		// Intl puts thin spaces around the dash.
+		expect(label.long.replace(/\s/g, ' ')).toBe('Freitag, 18. – Samstag, 19. Dezember 2026, 10:00–17:00');
+	});
+
+	it('go into the calendar from the first day’s start to the last day’s end', () => {
+		expect(new URL(calendarLink('Probenwochenende', weekend, 'Europe/Berlin')).searchParams.get('dates')).toBe('20261218T100000/20261219T170000');
+		expect(new URL(calendarLink('Probenwochenende', { id: 'b', date: '2026-12-18', until: '2026-12-19' }, 'Europe/Berlin')).searchParams.get('dates')).toBe('20261218/20261220');
+	});
+
+	it('show on the calendar on each of their days', () => {
+		const poll = { id: 'p1', title: 'Probenwochenende', options: [{ id: 'a', date: '2026-11-30', until: '2026-12-01' }] };
+		expect([...pollDatesByMonth([poll], '2026-10-23')].map(([month, polls]) => [month, polls[0].days])).toEqual([
+			['2026-11', ['2026-11-30']],
+			['2026-12', ['2026-12-01']]
 		]);
 	});
 });

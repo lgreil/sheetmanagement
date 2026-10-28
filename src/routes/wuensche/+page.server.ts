@@ -1,7 +1,9 @@
 import { fail } from '@sveltejs/kit';
-import { mayDeleteWish, safeLink, sortWishes, WISH_STATUSES, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
+import { config } from '#lib/config/index.ts';
+import { mayDeleteWish, safeLink, sortWishes, submitterEmail, WISH_STATUSES, type WishKind, type WishStatus } from '#lib/feedback/feedback.ts';
 import { t } from '#lib/i18n/index.ts';
 import { searchText } from '#lib/music/text.ts';
+import { shortDateLabel } from '#lib/repertoire/dates.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
 import { requireFeature } from '#lib/server/env.ts';
 import { addWish, deleteWish, feedbackUser, formText, setWishStatus, voteOnWish } from '#lib/server/feedback.ts';
@@ -40,9 +42,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 			description: wish.description,
 			status: wish.status,
 			answer: wish.answer,
-			submittedAt: wish.submittedAt,
-			// Who asked is for admins; everyone else sees only how many agree.
-			submittedBy: canManage ? wish.submittedBy || t.wishes.anonymous : undefined,
+			// "8. Okt." instead of the sheet's "2026-10-08".
+			submittedAt: shortDateLabel(wish.submittedAt.slice(0, 10), library.today, config.locale) || wish.submittedAt,
+			// Who asked is for admins; everyone else sees only how many agree. The name shows, the address is a tooltip.
+			submittedBy: canManage ? submitterName(wish.submittedBy) || t.wishes.anonymous : undefined,
+			submitterEmail: canManage && wish.submittedBy ? submitterEmail(wish.submittedBy) : undefined,
 			votes: wish.votes.length,
 			voted: wish.votes.includes(me),
 			canDelete: mayDeleteWish(wish, me, canManage),
@@ -52,6 +56,11 @@ export const load: PageServerLoad = async ({ locals }) => {
 		}))
 	};
 };
+
+/** "Jonas Geiger <jonas@example.org>" → "Jonas Geiger"; a bare address stays as it is. */
+function submitterName(submittedBy: string): string {
+	return submittedBy.replace(/\s*<[^<>]+>\s*$/, '').trim() || submittedBy.trim();
+}
 
 function upcomingConcerts(library: Awaited<ReturnType<typeof getLibrary>>) {
 	return library.concerts

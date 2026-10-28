@@ -11,6 +11,8 @@ import { parseInstruments } from '#lib/music/my-parts.ts';
 import { visiblePolls } from '#lib/server/polls.ts';
 import { getAccessList } from '#lib/server/repertoire.ts';
 import { getStore } from '#lib/server/db/index.ts';
+import { today } from '#lib/server/members.ts';
+import { SEASONS, seasonOf, type Season } from '#lib/seasons.ts';
 import type { LayoutServerLoad } from './$types';
 
 export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
@@ -41,6 +43,9 @@ export const load: LayoutServerLoad = async ({ locals, url, cookies }) => {
 		logo: shownLogo(logo),
 		brand: { colour: colours.brand, style, look },
 		features: on,
+		// The drawing for the season in a few quiet corners (#202), unless the orchestra turned it off.
+		// The demo shows any season with ?jahreszeit=winter.
+		season: on.seasons ? (isDemo() && SEASONS.includes(url.searchParams.get('jahreszeit') as Season) ? (url.searchParams.get('jahreszeit') as Season) : seasonOf(today())) : null,
 		instruments: instrumentOverrides(),
 		auth,
 		user: access.user ? { ...access.user, instrument } : null,

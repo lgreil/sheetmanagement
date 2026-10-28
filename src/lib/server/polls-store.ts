@@ -10,7 +10,7 @@ export interface PollStore {
 	create(poll: NewPoll, by: { email: string; name: string }): Promise<Poll>;
 	/** One row per person and poll: answering again replaces the earlier answer. */
 	respond(id: string, response: PollResponse): Promise<void>;
-	close(id: string, chosen: string | undefined): Promise<void>;
+	close(id: string, chosen: string[]): Promise<void>;
 	reopen(id: string): Promise<void>;
 	remove(id: string): Promise<void>;
 	/** One person's answers, with the poll's title and options; for their data export (#158). */
@@ -91,7 +91,8 @@ const toPoll = (row: PollRow): Poll => ({
 	createdByName: row.created_by_name,
 	createdAt: row.created_at,
 	closedAt: row.closed_at ?? undefined,
-	chosen: row.chosen ?? undefined
+	// Comma-separated option ids; one id from before #209 reads the same.
+	chosen: row.chosen ? row.chosen.split(',') : []
 });
 
 const toResponse = (row: ResponseRow): PollResponse => ({
@@ -139,7 +140,7 @@ export class SqlPollStore implements PollStore {
 
 	async create(poll: NewPoll, by: { email: string; name: string }): Promise<Poll> {
 		await this.ready();
-		const created: Poll = { ...poll, id: newId(), createdBy: by.email, createdByName: by.name, createdAt: new Date().toISOString() };
+		const created: Poll = { ...poll, id: newId(), createdBy: by.email, createdByName: by.name, createdAt: new Date().toISOString(), chosen: [] };
 		await this.db
 			.prepare(
 				'INSERT INTO polls (id, title, note, options, groups_json, deadline, created_by, created_by_name, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
@@ -170,9 +171,12 @@ export class SqlPollStore implements PollStore {
 			.run();
 	}
 
-	async close(id: string, chosen: string | undefined): Promise<void> {
+	async close(id: string, chosen: string[]): Promise<void> {
 		await this.ready();
-		await this.db.prepare('UPDATE polls SET closed_at = ?, chosen = ? WHERE id = ?').bind(new Date().toISOString(), chosen ?? null, id).run();
+		await this.db
+			.prepare('UPDATE polls SET closed_at = ?, chosen = ? WHERE id = ?')
+			.bind(new Date().toISOString(), chosen.length ? chosen.join(',') : null, id)
+			.run();
 	}
 
 	async reopen(id: string): Promise<void> {
@@ -230,7 +234,7 @@ export class MemoryPollStore implements PollStore {
 	}
 
 	async create(poll: NewPoll, by: { email: string; name: string }, createdAt = new Date().toISOString()): Promise<Poll> {
-		const created: Poll = { ...structuredClone(poll), id: newId(), createdBy: by.email, createdByName: by.name, createdAt };
+		const created: Poll = { ...structuredClone(poll), id: newId(), createdBy: by.email, createdByName: by.name, createdAt, chosen: [] };
 		this.polls.set(created.id, created);
 		return structuredClone(created);
 	}
@@ -242,14 +246,14 @@ export class MemoryPollStore implements PollStore {
 		this.responses.set(id, answers);
 	}
 
-	async close(id: string, chosen: string | undefined): Promise<void> {
+	async close(id: string, chosen: string[]): Promise<void> {
 		const poll = this.polls.get(id);
 		if (poll) Object.assign(poll, { closedAt: new Date().toISOString(), chosen });
 	}
 
 	async reopen(id: string): Promise<void> {
 		const poll = this.polls.get(id);
-		if (poll) Object.assign(poll, { closedAt: undefined, chosen: undefined });
+		if (poll) Object.assign(poll, { closedAt: undefined, chosen: [] });
 	}
 
 	async remove(id: string): Promise<void> {

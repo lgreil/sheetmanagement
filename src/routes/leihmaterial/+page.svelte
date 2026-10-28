@@ -29,20 +29,22 @@
 	{#snippet row(loan: Loan)}
 		<li class="loan {loan.state}">
 			<div class="main">
-				{#if loan.pieceId}
-					<a class="title" href="/stuecke/{encodeURIComponent(loan.pieceId)}">{loan.title}</a>
-				{:else}
-					<span class="title">{loan.title}</span>
-				{/if}
+				<span class="head">
+					{#if loan.pieceId}
+						<a class="title" href="/stuecke/{encodeURIComponent(loan.pieceId)}">{loan.title}</a>
+					{:else}
+						<span class="title">{loan.title}</span>
+					{/if}
+					<!-- How urgent it is, as a tinted chip next to the title instead of a stripe on the row. -->
+					{#if loan.days !== undefined && (loan.state === 'overdue' || loan.state === 'due-soon')}
+						<span class="chip {loan.state}"><Icon name={loan.state === 'overdue' ? 'alert' : 'clock'} size={12} />{t.loans.due(loan.days)}</span>
+					{/if}
+				</span>
 				<span class="muted">
 					{[loan.from && t.loans.from(loan.from), loan.borrowedAt && t.loans.borrowedAt(loan.borrowedAt)].filter(Boolean).join(' · ')}
 				</span>
 				{#if loan.state !== 'returned'}
-					<span class="due">
-						<Icon name={loan.state === 'overdue' ? 'alert' : 'clock'} size={14} />
-						{loan.dueAt ? t.loans.dueAt(loan.dueAt) : t.loans.dueUnknown}
-						{#if loan.days !== undefined && loan.state !== 'open'}<strong>· {t.loans.due(loan.days)}</strong>{/if}
-					</span>
+					<span class="due"><Icon name="calendar" size={14} />{loan.dueAt ? t.loans.dueAt(loan.dueAt) : t.loans.dueUnknown}</span>
 				{/if}
 				{#if loan.notes}<span class="notes">{loan.notes}</span>{/if}
 			</div>
@@ -129,14 +131,6 @@
 		padding: var(--space-3) var(--space-4);
 	}
 
-	.loan.overdue {
-		box-shadow: inset 3px 0 0 var(--danger);
-	}
-
-	.loan.due-soon {
-		box-shadow: inset 3px 0 0 var(--warn);
-	}
-
 	.main {
 		display: grid;
 		flex: 1;
@@ -144,9 +138,37 @@
 		min-width: min(100%, 240px);
 	}
 
+	.head {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: var(--space-1) var(--space-2);
+	}
+
 	.title {
 		font-weight: 600;
 		overflow-wrap: anywhere;
+	}
+
+	.chip {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		padding: 1px var(--space-2);
+		border-radius: var(--radius-pill);
+		font-size: var(--text-2xs);
+		font-weight: 700;
+		white-space: nowrap;
+	}
+
+	.chip.overdue {
+		background: color-mix(in oklab, var(--danger) 12%, transparent);
+		color: var(--danger);
+	}
+
+	.chip.due-soon {
+		background: color-mix(in oklab, var(--warn) 12%, transparent);
+		color: var(--warn);
 	}
 
 	a.title:hover {
@@ -165,18 +187,15 @@
 
 	.due {
 		display: inline-flex;
-		flex-wrap: wrap;
 		align-items: center;
 		gap: var(--space-1);
+		color: var(--text-muted);
 		font-size: var(--text-sm);
 	}
 
 	.overdue .due {
 		color: var(--danger);
-	}
-
-	.due-soon .due {
-		color: var(--warn);
+		font-weight: 600;
 	}
 
 	.add {
@@ -214,11 +233,12 @@
 		grid-column: 1 / -1;
 	}
 
-	.returned {
-		opacity: 0.85;
+	.returned summary {
+		color: var(--text-muted);
 	}
 
-	.returned summary {
+	/* Done with: quieter titles, but the text keeps its full contrast. */
+	.returned .title {
 		color: var(--text-muted);
 	}
 </style>
