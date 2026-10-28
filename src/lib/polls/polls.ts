@@ -32,8 +32,8 @@ export interface Poll {
 	createdByName: string;
 	createdAt: string;
 	closedAt?: string;
-	/** The option that was picked when it was closed. */
-	chosen?: string;
+	/** The options picked when it was closed (#209): one date, several (a weekend), or none. */
+	chosen: string[];
 }
 
 export interface PollResponse {

@@ -112,7 +112,8 @@ describe('pollData', () => {
 			groups: [],
 			createdBy: 'vera@example.org',
 			createdByName: 'Vera',
-			createdAt: '2027-01-01T00:00:00Z'
+			createdAt: '2027-01-01T00:00:00Z',
+			chosen: []
 		};
 		const response = { email: 'mia@example.org', name: 'Mia', choices: { o2: 'maybe' as const }, comment: 'Nur vormittags', updatedAt: '2027-01-02T10:00:00Z' };
 		expect(pollData([{ poll, response }])).toEqual({

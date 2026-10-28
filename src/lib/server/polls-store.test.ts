@@ -80,14 +80,18 @@ for (const [name, make] of [
 			expect(await store.countBy('ben@example.org')).toBe(0);
 		});
 
-		it('closes with the chosen date, reopens, and removes with its answers', async () => {
+		it('closes with the chosen dates, reopens, and removes with its answers', async () => {
 			const store = make();
 			const { id } = await store.create(poll, vera);
+			expect((await store.get(id))?.poll.chosen).toEqual([]);
 			await store.respond(id, { email: 'ben@example.org', name: 'Ben', choices: { o1: 'yes' }, updatedAt: '2027-01-01T10:00:00Z' });
-			await store.close(id, 'o1');
-			expect((await store.get(id))?.poll).toMatchObject({ chosen: 'o1', closedAt: expect.any(String) });
+			await store.close(id, ['o1', 'o2']);
+			expect((await store.get(id))?.poll).toMatchObject({ chosen: ['o1', 'o2'], closedAt: expect.any(String) });
 			await store.reopen(id);
-			expect((await store.get(id))?.poll.closedAt).toBeUndefined();
+			expect((await store.get(id))?.poll).toMatchObject({ chosen: [], closedAt: undefined });
+			await store.close(id, []);
+			expect((await store.get(id))?.poll.chosen).toEqual([]);
+			await store.reopen(id);
 			await store.remove(id);
 			expect(await store.get(id)).toBeNull();
 			expect(await store.list()).toEqual([]);

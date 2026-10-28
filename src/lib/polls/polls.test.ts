@@ -12,7 +12,8 @@ const poll: Poll = {
 	groups: ['Orga'],
 	createdBy: 'vera@example.org',
 	createdByName: 'Vera',
-	createdAt: '2027-01-01T10:00:00Z'
+	createdAt: '2027-01-01T10:00:00Z',
+	chosen: []
 };
 const answer = (name: string, choices: PollResponse['choices']): PollResponse => ({ email: `${name}@example.org`, name, choices, updatedAt: '' });
 

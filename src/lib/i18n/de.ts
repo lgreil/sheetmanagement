@@ -896,8 +896,9 @@ export const de = {
 		saved: 'Antwort gespeichert.',
 		best: 'Bester Termin',
 		chosen: 'Gewählt',
-		choose: 'Diesen nehmen',
-		closeWithout: 'Ohne Termin abschließen',
+		choose: 'Nehmen',
+		/** Closing with the ticked dates (#209): none, one, or several (a weekend). */
+		closeWith: (n: number) => (n === 0 ? 'Ohne Termin abschließen' : n === 1 ? 'Mit 1 Termin abschließen' : `Mit ${n} Terminen abschließen`),
 		reopen: 'Wieder öffnen',
 		remove: 'Umfrage löschen',
 		removeConfirm: 'Diese Umfrage mit allen Antworten löschen?',

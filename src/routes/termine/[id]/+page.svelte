@@ -19,6 +19,9 @@
 	// Your answers, changed here until saved; a date you haven't answered starts empty.
 	// svelte-ignore state_referenced_locally
 	let choices = $state<Record<string, PollAnswer | undefined>>({ ...(data.mine?.choices ?? {}) });
+	// The dates an organiser will close it with (#209); the best one is ticked to begin with.
+	// svelte-ignore state_referenced_locally
+	let picked = $state<string[]>(data.best ? [data.best] : []);
 	const deadline = $derived(poll.deadline ? optionLabel({ id: '', date: poll.deadline }, config.locale) : null);
 </script>
 
@@ -36,16 +39,27 @@
 </header>
 
 {#if poll.closedAt}
-	<!-- Decided: the date, and one click to put it into the calendar. -->
+	<!-- Decided: the dates, each one click away from the calendar. -->
 	<section class="ui-card decided">
 		<span class="badge"><Icon name="poll" size={22} /></span>
-		<span class="body">
-			<span class="over">{poll.chosen ? t.polls.chosen : t.polls.closed}</span>
-			{#if poll.chosen}<strong>{label(poll.chosen).long}</strong>{/if}
-		</span>
-		{#if data.calendarUrl}
-			<a class="btn" href={data.calendarUrl} target="_blank" rel="noopener noreferrer"><Icon name="calendar" size={16} />{t.polls.toCalendar}</a>
-		{/if}
+		<div class="body">
+			<span class="over">{poll.chosen.length ? t.polls.chosen : t.polls.closed}</span>
+			{#if poll.chosen.length}
+				<ul class="picked">
+					{#each poll.chosen as id (id)}
+						{@const when = label(id)}
+						<li>
+							<strong>{when.long}</strong>
+							{#if data.calendarUrls[id]}
+								<a class="btn small" href={data.calendarUrls[id]} target="_blank" rel="noopener noreferrer">
+									<Icon name="calendar" size={14} />{t.polls.toCalendar}<span class="sr-only"> ({when.long})</span>
+								</a>
+							{/if}
+						</li>
+					{/each}
+				</ul>
+			{/if}
+		</div>
 		{#if data.manage}
 			<form method="POST" action="?/reopen" use:enhance={saving.submit()}>
 				<button class="btn secondary" disabled={saving.busy}><Icon name="refresh" size={16} />{t.polls.reopen}</button>
@@ -57,12 +71,12 @@
 {#if data.saved}<p class="msg ok" role="status"><Icon name="check" size={16} />{t.polls.saved}</p>{/if}
 {#if form?.error}<p class="msg error" role="alert">{form.error}</p>{/if}
 
-<form method="POST" action="?/answer" use:enhance={saving.submit()}>
+<form id="poll-answers" method="POST" action="?/answer" use:enhance={saving.submit()}>
 	<ul class="options">
 		{#each poll.options as option (option.id)}
 			{@const when = label(option.id)}
 			{@const s = score(option.id)}
-			<li class="ui-card option" class:best={data.best === option.id && !poll.closedAt} class:chosen={poll.chosen === option.id}>
+			<li class="ui-card option" class:best={data.best === option.id && !poll.closedAt} class:chosen={poll.chosen.includes(option.id)}>
 				<span class="date" aria-hidden="true">
 					<span class="weekday">{when.weekday}</span>
 					<span class="day">{when.day}</span>
@@ -72,7 +86,7 @@
 					<span class="when">
 						{when.time || when.long}
 						{#if data.best === option.id && !poll.closedAt}<span class="tag best-tag"><Icon name="sparkle" size={12} />{t.polls.best}</span>{/if}
-						{#if poll.chosen === option.id}<span class="tag chosen-tag"><Icon name="check" size={12} />{t.polls.chosen}</span>{/if}
+						{#if poll.chosen.includes(option.id)}<span class="tag chosen-tag"><Icon name="check" size={12} />{t.polls.chosen}</span>{/if}
 					</span>
 					<span class="bar" aria-hidden="true">
 						<span class="yes" style:width="{(s.yes / most) * 100}%"></span>
@@ -92,9 +106,10 @@
 					</fieldset>
 				{/if}
 				{#if data.manage && !poll.closedAt}
-					<button class="take" formaction="?/close" name="option" value={option.id} formnovalidate>
+					<label class="take">
+						<input type="checkbox" name="option" value={option.id} bind:group={picked} />
 						{t.polls.choose}<span class="sr-only"> ({when.long})</span>
-					</button>
+					</label>
 				{/if}
 			</li>
 		{/each}
@@ -156,9 +171,10 @@
 {#if data.manage}
 	<div class="manage">
 		{#if !poll.closedAt}
-			<form method="POST" action="?/close" use:enhance={saving.submit()}>
-				<button class="btn secondary" disabled={saving.busy}>{t.polls.closeWithout}</button>
-			</form>
+			<!-- Sends the dates ticked above, which sit in the answers' form. -->
+			<button class="btn" class:secondary={!picked.length} form="poll-answers" formaction="?/close" formnovalidate disabled={saving.busy}>
+				<Icon name="check" size={16} />{t.polls.closeWith(picked.length)}
+			</button>
 		{/if}
 		<form
 			method="POST"
@@ -202,7 +218,7 @@
 	.decided {
 		display: flex;
 		flex-wrap: wrap;
-		align-items: center;
+		align-items: flex-start;
 		gap: var(--space-3);
 		margin-bottom: var(--space-5);
 		padding: var(--space-4);
@@ -222,8 +238,26 @@
 	.decided .body {
 		display: grid;
 		flex: 1;
+		gap: var(--space-1);
 		min-width: 200px;
 	}
+
+	.picked {
+		display: grid;
+		gap: var(--space-2);
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.picked li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2);
+	}
+
 
 	.over {
 		color: var(--text-muted);
@@ -406,18 +440,29 @@
 	}
 
 	.take {
-		padding: var(--space-1) var(--space-2);
-		border: 0;
-		background: none;
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 32px;
+		padding: 0 var(--space-3) 0 var(--space-2);
+		border-radius: var(--radius-pill);
 		color: var(--accent);
-		font: inherit;
 		font-size: var(--text-xs);
 		font-weight: 650;
 		cursor: pointer;
+		transition: background var(--fast) var(--ease);
 	}
 
-	.take:hover {
-		text-decoration: underline;
+	.take:hover,
+	.take:has(input:checked) {
+		background: var(--accent-soft);
+	}
+
+	.take input {
+		width: 18px;
+		height: 18px;
+		margin: 0;
+		accent-color: var(--accent);
 	}
 
 	.answer-bar {
