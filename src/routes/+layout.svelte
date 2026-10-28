@@ -7,6 +7,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import DemoBanner from '#lib/components/DemoBanner.svelte';
 	import Avatar from '#lib/components/Avatar.svelte';
+	import SeasonMark from '#lib/components/SeasonMark.svelte';
 	import Icon from '#lib/components/Icon.svelte';
 	import QuickSearch, { loadIndex } from '#lib/components/QuickSearch.svelte';
 	import NavMenu from '#lib/components/NavMenu.svelte';
@@ -95,7 +96,15 @@
 	<meta name="theme-color" content={data.brand.colour} />
 	{#if data.logo !== shownLogo(DEFAULT_LOGO)}<link rel="icon" href={data.logo} />{/if}
 	<!-- On :root, so the theme tokens in app.css derive from it. -->
-	{@html `<style>${data.brand.style}</style>`}
+	{@html `<style>${data.brand.style}
+	/* The season's drawing at the foot of every page, small and faint (#202). */
+	.season-mark {
+		display: flex;
+		justify-content: center;
+		margin-top: var(--space-3);
+		color: color-mix(in oklab, var(--accent) 45%, transparent);
+	}
+</style>`}
 </svelte:head>
 
 <div class="app">
@@ -186,6 +195,7 @@
 			{/if}
 			<!-- The instrument drawings are CC BY: credited where everyone sees them. -->
 			<p class="source"><a href="/licenses/game-icons-CC-BY-3.0.txt">{t.footer.instruments}</a></p>
+			<span class="season-mark"><SeasonMark size={18} /></span>
 		</footer>
 	</main>
 

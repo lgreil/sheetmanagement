@@ -566,6 +566,7 @@ export const en: Texts = {
 			signups: 'Yes and no for rehearsals and concerts.',
 			wishes: 'Suggest pieces and ideas, with +1.',
 			calendarFeed: 'A personal calendar to subscribe to, on the profile.',
+			seasons: 'Small drawings for the season: a snowflake, a blossom, a pumpkin.',
 			offline: 'Save parts in “My parts” for rehearsals without a connection.'
 		} as Record<string, string>,
 		instruments: 'Instruments',
@@ -605,6 +606,7 @@ export const en: Texts = {
 		signups: 'Sign-ups',
 		wishes: 'Wishes',
 		calendarFeed: 'Calendar feed',
+		seasons: 'Seasons',
 		offline: 'Save parts offline'
 	},
 	pwa: {
@@ -1601,7 +1603,7 @@ export const en: Texts = {
 		featuresOff: (names: string) => `Turned off: ${names}`,
 		allFeatures: 'Every feature is on.',
 		unknownFeatures: (words: string) => `FEATURES_OFF contains unknown words: ${words}.`,
-		featuresHint: 'Allowed are loans, musicReport, attendance, signups, wishes, calendarFeed and offline.',
+		featuresHint: 'Allowed are loans, musicReport, attendance, signups, wishes, calendarFeed, offline and seasons.',
 		ok: 'Connected',
 		error: 'Error',
 		missing: 'Not set up',

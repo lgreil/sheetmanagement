@@ -569,7 +569,8 @@ export const de = {
 			signups: 'Zu- und Absagen für Proben und Konzerte.',
 			wishes: 'Stücke und Ideen vorschlagen, mit +1.',
 			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
-			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.'
+			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.',
+			seasons: 'Kleine Zeichnungen zur Jahreszeit: Schneeflocke, Blüte, Kürbis.'
 		} as Record<string, string>,
 		instruments: 'Instrumente',
 		instrumentsLead:
@@ -607,7 +608,8 @@ export const de = {
 		signups: 'Anmeldungen',
 		wishes: 'Wünsche',
 		calendarFeed: 'Kalender-Abo',
-		offline: 'Noten offline speichern'
+		offline: 'Noten offline speichern',
+		seasons: 'Jahreszeiten'
 	},
 	pwa: {
 		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
@@ -1614,7 +1616,7 @@ export const de = {
 		featuresOff: (names: string) => `Ausgeschaltet: ${names}`,
 		allFeatures: 'Alle Funktionen sind eingeschaltet.',
 		unknownFeatures: (words: string) => `FEATURES_OFF enthält unbekannte Wörter: ${words}.`,
-		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender und offline.',
+		featuresHint: 'Erlaubt sind leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline und jahreszeiten.',
 		ok: 'Verbunden',
 		error: 'Fehler',
 		missing: 'Nicht eingerichtet',
