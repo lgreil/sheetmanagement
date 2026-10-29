@@ -1,5 +1,5 @@
 import { error, fail, redirect } from '@sveltejs/kit';
-import { countingMembers, normalizeEmail } from '#lib/access/access.ts';
+import { countingMembers, isAdminOnly, normalizeEmail } from '#lib/access/access.ts';
 import { attendanceVersion, parseTicks, planAttendanceSave } from '#lib/attendance/attendance.ts';
 import { config } from '#lib/config/index.ts';
 import type { ShownEvent } from '#lib/events/schedule.ts';
@@ -46,7 +46,7 @@ async function people(library: Library, event: ShownEvent) {
 		...countingMembers(members, orchestra, library.today).map((member) => member.email),
 		...answers.keys(),
 		...(recorded?.keys() ?? [])
-	]);
+	].filter((email) => !isAdminOnly(byEmail.get(email))));
 	const order = new Map(config.instruments.map((instrument, i) => [instrument.name, i]));
 	const list = [...emails].map((email) => {
 		const member = byEmail.get(email);

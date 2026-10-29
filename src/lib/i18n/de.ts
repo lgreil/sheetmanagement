@@ -302,6 +302,15 @@ export const de = {
 		archive: 'Aus der Chronik',
 		dateUnknown: 'Datum unbekannt',
 		preparesFor: 'Probe für',
+		orchestras: {
+			over: 'Orchester',
+			all: 'Alle Orchester',
+			change: 'Ändern',
+			save: 'Speichern',
+			hint: 'Nur wer in einem der angekreuzten Orchester spielt, sieht die Probe und wird bei „Wer kommt?“ mitgezählt.',
+			none: 'Bitte mindestens ein Orchester ankreuzen.',
+			saved: 'Orchester gespeichert.'
+		},
 		sharedFrom: 'Gleiches Programm wie',
 		sharedWith: 'Dieses Programm gilt auch für',
 		description: 'Notiz aus dem Kalender',
@@ -963,6 +972,7 @@ export const de = {
 		gone: 'Diesen Termin gibt es nicht (mehr) oder er ist vorbei.',
 		coverage: 'Besetzung',
 		coverageLead: 'Zusagen je Stimme.',
+		byPart: 'Nach Stimmen getrennt',
 		summary: (yes: number, maybe: number, no: number, open: number) =>
 			[`${yes} ${yes === 1 ? 'Zusage' : 'Zusagen'}`, maybe && `${maybe} vielleicht`, no && `${no} ${no === 1 ? 'Absage' : 'Absagen'}`, open && `${open} offen`]
 				.filter(Boolean)
@@ -1235,11 +1245,12 @@ export const de = {
 		orchestras: 'Orchester',
 		orchestrasHint: 'Keins angekreuzt: Du siehst die Konzerte aller Orchester.',
 		status: 'Status',
-		statuses: { aktiv: 'aktiv', pausiert: 'pausiert', inaktiv: 'inaktiv' } as Record<string, string>,
+		statuses: { aktiv: 'aktiv', pausiert: 'pausiert', inaktiv: 'inaktiv', verwaltung: 'nur Verwaltung' } as Record<string, string>,
 		statusHints: {
 			aktiv: 'Du zählst bei der Besetzung mit.',
 			pausiert: 'Zum Beispiel Auslandssemester oder Elternzeit. Mit Datum wirst du danach automatisch wieder aktiv.',
-			inaktiv: 'Du behältst den Zugang, zählst aber bei der Besetzung nicht mit.'
+			inaktiv: 'Du behältst den Zugang, zählst aber bei der Besetzung nicht mit.',
+			verwaltung: 'Ein reines Verwaltungskonto, das nicht mitspielt: Es taucht bei Anmeldungen, Anwesenheit und Umfragen nicht auf.'
 		} as Record<string, string>,
 		pausedUntil: 'Pausiert bis (optional)',
 		pausedUntilShort: (day: string) => `bis ${day}`,

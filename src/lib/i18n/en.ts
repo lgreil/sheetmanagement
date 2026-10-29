@@ -300,6 +300,15 @@ export const en: Texts = {
 		archive: 'From the history',
 		dateUnknown: 'Date unknown',
 		preparesFor: 'Rehearsal for',
+		orchestras: {
+			over: 'Orchestras',
+			all: 'All orchestras',
+			change: 'Change',
+			save: 'Save',
+			hint: 'Only members of a ticked orchestra see the rehearsal and count under “Who’s coming?”.',
+			none: 'Please tick at least one orchestra.',
+			saved: 'Orchestras saved.'
+		},
 		sharedFrom: 'Same programme as',
 		sharedWith: 'This programme also applies to',
 		description: 'Note from the calendar',
@@ -957,6 +966,7 @@ export const en: Texts = {
 		gone: "This date doesn't exist (any more) or is over.",
 		coverage: 'Instrumentation',
 		coverageLead: 'Yeses per part.',
+		byPart: 'Split by part',
 		summary: (yes: number, maybe: number, no: number, open: number) =>
 			[`${yes} yes`, maybe && `${maybe} maybe`, no && `${no} no`, open && `${open} open`].filter(Boolean).join(' · '),
 		uncovered: 'nobody',
@@ -1226,11 +1236,12 @@ export const en: Texts = {
 		orchestras: 'Orchestras',
 		orchestrasHint: "None ticked: you see the concerts of every orchestra.",
 		status: 'Status',
-		statuses: { aktiv: 'active', pausiert: 'paused', inaktiv: 'inactive' } as Record<string, string>,
+		statuses: { aktiv: 'active', pausiert: 'paused', inaktiv: 'inactive', verwaltung: 'admin only' } as Record<string, string>,
 		statusHints: {
 			aktiv: 'You count for the instrumentation.',
 			pausiert: 'For example a semester abroad or parental leave. With a date you become active again automatically.',
-			inaktiv: "You keep your access but don't count for the instrumentation."
+			inaktiv: "You keep your access but don't count for the instrumentation.",
+			verwaltung: "An admin-only account that doesn't play: it doesn't appear in sign-ups, attendance or polls."
 		} as Record<string, string>,
 		pausedUntil: 'Paused until (optional)',
 		pausedUntilShort: (day: string) => `until ${day}`,

@@ -54,7 +54,7 @@
 <Title title={t.myParts.title} />
 <PageHeader title={t.myParts.title} lead={t.myParts.lead} />
 
-{#if data.status !== 'aktiv'}
+{#if data.status === 'pausiert' || data.status === 'inaktiv'}
 	<p class="msg info status">
 		{data.status === 'pausiert' ? t.myParts.paused(data.pausedUntil && formatDay(data.pausedUntil, config.locale)) : t.myParts.inactive}
 		<a href="/profil">{t.myParts.profileHint}</a>

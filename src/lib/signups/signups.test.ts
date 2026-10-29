@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildAccessList } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
-import { buildSignups, coverage, readAnswer, sectionOf, totals } from './signups.ts';
+import { buildSignups, coverage, groupSections, readAnswer, sectionOf, totals } from './signups.ts';
 
 const HEADER = ['Termin', 'Wer', 'Name', 'Antwort', 'Instrument', 'Kommentar', 'Datum', 'Termin-ID'];
 
@@ -91,5 +91,47 @@ describe('coverage', () => {
 		const answers = buildSignups([HEADER, ['', 'david@example.org', '', 'Zusage', '', '', '', 'e1']]).byEvent.get('e1')!;
 		const sections = coverage(answers, board, config, { orchestra: 'EO', today: '2026-10-20' });
 		expect(sections.map((s) => [s.label, s.yes, s.open])).toEqual([['Ohne Instrument', ['David D'], []]]);
+	});
+});
+
+describe('the shared admin account', () => {
+	it('never counts, not even when it answered', () => {
+		const list = buildAccessList({
+			members: [
+				['E-Mail', 'Name', 'Instrument', 'Gruppen', 'Orchester', 'Status'],
+				['orchester@example.org', 'Ehemaligenorchester', 'Geige', 'Vorstand', '', 'verwaltung'],
+				['anna@example.org', 'Anna A', 'Geige I', '', 'EO', '']
+			]
+		}).members;
+		const answers = buildSignups([HEADER, ['', 'orchester@example.org', '', 'Zusage', '', '', '', 'e1']]).byEvent.get('e1')!;
+		const sections = coverage(answers, list, config, { orchestra: 'EO', today: '2026-10-20' });
+		expect(sections.map((s) => [s.label, s.yes, s.open])).toEqual([['Geige I', [], ['Anna A']]]);
+	});
+});
+
+describe('groupSections', () => {
+	const cellos = buildAccessList({
+		members: [
+			['E-Mail', 'Name', 'Instrument', 'Gruppen', 'Orchester', 'Status'],
+			['a@example.org', 'A', 'Geige I', '', '', ''],
+			['b@example.org', 'B', 'Geige II', '', '', ''],
+			['c@example.org', 'C', 'Violoncello I', '', '', ''],
+			['d@example.org', 'D', 'Violoncello II', '', '', ''],
+			['e@example.org', 'E', 'Viola', '', '', '']
+		]
+	}).members;
+	const answers = buildSignups([HEADER, ['', 'c@example.org', '', 'Zusage', '', '', '', 'e1']]).byEvent.get('e1')!;
+	const sections = coverage(answers, cellos, config, { today: '2026-10-20' });
+
+	it('makes one line per instrument, except the ones kept by part', () => {
+		expect(groupSections(sections, ['Geige']).map((s) => [s.label, s.yes, s.open])).toEqual([
+			['Geige I', [], ['A']],
+			['Geige II', [], ['B']],
+			['Bratsche', [], ['E']],
+			['Cello', ['C'], ['D']]
+		]);
+		expect(groupSections(sections).map((s) => s.label)).toEqual(['Geige', 'Bratsche', 'Cello']);
+		// The original stays as it was.
+		expect(sections.find((s) => s.label === 'Cello I')?.open).toEqual([]);
 	});
 });

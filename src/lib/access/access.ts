@@ -17,8 +17,12 @@ export const ACCESS_TABS = ['members', 'groups', 'rights', 'requests'] as const;
 export type AccessTab = (typeof ACCESS_TABS)[number];
 export type AccessValues = Partial<Record<AccessTab, string[][]>>;
 
-/** Paused or inactive members keep their access, but don't count for coverage. */
-export const MEMBER_STATUSES = ['aktiv', 'pausiert', 'inaktiv'] as const;
+/**
+ * Paused or inactive members keep their access, but don't count for coverage. "verwaltung" is an
+ * account that only administers (the orchestra's shared admin login): it never plays, so it is
+ * left out of sign-ups, attendance and polls altogether.
+ */
+export const MEMBER_STATUSES = ['aktiv', 'pausiert', 'inaktiv', 'verwaltung'] as const;
 export type MemberStatus = (typeof MEMBER_STATUSES)[number];
 
 export interface Member {
@@ -223,6 +227,7 @@ export function parseLinkVersion(text: string): number {
 /** Empty or unknown counts as active, so a member is never left out by a typo. */
 export function parseStatus(text: string): MemberStatus {
 	const value = normalize(text);
+	if (value.startsWith('admin') || value.includes('verwalt')) return 'verwaltung';
 	return MEMBER_STATUSES.find((status) => value.startsWith(status.slice(0, 4))) ?? 'aktiv';
 }
 
@@ -259,6 +264,9 @@ export function playsIn(member: Pick<Member, 'orchestras'>, orchestra: string | 
 export function seesDate(member: Pick<Member, 'orchestras'> | undefined, event: { type: string }, orchestra: string | undefined): boolean {
 	return !member || (event.type !== 'probe' && event.type !== 'generalprobe') || playsIn(member, orchestra);
 }
+
+/** An admin-only account: never a player, whatever else its row says. */
+export const isAdminOnly = (member: Pick<Member, 'status'> | undefined) => member?.status === 'verwaltung';
 
 /** Members who count for a concert's instrumentation: active ones in its orchestra. */
 export function countingMembers<M extends Pick<Member, 'orchestras' | 'status' | 'pausedUntil'>>(

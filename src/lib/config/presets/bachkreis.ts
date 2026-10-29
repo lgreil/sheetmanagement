@@ -198,6 +198,7 @@ export const bachkreis: OrchestraConfig = {
 		}
 	],
 	orchestras: ['EO', 'A', 'B'],
+	splitSections: ['Geige'],
 
 	// No sourceUrl: many members are kids and teens, and the repository leads to a personal profile.
 

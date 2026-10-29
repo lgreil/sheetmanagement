@@ -31,7 +31,7 @@ export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const wanted = new Set(poll.groups.map((group) => group.toLowerCase()));
 	const answered = new Set(responses.map((response) => response.email));
 	const waiting = (access?.members ?? [])
-		.filter((member) => member.status !== 'inaktiv' && member.groups.some((group) => wanted.has(group.toLowerCase())) && !answered.has(member.email))
+		.filter((member) => member.status !== 'inaktiv' && member.status !== 'verwaltung' && member.groups.some((group) => wanted.has(group.toLowerCase())) && !answered.has(member.email))
 		.map((member) => member.name);
 	return {
 		poll,

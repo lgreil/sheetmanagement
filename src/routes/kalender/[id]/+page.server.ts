@@ -1,9 +1,9 @@
 import { error, fail } from '@sveltejs/kit';
-import { countingMembers, normalizeEmail } from '#lib/access/access.ts';
+import { countingMembers, isAdminOnly, normalizeEmail } from '#lib/access/access.ts';
 import { config } from '#lib/config/index.ts';
 import { coverage, formatInstrument, parseInstruments, playableInstruments, playedParts, programInstruments } from '#lib/music/my-parts.ts';
 import { t } from '#lib/i18n/index.ts';
-import { ANSWERS, coverage as signupCoverage, totals, type Answer } from '#lib/signups/signups.ts';
+import { ANSWERS, coverage as signupCoverage, groupSections, totals, type Answer, type SectionCoverage } from '#lib/signups/signups.ts';
 import { feedbackUser, formText } from '#lib/server/feedback.ts';
 import { features, isOn } from '#lib/server/env.ts';
 import { today } from '#lib/server/members.ts';
@@ -11,6 +11,10 @@ import { saveSignup, withdrawSignup } from '#lib/server/signups.ts';
 import { currentProgramAvailable, currentProgramStatus, isCurrentConcert, NoProgramFolderError, syncCurrentProgram } from '#lib/server/current-program.ts';
 import { getLibrary, isPastConcert, namedItem, orchestraOf, programsOf, reportPieces, type Library, type LibraryConcert, type ProgramItem } from '#lib/server/library.ts';
 import { pickOrchestra, programScopes, sameOrchestra } from '#lib/repertoire/orchestras.ts';
+import { splitList } from '#lib/repertoire/lists.ts';
+import { orchestraTitle } from '#lib/events/new-event.ts';
+import { calendarWriteEnabled } from '#lib/server/services.ts';
+import { setEventOrchestras } from '#lib/server/schedule.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
@@ -98,6 +102,14 @@ async function signups(event: ShownEvent, orchestra: string | undefined, locals:
 	);
 	const sections = signupCoverage(answers, access?.members ?? [], config, { orchestra, today: today() });
 	const seeAll = locals.access.rights.has('anmeldungen.sehen');
+	const shown = (list: SectionCoverage[]) =>
+		list.map(({ label, yes, maybe, no, open }) => ({
+			label,
+			counts: { yes: yes.length, maybe: maybe.length, no: no.length, open: open.length },
+			names: seeAll ? { yes, maybe, no, open } : null
+		}));
+	// Each instrument as one line, the violins by part; part by part for whoever wants it.
+	const grouped = groupSections(sections, config.splitSections);
 	return {
 		state: 'ready' as const,
 		mine: mine ? { answer: mine.answer, instrument: mine.instrument, comment: mine.comment } : null,
@@ -106,11 +118,8 @@ async function signups(event: ShownEvent, orchestra: string | undefined, locals:
 		instruments: playableInstruments(config),
 		totals: totals(sections),
 		seeAll,
-		sections: sections.map(({ label, yes, maybe, no, open }) => ({
-			label,
-			counts: { yes: yes.length, maybe: maybe.length, no: no.length, open: open.length },
-			names: seeAll ? { yes, maybe, no, open } : null
-		})),
+		sections: shown(grouped),
+		byPart: grouped.length < sections.length ? shown(sections) : null,
 		comments: seeAll
 			? answers.filter((signup) => signup.comment).map((signup) => ({ name: access?.membersByEmail.get(signup.email)?.name ?? signup.name, comment: signup.comment }))
 			: []
@@ -158,7 +167,7 @@ async function attendance(event: ShownEvent, library: Library, plan: RehearsalPl
 					...countingMembers(access?.members ?? [], orchestra, library.today)
 						.filter((member) => member.instrument)
 						.map((member) => member.email),
-					...recorded
+					...[...recorded].filter((email) => !isAdminOnly(access?.membersByEmail.get(email)))
 				])
 			]
 		: [email];
@@ -388,6 +397,15 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 					: undefined
 		},
 		concert: event.concertId ? lookup(event.concertId) : undefined,
+		// Whose rehearsal it is, changed here by those who plan dates (several orchestras only).
+		orchestras:
+			event.type !== 'konzert' && config.orchestras.length > 1
+				? {
+						current: orchestra ? config.orchestras.filter((name) => splitList(orchestra).some((other) => sameOrchestra(name, other))) : config.orchestras,
+						all: config.orchestras,
+						canChange: rights.has('termine.planen') && calendarWriteEnabled()
+					}
+				: null,
 		mapUrl: mapUrl(event.location),
 		program
 	};
@@ -433,6 +451,23 @@ export const actions: Actions = {
 	},
 
 	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
+
+	/** Which orchestras a rehearsal is for, ticked one by one; also for rehearsals already past. */
+	orchestras: async ({ request, locals, params }) => {
+		requireRight(locals, 'termine.planen');
+		const library = await getLibrary();
+		const event = library.schedule.ok ? library.schedule.byId.get(params.id) : undefined;
+		if (!event || event.type === 'konzert') error(404, t.messages.noEvent);
+		const ticked = new Set((await request.formData()).getAll('orchestra').map(String));
+		const chosen = config.orchestras.filter((name) => ticked.has(name));
+		if (!chosen.length) return fail(400, { orchestraError: t.concert.orchestras.none });
+		const result = await setEventOrchestras(event.id, {
+			summary: orchestraTitle(event.title, chosen, config.orchestras),
+			orchestras: chosen.join(', ')
+		});
+		if (!result.ok) return fail(result.reason === 'failed' ? 503 : 400, { orchestraError: t.calendar.add.errors[result.reason] });
+		return { orchestrasSaved: true };
+	},
 
 	/** Puts the programme's pieces into "01 | Aktuelles Programm" and takes the others out (#60). */
 	currentProgram: async ({ request, locals, params }) => {

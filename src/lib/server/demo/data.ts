@@ -37,6 +37,7 @@ export interface DemoEvent {
 	description?: string;
 	start: { date?: string; dateTime?: string };
 	end: { date?: string; dateTime?: string };
+	extendedProperties?: { shared?: Record<string, string | null> };
 }
 
 const FOLDER = 'application/vnd.google-apps.folder';
