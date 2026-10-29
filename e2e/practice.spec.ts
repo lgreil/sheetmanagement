@@ -340,3 +340,34 @@ test('two fingers on the glass draw one line, and symbols go on with a tap (#235
 	expect(sent.strokes.at(-1)!.points).toHaveLength(2);
 	await expect(page.locator('svg.marks path')).toHaveCount(3);
 });
+
+test('notes from the section: one taken over by hand, then the rest at once', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	// The demo member's desk partner offers her four marks in this part.
+	const offer = page.locator('.offer');
+	await expect(offer).toContainText('Greta Pult bietet dir 4 Notizen');
+	await offer.getByRole('button', { name: 'Ansehen' }).click();
+	await expect(page.locator('g.offered')).toHaveCount(4);
+	// The one taken over is the member's own, and saved as such.
+	const saved = page.waitForResponse((response) => response.url().endsWith('/api/ueben/notizen') && response.request().method() === 'PUT');
+	await page.locator('g.offered').first().focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('g.offered')).toHaveCount(3);
+	expect((await saved).status()).toBe(204);
+	await offer.getByRole('button', { name: 'Alle übernehmen' }).click();
+	await expect(offer).toHaveCount(0);
+
+	// After reloading: all four marks hers (a down-bow is two lines, mf three), the offer answered.
+	await open(page, PART);
+	await expect(page.locator('svg.marks > path')).toHaveCount(7);
+	await expect(page.locator('.offer')).toHaveCount(0);
+
+	// Her own offer to the section, and taken back.
+	page.on('dialog', (dialog) => dialog.accept());
+	await page.getByRole('button', { name: 'Stift' }).click();
+	await page.getByRole('button', { name: 'Mit Stimmgruppe teilen' }).click();
+	await expect(page.getByRole('button', { name: 'Nicht mehr teilen' })).toBeVisible();
+	await page.getByRole('button', { name: 'Nicht mehr teilen' }).click();
+	await expect(page.getByRole('button', { name: 'Mit Stimmgruppe teilen' })).toBeVisible();
+});

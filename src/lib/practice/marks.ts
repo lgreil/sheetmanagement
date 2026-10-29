@@ -72,6 +72,29 @@ function fewer(points: number[]): number[] {
 	return kept;
 }
 
+/**
+ * Someone else's marks on a page, taken over into one's own: those not there already, in order,
+ * as long as the page has room (MAX_PAGE_POINTS, MAX_STROKES). `skipped` didn't fit.
+ */
+export function mergeMarks(own: Stroke[], offered: Stroke[]): { strokes: Stroke[]; skipped: number } {
+	const strokes = [...own];
+	const there = new Set(own.map((stroke) => JSON.stringify(stroke)));
+	let points = pagePoints(own);
+	let skipped = 0;
+	for (const stroke of offered) {
+		const key = JSON.stringify(stroke);
+		if (there.has(key)) continue;
+		if (strokes.length >= MAX_STROKES || points + stroke.points.length / 2 > MAX_PAGE_POINTS) {
+			skipped++;
+			continue;
+		}
+		strokes.push(stroke);
+		there.add(key);
+		points += stroke.points.length / 2;
+	}
+	return { strokes, skipped };
+}
+
 /** Leaves out points closer than `min` to the last one kept, so a slow line isn't hundreds of them. */
 export function thinPoints(points: number[], min = 0.002): number[] {
 	if (points.length <= 4) return points;

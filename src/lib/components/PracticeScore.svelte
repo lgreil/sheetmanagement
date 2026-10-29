@@ -10,7 +10,8 @@
 	 * turned by tapping the left or right half, with the arrow and page keys, or a page-turn
 	 * pedal (they send those keys). Full screen on request, with the controls above the page,
 	 * never over it (#235). With the pen, the member's own marks go on the page, drawn or as
-	 * symbols placed with a tap; they are saved a moment after the pen stops.
+	 * symbols placed with a tap; they are saved a moment after the pen stops. They can be offered
+	 * to the others who play the part, who take them over, all or one by one, or decline.
 	 */
 	let {
 		file,
@@ -23,7 +24,9 @@
 		startFull = false,
 		onleave,
 		night = false,
-		extra
+		extra,
+		offers = [],
+		sharedAt = null
 	}: {
 		file: string;
 		marks: Record<number, Stroke[]>;
@@ -45,7 +48,12 @@
 		night?: boolean;
 		/** More controls at the start of the toolbar. */
 		extra?: Snippet;
+		/** What others in the member's section offer of their notes in this part, newest first. */
+		offers?: Offer[];
+		/** When the member last offered their own notes here to their section. */
+		sharedAt?: string | null;
 	} = $props();
+	type Offer = { id: string; from: string; pages: Record<number, Stroke[]> };
 
 	/** The tool shown; tools once opened stay mounted, so a metronome or drone keeps going. */
 	let active = $state<string | null>(null);
@@ -296,6 +304,67 @@
 		}
 	}
 
+	/** Saves what's still waiting now, before the server reads the member's marks. */
+	async function flush() {
+		await Promise.all([...timers].map(([number, timer]) => (clearTimeout(timer), save(number))));
+	}
+
+	// Sharing with the section: the member's own offer, and the offers of others.
+	let shared = $state<string | null>(null);
+	let pending = $state<Offer[]>([]);
+	$effect.pre(() => {
+		shared = sharedAt;
+		pending = offers.map((offer) => ({ ...offer, pages: { ...offer.pages } }));
+	});
+	const offer = $derived(pending[0]);
+	const offerCount = $derived(offer ? Object.values(offer.pages).reduce((sum, strokes) => sum + strokes.length, 0) : 0);
+	let reviewing = $state(false);
+	/** Marks taken over one by one from the offer shown. */
+	let picked = $state(0);
+	let shareNote = $state('');
+	/** The offered marks shown on this page, to be taken over with a tap. */
+	const offered = $derived(reviewing && offer ? (offer.pages[page] ?? []) : []);
+
+	async function share() {
+		if (!confirm(t.practice.share.confirm)) return;
+		await flush();
+		const response = await fetch('/api/ueben/notizen/teilen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ file }) }).catch(() => null);
+		if (response?.ok) {
+			shared = ((await response.json()) as { at: string }).at;
+			shareNote = '';
+		} else shareNote = response?.status === 400 ? t.practice.share.nothing : t.practice.share.failed;
+	}
+	async function unshare() {
+		if (!confirm(t.practice.share.confirmUnshare)) return;
+		const response = await fetch('/api/ueben/notizen/teilen', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ file }) }).catch(() => null);
+		if (response?.ok) shared = null;
+		else shareNote = t.practice.share.failed;
+	}
+
+	/** One offered mark on this page into the member's own. */
+	function take(index: number) {
+		if (!offer) return;
+		const stroke = offered[index];
+		if (!stroke || !fits(stroke)) return;
+		change(page, [...current, stroke]);
+		pending[0] = { ...offer, pages: { ...offer.pages, [page]: offered.filter((_, i) => i !== index) } };
+		picked++;
+	}
+
+	/** Ends the offer shown: everything taken over, some by hand, or none. */
+	async function answer(kind: 'all' | 'some' | 'declined') {
+		if (!offer) return;
+		await flush();
+		const response = await fetch('/api/ueben/notizen/angebot', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: offer.id, answer: kind }) }).catch(() => null);
+		if (!response?.ok) return void (shareNote = t.practice.share.failed);
+		const { pages: merged, skipped } = (await response.json()) as { pages: Record<number, Stroke[]>; skipped: number };
+		if (Object.keys(merged).length) marks = { ...marks, ...merged };
+		shareNote = skipped ? t.practice.share.skipped(skipped) : '';
+		pending = pending.slice(1);
+		reviewing = false;
+		picked = 0;
+	}
+
 	// Leaving the page: what's still waiting goes out now.
 	$effect(() => () => {
 		for (const [number, timer] of timers) {
@@ -503,6 +572,9 @@
 			<div class="group">
 				<button type="button" class="tool text" onclick={undo}>{t.practice.marks.undo}</button>
 				<button type="button" class="tool text" onclick={clear} disabled={!current.length}>{t.practice.marks.clear}</button>
+				<button type="button" class="tool text" class:on={!!shared} aria-pressed={!!shared} onclick={() => (shared ? unshare() : share())}>
+					<Icon name="users" size={15} />{shared ? t.practice.share.unshare : t.practice.share.share}
+				</button>
 				<span class="state" class:failed={saving === 'failed' || refused} role="status">
 					{refused
 						? t.practice.marks.pageFull
@@ -514,11 +586,35 @@
 									? t.practice.marks.nearlyFull
 									: saving === 'saved'
 										? t.practice.marks.saved
-										: t.practice.marks.private}
+										: shared
+											? t.practice.marks.sharedNote
+											: t.practice.marks.private}
 				</span>
 			</div>
 		</div>
 	{/if}
+
+	<!-- An offer from the section: above the page like the rest, never over it. -->
+	{#if penAllowed && offer}
+		<div class="bar offer" role="region" aria-label={t.practice.marks.title}>
+			<p>
+				<Icon name="users" size={15} />{t.practice.share.offered(offer.from, offerCount + picked)}
+				{#if reviewing}<span class="muted">{t.practice.share.pick} {t.practice.share.onPage(offered.length)}</span>{/if}
+			</p>
+			<div class="group">
+				<button type="button" class="tool text" class:on={reviewing} aria-pressed={reviewing} onclick={() => (reviewing ? (reviewing = false) : (finishStroke(), (pen = false), (reviewing = true)))}>
+					{reviewing ? t.practice.share.hide : t.practice.share.show}
+				</button>
+				<button type="button" class="tool text" onclick={() => answer('all')}>{t.practice.share.takeAll}</button>
+				{#if picked}
+					<button type="button" class="tool text" onclick={() => answer('some')}>{t.practice.share.done}</button>
+				{:else}
+					<button type="button" class="tool text" onclick={() => answer('declined')}>{t.practice.share.decline}</button>
+				{/if}
+			</div>
+		</div>
+	{/if}
+	{#if shareNote}<p class="share-note" role="status">{shareNote}</p>{/if}
 	</div>
 
 	<div class="area" class:docked={!!active}>
@@ -559,12 +655,29 @@
 					onpointermove={move}
 					onpointerup={lift}
 					onpointercancel={lift}
-					aria-hidden="true"
+					aria-hidden={offered.length ? undefined : 'true'}
 				>
 					{#each [...current, ...(drawing ? [drawing] : [])] as stroke, i (i)}
 						{#each markLines(stroke, size.width / size.height) as line, j (j)}
 							<path d={strokePath(line, size.width, size.height)} stroke={STROKE[stroke.color]} stroke-width={strokeWidth} />
 						{/each}
+					{/each}
+					<!-- Offered marks, dashed; a tap takes one over (a wide invisible line makes it easy to hit). -->
+					{#each offered as stroke, i (i)}
+						<g
+							class="offered"
+							role="button"
+							tabindex="0"
+							aria-label={t.practice.share.take}
+							onclick={(event) => (event.stopPropagation(), take(i))}
+							onkeydown={(event) => (event.key === 'Enter' || event.key === ' ') && (event.preventDefault(), event.stopPropagation(), take(i))}
+						>
+							{#each markLines(stroke, size.width / size.height) as line, j (j)}
+								{@const d = strokePath(line, size.width, size.height)}
+								<path {d} class="hit" stroke-width={Math.max(18, strokeWidth * 6)} />
+								<path {d} stroke={STROKE[stroke.color]} stroke-width={strokeWidth} stroke-dasharray="{strokeWidth * 2} {strokeWidth * 2}" />
+							{/each}
+						</g>
 					{/each}
 				</svg>
 			{/if}
@@ -824,6 +937,55 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		pointer-events: none;
+	}
+
+	/* Offered marks take taps even while the page's own marks don't. */
+	.offered {
+		pointer-events: stroke;
+		cursor: pointer;
+		opacity: 0.75;
+	}
+
+	.offered:hover,
+	.offered:focus-visible {
+		opacity: 1;
+		outline: none;
+	}
+
+	.offered .hit {
+		stroke: var(--accent);
+		stroke-opacity: 0;
+	}
+
+	.offered:hover .hit,
+	.offered:focus-visible .hit {
+		stroke-opacity: 0.18;
+	}
+
+	.offer {
+		padding: var(--space-2);
+		border: 1px solid var(--accent);
+		border-radius: var(--radius-m);
+		background: var(--accent-soft);
+	}
+
+	.offer p {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		margin: 0;
+		font-size: var(--text-sm);
+	}
+
+	.offer .muted,
+	.share-note {
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
+	.share-note {
+		margin: 0;
 	}
 
 	.marks.drawing {

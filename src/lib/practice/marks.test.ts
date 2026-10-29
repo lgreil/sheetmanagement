@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_POINTS, MAX_STROKES, markLines, pagePoints, parseStrokes, strokePath, symbolLines, thinPoints } from './marks.ts';
+import { MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_POINTS, MAX_STROKES, markLines, mergeMarks, pagePoints, parseStrokes, strokePath, symbolLines, thinPoints } from './marks.ts';
 
 describe('parseStrokes', () => {
 	it('takes strokes as the viewer sends them, rounded', () => {
@@ -86,5 +86,18 @@ describe('a page’s room (#236)', () => {
 	it('takes a full page, not more', () => {
 		expect(parseStrokes([line(MAX_PAGE_POINTS / 2), line(MAX_PAGE_POINTS / 2)])).not.toBeNull();
 		expect(parseStrokes([line(MAX_PAGE_POINTS / 2), line(MAX_PAGE_POINTS / 2), { color: 'red', points: [0, 0], symbol: 'p' }])).toBeNull();
+	});
+});
+
+describe('mergeMarks', () => {
+	const mark = (x: number) => ({ color: 'red' as const, points: [x, 0.5], symbol: 'p' as const });
+
+	it('adds what isn’t there yet, in order', () => {
+		expect(mergeMarks([mark(0.1)], [mark(0.1), mark(0.2)])).toEqual({ strokes: [mark(0.1), mark(0.2)], skipped: 0 });
+	});
+
+	it('stops where the page is full', () => {
+		const full = Array.from({ length: MAX_STROKES }, (_, i) => mark(i / MAX_STROKES));
+		expect(mergeMarks(full, [mark(2)])).toEqual({ strokes: full, skipped: 1 });
 	});
 });

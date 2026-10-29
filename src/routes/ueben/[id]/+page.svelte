@@ -158,7 +158,7 @@
 	{/if}
 {/snippet}
 
-<PracticeScore file={data.file} marks={data.marks} {tools} panel={toolPanel} />
+<PracticeScore file={data.file} marks={data.marks} offers={data.offers} sharedAt={data.sharedAt} {tools} panel={toolPanel} />
 
 <p class="elsewhere"><a href={data.elsewhere} target="_blank" rel="noopener noreferrer"><Icon name="external" size={14} />{t.practice.viewer.elsewhere}</a></p>
 
