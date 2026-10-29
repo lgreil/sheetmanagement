@@ -1,7 +1,7 @@
 import type { EventKeywords } from '#lib/config/index.ts';
 import type { CalendarEvent } from '#lib/server/google/calendar.ts';
-import { joinList } from '#lib/repertoire/lists.ts';
-import { orchestraChoices, rowOrchestra, sameOrchestra, titleOrchestra } from '#lib/repertoire/orchestras.ts';
+import { joinList, splitList } from '#lib/repertoire/lists.ts';
+import { rowOrchestra, sameOrchestra, titleOrchestra } from '#lib/repertoire/orchestras.ts';
 import { buildSchedule, classify, significantWords } from './schedule.ts';
 
 /**
@@ -11,6 +11,9 @@ import { buildSchedule, classify, significantWords } from './schedule.ts';
  * of only some of the orchestras names them too, "Probe Herbstkonzert (A)", so everyone looking
  * at the calendar sees it; all of them together, the usual case, needs no name.
  */
+
+/** Where the app keeps a rehearsal's orchestras on the calendar event itself ("EO, A"). */
+export const ORCHESTRA_PROPERTY = 'orchester';
 
 export const NEW_EVENT_TYPES = ['konzert', 'probe', 'generalprobe'] as const;
 export type NewEventType = (typeof NEW_EVENT_TYPES)[number];
@@ -24,6 +27,8 @@ export interface NewEventBody {
 	description?: string;
 	start: { date: string } | { dateTime: string; timeZone: string };
 	end: { date: string } | { dateTime: string; timeZone: string };
+	/** A rehearsal of some of the orchestras keeps them on the event too (see google/calendar.ts). */
+	extendedProperties?: { shared: Record<string, string> };
 }
 
 export interface NewEventContext {
@@ -89,8 +94,9 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 	const description = String(form.get('description') ?? '').trim();
 	const concertId = text(form, 'concert');
 	const orchestras = context.orchestras ?? [];
-	// Empty is all of them together.
-	const orchestra = type === 'konzert' ? undefined : rowOrchestra(text(form, 'orchestra'), orchestras);
+	// Ticked one by one; none is all of them together.
+	const ticked = splitList(form.getAll('orchestra').map(String).join(', '));
+	const orchestra = type === 'konzert' ? undefined : rowOrchestra(joinList(ticked), orchestras);
 
 	if (type === 'konzert' && !title) return { error: 'title' };
 	if (title.length > 120 || location.length > 200 || description.length > 2000) return { error: 'too-long' };
@@ -102,7 +108,7 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 
 	const concert = concertId ? context.concerts.find((candidate) => candidate.id === concertId) : undefined;
 	if (concertId && (!concert || type === 'konzert')) return { error: 'concert' };
-	if (orchestra && ![...orchestraChoices(orchestras), joinList(orchestras)].some((choice) => sameOrchestra(choice, orchestra))) return { error: 'orchestra' };
+	if (!ticked.every((name) => orchestras.some((known) => sameOrchestra(known, name)))) return { error: 'orchestra' };
 
 	const summary = newEventTitle(type, title, date, context, concert, orchestra) + (form.get('tentative') ? ' (?)' : '');
 	const until = end || clock(Math.min(minutes(start) + DEFAULT_HOURS[type] * 60, 23 * 60 + 59));
@@ -112,7 +118,26 @@ export function newEventFromForm(form: FormData, context: NewEventContext): { ev
 			...(location ? { location } : {}),
 			...(description ? { description } : {}),
 			start: start ? { dateTime: `${date}T${start}:00`, timeZone: context.timeZone } : { date },
-			end: start ? { dateTime: `${date}T${until}:00`, timeZone: context.timeZone } : { date: nextDay(date) }
+			end: start ? { dateTime: `${date}T${until}:00`, timeZone: context.timeZone } : { date: nextDay(date) },
+			...(orchestra && !sameOrchestra(orchestra, joinList(orchestras)) ? { extendedProperties: { shared: { [ORCHESTRA_PROPERTY]: orchestra } } } : {})
 		}
 	};
+}
+
+const TENTATIVE = /\s*\(\s*\?\s*\)/;
+
+/**
+ * A rehearsal's title once its orchestras are changed on its page: an "(A)" at the end gives way
+ * to the new ones, none for all of them. What the title says elsewhere stays; the orchestras
+ * kept on the event decide (see schedule.ts).
+ */
+export function orchestraTitle(title: string, chosen: string[], orchestras: string[]): string {
+	const tentative = TENTATIVE.test(title);
+	let result = title.replace(TENTATIVE, '').trim();
+	const end = result.match(/\s*\(([^()]*)\)$/);
+	const names = splitList(end?.[1]);
+	if (end && names.length && names.every((name) => orchestras.some((orchestra) => sameOrchestra(orchestra, name)))) result = result.slice(0, end.index).trim();
+	const some = chosen.length && chosen.length < orchestras.length;
+	if (some) result = `${result} (${joinList(chosen)})`;
+	return tentative ? `${result} (?)` : result;
 }

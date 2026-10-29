@@ -2,8 +2,7 @@
 	import { enhance } from '$app/forms';
 	import { config } from '#lib/config/index.ts';
 	import { NEW_EVENT_TYPES, type NewEventType } from '#lib/events/new-event.ts';
-	import { joinList, splitList } from '#lib/repertoire/lists.ts';
-	import { orchestraChoices } from '#lib/repertoire/orchestras.ts';
+	import { splitList } from '#lib/repertoire/lists.ts';
 	import { FormState } from '#lib/forms.svelte.ts';
 	import { t } from '#lib/i18n/index.ts';
 	import Icon from './Icon.svelte';
@@ -109,15 +108,16 @@
 		</label>
 		<!-- A past concert's orchestras go into the archive, a rehearsal's into its title ("Probe A"). -->
 		{#if (past && orchestras.length) || (type !== 'konzert' && orchestras.length > 1)}
-			<label class="field">
-				{t.archive.orchestra}
-				<!-- Playing together is the usual case: all orchestras first, then each alone or in pairs. -->
-				<select name="orchestra" value={values.orchestra ?? joinList(orchestras)}>
-					{#each [joinList(orchestras), ...orchestraChoices(orchestras).filter((choice) => choice !== joinList(orchestras))] as choice (choice)}
-						<option value={choice}>{splitList(choice).length > 1 ? t.editor.jointTab(splitList(choice)) : choice}</option>
+			<!-- Playing together is the usual case: all ticked to start with, any of them alone or together. -->
+			{@const ticked = values.orchestra ? splitList(values.orchestra) : orchestras}
+			<fieldset class="orchestras">
+				<legend>{t.archive.orchestra}</legend>
+				<span class="checks">
+					{#each orchestras as name (name)}
+						<label class="check"><input type="checkbox" name="orchestra" value={name} checked={ticked.includes(name)} />{name}</label>
 					{/each}
-				</select>
-			</label>
+				</span>
+			</fieldset>
 		{/if}
 		{#if type !== 'konzert' && concerts.length}
 			<label class="field">
@@ -275,6 +275,32 @@
 		width: 18px;
 		height: 18px;
 		accent-color: var(--accent);
+	}
+
+	.orchestras {
+		display: grid;
+		gap: var(--space-1);
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.orchestras legend {
+		padding: 0 0 var(--space-1);
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+		font-weight: 600;
+	}
+
+	.checks {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-4);
+	}
+
+	.checks .check {
+		min-height: 36px;
+		cursor: pointer;
 	}
 
 	@media (max-width: 560px) {

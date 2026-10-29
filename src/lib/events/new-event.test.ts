@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { newEventFromForm, newEventTitle, type NewEventContext } from './new-event.ts';
+import { newEventFromForm, newEventTitle, orchestraTitle, type NewEventContext } from './new-event.ts';
 
 const keywords = {
 	generalprobe: ['generalprobe'],
@@ -10,9 +10,9 @@ const herbst = { id: 'h', title: 'Herbstkonzert', start: '2026-11-15T17:00:00+01
 const weihnacht = { id: 'w', title: 'Weihnachtskonzert (?)', start: '2026-12-20T17:00:00+01:00', end: '2026-12-20T19:00:00+01:00', allDay: false };
 const context: NewEventContext = { keywords, timeZone: 'Europe/Berlin', concerts: [herbst, weihnacht] };
 
-const form = (fields: Record<string, string>) => {
+const form = (fields: Record<string, string | string[]>) => {
 	const data = new FormData();
-	for (const [name, value] of Object.entries(fields)) data.set(name, value);
+	for (const [name, value] of Object.entries(fields)) for (const one of [value].flat()) data.append(name, one);
 	return data;
 };
 
@@ -92,5 +92,30 @@ describe('newEventFromForm', () => {
 		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-07', concert: 'gone' }), context)).toEqual({ error: 'concert' });
 		expect(newEventFromForm(form({ type: 'konzert', title: 'X', date: '2026-11-07', concert: 'h' }), context)).toEqual({ error: 'concert' });
 		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-07', title: 'x'.repeat(121) }), context)).toEqual({ error: 'too-long' });
+	});
+});
+
+describe('orchestras ticked one by one', () => {
+	const shared: NewEventContext = { ...context, orchestras: ['EO', 'A', 'B'] };
+
+	it('keeps them on the event too, unless all of them play', () => {
+		expect(newEventFromForm(form({ type: 'probe', date: '2026-11-01', concert: 'h', orchestra: ['A', 'EO'] }), shared)).toMatchObject({
+			event: { summary: 'Probe Herbstkonzert (EO, A)', extendedProperties: { shared: { orchester: 'EO, A' } } }
+		});
+		const all = newEventFromForm(form({ type: 'probe', date: '2026-11-01', concert: 'h', orchestra: ['EO', 'A', 'B'] }), shared);
+		expect(all).toMatchObject({ event: { summary: 'Probe Herbstkonzert' } });
+		expect('event' in all && all.event.extendedProperties).toBeFalsy();
+	});
+});
+
+describe('orchestraTitle', () => {
+	const orchestras = ['EO', 'A', 'B'];
+
+	it('swaps the orchestras at the end of the title, and keeps the rest', () => {
+		expect(orchestraTitle('Probe Herbstkonzert', ['A'], orchestras)).toBe('Probe Herbstkonzert (A)');
+		expect(orchestraTitle('Probe Herbstkonzert (A)', ['EO', 'B'], orchestras)).toBe('Probe Herbstkonzert (EO, B)');
+		expect(orchestraTitle('Probe Herbstkonzert (EO, A) (?)', ['EO', 'A', 'B'], orchestras)).toBe('Probe Herbstkonzert (?)');
+		// Brackets that aren't orchestras stay.
+		expect(orchestraTitle('Probe (Aula)', ['A'], orchestras)).toBe('Probe (Aula) (A)');
 	});
 });

@@ -223,6 +223,9 @@ describe('member status and orchestras', () => {
 		['pausiert', 'pausiert'],
 		['Pause', 'pausiert'],
 		['INAKTIV', 'inaktiv'],
+		['nur Verwaltung', 'verwaltung'],
+		['Verwaltung', 'verwaltung'],
+		['Admin', 'verwaltung'],
 		['weg', 'aktiv']
 	])('status %j → %s', (text, status) => {
 		expect(parseStatus(text)).toBe(status);

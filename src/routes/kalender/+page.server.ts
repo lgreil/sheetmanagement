@@ -110,6 +110,8 @@ export const actions: Actions = {
 	addEvent: async ({ locals, request }) => {
 		const form = await request.formData();
 		const values = Object.fromEntries([...form].map(([name, value]) => [name, String(value)]));
+		// Ticked one by one: all of them, to show the form again as it was.
+		values.orchestra = form.getAll('orchestra').map(String).join(', ');
 		const date = String(form.get('date') ?? '').trim();
 		const today = eventDay({ start: new Date().toISOString(), allDay: false }, config.timeZone);
 		if (values.type === 'konzert' && /^\d{4}-\d{2}-\d{2}$/.test(date) && date < today && locals.access.rights.has('archiv.bearbeiten')) {
@@ -118,7 +120,7 @@ export const actions: Actions = {
 				title: field('title'),
 				date: form.get('yearOnly') ? date.slice(0, 4) : date,
 				location: field('location'),
-				orchestra: field('orchestra')
+				orchestra: values.orchestra.slice(0, 200)
 			});
 			return fail(refused.status, { eventError: refused.message, eventValues: values });
 		}

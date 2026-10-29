@@ -24,6 +24,25 @@
 	const KINDS = ['yes', 'maybe', 'no', 'open'] as const;
 	const mine = $derived(signups.mine);
 	const otherSections = $derived(signups.instruments.filter((name) => !signups.ownSections.includes(name)));
+
+	// Each instrument as one line by default; part by part on request, remembered on this device.
+	const BY_PART = 'signups-by-part';
+	let byPart = $state(false);
+	$effect(() => {
+		try {
+			byPart = localStorage.getItem(BY_PART) === '1';
+		} catch {
+			// Private mode or blocked storage: grouped, as by default.
+		}
+	});
+	function rememberByPart() {
+		try {
+			localStorage.setItem(BY_PART, byPart ? '1' : '0');
+		} catch {
+			// Not remembered; the choice still holds on this page.
+		}
+	}
+	const sections = $derived(byPart && signups.byPart ? signups.byPart : signups.sections);
 </script>
 
 <section class="signups" id="anmeldung" aria-labelledby="signups-title">
@@ -67,9 +86,12 @@
 			<span class="coverage-title">{t.signups.coverage}</span>
 			<span class="summary">{t.signups.summary(signups.totals.yes, signups.totals.maybe, signups.totals.no, signups.totals.open)}</span>
 		</summary>
-		{#if signups.sections.length}
+		{#if signups.byPart}
+			<label class="by-part"><input type="checkbox" bind:checked={byPart} onchange={rememberByPart} />{t.signups.byPart}</label>
+		{/if}
+		{#if sections.length}
 			<ul class="sections">
-				{#each signups.sections as section (section.label)}
+				{#each sections as section (section.label)}
 					{@const expected = section.counts.yes + section.counts.maybe + section.counts.open}
 					<li class:uncovered={section.counts.yes === 0}>
 						<span class="label"><InstrumentGlyph glyph={glyphOf(section.label)} size={18} />{section.label}</span>
@@ -136,6 +158,23 @@
 		color: var(--text-muted);
 		font-size: var(--text-sm);
 		font-weight: 400;
+	}
+
+	.by-part {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 36px;
+		margin-bottom: var(--space-1);
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+		cursor: pointer;
+	}
+
+	.by-part input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--accent);
 	}
 
 	h3 {

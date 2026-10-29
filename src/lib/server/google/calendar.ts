@@ -1,4 +1,4 @@
-import type { NewEventBody } from '#lib/events/new-event.ts';
+import { ORCHESTRA_PROPERTY, type NewEventBody } from '#lib/events/new-event.ts';
 import type { GoogleClient } from './client.ts';
 
 interface ApiEvent {
@@ -10,6 +10,7 @@ interface ApiEvent {
 	htmlLink?: string;
 	start?: { date?: string; dateTime?: string };
 	end?: { date?: string; dateTime?: string };
+	extendedProperties?: { private?: Record<string, string>; shared?: Record<string, string> };
 }
 
 interface EventListPage {
@@ -27,6 +28,8 @@ export interface CalendarEvent {
 	location?: string;
 	description?: string;
 	url?: string;
+	/** The orchestras the app set for it ("EO, A"); ahead of what the title names. */
+	orchestras?: string;
 }
 
 export function toCalendarEvent(event: ApiEvent): CalendarEvent | null {
@@ -40,7 +43,8 @@ export function toCalendarEvent(event: ApiEvent): CalendarEvent | null {
 		allDay: !event.start?.dateTime,
 		location: event.location?.trim() || undefined,
 		description: event.description?.trim() || undefined,
-		url: event.htmlLink
+		url: event.htmlLink,
+		orchestras: event.extendedProperties?.shared?.[ORCHESTRA_PROPERTY]?.trim() || undefined
 	};
 }
 
@@ -73,4 +77,18 @@ export async function insertEvent(client: GoogleClient, calendarId: string, even
 	const result = toCalendarEvent(created);
 	if (!result) throw new Error('Google returned the new event without a start');
 	return result;
+}
+
+/** Changes an event's title and the orchestras the app keeps on it (empty removes them). */
+export async function patchEventOrchestras(
+	client: GoogleClient,
+	calendarId: string,
+	eventId: string,
+	{ summary, orchestras }: { summary: string; orchestras: string }
+): Promise<void> {
+	await client.request<ApiEvent>(
+		`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(calendarId)}/events/${encodeURIComponent(eventId)}`,
+		// Null deletes a property; shared, so everyone with the calendar keeps the same answer.
+		{ method: 'PATCH', body: { summary, extendedProperties: { shared: { [ORCHESTRA_PROPERTY]: orchestras || null } } } }
+	);
 }

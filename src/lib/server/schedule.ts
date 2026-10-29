@@ -3,7 +3,7 @@ import { dateParts, daysUntil, isPast, type DateParts } from '#lib/events/format
 import { buildSchedule, type ScheduleEvent, type ShownEvent } from '#lib/events/schedule.ts';
 import { cached } from './cache.ts';
 import { appEnv, runInBackground } from './env.ts';
-import { insertEvent, listEvents, type CalendarEvent } from './google/calendar.ts';
+import { insertEvent, listEvents, patchEventOrchestras, type CalendarEvent } from './google/calendar.ts';
 import { calendarWriteEnabled, getGoogle, NotConfiguredError, requireSetting } from './services.ts';
 import type { NewEventBody } from '#lib/events/new-event.ts';
 
@@ -100,6 +100,25 @@ export async function addCalendarEvent(event: NewEventBody, now = Date.now()): P
 		// 403/404: the calendar isn't shared with the service account for changes.
 		const status = (error as { status?: number }).status;
 		console.error('Adding an event to the calendar failed:', error);
+		return { ok: false, reason: status === 403 || status === 404 ? 'refused' : 'failed' };
+	}
+}
+
+/**
+ * Sets which orchestras a rehearsal is for, after the fact (CALENDAR_WRITE): kept on the event,
+ * with the title's "(A)" brought in line. The caller checks the right ("termine.planen").
+ */
+export async function setEventOrchestras(eventId: string, change: { summary: string; orchestras: string }, now = Date.now()): Promise<{ ok: true } | Extract<AddEventResult, { ok: false }>> {
+	try {
+		const calendarId = requireSetting('CALENDAR_ID');
+		if (!calendarWriteEnabled()) return { ok: false, reason: 'read-only' };
+		await patchEventOrchestras(getGoogle().client, calendarId, eventId, change);
+		await calendarEvents(now, true).catch((error) => console.error('Reloading the calendar after changing an event failed:', error));
+		return { ok: true };
+	} catch (error) {
+		if (error instanceof NotConfiguredError) return { ok: false, reason: 'not-configured' };
+		const status = (error as { status?: number }).status;
+		console.error('Changing an event in the calendar failed:', error);
 		return { ok: false, reason: status === 403 || status === 404 ? 'refused' : 'failed' };
 	}
 }

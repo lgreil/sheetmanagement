@@ -15,8 +15,10 @@
 	import Title from '#lib/components/Title.svelte';
 	import { concertOrchestras, programLabel } from '#lib/repertoire/orchestras.ts';
 	import { splitTrailingEmoji } from '#lib/events/format.ts';
+	import { FormState } from '#lib/forms.svelte.ts';
 
 	let { data, form } = $props();
+	const orchestraSave = new FormState();
 	/** The orchestra whose Drive folder is being synced. */
 	let syncing = $state<string | null>(null);
 	const several = $derived(data.program.groups.length > 1);
@@ -187,6 +189,36 @@
 				</span>
 				<span class="trail"><Icon name="chevron" size={16} /></span>
 			</a>
+		</li>
+	{/if}
+	{#if data.kind === 'event' && data.orchestras}
+		{@const orchestras = data.orchestras}
+		<li>
+			<div class="fact">
+				<span class="icon"><Icon name="users" size={18} /></span>
+				<span class="fact-body">
+					<span class="over">{t.concert.orchestras.over}</span>
+					<strong>{orchestras.current.length === orchestras.all.length ? t.concert.orchestras.all : orchestras.current.join(' + ')}</strong>
+				</span>
+			</div>
+			{#if orchestras.canChange}
+				<!-- Also afterwards: who saw the rehearsal and who counts for it follow the ticks. -->
+				<details class="orchestra-edit" open={!!form?.orchestraError}>
+					<summary>{t.concert.orchestras.change}</summary>
+					<form method="POST" action="?/orchestras" use:enhance={orchestraSave.submit()}>
+						<fieldset>
+							<legend class="sr-only">{t.concert.orchestras.over}</legend>
+							{#each orchestras.all as name (name)}
+								<label class="check"><input type="checkbox" name="orchestra" value={name} checked={orchestras.current.includes(name)} />{name}</label>
+							{/each}
+						</fieldset>
+						<p class="hint">{t.concert.orchestras.hint}</p>
+						{#if form?.orchestraError}<p class="msg error" role="alert">{form.orchestraError}</p>{/if}
+						<button class="btn small" disabled={orchestraSave.busy}>{t.concert.orchestras.save}</button>
+					</form>
+				</details>
+				{#if form?.orchestrasSaved}<p class="saved orchestra-saved" role="status"><Icon name="check" size={16} />{t.concert.orchestras.saved}</p>{/if}
+			{/if}
 		</li>
 	{/if}
 	{#if data.kind === 'event' && data.event.url}
@@ -996,6 +1028,58 @@
 		color: var(--accent);
 		font-size: var(--text-sm);
 		font-weight: 600;
+	}
+
+	.orchestra-edit {
+		padding: 0 var(--space-4) var(--space-3) calc(var(--space-4) + 34px + var(--space-3));
+		font-size: var(--text-sm);
+	}
+
+	.orchestra-edit summary {
+		width: fit-content;
+		color: var(--accent);
+		font-weight: 600;
+		cursor: pointer;
+	}
+
+	.orchestra-edit form {
+		display: grid;
+		justify-items: start;
+		gap: var(--space-2);
+		margin-top: var(--space-2);
+	}
+
+	.orchestra-edit fieldset {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--space-2) var(--space-4);
+		margin: 0;
+		padding: 0;
+		border: 0;
+	}
+
+	.orchestra-edit .check {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		min-height: 36px;
+		cursor: pointer;
+	}
+
+	.orchestra-edit .check input {
+		width: 18px;
+		height: 18px;
+		accent-color: var(--accent);
+	}
+
+	.orchestra-edit .hint {
+		margin: 0;
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
+	.orchestra-saved {
+		margin: 0 var(--space-4) var(--space-3);
 	}
 
 	.fact-body .drive-error {

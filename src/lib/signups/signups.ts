@@ -1,7 +1,8 @@
-import { countingMembers, normalizeEmail, type Member } from '#lib/access/access.ts';
+import { countingMembers, isAdminOnly, normalizeEmail, type Member } from '#lib/access/access.ts';
 import type { OrchestraConfig } from '#lib/config/index.ts';
 import { t } from '#lib/i18n/index.ts';
 import { formatInstrument, parseInstruments, type InstrumentChoice } from '#lib/music/my-parts.ts';
+import { instrumentLabel } from '#lib/music/instrument-label.ts';
 import { LAYOUT, normalize, readTable, type ColumnKey, type Table } from '#lib/repertoire/sheet.ts';
 
 /**
@@ -114,6 +115,8 @@ export function coverage(
 	for (const signup of signups) {
 		answered.add(signup.email);
 		const member = byEmail.get(signup.email);
+		// The shared admin account doesn't play, even if it clicked an answer.
+		if (isAdminOnly(member)) continue;
 		add(sectionOf(signup.instrument, member, config), member?.name ?? signup.name, signup.answer);
 	}
 	// The conductor or the board without an instrument only show up once they answer.
@@ -123,6 +126,26 @@ export function coverage(
 	const order = new Map(config.instruments.map((instrument, i) => [instrument.name, i]));
 	const rank = (section: SectionCoverage) => order.get(section.instrument) ?? Infinity;
 	return [...sections.values()].sort((a, b) => rank(a) - rank(b) || a.label.localeCompare(b.label, config.locale));
+}
+
+/**
+ * The same coverage with each instrument's parts as one line ("Cello" for "Cello I" and
+ * "Cello II"), except the instruments that keep them apart (config.splitSections, the violins).
+ */
+export function groupSections(sections: SectionCoverage[], split: string[] = []): SectionCoverage[] {
+	const keep = new Set(split.map(normalize));
+	const grouped = new Map<string, SectionCoverage>();
+	for (const section of sections) {
+		const apart = !section.instrument || keep.has(normalize(section.instrument));
+		const key = apart ? `label:${section.label}` : `instrument:${section.instrument}`;
+		const found = grouped.get(key);
+		if (!found) {
+			grouped.set(key, { ...section, label: apart ? section.label : instrumentLabel(section.instrument), yes: [...section.yes], maybe: [...section.maybe], no: [...section.no], open: [...section.open] });
+			continue;
+		}
+		for (const kind of ['yes', 'maybe', 'no', 'open'] as const) found[kind].push(...section[kind]);
+	}
+	return [...grouped.values()];
 }
 
 /** Totals over all sections. */

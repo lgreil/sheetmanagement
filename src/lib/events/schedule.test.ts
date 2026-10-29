@@ -67,6 +67,15 @@ describe('buildSchedule', () => {
 		expect(of.get('ka')?.orchestra).toBeUndefined();
 	});
 
+	it('takes the orchestras set on the rehearsal’s page over its title', () => {
+		const set = buildSchedule(
+			[{ ...timed('pa', 'Probe Herbstkonzert (A)', '2026-10-20T18:00:00+02:00', '2026-10-20T21:00:00+02:00'), orchestras: 'a, eo' }, allDay('autumn', 'Herbstkonzert', '2026-11-15')],
+			keywords,
+			['EO', 'A', 'B']
+		);
+		expect(set[0]).toMatchObject({ orchestra: 'EO, A', concertId: 'autumn' });
+	});
+
 	it('falls back to the next concert when the title names none', () => {
 		expect(byId.get('px')?.concertId).toBe('xmas1');
 		expect(byId.get('xmas2')?.rehearsalIds).toEqual([]);

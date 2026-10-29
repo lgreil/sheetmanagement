@@ -135,6 +135,11 @@ export interface OrchestraConfig {
 	 */
 	sharedParts?: Record<string, string[]>;
 	/**
+	 * Instruments whose parts count apart under "Wer kommt?" ("Geige I", "Geige II"); every other
+	 * instrument is one line however many parts it has ("Cello"), unless the viewer splits them.
+	 */
+	splitSections?: string[];
+	/**
 	 * Genres offered when editing a piece, together with the ones already in the sheet.
 	 * Suggestions from Wikidata or the year are only made in these words.
 	 */

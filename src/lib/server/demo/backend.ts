@@ -210,6 +210,17 @@ export function finishDemoUpload(sessionId: string): { id: string; name: string 
 
 function calendar(url: URL, method: string, body: Record<string, unknown> | undefined): Response {
 	if (!decodeURIComponent(url.pathname).includes(DEMO_IDS.calendar)) return notFound('Calendar not found');
+	if (method === 'PATCH') {
+		// A rehearsal's orchestras changed on its page.
+		const id = decodeURIComponent(url.pathname.split('/').at(-1) ?? '');
+		const event = load().events.find((candidate) => candidate.id === id);
+		if (!event) return notFound('Event not found');
+		const patch = body as Pick<DemoEvent, 'summary' | 'extendedProperties'>;
+		if (patch.summary) event.summary = patch.summary;
+		const shared = { ...event.extendedProperties?.shared, ...patch.extendedProperties?.shared };
+		event.extendedProperties = { shared: Object.fromEntries(Object.entries(shared).filter(([, value]) => value !== null)) as Record<string, string> };
+		return json(event);
+	}
 	if (method === 'POST') {
 		// Added on /kalender: kept like the sample events, local times without a zone.
 		const event = { ...(body as Omit<DemoEvent, 'id'>), id: `demo-neu-${crypto.randomUUID().slice(0, 8)}` } as DemoEvent;
