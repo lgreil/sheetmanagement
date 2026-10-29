@@ -76,6 +76,10 @@
 	let stageHeight = $state(0);
 	/** The current page's size on screen. */
 	let size = $state<{ width: number; height: number } | null>(null);
+	/** The current page's own size, unscaled. */
+	let base = $state<{ width: number; height: number } | null>(null);
+	/** The page's area: in full screen the tools above the page and the stage share its height. */
+	let areaHeight = $state(0);
 
 	$effect(() => {
 		const id = file;
@@ -118,8 +122,8 @@
 		return found;
 	}
 
-	function fitted(base: { width: number; height: number }) {
-		const scale = fit === 'page' ? Math.min(stageWidth / base.width, stageHeight / base.height) : stageWidth / base.width;
+	function fitted(base: { width: number; height: number }, height = stageHeight) {
+		const scale = fit === 'page' ? Math.min(stageWidth / base.width, height / base.height) : stageWidth / base.width;
 		return { width: Math.max(100, Math.floor(base.width * scale)), height: Math.max(100, Math.floor(base.height * scale)) };
 	}
 
@@ -153,10 +157,12 @@
 		void mode;
 		(async () => {
 			try {
-				const target = fitted(await baseSize(current, number));
+				const own = await baseSize(current, number);
+				const target = fitted(own);
 				const canvas = await canvasFor(current, number, target.width);
 				if (token !== shown) return;
 				size = target;
+				base = own;
 				slot!.replaceChildren(canvas);
 				if (fit === 'width') stage?.scrollTo({ top: 0 });
 				// The neighbours, ready for the next turn.
@@ -478,19 +484,23 @@
 	const GAP = 12;
 
 	const dock = $derived.by(() => {
-		const width = size?.width ?? stageWidth;
-		const height = size?.height ?? stageHeight;
+		// Decided by the page as it is without the tools: in full screen, tools above the page make
+		// it smaller, and the smaller page mustn't then send them beside it, and back (#239).
+		const room = full && areaHeight ? areaHeight : stageHeight;
+		const whole = base ? fitted(base, room) : size;
+		const width = whole?.width ?? stageWidth;
+		const height = whole?.height ?? stageHeight;
 		const free = stageWidth - width;
 		if (fit === 'page' && free >= PANEL + GAP) {
 			const left = Math.max(0, Math.min((stageWidth - width) / 2, stageWidth - PANEL - GAP - width));
 			return { place: 'side', page: left, left: `${left + width + GAP}px`, top: '0px', width: `${Math.min(PANEL + 40, stageWidth - left - width - GAP)}px`, height: '100%' };
 		}
-		const below = stageHeight - height - GAP;
+		const below = room - height - GAP;
 		if (fit === 'page' && size && below >= 150) {
 			const left = (stageWidth - width) / 2;
 			return { place: 'below', page: left, left: `${left}px`, top: `${height + GAP}px`, width: `${width}px`, height: `${below}px` };
 		}
-		const centred = Math.max(0, (stageWidth - width) / 2);
+		const centred = Math.max(0, (stageWidth - (size?.width ?? width)) / 2);
 		return { place: 'above', page: centred, left: undefined, top: undefined, width: undefined, height: undefined };
 	});
 	/** The page's left edge in the stage: centred, or moved aside for the tools. */
@@ -617,7 +627,7 @@
 	{#if shareNote}<p class="share-note" role="status">{shareNote}</p>{/if}
 	</div>
 
-	<div class="area" class:docked={!!active}>
+	<div class="area" class:docked={!!active} bind:clientHeight={areaHeight}>
 	<!-- The tools: rendered once, so a running metronome or drone carries on when the panel moves or closes. -->
 	{#if panel && opened.length}
 		<div class="dock {dock.place}" hidden={!active} style:top={dock.top} style:left={dock.left} style:width={dock.width} style:max-height={dock.height}>
@@ -780,6 +790,13 @@
 		order: -1;
 		max-width: 720px;
 		margin-bottom: var(--space-2);
+	}
+
+	/* In full screen the page keeps most of the height: the tools scroll in what's left. */
+	.full .dock.above {
+		flex: none;
+		max-height: 45%;
+		margin: var(--space-2) var(--space-2) 0;
 	}
 
 	.close {
