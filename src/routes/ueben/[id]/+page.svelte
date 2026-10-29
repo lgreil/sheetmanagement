@@ -15,13 +15,18 @@
 	 */
 	let { data } = $props();
 
-	/** The tools, each a button in the score's toolbar; PracticeScore places their panel beside the page. */
+	/**
+	 * The tools, each a button in the score's toolbar; PracticeScore places their panel beside the
+	 * page. Metronome, tuner and drone share one, "Werkzeuge", with a tab each; all stay running.
+	 */
 	let playing = $state(false);
 	const tools = $derived([
 		...(data.recording ? [{ value: 'recording' as const, label: t.practice.recording.title }] : []),
-		{ value: 'metronome', label: t.practice.metronome.title },
-		{ value: 'tuner', label: t.practice.tuner.title }
+		{ value: 'tools', label: t.practice.viewer.tools }
 	]);
+	type Tab = 'metronome' | 'tuner' | 'drone';
+	let tab = $state<Tab>('metronome');
+	const TABS: Tab[] = ['metronome', 'tuner', 'drone'];
 
 	// The clock: ticks every 5 seconds, reports every 30; only with practice time on.
 	type Status = 'counting' | 'idle' | 'full' | 'stopped';
@@ -142,10 +147,14 @@
 			{/if}
 			<a class="external" href={data.recording.url} target="_blank" rel="noopener noreferrer nofollow"><Icon name="external" size={14} />{t.practice.recording.open}</a>
 		</section>
-	{:else if tool === 'metronome'}
-		<Metronome />
-	{:else if tool === 'tuner'}
-		<Tuner />
+	{:else if tool === 'tools'}
+		<div class="tabs" role="group" aria-label={t.practice.viewer.tools}>
+			{#each TABS as each (each)}
+				<button type="button" class:on={tab === each} aria-pressed={tab === each} onclick={() => (tab = each)}>{t.practice[each].title}</button>
+			{/each}
+		</div>
+		<div hidden={tab !== 'metronome'}><Metronome /></div>
+		<div hidden={tab === 'metronome'}><Tuner show={tab === 'drone' ? 'drone' : 'tuner'} /></div>
 	{/if}
 {/snippet}
 
@@ -216,6 +225,42 @@
 	.clock a {
 		color: var(--accent);
 		font-weight: 600;
+	}
+
+	/* Clear of the panel's close button; three short words, wrapping in a very narrow panel. */
+	.tabs {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px;
+		margin: 0 34px var(--space-3) 0;
+		padding: 3px;
+		border-radius: var(--radius-control);
+		background: color-mix(in oklab, var(--text) 6%, transparent);
+	}
+
+	.tabs button {
+		flex: 1 1 auto;
+		min-width: 0;
+		min-height: 32px;
+		padding: 0 var(--space-1);
+		border: 0;
+		border-radius: calc(var(--radius-control) - 2px);
+		background: none;
+		color: var(--text-muted);
+		font: inherit;
+		font-size: var(--text-xs);
+		cursor: pointer;
+	}
+
+	.tabs button.on {
+		background: var(--surface);
+		box-shadow: var(--shadow);
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	[hidden] {
+		display: none;
 	}
 
 	.recording {
