@@ -33,6 +33,12 @@ async function draw(page: Page, from: [number, number], to: [number, number]) {
 	await page.mouse.up();
 }
 
+/** One of the tools behind the toolbar's "Werkzeuge": the panel opened, on that tool's tab. */
+async function tool(page: Page, name: 'Metronom' | 'Stimmgerät' | 'Liegeton') {
+	if (!(await page.locator('.dock').isVisible())) await page.getByRole('button', { name: 'Werkzeuge' }).click();
+	await page.locator('.dock .tabs').getByRole('button', { name }).click();
+}
+
 test('Meine Noten opens the part in the practice viewer, which draws it', async ({ page }) => {
 	await open(page, '/meine-noten');
 	await expect(page.locator('a.part').first()).toHaveAttribute('href', /^\/ueben\//);
@@ -108,7 +114,7 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 		};
 	});
 	await open(page, PART);
-	await page.getByRole('button', { name: 'Stimmgerät' }).click();
+	await tool(page, 'Stimmgerät');
 	await page.getByRole('button', { name: 'Mikrofon einschalten' }).click();
 	const reading = page.locator('.tuner .reading');
 	await expect(reading).toContainText('A4');
@@ -127,8 +133,8 @@ test('the tuner names a soft note and how far off it is', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Mikrofon einschalten' })).toBeVisible();
 	await expect(reading).toContainText('zuletzt gehört');
 
-	// The drone, folded away until opened, on the note heard last.
-	await page.getByText('Liegeton', { exact: true }).click();
+	// The drone, a tab of its own, on the note the tuner heard last.
+	await tool(page, 'Liegeton');
 	await page.getByRole('button', { name: 'Gehörten Ton nehmen' }).click();
 	await page.getByRole('button', { name: 'A4 spielen' }).click();
 	await expect(page.getByRole('button', { name: 'Liegeton aus' })).toBeVisible();
@@ -144,7 +150,7 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await page.keyboard.press('PageDown');
 	await expect(page.getByText('Seite 1 von 1')).toBeVisible();
 
-	await page.getByRole('button', { name: 'Metronom' }).click();
+	await tool(page, 'Metronom');
 	const bpm = page.getByRole('spinbutton', { name: 'Schläge pro Minute' });
 	await expect(bpm).toHaveValue('92');
 	await expect(page.locator('.metronome .name')).toHaveText('Andante');
@@ -164,22 +170,23 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await expect(page.getByRole('button', { name: 'Stopp' })).toBeVisible();
 	await page.getByRole('button', { name: 'Stopp' }).click();
 
-	await page.getByRole('button', { name: 'Stimmgerät' }).click();
+	await tool(page, 'Stimmgerät');
 	await expect(page.getByRole('button', { name: 'Mikrofon einschalten' })).toBeVisible();
+	await page.getByRole('button', { name: 'Werkzeuge schließen' }).click();
 	await page.getByRole('button', { name: 'Vollbild' }).click();
 	await expect(page.locator('.score.full')).toBeVisible();
-	// The page fills the screen: its whole height, or its whole width on a narrow screen, there below the controls.
+	// The page fills the screen below the controls (#235): down to its foot, or its whole width on a narrow screen.
 	await expect
 		.poll(() =>
 			page.locator('.sheet').evaluate((sheet) => {
-				const { top, height, width } = sheet.getBoundingClientRect();
+				const { top, bottom, width } = sheet.getBoundingClientRect();
 				const controls = document.querySelector('.full .controls')!.getBoundingClientRect();
-				return (Math.round(top) === 0 && Math.round(height) === innerHeight) || (Math.round(width) === innerWidth && top >= controls.bottom);
+				return top >= controls.bottom - 1 && (Math.round(bottom) === innerHeight || Math.round(width) === innerWidth);
 			})
 		)
 		.toBe(true);
-	// The tools in full screen, from the same buttons; a metronome started there keeps going after.
-	await page.getByRole('button', { name: 'Metronom' }).click();
+	// The tools in full screen, from the same button; a metronome started there keeps going after.
+	await tool(page, 'Metronom');
 	const panel = page.locator('.full .dock');
 	await expect(panel).toBeVisible();
 	await panel.getByRole('button', { name: 'Start' }).click();
@@ -187,7 +194,7 @@ test('turning keys, the metronome and the tuner panel', async ({ page }) => {
 	await expect(panel).toBeHidden();
 	await page.keyboard.press('Escape');
 	await expect(page.locator('.score.full')).toHaveCount(0);
-	await page.getByRole('button', { name: 'Metronom' }).click();
+	await tool(page, 'Metronom');
 	await expect(page.getByRole('button', { name: 'Stopp' })).toBeVisible();
 	await page.getByRole('button', { name: 'Stopp' }).click();
 });
@@ -234,17 +241,15 @@ test('the concert mode turns on into the next piece, its head clear of the contr
 	await expect(piece).toHaveValue('1');
 	await expect.poll(() => canvas.evaluate((each: HTMLCanvasElement) => each.toDataURL())).not.toBe(first);
 
-	// A phone held upright has height to spare: the page starts below the floating controls.
-	if (test.info().project.name === 'phone') {
-		const controls = (await page.locator('.concert-mode .controls').boundingBox())!;
-		const sheet = (await page.locator('.concert-mode .sheet').boundingBox())!;
-		expect(sheet.y).toBeGreaterThanOrEqual(controls.y + controls.height);
-	}
+	// The page starts below the controls, which never lie over it (#235).
+	const controls = (await page.locator('.concert-mode .controls').boundingBox())!;
+	const sheet = (await page.locator('.concert-mode .sheet').boundingBox())!;
+	expect(sheet.y).toBeGreaterThanOrEqual(controls.y + controls.height - 1);
 });
 
 test('the metronome’s weight sets the tempo when dragged', async ({ page }) => {
 	await open(page, PART);
-	await page.getByRole('button', { name: 'Metronom' }).click();
+	await tool(page, 'Metronom');
 	const bpm = page.getByRole('spinbutton', { name: 'Schläge pro Minute' });
 	await expect(bpm).toHaveValue('92');
 	// Up the rod is slower, as on a real one.
@@ -274,26 +279,95 @@ async function boxes(page: Page) {
 	});
 }
 
-test('the tools never cover the music, and the music never shrinks for them', async ({ page }) => {
+test('the tools never cover the music, and only in full screen without room does it shrink for them', async ({ page }) => {
 	await open(page, PART);
 	await expect(page.locator('.slot canvas')).toHaveCount(1);
 	for (const mode of ['page', 'full'] as const) {
 		if (mode === 'full') await page.getByRole('button', { name: 'Vollbild' }).click();
 		await page.waitForTimeout(300);
 		const before = await page.locator('.sheet').boundingBox();
-		for (const tool of ['Metronom', 'Stimmgerät']) {
-			await page.getByRole('button', { name: tool, exact: true }).click();
+		for (const name of ['Metronom', 'Stimmgerät', 'Liegeton'] as const) {
+			await tool(page, name);
 			await expect(page.locator('.dock')).toBeVisible();
 			await page.waitForTimeout(300);
 			const { sheet, dock, place } = await boxes(page);
-			// The same size as without the tools.
-			expect(Math.round(sheet.width), `${mode} ${tool}`).toBe(Math.round(before!.width));
-			expect(Math.round(sheet.height), `${mode} ${tool}`).toBe(Math.round(before!.height));
-			// Beside, below or above the page, never over it; only in full screen without any room may it lie over its foot.
+			// The same size as without the tools, except above the page in full screen, where the screen is all there is.
+			if (mode === 'page' || !place.includes('above')) {
+				expect(Math.round(sheet.width), `${mode} ${name}`).toBe(Math.round(before!.width));
+				expect(Math.round(sheet.height), `${mode} ${name}`).toBe(Math.round(before!.height));
+			}
+			// Beside, below or above the page, never over it (#235).
 			const apart = dock.left >= sheet.right - 1 || dock.right <= sheet.left + 1 || dock.top >= sheet.bottom - 1 || dock.bottom <= sheet.top + 1;
-			if (!place.includes('over')) expect(apart, `${mode} ${tool} ${place}`).toBe(true);
-			await page.getByRole('button', { name: tool, exact: true }).click();
+			expect(apart, `${mode} ${name} ${place}`).toBe(true);
+			await page.getByRole('button', { name: 'Werkzeuge schließen' }).click();
 			await expect(page.locator('.dock')).toBeHidden();
 		}
 	}
+});
+
+test('two fingers on the glass draw one line, and symbols go on with a tap (#235, #236)', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	await page.getByRole('button', { name: 'Stift' }).click();
+	const saved = page.waitForResponse((response) => response.url().endsWith('/api/ueben/notizen') && response.request().method() === 'PUT');
+	await page.locator('svg.marks').evaluate((svg) => {
+		const box = svg.getBoundingClientRect();
+		const send = (type: string, id: number, x: number, y: number) =>
+			svg.dispatchEvent(
+				new PointerEvent(type, { bubbles: true, pointerId: id, pointerType: 'touch', isPrimary: id === 1, buttons: type === 'pointerup' ? 0 : 1, clientX: box.left + box.width * x, clientY: box.top + box.height * y })
+			);
+		send('pointerdown', 1, 0.2, 0.4);
+		send('pointerdown', 2, 0.8, 0.8);
+		for (let i = 1; i <= 8; i++) {
+			send('pointermove', 1, 0.2 + i * 0.03, 0.4);
+			send('pointermove', 2, 0.8 - i * 0.05, 0.8 - i * 0.04);
+		}
+		send('pointerup', 2, 0.4, 0.48);
+		send('pointerup', 1, 0.44, 0.4);
+	});
+	// One straight line: the second finger's moves never joined it.
+	await expect(page.locator('svg.marks path')).toHaveCount(1);
+	const ys = (await page.locator('svg.marks path').getAttribute('d'))!.match(/ [\d.]+/g)!.map(Number);
+	expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(1);
+	expect((await saved).status()).toBe(204);
+
+	// A down-bow: one tap, one point stored, drawn as its two lines.
+	await page.getByRole('button', { name: 'Abstrich' }).click();
+	const stamped = page.waitForRequest((request) => request.url().endsWith('/api/ueben/notizen') && request.method() === 'PUT');
+	await page.locator('svg.marks').click({ position: { x: 60, y: 40 } });
+	const sent = (await stamped).postDataJSON() as { strokes: { points: number[]; symbol?: string }[] };
+	expect(sent.strokes.at(-1)).toMatchObject({ symbol: 'downbow' });
+	expect(sent.strokes.at(-1)!.points).toHaveLength(2);
+	await expect(page.locator('svg.marks path')).toHaveCount(3);
+});
+
+test('notes from the section: one taken over by hand, then the rest at once', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	// The demo member's desk partner offers her four marks in this part.
+	const offer = page.locator('.offer');
+	await expect(offer).toContainText('Greta Pult bietet dir 4 Notizen');
+	await offer.getByRole('button', { name: 'Ansehen' }).click();
+	await expect(page.locator('g.offered')).toHaveCount(4);
+	// The one taken over is the member's own, and saved as such.
+	const saved = page.waitForResponse((response) => response.url().endsWith('/api/ueben/notizen') && response.request().method() === 'PUT');
+	await page.locator('g.offered').first().focus();
+	await page.keyboard.press('Enter');
+	await expect(page.locator('g.offered')).toHaveCount(3);
+	expect((await saved).status()).toBe(204);
+	await offer.getByRole('button', { name: 'Alle übernehmen' }).click();
+	await expect(offer).toHaveCount(0);
+
+	// After reloading: all four marks hers (a down-bow is two lines, mf three), the offer answered.
+	await open(page, PART);
+	await expect(page.locator('svg.marks > path')).toHaveCount(7);
+	await expect(page.locator('.offer')).toHaveCount(0);
+
+	// Her own offer to the section, and taken back.
+	page.on('dialog', (dialog) => dialog.accept());
+	await page.getByRole('button', { name: 'Stift' }).click();
+	await page.getByRole('button', { name: 'Mit Stimmgruppe teilen' }).click();
+	await expect(page.getByRole('button', { name: 'Nicht mehr teilen' })).toBeVisible();
+	await page.getByRole('button', { name: 'Nicht mehr teilen' }).click();
+	await expect(page.getByRole('button', { name: 'Mit Stimmgruppe teilen' })).toBeVisible();
 });

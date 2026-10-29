@@ -1451,11 +1451,36 @@ export const de = {
 			saved: 'Gespeichert',
 			failed: (status: string) => (status ? `Nicht gespeichert (Fehler ${status}).` : 'Nicht gespeichert. Bitte die Verbindung prüfen.'),
 			private: 'Nur du siehst deine Notizen.',
+			symbolsTitle: 'Zeichen',
+			symbols: { downbow: 'Abstrich', upbow: 'Aufstrich', breath: 'Atemzeichen', fermata: 'Fermate', pp: 'pianissimo', p: 'piano', mp: 'mezzopiano', mf: 'mezzoforte', f: 'forte', ff: 'fortissimo', cresc: 'crescendo', dim: 'decrescendo' },
+			pageFull: 'Die Seite ist voll. Radier etwas weg oder nimm Zeichen, die brauchen kaum Platz.',
+			nearlyFull: 'Die Seite ist fast voll. Zeichen brauchen kaum Platz.',
+			sharedNote: 'Deiner Stimmgruppe angeboten. Sonst siehst nur du deine Notizen.',
 			/** On /profil. */
 			profileTitle: 'Notizen in deinen Noten',
 			count: (parts: number) => (parts === 1 ? 'In einer Stimme.' : `In ${parts} Stimmen.`),
 			deleteAll: 'Alle Notizen löschen',
 			confirmDeleteAll: 'Alle deine Notizen in allen Stimmen löschen? Das lässt sich nicht rückgängig machen.'
+		},
+		/** Notes offered to and from the others who play the same part. */
+		share: {
+			share: 'Mit Stimmgruppe teilen',
+			unshare: 'Nicht mehr teilen',
+			confirm: 'Deine Notizen in dieser Stimme, so wie sie jetzt sind, deiner Stimmgruppe anbieten? Wer dieselbe Stimme spielt, sieht sie und kann sie übernehmen oder ablehnen.',
+			confirmUnshare: 'Das Angebot zurückziehen? Was andere schon übernommen haben, bleibt bei ihnen.',
+			nothing: 'Hier gibt es noch keine Notizen zum Teilen.',
+			failed: 'Das hat nicht geklappt. Bitte versuch es noch einmal.',
+			someone: 'Jemand aus deiner Stimmgruppe',
+			offered: (name: string, count: number) => `${name} bietet dir ${count === 1 ? 'eine Notiz' : `${count} Notizen`} in dieser Stimme an.`,
+			show: 'Ansehen',
+			hide: 'Ausblenden',
+			pick: 'Tippe eine angebotene Notiz an, um sie zu übernehmen.',
+			onPage: (count: number) => (count ? `Auf dieser Seite: ${count}.` : 'Auf dieser Seite keine.'),
+			take: 'Notiz übernehmen',
+			takeAll: 'Alle übernehmen',
+			decline: 'Ablehnen',
+			done: 'Fertig',
+			skipped: (count: number) => (count === 1 ? 'Eine Notiz passte nicht mehr auf die Seite.' : `${count} Notizen passten nicht mehr auf die Seite.`)
 		},
 		/** In "Meine Daten herunterladen". */
 		data: 'Probenzeit',

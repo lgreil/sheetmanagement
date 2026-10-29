@@ -157,6 +157,36 @@ describe.each([
 		expect((await store.marksOf('b@x.org')).length).toBe(1);
 	});
 
+	it('offers a member’s marks to their section until each answers, once per part', async () => {
+		const store = make();
+		const pages = { 1: [{ color: 'red' as const, points: [0.5, 0.5], symbol: 'downbow' as const }] };
+		const first = await store.shareMarks('a@x.org', 'file-1', pages);
+		expect(first).toMatchObject({ sender: 'a@x.org', file: 'file-1', pages });
+		expect(await store.shareOf('a@x.org', 'file-1')).toMatchObject({ id: first.id });
+		// Not to the member themself, nor in another part.
+		expect(await store.sharesFor('a@x.org', 'file-1')).toEqual([]);
+		expect(await store.sharesFor('b@x.org', 'file-2')).toEqual([]);
+		expect((await store.sharesFor('b@x.org', 'file-1')).map((share) => share.id)).toEqual([first.id]);
+
+		// Answered, it's gone for them, not for others.
+		await store.answerShare(first.id, 'b@x.org', 'declined');
+		expect(await store.sharesFor('b@x.org', 'file-1')).toEqual([]);
+		expect((await store.sharesFor('c@x.org', 'file-1')).length).toBe(1);
+
+		// Offered again, it replaces the first, and everyone answers anew.
+		const again = await store.shareMarks('a@x.org', 'file-1', { 2: pages[1] });
+		expect(await store.shareById(first.id)).toBeNull();
+		expect((await store.sharesFor('b@x.org', 'file-1')).map((share) => share.pages)).toEqual([{ 2: pages[1] }]);
+		expect(await store.shareById(again.id)).toMatchObject({ id: again.id });
+
+		// Taken back, or with the member's marks deleted, it's gone.
+		await store.unshareMarks('a@x.org', 'file-1');
+		expect(await store.sharesFor('b@x.org', 'file-1')).toEqual([]);
+		await store.shareMarks('a@x.org', 'file-1', pages);
+		await store.deleteMarks('a@x.org');
+		expect(await store.shareOf('a@x.org', 'file-1')).toBeNull();
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

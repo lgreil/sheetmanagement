@@ -1,4 +1,7 @@
-import { reminderKey, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+
+type ShareRow = { id: string; sender: string; file: string; pages: string; created_at: string };
+const shareFrom = (row: ShareRow): MarkShare => ({ id: row.id, sender: row.sender, file: row.file, pages: JSON.parse(row.pages), at: row.created_at });
 
 /** The part of a Cloudflare D1 binding this app uses. Plain SQL, no ORM. */
 export interface D1 {
@@ -177,6 +180,55 @@ export function sqlStore(db: D1): Store {
 		},
 		async deleteMarks(email) {
 			await run('DELETE FROM practice_marks WHERE email = ?', email);
+			await run('DELETE FROM mark_share_answers WHERE email = ? OR share IN (SELECT id FROM mark_shares WHERE sender = ?)', email, email);
+			await run('DELETE FROM mark_shares WHERE sender = ?', email);
+		},
+
+		async shareMarks(sender, file, pages) {
+			const id = crypto.randomUUID();
+			// A new offer: everyone answers it anew.
+			await run('DELETE FROM mark_share_answers WHERE share IN (SELECT id FROM mark_shares WHERE sender = ? AND file = ?)', sender, file);
+			await run(
+				`INSERT INTO mark_shares (id, sender, file, pages) VALUES (?, ?, ?, ?)
+				 ON CONFLICT (sender, file) DO UPDATE SET id = excluded.id, pages = excluded.pages, created_at = datetime('now')`,
+				id,
+				sender,
+				file,
+				JSON.stringify(pages)
+			);
+			return (await this.shareById(id))!;
+		},
+		async unshareMarks(sender, file) {
+			await run('DELETE FROM mark_share_answers WHERE share IN (SELECT id FROM mark_shares WHERE sender = ? AND file = ?)', sender, file);
+			await run('DELETE FROM mark_shares WHERE sender = ? AND file = ?', sender, file);
+		},
+		async shareById(id) {
+			const [row] = await all<ShareRow>('SELECT id, sender, file, pages, created_at FROM mark_shares WHERE id = ?', id);
+			return row ? shareFrom(row) : null;
+		},
+		async shareOf(sender, file) {
+			const [row] = await all<ShareRow>('SELECT id, sender, file, pages, created_at FROM mark_shares WHERE sender = ? AND file = ?', sender, file);
+			return row ? shareFrom(row) : null;
+		},
+		async sharesFor(email, file) {
+			const rows = await all<ShareRow>(
+				`SELECT id, sender, file, pages, created_at FROM mark_shares
+				 WHERE file = ? AND sender != ? AND id NOT IN (SELECT share FROM mark_share_answers WHERE email = ?)
+				 ORDER BY created_at DESC, id`,
+				file,
+				email,
+				email
+			);
+			return rows.map(shareFrom);
+		},
+		async answerShare(id, email, answer) {
+			await run(
+				`INSERT INTO mark_share_answers (share, email, answer) VALUES (?, ?, ?)
+				 ON CONFLICT (share, email) DO UPDATE SET answer = excluded.answer, answered_at = datetime('now')`,
+				id,
+				email,
+				answer
+			);
 		},
 
 		async partChecks() {

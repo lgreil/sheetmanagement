@@ -78,7 +78,7 @@ export const legal = {
 				paragraphs: [
 					"On your profile you can turn on “Record practice time”. The app then counts how long a part of your instrument from “My parts” is open and visible in the app, and stores your email address, the date and the seconds per day in the database at Cloudflare (D1), not in the Google Sheet. Which part you had open isn't part of the time.",
 					'What you draw in a part while practising is stored with your email address, the part and the page in the same database, so it is there when you open the part again.',
-					'Only you can see either: not the admins, not other members, not in any report. The legal basis is your consent (Art. 6(1)(a) GDPR). “Stop recording” stops counting; “Delete recorded time” and “Delete all notes” on your profile delete everything at once.'
+					'Only you can see either: not the admins, not other members, not in any report. Only when you share your notes in a part with your section do those who play that part see a copy and can take them over; “Stop sharing” ends the offer, and what they took over stays with them. The legal basis is your consent (Art. 6(1)(a) GDPR). “Stop recording” stops counting; “Delete recorded time” and “Delete all notes” on your profile delete everything at once.'
 				]
 			},
 			{

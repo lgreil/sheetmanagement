@@ -90,7 +90,7 @@ export const legal = {
 				paragraphs: [
 					'Im Profil kannst du „Probenzeit aufzeichnen“ einschalten. Dann zählt die App, wie lange eine Stimme deines Instruments aus „Meine Noten“ in der App geöffnet und sichtbar ist, und speichert je Tag deine E-Mail-Adresse, das Datum und die Sekunden in der Datenbank bei Cloudflare (D1), nicht in der Google-Tabelle. Welche Stimme du geöffnet hattest, gehört nicht zur Zeit.',
 					'Was du beim Üben in eine Stimme zeichnest, speichert die App mit deiner E-Mail-Adresse, der Stimme und der Seite in derselben Datenbank, damit du es beim nächsten Öffnen wiederfindest.',
-					'Beides siehst nur du selbst, nicht die Verwaltung, nicht die anderen Mitglieder und in keiner Auswertung. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Mit „Aufzeichnen ausschalten“ zählt nichts mehr; „Aufgezeichnete Zeit löschen“ und „Alle Notizen löschen“ im Profil löschen sofort alles.'
+					'Beides siehst nur du selbst, nicht die Verwaltung, nicht die anderen Mitglieder und in keiner Auswertung. Nur wenn du deine Notizen in einer Stimme mit deiner Stimmgruppe teilst, sehen die, die diese Stimme spielen, eine Kopie davon und können sie übernehmen; mit „Nicht mehr teilen“ endet das Angebot, Übernommenes bleibt bei ihnen. Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO). Mit „Aufzeichnen ausschalten“ zählt nichts mehr; „Aufgezeichnete Zeit löschen“ und „Alle Notizen löschen“ im Profil löschen sofort alles.'
 				]
 			},
 			{

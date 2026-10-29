@@ -1,15 +1,17 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { OpenScore } from '#lib/music/score-reader.ts';
-	import { MARK_COLORS, onPage, strokePath, thinPoints, type MarkColor, type Stroke } from '#lib/practice/marks.ts';
+	import { MARK_COLORS, MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_STROKES, markLines, onPage, pagePoints, strokePath, SYMBOL_SIZE, symbolLines, thinPoints, type MarkColor, type MarkSymbol, type Stroke } from '#lib/practice/marks.ts';
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 
 	/**
 	 * A part in the practice viewer: one page at a time, fitted to the screen or to its width,
 	 * turned by tapping the left or right half, with the arrow and page keys, or a page-turn
-	 * pedal (they send those keys). Full screen on request. With the pen, the member's own
-	 * marks go on the page; they are saved a moment after the pen stops.
+	 * pedal (they send those keys). Full screen on request, with the controls above the page,
+	 * never over it (#235). With the pen, the member's own marks go on the page, drawn or as
+	 * symbols placed with a tap; they are saved a moment after the pen stops. They can be offered
+	 * to the others who play the part, who take them over, all or one by one, or decline.
 	 */
 	let {
 		file,
@@ -22,7 +24,9 @@
 		startFull = false,
 		onleave,
 		night = false,
-		extra
+		extra,
+		offers = [],
+		sharedAt = null
 	}: {
 		file: string;
 		marks: Record<number, Stroke[]>;
@@ -44,7 +48,12 @@
 		night?: boolean;
 		/** More controls at the start of the toolbar. */
 		extra?: Snippet;
+		/** What others in the member's section offer of their notes in this part, newest first. */
+		offers?: Offer[];
+		/** When the member last offered their own notes here to their section. */
+		sharedAt?: string | null;
 	} = $props();
+	type Offer = { id: string; from: string; pages: Record<number, Stroke[]> };
 
 	/** The tool shown; tools once opened stay mounted, so a metronome or drone keeps going. */
 	let active = $state<string | null>(null);
@@ -67,6 +76,10 @@
 	let stageHeight = $state(0);
 	/** The current page's size on screen. */
 	let size = $state<{ width: number; height: number } | null>(null);
+	/** The current page's own size, unscaled. */
+	let base = $state<{ width: number; height: number } | null>(null);
+	/** The page's area: in full screen the tools above the page and the stage share its height. */
+	let areaHeight = $state(0);
 
 	$effect(() => {
 		const id = file;
@@ -109,8 +122,8 @@
 		return found;
 	}
 
-	function fitted(base: { width: number; height: number }) {
-		const scale = fit === 'page' ? Math.min(stageWidth / base.width, stageHeight / base.height) : stageWidth / base.width;
+	function fitted(base: { width: number; height: number }, height = stageHeight) {
+		const scale = fit === 'page' ? Math.min(stageWidth / base.width, height / base.height) : stageWidth / base.width;
 		return { width: Math.max(100, Math.floor(base.width * scale)), height: Math.max(100, Math.floor(base.height * scale)) };
 	}
 
@@ -144,10 +157,12 @@
 		void mode;
 		(async () => {
 			try {
-				const target = fitted(await baseSize(current, number));
+				const own = await baseSize(current, number);
+				const target = fitted(own);
 				const canvas = await canvasFor(current, number, target.width);
 				if (token !== shown) return;
 				size = target;
+				base = own;
 				slot!.replaceChildren(canvas);
 				if (fit === 'width') stage?.scrollTo({ top: 0 });
 				// The neighbours, ready for the next turn.
@@ -239,20 +254,33 @@
 		marks = { ...saved };
 	});
 	let pen = $state(false);
-	let color = $state<MarkColor | 'eraser'>('graphite');
+	let ink = $state<MarkColor>('graphite');
+	/** Drawing a line, erasing, or placing a symbol with each tap. */
+	let tool = $state<'line' | 'eraser' | MarkSymbol>('line');
 	let drawing = $state<Stroke | null>(null);
+	/** A mark that didn't fit on the page (MAX_PAGE_POINTS, MAX_STROKES) until something goes. */
+	let refused = $state(false);
 	let saving = $state<'idle' | 'saving' | 'saved' | 'failed'>('idle');
 	/** Why the last save failed: the HTTP status, or none when the device was offline. */
 	let failure = $state('');
 	const history = new Map<number, Stroke[][]>();
 	const timers = new Map<number, ReturnType<typeof setTimeout>>();
 	const current = $derived(marks[page] ?? []);
+	/** How full the page is, 0 to 1: drawn lines fill it, symbols hardly. */
+	const fullness = $derived(Math.max(pagePoints(current) / MAX_PAGE_POINTS, current.length / MAX_STROKES));
+
+	/** Whether one more mark still fits on the page. */
+	function fits(stroke: Stroke) {
+		refused = current.length >= MAX_STROKES || pagePoints(current) + stroke.points.length / 2 > MAX_PAGE_POINTS;
+		return !refused;
+	}
 
 	function change(number: number, next: Stroke[]) {
 		const before = history.get(number) ?? [];
 		before.push(marks[number] ?? []);
 		history.set(number, before.slice(-50));
 		marks = { ...marks, [number]: next };
+		refused = false;
 		saveSoon(number);
 	}
 
@@ -280,6 +308,67 @@
 			failure = '';
 			saving = 'failed';
 		}
+	}
+
+	/** Saves what's still waiting now, before the server reads the member's marks. */
+	async function flush() {
+		await Promise.all([...timers].map(([number, timer]) => (clearTimeout(timer), save(number))));
+	}
+
+	// Sharing with the section: the member's own offer, and the offers of others.
+	let shared = $state<string | null>(null);
+	let pending = $state<Offer[]>([]);
+	$effect.pre(() => {
+		shared = sharedAt;
+		pending = offers.map((offer) => ({ ...offer, pages: { ...offer.pages } }));
+	});
+	const offer = $derived(pending[0]);
+	const offerCount = $derived(offer ? Object.values(offer.pages).reduce((sum, strokes) => sum + strokes.length, 0) : 0);
+	let reviewing = $state(false);
+	/** Marks taken over one by one from the offer shown. */
+	let picked = $state(0);
+	let shareNote = $state('');
+	/** The offered marks shown on this page, to be taken over with a tap. */
+	const offered = $derived(reviewing && offer ? (offer.pages[page] ?? []) : []);
+
+	async function share() {
+		if (!confirm(t.practice.share.confirm)) return;
+		await flush();
+		const response = await fetch('/api/ueben/notizen/teilen', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ file }) }).catch(() => null);
+		if (response?.ok) {
+			shared = ((await response.json()) as { at: string }).at;
+			shareNote = '';
+		} else shareNote = response?.status === 400 ? t.practice.share.nothing : t.practice.share.failed;
+	}
+	async function unshare() {
+		if (!confirm(t.practice.share.confirmUnshare)) return;
+		const response = await fetch('/api/ueben/notizen/teilen', { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ file }) }).catch(() => null);
+		if (response?.ok) shared = null;
+		else shareNote = t.practice.share.failed;
+	}
+
+	/** One offered mark on this page into the member's own. */
+	function take(index: number) {
+		if (!offer) return;
+		const stroke = offered[index];
+		if (!stroke || !fits(stroke)) return;
+		change(page, [...current, stroke]);
+		pending[0] = { ...offer, pages: { ...offer.pages, [page]: offered.filter((_, i) => i !== index) } };
+		picked++;
+	}
+
+	/** Ends the offer shown: everything taken over, some by hand, or none. */
+	async function answer(kind: 'all' | 'some' | 'declined') {
+		if (!offer) return;
+		await flush();
+		const response = await fetch('/api/ueben/notizen/angebot', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: offer.id, answer: kind }) }).catch(() => null);
+		if (!response?.ok) return void (shareNote = t.practice.share.failed);
+		const { pages: merged, skipped } = (await response.json()) as { pages: Record<number, Stroke[]>; skipped: number };
+		if (Object.keys(merged).length) marks = { ...marks, ...merged };
+		shareNote = skipped ? t.practice.share.skipped(skipped) : '';
+		pending = pending.slice(1);
+		reviewing = false;
+		picked = 0;
 	}
 
 	// Leaving the page: what's still waiting goes out now.
@@ -310,37 +399,65 @@
 		saveSoon(page);
 	}
 
+	/**
+	 * The one pointer drawing: a second finger or the palm on the glass doesn't join its line
+	 * (#235). Once a pen has drawn, fingers don't draw at all, so a resting hand leaves no marks.
+	 */
+	let pointer: { id: number; type: string } | null = null;
+	let penSeen = false;
+
 	function down(event: PointerEvent) {
 		if (!pen) return;
 		event.preventDefault();
+		if (event.pointerType === 'pen') penSeen = true;
+		else if (penSeen && event.pointerType === 'touch') return;
+		if (pointer) {
+			// A pen taking over from the hand it rests on: the hand's line goes.
+			if (event.pointerType !== 'pen' || pointer.type === 'pen') return;
+			drawing = null;
+		}
 		const element = event.currentTarget as Element;
+		const at = point(event, element);
+		if (tool !== 'line' && tool !== 'eraser') {
+			const stamp: Stroke = { color: ink, points: at, symbol: tool };
+			if (fits(stamp)) change(page, [...current, stamp]);
+			return;
+		}
+		pointer = { id: event.pointerId, type: event.pointerType };
 		// Keeps the line going past the page's edge; a browser that won't still draws on the page.
 		try {
 			element.setPointerCapture(event.pointerId);
 		} catch {
 			// Drawn without capture.
 		}
-		if (color === 'eraser') {
+		if (tool === 'eraser') {
 			erasing = false;
-			erase(point(event, element));
-		} else drawing = { color, points: point(event, element) };
+			erase(at);
+		} else drawing = { color: ink, points: at };
 	}
 	function move(event: PointerEvent) {
-		if (!pen || !(event.buttons || event.pointerType === 'touch')) return;
+		if (!pen || event.pointerId !== pointer?.id) return;
 		const element = event.currentTarget as Element;
-		if (color === 'eraser') return erase(point(event, element));
+		if (tool === 'eraser') return erase(point(event, element));
 		if (!drawing) return;
 		// Pens report many points between frames; all of them make a smoother line.
-		const events = event.getCoalescedEvents?.() ?? [event];
+		const coalesced = event.getCoalescedEvents?.();
+		const events = coalesced?.length ? coalesced : [event];
 		const added = events.flatMap((each) => point(each, element));
 		drawing = { ...drawing, points: [...drawing.points, ...added] };
 	}
+	function lift(event: PointerEvent) {
+		if (event.pointerId !== pointer?.id) return;
+		pointer = null;
+		finishStroke();
+	}
 	function finishStroke() {
 		erasing = false;
+		pointer = null;
 		if (!drawing) return;
 		const stroke = { ...drawing, points: thinPoints(drawing.points) };
 		drawing = null;
-		change(page, [...current, stroke]);
+		if (fits(stroke)) change(page, [...current, stroke]);
 	}
 
 	function undo() {
@@ -348,6 +465,7 @@
 		const last = before?.pop();
 		if (last === undefined) return;
 		marks = { ...marks, [page]: last };
+		refused = false;
 		saveSoon(page);
 	}
 
@@ -356,79 +474,49 @@
 		change(page, []);
 	}
 
-	// In full screen the controls fade after a few seconds without a touch, so they cover less music.
-	let awake = $state(true);
-	let sleepy: ReturnType<typeof setTimeout> | undefined;
-	function wake() {
-		awake = true;
-		clearTimeout(sleepy);
-		sleepy = setTimeout(() => (awake = false), 3000);
-	}
-	$effect(() => {
-		const element = root;
-		if (!element) return;
-		element.addEventListener('pointermove', wake, { passive: true });
-		element.addEventListener('pointerdown', wake, { passive: true });
-		return () => {
-			clearTimeout(sleepy);
-			element.removeEventListener('pointermove', wake);
-			element.removeEventListener('pointerdown', wake);
-		};
-	});
-
 	/**
 	 * Where the tools go, so they never cover the music and the page never shrinks for them:
 	 * beside the page where its margin has room (moving the page aside, at the same size, when
 	 * only both margins together do), below it where a page narrower than the screen leaves room,
-	 * else above it in the page's flow, and only in full screen with no room at all over its foot.
+	 * else above it in the page's flow, where in full screen the page gets smaller for it.
 	 */
 	const PANEL = 260;
 	const GAP = 12;
 
-	/**
-	 * In full screen the floating controls would cover the page's head (a phone held upright
-	 * has height to spare): the page moves down below them, centred when there's room for that,
-	 * and only where the screen is too short does it still go under them.
-	 */
-	let controlsHeight = $state(0);
-	const pageTop = $derived.by(() => {
-		if (!full) return 0;
-		const clear = controlsHeight + 2 * GAP;
-		if (fit === 'width') return clear;
-		if (!size) return 0;
-		const free = stageHeight - size.height;
-		return Math.max(0, Math.min(free, active ? clear : Math.max(free / 2, clear)));
-	});
 	const dock = $derived.by(() => {
-		const width = size?.width ?? stageWidth;
-		const height = size?.height ?? stageHeight;
+		// Decided by the page as it is without the tools: in full screen, tools above the page make
+		// it smaller, and the smaller page mustn't then send them beside it, and back (#239).
+		const room = full && areaHeight ? areaHeight : stageHeight;
+		const whole = base ? fitted(base, room) : size;
+		const width = whole?.width ?? stageWidth;
+		const height = whole?.height ?? stageHeight;
 		const free = stageWidth - width;
-		// In full screen the floating controls sit in the top right corner.
-		const top = full ? 64 : 0;
 		if (fit === 'page' && free >= PANEL + GAP) {
 			const left = Math.max(0, Math.min((stageWidth - width) / 2, stageWidth - PANEL - GAP - width));
-			return { place: 'side', page: left, left: `${left + width + GAP}px`, top: `${top}px`, width: `${Math.min(PANEL + 40, stageWidth - left - width - GAP)}px`, height: `calc(100% - ${top}px)` };
+			return { place: 'side', page: left, left: `${left + width + GAP}px`, top: '0px', width: `${Math.min(PANEL + 40, stageWidth - left - width - GAP)}px`, height: '100%' };
 		}
-		const below = stageHeight - pageTop - height - GAP;
+		const below = room - height - GAP;
 		if (fit === 'page' && size && below >= 150) {
 			const left = (stageWidth - width) / 2;
-			return { place: 'below', page: left, left: `${left}px`, top: `${pageTop + height + GAP}px`, width: `${width}px`, height: `${below}px` };
+			return { place: 'below', page: left, left: `${left}px`, top: `${height + GAP}px`, width: `${width}px`, height: `${below}px` };
 		}
-		const centred = Math.max(0, (stageWidth - width) / 2);
-		return { place: full ? 'over' : 'above', page: centred, left: undefined, top: undefined, width: undefined, height: undefined };
+		const centred = Math.max(0, (stageWidth - (size?.width ?? width)) / 2);
+		return { place: 'above', page: centred, left: undefined, top: undefined, width: undefined, height: undefined };
 	});
 	/** The page's left edge in the stage: centred, or moved aside for the tools. */
 	const pageLeft = $derived(active ? dock.page : Math.max(0, ((size ? stageWidth - size.width : 0) / 2)));
 
 	const STROKE: Record<MarkColor, string> = { graphite: 'var(--mark-graphite)', red: 'var(--mark-red)', blue: 'var(--mark-blue)' };
+	/** A symbol's button: its glyph in a 24 × 24 box, 10 to a symbol unit. */
+	const preview = (symbol: MarkSymbol) => symbolLines(symbol, 0, 0, 1).map((line) => strokePath(line.map((n) => 12 + (n / SYMBOL_SIZE) * 10), 1, 1));
 	const strokeWidth = $derived(Math.max(1.5, (size?.width ?? 600) * 0.0032));
 </script>
 
 <svelte:window {onkeydown} />
 
-<!-- In full screen the page takes the whole height; the controls float over its corner, faded until touched. -->
+<!-- In full screen the controls take a row of their own above the page, which gets the rest. -->
 <div class="score" class:full class:night bind:this={root}>
-	<div class="controls" class:awake bind:offsetHeight={controlsHeight}>
+	<div class="controls">
 	<div class="bar">
 		{#if extra}<div class="group">{@render extra()}</div>{/if}
 		<div class="group">
@@ -438,7 +526,7 @@
 		</div>
 		<div class="group">
 			<button type="button" class="tool text" onclick={() => (fit = fit === 'page' ? 'width' : 'page')}>
-				{fit === 'page' ? t.practice.viewer.fitWidth : t.practice.viewer.fitPage}
+				<Icon name={fit === 'page' ? 'fitWidth' : 'fitHeight'} size={15} />{fit === 'page' ? t.practice.viewer.fitWidth : t.practice.viewer.fitPage}
 			</button>
 			{#if penAllowed}
 				<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
@@ -460,24 +548,86 @@
 		<div class="bar pen" role="toolbar" aria-label={t.practice.marks.title}>
 			<div class="group">
 				{#each MARK_COLORS as each (each)}
-					<button type="button" class="swatch {each}" class:on={color === each} aria-pressed={color === each} onclick={() => (color = each)} title={t.practice.marks[each]}>
+					<button
+						type="button"
+						class="swatch {each}"
+						class:on={ink === each && tool !== 'eraser'}
+						aria-pressed={ink === each && tool !== 'eraser'}
+						onclick={() => ((ink = each), tool === 'eraser' && (tool = 'line'))}
+						title={t.practice.marks[each]}
+					>
 						<span class="dot"></span><span class="label">{t.practice.marks[each]}</span>
 					</button>
 				{/each}
-				<button type="button" class="tool text" class:on={color === 'eraser'} aria-pressed={color === 'eraser'} onclick={() => (color = 'eraser')}>{t.practice.marks.eraser}</button>
+				<button type="button" class="tool text" class:on={tool === 'eraser'} aria-pressed={tool === 'eraser'} onclick={() => (tool = tool === 'eraser' ? 'line' : 'eraser')}>{t.practice.marks.eraser}</button>
+			</div>
+			<!-- Symbols: a tap on the page places one; they hardly fill the page, as lines do. -->
+			<div class="group symbols" role="group" aria-label={t.practice.marks.symbolsTitle}>
+				{#each MARK_SYMBOLS as each (each)}
+					<button
+						type="button"
+						class="tool symbol {ink}"
+						class:on={tool === each}
+						aria-pressed={tool === each}
+						onclick={() => (tool = tool === each ? 'line' : each)}
+						title={t.practice.marks.symbols[each]}
+						aria-label={t.practice.marks.symbols[each]}
+					>
+						<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+							{#each preview(each) as d, i (i)}<path {d} />{/each}
+						</svg>
+					</button>
+				{/each}
 			</div>
 			<div class="group">
 				<button type="button" class="tool text" onclick={undo}>{t.practice.marks.undo}</button>
 				<button type="button" class="tool text" onclick={clear} disabled={!current.length}>{t.practice.marks.clear}</button>
-				<span class="state" class:failed={saving === 'failed'} role="status">
-					{saving === 'saving' ? t.practice.marks.saving : saving === 'saved' ? t.practice.marks.saved : saving === 'failed' ? t.practice.marks.failed(failure) : t.practice.marks.private}
+				<button type="button" class="tool text" class:on={!!shared} aria-pressed={!!shared} onclick={() => (shared ? unshare() : share())}>
+					<Icon name="users" size={15} />{shared ? t.practice.share.unshare : t.practice.share.share}
+				</button>
+				<span class="state" class:failed={saving === 'failed' || refused} role="status">
+					{refused
+						? t.practice.marks.pageFull
+						: saving === 'saving'
+							? t.practice.marks.saving
+							: saving === 'failed'
+								? t.practice.marks.failed(failure)
+								: fullness > 0.8
+									? t.practice.marks.nearlyFull
+									: saving === 'saved'
+										? t.practice.marks.saved
+										: shared
+											? t.practice.marks.sharedNote
+											: t.practice.marks.private}
 				</span>
 			</div>
 		</div>
 	{/if}
+
+	<!-- An offer from the section: above the page like the rest, never over it. -->
+	{#if penAllowed && offer}
+		<div class="bar offer" role="region" aria-label={t.practice.marks.title}>
+			<p>
+				<Icon name="users" size={15} />{t.practice.share.offered(offer.from, offerCount + picked)}
+				{#if reviewing}<span class="muted">{t.practice.share.pick} {t.practice.share.onPage(offered.length)}</span>{/if}
+			</p>
+			<div class="group">
+				<button type="button" class="tool text" class:on={reviewing} aria-pressed={reviewing} onclick={() => (reviewing ? (reviewing = false) : (finishStroke(), (pen = false), (reviewing = true)))}>
+					{reviewing ? t.practice.share.hide : t.practice.share.show}
+				</button>
+				<button type="button" class="tool text" onclick={() => answer('all')}>{t.practice.share.takeAll}</button>
+				{#if picked}
+					<button type="button" class="tool text" onclick={() => answer('some')}>{t.practice.share.done}</button>
+				{:else}
+					<button type="button" class="tool text" onclick={() => answer('declined')}>{t.practice.share.decline}</button>
+				{/if}
+			</div>
+		</div>
+	{/if}
+	{#if shareNote}<p class="share-note" role="status">{shareNote}</p>{/if}
 	</div>
 
-	<div class="area" class:docked={!!active}>
+	<div class="area" class:docked={!!active} bind:clientHeight={areaHeight}>
 	<!-- The tools: rendered once, so a running metronome or drone carries on when the panel moves or closes. -->
 	{#if panel && opened.length}
 		<div class="dock {dock.place}" hidden={!active} style:top={dock.top} style:left={dock.left} style:width={dock.width} style:max-height={dock.height}>
@@ -501,7 +651,6 @@
 			style:width={size ? `${size.width}px` : undefined}
 			style:height={size ? `${size.height}px` : undefined}
 			style:margin-left={size ? `${pageLeft}px` : undefined}
-			style:margin-top={pageTop ? `${pageTop}px` : undefined}
 			hidden={!score || failed}
 		>
 			<div class="slot" bind:this={slot}></div>
@@ -514,12 +663,31 @@
 					height={size.height}
 					onpointerdown={down}
 					onpointermove={move}
-					onpointerup={finishStroke}
-					onpointercancel={finishStroke}
-					aria-hidden="true"
+					onpointerup={lift}
+					onpointercancel={lift}
+					aria-hidden={offered.length ? undefined : 'true'}
 				>
 					{#each [...current, ...(drawing ? [drawing] : [])] as stroke, i (i)}
-						<path d={strokePath(stroke.points, size.width, size.height)} stroke={STROKE[stroke.color]} stroke-width={strokeWidth} />
+						{#each markLines(stroke, size.width / size.height) as line, j (j)}
+							<path d={strokePath(line, size.width, size.height)} stroke={STROKE[stroke.color]} stroke-width={strokeWidth} />
+						{/each}
+					{/each}
+					<!-- Offered marks, dashed; a tap takes one over (a wide invisible line makes it easy to hit). -->
+					{#each offered as stroke, i (i)}
+						<g
+							class="offered"
+							role="button"
+							tabindex="0"
+							aria-label={t.practice.share.take}
+							onclick={(event) => (event.stopPropagation(), take(i))}
+							onkeydown={(event) => (event.key === 'Enter' || event.key === ' ') && (event.preventDefault(), event.stopPropagation(), take(i))}
+						>
+							{#each markLines(stroke, size.width / size.height) as line, j (j)}
+								{@const d = strokePath(line, size.width, size.height)}
+								<path {d} class="hit" stroke-width={Math.max(18, strokeWidth * 6)} />
+								<path {d} stroke={STROKE[stroke.color]} stroke-width={strokeWidth} stroke-dasharray="{strokeWidth * 2} {strokeWidth * 2}" />
+							{/each}
+						</g>
 					{/each}
 				</svg>
 			{/if}
@@ -547,7 +715,10 @@
 		position: fixed;
 		inset: 0;
 		z-index: 1000;
-		display: block;
+		display: flex;
+		flex-direction: column;
+		gap: 0;
+		padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 		background: var(--bg);
 	}
 
@@ -560,27 +731,27 @@
 		filter: invert(1) hue-rotate(180deg);
 	}
 
+	/* A row of their own above the page; nothing lies over the music (#235). */
 	.full .controls {
-		position: absolute;
-		top: var(--space-2);
-		right: var(--space-2);
-		z-index: 2;
-		max-width: calc(100% - 2 * var(--space-2));
-		padding: var(--space-1);
-		border-radius: var(--radius-m);
-		background: color-mix(in oklab, var(--surface) 88%, transparent);
-		box-shadow: var(--shadow-raised);
-		opacity: 0.3;
-		transition: opacity 0.3s var(--ease);
-	}
-
-	.full .controls.awake,
-	.full .controls:focus-within {
-		opacity: 1;
+		display: flex;
+		flex: none;
+		flex-wrap: wrap;
+		justify-content: flex-end;
+		gap: var(--space-1) var(--space-2);
+		padding: var(--space-1) var(--space-2);
+		border-bottom: 1px solid var(--hairline);
+		background: var(--surface);
 	}
 
 	.full .bar {
 		justify-content: flex-end;
+	}
+
+	/* On a tablet, Safari puts its own close button over the top left corner of a full screen page. */
+	@media (pointer: coarse) {
+		.full .controls {
+			padding-left: max(var(--space-2), 56px);
+		}
 	}
 
 	/* The page's area: the stage, and the tools where there's room for them. */
@@ -591,8 +762,8 @@
 	}
 
 	.full .area {
-		position: absolute;
-		inset: 0;
+		flex: 1;
+		min-height: 0;
 	}
 
 	.dock {
@@ -621,14 +792,11 @@
 		margin-bottom: var(--space-2);
 	}
 
-	/* Full screen without room anywhere: over the page's foot, small, closed with ×. */
-	.dock.over {
-		top: auto;
-		right: var(--space-2);
-		bottom: var(--space-2);
-		left: var(--space-2);
-		max-height: 46%;
-		box-shadow: var(--shadow-raised);
+	/* In full screen the page keeps most of the height: the tools scroll in what's left. */
+	.full .dock.above {
+		flex: none;
+		max-height: 45%;
+		margin: var(--space-2) var(--space-2) 0;
 	}
 
 	.close {
@@ -719,6 +887,22 @@
 		background: var(--mark-blue);
 	}
 
+	.symbol svg {
+		fill: none;
+		stroke: var(--mark-graphite);
+		stroke-width: 1.6;
+		stroke-linecap: round;
+		stroke-linejoin: round;
+	}
+
+	.symbol.red svg {
+		stroke: var(--mark-red);
+	}
+
+	.symbol.blue svg {
+		stroke: var(--mark-blue);
+	}
+
 	.state {
 		color: var(--text-muted);
 		font-size: var(--text-xs);
@@ -739,7 +923,8 @@
 
 	/* The page as tall as the screen. */
 	.full .stage {
-		height: 100%;
+		flex: 1;
+		height: auto;
 		min-height: 0;
 	}
 
@@ -769,6 +954,55 @@
 		stroke-linecap: round;
 		stroke-linejoin: round;
 		pointer-events: none;
+	}
+
+	/* Offered marks take taps even while the page's own marks don't. */
+	.offered {
+		pointer-events: stroke;
+		cursor: pointer;
+		opacity: 0.75;
+	}
+
+	.offered:hover,
+	.offered:focus-visible {
+		opacity: 1;
+		outline: none;
+	}
+
+	.offered .hit {
+		stroke: var(--accent);
+		stroke-opacity: 0;
+	}
+
+	.offered:hover .hit,
+	.offered:focus-visible .hit {
+		stroke-opacity: 0.18;
+	}
+
+	.offer {
+		padding: var(--space-2);
+		border: 1px solid var(--accent);
+		border-radius: var(--radius-m);
+		background: var(--accent-soft);
+	}
+
+	.offer p {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--space-1) var(--space-2);
+		margin: 0;
+		font-size: var(--text-sm);
+	}
+
+	.offer .muted,
+	.share-note {
+		color: var(--text-muted);
+		font-size: var(--text-xs);
+	}
+
+	.share-note {
+		margin: 0;
 	}
 
 	.marks.drawing {

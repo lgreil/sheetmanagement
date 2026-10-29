@@ -1,4 +1,4 @@
-import { reminderKey, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -16,6 +16,9 @@ export function memoryStore(now = () => Date.now()): Store {
 	const practice = new Map<string, Map<string, number>>();
 	/** Marks by member, then by `${page} ${file}`. */
 	const marks = new Map<string, Map<string, PageMarks>>();
+	/** Offers by id; answers as `${id} ${email}`. */
+	const shares = new Map<string, MarkShare>();
+	const answers = new Set<string>();
 	const hits = new Map<string, { count: number; since: number }>();
 	const partChecks = new Map<string, PartCheck>();
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
@@ -96,6 +99,33 @@ export function memoryStore(now = () => Date.now()): Store {
 		},
 		async deleteMarks(email) {
 			marks.delete(email);
+			for (const share of [...shares.values()]) if (share.sender === email) await this.unshareMarks(email, share.file);
+			for (const answer of [...answers]) if (answer.endsWith(` ${email}`)) answers.delete(answer);
+		},
+
+		async shareMarks(sender, file, pages) {
+			await this.unshareMarks(sender, file);
+			const share: MarkShare = { id: crypto.randomUUID(), sender, file, pages: structuredClone(pages), at: sqlTime(now()) };
+			shares.set(share.id, share);
+			return structuredClone(share);
+		},
+		async unshareMarks(sender, file) {
+			for (const [id, share] of shares) {
+				if (share.sender !== sender || share.file !== file) continue;
+				shares.delete(id);
+				for (const answer of [...answers]) if (answer.startsWith(`${id} `)) answers.delete(answer);
+			}
+		},
+		shareById: async (id) => structuredClone(shares.get(id) ?? null),
+		shareOf: async (sender, file) => structuredClone([...shares.values()].find((share) => share.sender === sender && share.file === file) ?? null),
+		sharesFor: async (email, file) =>
+			structuredClone(
+				[...shares.values()]
+					.filter((share) => share.file === file && share.sender !== email && !answers.has(`${share.id} ${email}`))
+					.sort((a, b) => b.at.localeCompare(a.at) || a.id.localeCompare(b.id))
+			),
+		async answerShare(id, email) {
+			answers.add(`${id} ${email}`);
 		},
 
 		partChecks: async () => [...partChecks.values()],

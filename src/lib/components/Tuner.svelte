@@ -9,7 +9,10 @@
 	 * reading. Nothing is recorded or sent anywhere, and the microphone is on only while it's
 	 * started. The drone holds a note with overtones, at the same concert A. The concert A and
 	 * the drone's note are remembered in this browser (orchestras often tune to 442 or 443 Hz).
+	 * `show` picks the tuner or the drone alone, as two tabs of one set of tools; the other part
+	 * keeps going meanwhile, a drone sounding on while the tuner is shown.
 	 */
+	let { show = 'both' }: { show?: 'both' | 'tuner' | 'drone' } = $props();
 	const KEY = 'tuner';
 	function remembered(): { a4: number; pitchClass: number; octave: number; fifth: boolean; volume: number } {
 		const fallback = { a4: 440, pitchClass: 9, octave: 3, fifth: false, volume: 0.6 };
@@ -223,8 +226,52 @@
 	});
 </script>
 
+{#snippet droneControls()}
+	<!-- One octave of a keyboard, the note to hold pressed down. -->
+	<div class="keyboard" role="group" aria-label={t.practice.drone.note}>
+		{#each WHITE as key (key)}
+			<button type="button" class="key white" class:on={pitchClass === key} class:sounding={droning && pitchClass === key} aria-pressed={pitchClass === key} onclick={() => (pitchClass = key)}>
+				<span>{t.practice.tuner.notes[key]}</span>
+			</button>
+		{/each}
+		{#each BLACK as [key, after] (key)}
+			<button
+				type="button"
+				class="key black"
+				class:on={pitchClass === key}
+				class:sounding={droning && pitchClass === key}
+				style:left="{((after + 1) / WHITE.length) * 100}%"
+				aria-pressed={pitchClass === key}
+				onclick={() => (pitchClass = key)}
+			>
+				<span>{t.practice.tuner.notes[key]}</span>
+			</button>
+		{/each}
+	</div>
+	<div class="row">
+		<label class="field">
+			{t.practice.drone.octave}
+			<select bind:value={octave}>
+				{#each [1, 2, 3, 4, 5] as each (each)}<option value={each}>{t.practice.tuner.notes[pitchClass]}{each}</option>{/each}
+			</select>
+		</label>
+		<label class="check"><input type="checkbox" bind:checked={fifth} />{t.practice.drone.fifth}</label>
+		<label class="field volume">
+			{t.practice.drone.volume}
+			<input type="range" min="0" max="1" step="0.05" bind:value={volume} />
+		</label>
+	</div>
+	<div class="row">
+		{#if note}<button type="button" class="btn ghost" onclick={droneHeard}>{t.practice.drone.heard}</button>{/if}
+		<button type="button" class={droning ? 'btn secondary' : 'btn'} aria-pressed={droning} onclick={() => (droning ? stopDrone() : startDrone())}>
+			{droning ? t.practice.drone.stop : t.practice.drone.play(`${t.practice.tuner.notes[pitchClass]}${octave}`)}
+		</button>
+	</div>
+{/snippet}
+
 <!-- Narrow beside the page, flat above or below it: laid out by the panel's width. -->
-<div class="tuner">
+<div class="tuner" class:drone-only={show === 'drone'}>
+	{#if show !== 'drone'}
 	<!-- The device: always there, a dash before the first note, the last one held in a pause. -->
 	<div class="reading" class:ok={verdict === 'ok' && !stale} class:stale class:idle={!note} role="status">
 		<TunerGauge cents={note?.cents ?? null} verdict={stale ? null : verdict} quiet={!note || stale} />
@@ -261,51 +308,17 @@
 			</span>
 		</label>
 	</div>
+	{/if}
 
-	<!-- Folded away until wanted. -->
-	<details class="drone" bind:open={droneOpen}>
-		<summary>{t.practice.drone.title}{#if droning}<span class="sounding-dot" aria-hidden="true"></span>{/if}</summary>
-		<!-- One octave of a keyboard, the note to hold pressed down. -->
-		<div class="keyboard" role="group" aria-label={t.practice.drone.note}>
-			{#each WHITE as key (key)}
-				<button type="button" class="key white" class:on={pitchClass === key} class:sounding={droning && pitchClass === key} aria-pressed={pitchClass === key} onclick={() => (pitchClass = key)}>
-					<span>{t.practice.tuner.notes[key]}</span>
-				</button>
-			{/each}
-			{#each BLACK as [key, after] (key)}
-				<button
-					type="button"
-					class="key black"
-					class:on={pitchClass === key}
-					class:sounding={droning && pitchClass === key}
-					style:left="{((after + 1) / WHITE.length) * 100}%"
-					aria-pressed={pitchClass === key}
-					onclick={() => (pitchClass = key)}
-				>
-					<span>{t.practice.tuner.notes[key]}</span>
-				</button>
-			{/each}
-		</div>
-		<div class="row">
-			<label class="field">
-				{t.practice.drone.octave}
-				<select bind:value={octave}>
-					{#each [1, 2, 3, 4, 5] as each (each)}<option value={each}>{t.practice.tuner.notes[pitchClass]}{each}</option>{/each}
-				</select>
-			</label>
-			<label class="check"><input type="checkbox" bind:checked={fifth} />{t.practice.drone.fifth}</label>
-			<label class="field volume">
-				{t.practice.drone.volume}
-				<input type="range" min="0" max="1" step="0.05" bind:value={volume} />
-			</label>
-		</div>
-		<div class="row">
-			{#if note}<button type="button" class="btn ghost" onclick={droneHeard}>{t.practice.drone.heard}</button>{/if}
-			<button type="button" class={droning ? 'btn secondary' : 'btn'} aria-pressed={droning} onclick={() => (droning ? stopDrone() : startDrone())}>
-				{droning ? t.practice.drone.stop : t.practice.drone.play(`${t.practice.tuner.notes[pitchClass]}${octave}`)}
-			</button>
-		</div>
-	</details>
+	{#if show === 'drone'}
+		<div class="drone alone">{@render droneControls()}</div>
+	{:else if show === 'both'}
+		<!-- Folded away until wanted. -->
+		<details class="drone" bind:open={droneOpen}>
+			<summary>{t.practice.drone.title}{#if droning}<span class="sounding-dot" aria-hidden="true"></span>{/if}</summary>
+			{@render droneControls()}
+		</details>
+	{/if}
 </div>
 
 <style>
@@ -472,7 +485,17 @@
 		border-top: 1px solid var(--hairline);
 	}
 
-	.drone[open] {
+	.drone.alone {
+		padding-top: 0;
+		border-top: 0;
+	}
+
+	.drone-only {
+		grid-template-areas: 'drone';
+	}
+
+	.drone[open],
+	.drone.alone {
 		display: grid;
 		gap: var(--space-2);
 	}

@@ -33,6 +33,20 @@ export interface PageMarks {
 	strokes: Stroke[];
 }
 
+/** A member's marks in a part, offered to the others who play it: a copy of their pages then. */
+export interface MarkShare {
+	id: string;
+	sender: string;
+	file: string;
+	/** By page. */
+	pages: Record<number, Stroke[]>;
+	/** When it was offered, like SQLite's datetime('now'). */
+	at: string;
+}
+
+/** How a member answered an offer: took all of it, some marks by hand, or none. */
+export type ShareAnswer = 'all' | 'some' | 'declined';
+
 /** What the completeness check found for one file in the archive (#93). */
 export interface PartCheck {
 	fileId: string;
@@ -92,8 +106,20 @@ export interface Store {
 	marksOf(email: string, file?: string): Promise<PageMarks[]>;
 	/** Replaces one page's marks; no strokes forget the page. */
 	saveMarks(email: string, file: string, page: number, strokes: Stroke[]): Promise<void>;
-	/** Forgets all of a member's marks. */
+	/** Forgets all of a member's marks, with their offers and their answers to others' offers. */
 	deleteMarks(email: string): Promise<void>;
+
+	/** Offers the member's marks in a part to their section; replaces an earlier offer of that part. */
+	shareMarks(sender: string, file: string, pages: Record<number, Stroke[]>): Promise<MarkShare>;
+	/** Takes the member's offer in a part back. */
+	unshareMarks(sender: string, file: string): Promise<void>;
+	/** One offer, answered or not. */
+	shareById(id: string): Promise<MarkShare | null>;
+	/** The member's own offer in a part, if they made one. */
+	shareOf(sender: string, file: string): Promise<MarkShare | null>;
+	/** Others' offers in a part that the member hasn't answered yet, newest first. */
+	sharesFor(email: string, file: string): Promise<MarkShare[]>;
+	answerShare(id: string, email: string, answer: ShareAnswer): Promise<void>;
 
 	/** Everything the completeness check found (#93). */
 	partChecks(): Promise<PartCheck[]>;

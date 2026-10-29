@@ -18,6 +18,8 @@ export const DEMO_IDS = {
 
 export const DEMO_ADMIN = { email: 'verwaltung@example.org', name: 'Vera Verwaltung' };
 export const DEMO_MEMBER = { email: 'mia@example.org', name: 'Mia Beispiel' };
+/** Plays next to the demo member and offers her the notes in one part. */
+export const DEMO_DESK_PARTNER = { email: 'greta@example.org', name: 'Greta Pult' };
 
 export interface DemoFile {
 	id: string;
@@ -346,6 +348,7 @@ export function demoSheet(now: number): Map<string, string[][]> {
 			{ email: DEMO_MEMBER.email, name: DEMO_MEMBER.name, instrument: 'Geige II', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'david@example.org', name: 'David Dirigent', groups: 'Dirigat', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'nora@example.org', name: 'Nora Notenwart', instrument: 'Viola', groups: 'Notenwart', orchestras: 'EO', status: 'aktiv' },
+			{ email: DEMO_DESK_PARTNER.email, name: DEMO_DESK_PARTNER.name, instrument: 'Geige II', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'jonas@example.org', name: 'Jonas Geiger', instrument: 'Geige I', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'lea@example.org', name: 'Lea Lang', instrument: 'Geige I', orchestras: 'EO', status: 'aktiv' },
 			{ email: 'paul@example.org', name: 'Paul Probe', instrument: 'Violoncello', orchestras: 'EO', status: 'aktiv' },
