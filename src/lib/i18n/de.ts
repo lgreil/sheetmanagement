@@ -1451,6 +1451,10 @@ export const de = {
 			saved: 'Gespeichert',
 			failed: (status: string) => (status ? `Nicht gespeichert (Fehler ${status}).` : 'Nicht gespeichert. Bitte die Verbindung prüfen.'),
 			private: 'Nur du siehst deine Notizen.',
+			symbolsTitle: 'Zeichen',
+			symbols: { downbow: 'Abstrich', upbow: 'Aufstrich', breath: 'Atemzeichen', fermata: 'Fermate', pp: 'pianissimo', p: 'piano', mp: 'mezzopiano', mf: 'mezzoforte', f: 'forte', ff: 'fortissimo', cresc: 'crescendo', dim: 'decrescendo' },
+			pageFull: 'Die Seite ist voll. Radier etwas weg oder nimm Zeichen, die brauchen kaum Platz.',
+			nearlyFull: 'Die Seite ist fast voll. Zeichen brauchen kaum Platz.',
 			/** On /profil. */
 			profileTitle: 'Notizen in deinen Noten',
 			count: (parts: number) => (parts === 1 ? 'In einer Stimme.' : `In ${parts} Stimmen.`),

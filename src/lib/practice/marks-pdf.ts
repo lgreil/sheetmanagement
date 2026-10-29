@@ -1,5 +1,5 @@
 import type { PDFPage } from '@cantoo/pdf-lib';
-import type { MarkColor, Stroke } from './marks.ts';
+import { markLines, type MarkColor, type Stroke } from './marks.ts';
 
 /**
  * The member's notes drawn into the merged PDF of a concert's parts ("Meine Noten"), where the
@@ -56,13 +56,16 @@ export async function drawMarks(page: PDFPage, strokes: Stroke[] | undefined) {
 	// As thick as in the viewer, where it's 0.32 % of the page's width as shown.
 	const shownWidth = rotation % 180 ? box.height : box.width;
 	const width = Math.max(0.8, shownWidth * 0.0032);
+	const shownHeight = rotation % 180 ? box.width : box.height;
 	for (const stroke of strokes) {
-		page.drawSvgPath(pdfPath(stroke.points, box, rotation), {
-			x: 0,
-			y: 0,
-			borderColor: rgb(...COLORS[stroke.color]),
-			borderWidth: width,
-			borderLineCap: LineCapStyle.Round
-		});
+		for (const line of markLines(stroke, shownWidth / shownHeight)) {
+			page.drawSvgPath(pdfPath(line, box, rotation), {
+				x: 0,
+				y: 0,
+				borderColor: rgb(...COLORS[stroke.color]),
+				borderWidth: width,
+				borderLineCap: LineCapStyle.Round
+			});
+		}
 	}
 }
