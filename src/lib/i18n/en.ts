@@ -286,6 +286,13 @@ export const en: Texts = {
 		}
 	},
 	concert: {
+		/** In the public feed for the orchestra's website (#197). */
+		publish: {
+			on: "On the orchestra's website",
+			off: "Not on the orchestra's website",
+			publish: 'Publish',
+			withdraw: 'Withdraw'
+		},
 		map: 'Map',
 		openInCalendar: 'In Google Calendar',
 		rehearsals: 'Rehearsals',
@@ -662,7 +669,10 @@ export const en: Texts = {
 		answer: (answer: string) => `Your answer: ${answer}`,
 		details: 'Details:',
 		parts: 'Your parts:',
-		calendarName: (orchestra: string) => `${orchestra} · Dates`
+		calendarName: (orchestra: string) => `${orchestra} · Dates`,
+		/** The concerts for the orchestra's website (#197). */
+		publicCalendarName: (orchestra: string) => `${orchestra} · Concerts`,
+		publicProgram: 'Programme:'
 	},
 	/** The planners' checklist on a concert page, worked out from the data. */
 	check: {
