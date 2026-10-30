@@ -1832,7 +1832,8 @@ export const en: Texts = {
 		failed: (message: string) => `That didn't work: ${message}`,
 		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), and every night the sheet is a copy outside Cloudflare.',
 		statusD1: (rows: number) => `Source: database, ${rows} rows; the sheet is a copy`,
-		exportSheetOff: 'The sheet is the source; nothing to export.'
+		exportSheetOff: 'The sheet is the source; nothing to export.',
+		exportUnchanged: 'Nothing changed since the last export; the sheet is up to date.'
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

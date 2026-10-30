@@ -1848,7 +1848,8 @@ export const de = {
 		failed: (message: string) => `Hat nicht geklappt: ${message}`,
 		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), und die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare.',
 		statusD1: (rows: number) => `Quelle: Datenbank, ${rows} Zeilen; die Tabelle ist eine Kopie`,
-		exportSheetOff: 'Die Tabelle ist die Quelle; nichts zu exportieren.'
+		exportSheetOff: 'Die Tabelle ist die Quelle; nichts zu exportieren.',
+		exportUnchanged: 'Seit dem letzten Export nichts geändert; die Tabelle ist aktuell.'
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

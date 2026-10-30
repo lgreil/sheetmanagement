@@ -85,6 +85,8 @@ export async function importFromSheet(): Promise<ImportPlan> {
 export async function exportToSheet(): Promise<{ tabs: number; rows: number }> {
 	return withSheetLock(async () => {
 		const { client, spreadsheetId } = target();
+		// The version before reading: a change made during the export is written next time.
+		const { version } = await dataState({ force: true });
 		const data = await getStore().readData();
 		const keys = (Object.keys(data) as TabKey[]).filter((key) => key in LAYOUT);
 		const present = new Set((await getTabs(client, spreadsheetId)).map((tab) => tab.title));
@@ -113,8 +115,18 @@ export async function exportToSheet(): Promise<{ tabs: number; rows: number }> {
 		});
 		await clearValues(client, spreadsheetId, keys.map((key) => tabRange(LAYOUT[key].tab, 'A2:ZZ')));
 		await updateValues(client, spreadsheetId, writes);
+		await getStore().setState(EXPORTED_KEY, String(version));
 		return { tabs: keys.length, rows: writes.reduce((sum, write) => sum + write.values.length - 1, 0) };
 	});
+}
+
+/** The data version the sheet was last written with. */
+const EXPORTED_KEY = 'data-exported';
+
+/** Whether D1 changed since the last export, so the nightly one has something to write. */
+export async function changedSinceExport(): Promise<boolean> {
+	const [{ version }, exported] = await Promise.all([dataState({ force: true }), getStore().getState(EXPORTED_KEY)]);
+	return exported === null || Number(exported) !== version;
 }
 
 /** Makes the sheet the source again, after one last export so it has everything. */

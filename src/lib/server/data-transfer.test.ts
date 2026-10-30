@@ -14,7 +14,7 @@ vi.mock('./repertoire.ts', async (original) => ({ ...(await original<typeof impo
 
 const { forgetDataState } = await import('./data-source.ts');
 const { appendRecords, deleteRows, readTab, replaceRows, updateRecord } = await import('./sheet-writes.ts');
-const { backToSheet, exportToSheet, importFromSheet, planImport } = await import('./data-transfer.ts');
+const { backToSheet, changedSinceExport, exportToSheet, importFromSheet, planImport } = await import('./data-transfer.ts');
 
 const sheetPieces = async () => {
 	const range = tabRange(LAYOUT.pieces.tab);
@@ -73,6 +73,16 @@ describe('moving the data into D1', () => {
 		const row = columns.map((column) => (column === 'fileId' ? 'f1' : column === 'done' ? true : ''));
 		await replaceRows('missingParts', [row, columns.map(() => '')]);
 		expect((await store.readData(['missingParts'])).missingParts.map((r) => r.cells)).toEqual([{ fileId: 'f1', done: 'TRUE' }]);
+	});
+
+	it('knows whether anything changed since the last export', async () => {
+		await importFromSheet();
+		expect(await changedSinceExport()).toBe(true);
+		await exportToSheet();
+		expect(await changedSinceExport()).toBe(false);
+		const pieces = await readTab('pieces');
+		await updateRecord('pieces', pieces, pieces.rows[0].row, { notes: 'geändert' });
+		expect(await changedSinceExport()).toBe(true);
 	});
 
 	it('writes D1 back into the sheet, and can make the sheet the source again', async () => {
