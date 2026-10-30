@@ -1,0 +1,25 @@
+name: Idea or feature request
+description: Something the app could do for your orchestra.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What's the problem?
+      description: What do you or your members need to do today, and what makes it hard?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: How you imagine it. Rough ideas are fine.
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who is it for?
+      multiple: true
+      options:
+        - Members (on the phone)
+        - Organisers (librarian, board, conductor)
+        - Whoever runs the deployment

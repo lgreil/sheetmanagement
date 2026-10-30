@@ -1,0 +1,42 @@
+name: Bug report
+description: Something doesn't work as it should.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How can we see it?
+      description: Steps to reproduce, ideally in the demo (https://noten-demo.bachkreis.workers.dev). Please no real member data.
+      placeholder: |
+        1. Open …
+        2. Tap …
+  - type: dropdown
+    id: device
+    attributes:
+      label: Device
+      options:
+        - Phone
+        - Tablet
+        - Laptop / desktop
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+      placeholder: e.g. Safari on iOS 19, Chrome 140
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Shown next to the source link at the bottom of every page, and on /status.
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots
+      description: Drag images here. Please hide names of real members.
