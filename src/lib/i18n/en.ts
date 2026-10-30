@@ -1497,7 +1497,10 @@ export const en: Texts = {
 		build: 'As one PDF',
 		building: (i: number, n: number) => `Part ${i} of ${n} …`,
 		notPdf: 'not a PDF',
-		fileName: 'Set of parts'
+		fileName: 'Set of parts',
+		orchestra: 'For',
+		allOrchestras: 'All orchestras',
+		apply: 'Show'
 	},
 	print: {
 		link: 'Print',
@@ -1833,6 +1836,16 @@ export const en: Texts = {
 		backConfirm: 'Make the sheet the source again? Everything in the database is written into it first.',
 		back: 'The sheet is the source again.',
 		download: 'Download everything (JSON)',
+		restoreTitle: 'Restore from a backup',
+		restoreLead: 'A file from “Download everything” or a backup from Drive. Replaces everything in the database and makes it the source.',
+		restoreFile: 'Backup (JSON)',
+		restoreButton: 'Restore',
+		restoreConfirm: 'Replace everything in the database with this backup? Changes made since are lost.',
+		restoreNoFile: 'Please choose a backup file.',
+		restoreTooLarge: 'The file is too large for a backup of this app.',
+		restoreNotBackup: 'This is not a backup of this app.',
+		restored: (rows: number, tabs: number, skipped: number) =>
+			`Restored: ${rows} rows from ${tabs} tabs${skipped ? `; ${skipped} ${skipped === 1 ? 'row did not fit and is missing' : 'rows did not fit and are missing'}` : ''}. The database is the source.`,
 		failed: (message: string) => `That didn't work: ${message}`,
 		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), and every night the sheet is a copy outside Cloudflare.',
 		statusD1: (rows: number) => `Source: database, ${rows} rows; the sheet is a copy`,

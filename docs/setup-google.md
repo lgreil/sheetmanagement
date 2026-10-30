@@ -202,6 +202,7 @@ Until this step, the app is open to anyone with the link and nobody can change a
   - Who may start and close polls: the right `termine.planen` in **Rechte** (the preset gives it to Orga and Vorstand). A poll is for the groups chosen when it's started: only their members see and answer it, and the menu shows **Terminumfragen** to them.
   - Closing a poll with a date gives a link that opens Google Calendar with the event filled in; the app itself doesn't write to the calendar.
   - Backups: D1 keeps 30 days of history (Time Travel), see `pnpm wrangler d1 time-travel info noten`.
+  - **Restoring a backup:** on **Setup → Datenbank**, **Aus einer Sicherung wiederherstellen** takes a file from **Alles herunterladen** and replaces everything in D1 with it (D1 becomes the source). Rows that no longer fit, e.g. a programme entry whose concert is missing, are left out and counted.
 - **Turning sign-in off again:** set `FORCE_AUTH` to `false` (`pnpm wrangler secret put FORCE_AUTH`). The other values stay, and deleting `FORCE_AUTH` turns sign-in back on. While it's off, the app works as before step 9: anyone with the link can view everything, including `/setup` and `/status`, and nobody can change anything, report problems or add wishes. Use it for an instance that should be public, or to get in while Google sign-in is broken.
 
 ## 10. Optional extras

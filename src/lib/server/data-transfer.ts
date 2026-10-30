@@ -73,6 +73,56 @@ export async function planImport(): Promise<ImportPlan> {
 	return prepare(await readSheetRecords()).plan;
 }
 
+export class BackupFormatError extends Error {
+	constructor() {
+		super('Not a backup of this app');
+		this.name = 'BackupFormatError';
+	}
+}
+
+/**
+ * The tabs of a backup file ("Alles herunterladen", or the weekly copy in Drive), checked:
+ * only tabs and columns the app knows, only text values. Rows are numbered as in a sheet, so
+ * the import's hints ("Zeile 7") point at the right entry.
+ */
+export function backupTabs(backup: unknown): Partial<Record<TabKey, { row: number; cells: Record<string, string> }[]>> {
+	const tabs = (backup as { tabs?: unknown } | null)?.tabs;
+	if (!tabs || typeof tabs !== 'object' || Array.isArray(tabs)) throw new BackupFormatError();
+	const result: Partial<Record<TabKey, { row: number; cells: Record<string, string> }[]>> = {};
+	for (const [key, rows] of Object.entries(tabs)) {
+		if (!(key in LAYOUT) || !Array.isArray(rows)) continue;
+		const known = new Set(Object.keys(columnsOf(key as TabKey)));
+		result[key as TabKey] = rows
+			.filter((row): row is Record<string, unknown> => !!row && typeof row === 'object' && !Array.isArray(row))
+			.map((row, i) => ({
+				row: i + 2,
+				cells: Object.fromEntries(
+					Object.entries(row).filter((entry): entry is [string, string] => known.has(entry[0]) && typeof entry[1] === 'string' && !!entry[1])
+				)
+			}));
+	}
+	if (!Object.keys(result).length) throw new BackupFormatError();
+	return result;
+}
+
+/**
+ * Puts a backup back into D1 (#186) and makes D1 the source: the way back after a mistake older
+ * than Time Travel's 30 days, or onto a new database. Everything in D1 is replaced.
+ */
+export async function restoreFromBackup(backup: unknown): Promise<ImportPlan> {
+	const tabs = backupTabs(backup);
+	const keys = Object.keys(tabs) as TabKey[];
+	const plan = await withSheetLock(async () => {
+		const prepared = prepareImport(tabs);
+		await getStore().importData(prepared, keys);
+		forgetDataState();
+		const plans = keys.map((key) => ({ key, tab: LAYOUT[key].tab, rows: prepared.rows[key]?.length ?? 0, unknown: [], missing: [] }));
+		return { tabs: plans, rows: plans.reduce((sum, tab) => sum + tab.rows, 0), skipped: prepared.skipped } satisfies ImportPlan;
+	});
+	await getRepertoire({ force: true });
+	return plan;
+}
+
 /** Takes the sheet over into D1 and makes D1 the source. Earlier data in D1 is replaced. */
 export async function importFromSheet(): Promise<ImportPlan> {
 	// In the lock, so no save to the sheet lands between the read and the switch.
