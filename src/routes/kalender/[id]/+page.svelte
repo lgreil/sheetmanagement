@@ -20,6 +20,7 @@
 	let { data, form } = $props();
 	const orchestraSave = new FormState();
 	const publishSave = new FormState();
+	const detailsSave = new FormState();
 	/** The orchestra whose Drive folder is being synced. */
 	let syncing = $state<string | null>(null);
 	const several = $derived(data.program.groups.length > 1);
@@ -337,6 +338,53 @@
 				</span>
 				<button class="btn small secondary" disabled={publishSave.busy}>{data.program.published ? t.concert.publish.withdraw : t.concert.publish.publish}</button>
 			</form>
+			{#if data.program.published && data.program.publicDetails}
+				{@const details = data.program.publicDetails}
+				<!-- What the website shows with it; folded, since most concerts need only the switch. -->
+				<details class="ui-disclosure public-details" open={!!(form?.publicDetailsError || form?.publicDetailsSaved)}>
+					<summary>{t.concert.publish.details}</summary>
+					<form method="POST" action="?/publicDetails" use:enhance={detailsSave.submit()}>
+						<p class="details-hint">{t.concert.publish.detailsHint}</p>
+						<div class="pair">
+							<label class="field">
+								<span>{t.concert.publish.textDe}</span>
+								<textarea name="textDe" lang="de" maxlength="2000">{details.text?.de ?? ''}</textarea>
+							</label>
+							<label class="field">
+								<span>{t.concert.publish.textEn}</span>
+								<textarea name="textEn" lang="en" maxlength="2000">{details.text?.en ?? ''}</textarea>
+							</label>
+						</div>
+						<label class="field">
+							<span>{t.concert.publish.ticketUrl}</span>
+							<input
+								type="url"
+								name="ticketUrl"
+								inputmode="url"
+								placeholder="https://"
+								value={details.ticketUrl ?? ''}
+								aria-invalid={form?.publicDetailsError ? 'true' : undefined}
+								aria-describedby={form?.publicDetailsError ? 'ticket-error' : undefined}
+							/>
+						</label>
+						{#if form?.publicDetailsError}<p class="msg error" id="ticket-error" role="alert">{form.publicDetailsError}</p>{/if}
+						<div class="pair">
+							<label class="field">
+								<span>{t.concert.publish.ticketNoteDe}</span>
+								<input name="ticketNoteDe" lang="de" maxlength="200" placeholder={t.concert.publish.ticketNotePlaceholder} value={details.ticketNote?.de ?? ''} />
+							</label>
+							<label class="field">
+								<span>{t.concert.publish.ticketNoteEn}</span>
+								<input name="ticketNoteEn" lang="en" maxlength="200" value={details.ticketNote?.en ?? ''} />
+							</label>
+						</div>
+						<div class="details-actions">
+							<button class="btn small" disabled={detailsSave.busy}>{t.concert.publish.save}</button>
+							{#if form?.publicDetailsSaved}<span class="saved-inline" role="status"><Icon name="check" size={16} />{t.concert.publish.saved}</span>{/if}
+						</div>
+					</form>
+				</details>
+			{/if}
 		{/if}
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
 		{#if data.program.driveAuto === 'ok'}<p class="saved" role="status"><Icon name="folder" size={16} />{t.currentProgram.autoDone}</p>{/if}
@@ -1135,6 +1183,45 @@
 
 	.publish-state.on :global(svg) {
 		color: var(--ok);
+	}
+
+	.public-details {
+		margin: 0 0 var(--space-3);
+		padding: 0 var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+		font-size: var(--text-sm);
+	}
+
+	.public-details form {
+		display: grid;
+		gap: var(--space-3);
+		padding-bottom: var(--space-3);
+	}
+
+	.details-hint {
+		margin: 0;
+		color: var(--text-muted);
+	}
+
+	.pair {
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+		gap: var(--space-3);
+	}
+
+	.details-actions {
+		display: flex;
+		align-items: center;
+		gap: var(--space-3);
+	}
+
+	.saved-inline {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-1);
+		color: var(--ok);
+		font-weight: 600;
 	}
 
 	.note {

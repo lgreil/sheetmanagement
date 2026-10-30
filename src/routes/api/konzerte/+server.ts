@@ -1,6 +1,6 @@
 import { orchestra } from '#lib/server/env.ts';
 import { getLibrary } from '#lib/server/library.ts';
-import { publicFeed, publishedIds } from '#lib/server/public-concerts.ts';
+import { FEED_VERSION, publicDetails, publicFeed, publishedIds } from '#lib/server/public-concerts.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -9,9 +9,9 @@ import type { RequestHandler } from './$types';
  * what an organiser chose to make public.
  */
 export const GET: RequestHandler = async () => {
-	const [library, published] = await Promise.all([getLibrary(), publishedIds()]);
-	const feed = publicFeed(library, published);
-	return new Response(JSON.stringify({ orchestra: orchestra().name, ...feed }), {
+	const [library, published, details] = await Promise.all([getLibrary(), publishedIds(), publicDetails()]);
+	const feed = publicFeed(library, published, details);
+	return new Response(JSON.stringify({ version: FEED_VERSION, orchestra: orchestra().name, ...feed }), {
 		headers: {
 			'content-type': 'application/json; charset=utf-8',
 			'access-control-allow-origin': '*',
