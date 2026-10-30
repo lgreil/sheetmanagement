@@ -5,7 +5,7 @@ import type { Library, LibraryConcert, LibraryPiece } from './library.ts';
 const store = memoryStore();
 vi.mock('./db/index.ts', () => ({ getStore: () => store }));
 
-const { feedEventsOf, publicFeed, publishedIds, setPublished } = await import('./public-concerts.ts');
+const { concertSlug, feedEventsOf, publicDetails, publicFeed, publishedIds, readDetails, setPublicDetails, setPublished } = await import('./public-concerts.ts');
 
 const event = (start: string, past: boolean) => ({ start, end: start.replace('T19', 'T21'), allDay: false, location: 'Aula', displayTitle: 'Herbstkonzert', past });
 
@@ -48,6 +48,7 @@ describe('publicFeed', () => {
 	it('names the programme with composers, and nothing about members', () => {
 		expect(feed.upcoming[0]).toEqual({
 			id: 'herbst',
+			slug: 'herbstkonzert-2026',
 			title: 'Herbstkonzert',
 			date: '2026-11-15',
 			dateText: 'Sonntag, 15. November 2026',
@@ -64,6 +65,56 @@ describe('publicFeed', () => {
 		const events = feedEventsOf(feed, 'Programm:');
 		expect(events.map((e) => e.uid)).toEqual(['herbst@sheetmanagement-public', 'winter@sheetmanagement-public']);
 		expect(events[0].description).toBe('Programm:\nMozart: Eine kleine Nachtmusik\nZugabe');
+	});
+});
+
+describe('slugs', () => {
+	it('add the year unless the title has it, and spell out umlauts', () => {
+		expect(concertSlug('Herbstkonzert', '2026-11-15')).toBe('herbstkonzert-2026');
+		expect(concertSlug('Frühlingskonzert 2026', '2026-04-19')).toBe('fruehlingskonzert-2026');
+		expect(concertSlug('Weihnachtskonzert', '1957-12')).toBe('weihnachtskonzert-1957');
+		expect(concertSlug('🎻', '')).toBe('konzert');
+	});
+
+	it('stay unique in the feed, the oldest keeping the plain one', () => {
+		const twice = { ...library, concertsById: new Map(library.concertsById) } as Library;
+		twice.concertsById.set('herbst-2', concert('herbst-2', { event: event('2026-11-16T19:00:00+01:00', false) as LibraryConcert['event'] }));
+		const slugs = publicFeed(twice, new Set(['herbst-2', 'herbst'])).upcoming.map((c) => [c.id, c.slug]);
+		expect(slugs).toEqual([
+			['herbst', 'herbstkonzert-2026'],
+			['herbst-2', 'herbstkonzert-2026-2']
+		]);
+	});
+});
+
+describe('details for the website', () => {
+	const form = (fields: Record<string, string>) => {
+		const data = new FormData();
+		for (const [name, value] of Object.entries(fields)) data.set(name, value);
+		return data;
+	};
+
+	it('reads the form, leaving out what is empty', () => {
+		expect(readDetails(form({ textDe: ' Mit Solistin ', textEn: '', ticketUrl: 'https://tickets.example.org/herbst', ticketNoteDe: 'Eintritt frei' }))).toEqual({
+			details: { text: { de: 'Mit Solistin' }, ticketUrl: 'https://tickets.example.org/herbst', ticketNote: { de: 'Eintritt frei' } },
+			badLink: false
+		});
+		expect(readDetails(form({}))).toEqual({ details: {}, badLink: false });
+	});
+
+	it('refuses ticket links that are not http(s)', () => {
+		expect(readDetails(form({ ticketUrl: 'javascript:alert(1)' }))).toEqual({ details: {}, badLink: true });
+	});
+
+	it('are stored per concert and go into the feed', async () => {
+		await setPublicDetails('herbst', { text: { de: 'Mit Solistin', en: 'With a soloist' }, ticketNote: { de: 'Eintritt frei' } });
+		await setPublicDetails('winter', { ticketUrl: 'https://tickets.example.org' });
+		await setPublicDetails('winter', {});
+		const details = await publicDetails();
+		expect([...details.keys()]).toEqual(['herbst']);
+		const herbst = publicFeed(library, new Set(['herbst']), details).upcoming[0];
+		expect(herbst).toMatchObject({ text: { de: 'Mit Solistin', en: 'With a soloist' }, ticketNote: { de: 'Eintritt frei' } });
+		expect(herbst.ticketUrl).toBeUndefined();
 	});
 });
 

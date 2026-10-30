@@ -18,7 +18,7 @@ import { setEventOrchestras } from '#lib/server/schedule.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
-import { publishedIds, setPublished } from '#lib/server/public-concerts.ts';
+import { publicDetails, publishedIds, readDetails, setPublicDetails, setPublished } from '#lib/server/public-concerts.ts';
 import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord, withSheetLock } from '#lib/server/sheet-writes.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { concertCheck } from '#lib/repertoire/concert-check.ts';
@@ -337,7 +337,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		// How the Drive sync after saving in the editor went.
 		driveAuto: showDrive ? url.searchParams.get('drive') : null,
 		// On the orchestra's website (#197): whether this concert is in the public feed; null for those who can't change it.
-		published: concert && locals.access.rights.has('programme.bearbeiten') ? (await publishedIds()).has(concert.id) : null
+		published: concert && locals.access.rights.has('programme.bearbeiten') ? (await publishedIds()).has(concert.id) : null,
+		// What the website shows with it: texts, where to get tickets.
+		publicDetails: concert && locals.access.rights.has('programme.bearbeiten') ? ((await publicDetails()).get(concert.id) ?? {}) : null
 	};
 
 	if (!event) {
@@ -461,6 +463,17 @@ export const actions: Actions = {
 		const published = (await request.formData()).get('published') === 'on';
 		await setPublished(concert.id, published);
 		return { publishSaved: published };
+	},
+
+	/** The text and ticket details the website shows with a published concert (#197). */
+	publicDetails: async ({ request, locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const concert = (await getLibrary()).concertsById.get(params.id);
+		if (!concert) error(404, t.messages.noEvent);
+		const { details, badLink } = readDetails(await request.formData());
+		if (badLink) return fail(400, { publicDetailsError: t.concert.publish.badLink });
+		await setPublicDetails(concert.id, details);
+		return { publicDetailsSaved: true };
 	},
 
 	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
