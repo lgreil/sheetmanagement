@@ -1,138 +1,113 @@
+<div align="center">
+
+<img src="static/demo/musterorchester.svg" alt="" width="72" height="72">
+
 # Sheetmanagement
 
-A lightweight web app for orchestras and ensembles: the **sheet music archive**, **concerts** and **programmes** in one place. It is built on what many ensembles already use:
+**The sheet music library, rehearsals and concerts of an orchestra in one place, on top of the Google Drive, Calendar and Sheets you already use.**
 
-- **Google Drive**: one folder per piece, one PDF per part
-- **Google Calendar**: rehearsals and concerts
-- **Google Sheets**: which pieces were played when and where, plus members and rights
+[![CI](https://github.com/lgreil/sheetmanagement/actions/workflows/ci.yml/badge.svg)](https://github.com/lgreil/sheetmanagement/actions/workflows/ci.yml)
+[![Deploy](https://github.com/lgreil/sheetmanagement/actions/workflows/deploy.yml/badge.svg)](https://github.com/lgreil/sheetmanagement/actions/workflows/deploy.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Version](https://img.shields.io/github/package-json/v/lgreil/sheetmanagement)
+![Cost to run: €0](https://img.shields.io/badge/cost%20to%20run-%E2%82%AC0-2c5d8f)
 
-Drive and Calendar stay fully usable on their own. The app only reads them and adds a combined view on top.
+[**Try the live demo**](https://noten-demo.bachkreis.workers.dev) · [Wiki](https://github.com/lgreil/sheetmanagement/wiki) · [Roadmap](https://github.com/lgreil/sheetmanagement/issues/73) · [Report a bug](https://github.com/lgreil/sheetmanagement/issues/new/choose)
 
-> **Status:** in use, version 0.15. Archive, concerts, programmes, "Meine Noten", sign-ups, rehearsal plans, attendance, rented music, the GEMA list, a personal calendar feed, an offline mode with an update notice, and end-to-end tests are done. New: the Chronik with the orchestra's history in numbers and a printable season report, notes from rehearsals on pieces and after each rehearsal, full composer names for the GEMA list, and a download of one's own data on /profil. What comes next, version by version, is in the pinned [Roadmap issue](https://github.com/lgreil/sheetmanagement/issues/73); the original design is in [docs/redesign-plan.md](docs/redesign-plan.md).
+<img src="docs/screenshots/overview.png" alt="The overview page: the next rehearsal with what's rehearsed and notes from the last one, the next concert with its programme, and a sign-up" width="860">
 
-Free and open source (MIT). Hosting on Cloudflare's free plan and Google's free APIs costs nothing.
+</div>
 
-## Tech
+## Why
 
-- [SvelteKit](https://svelte.dev/docs/kit) on [Cloudflare Workers](https://developers.cloudflare.com/workers/)
-- No runtime dependencies besides SvelteKit; Google APIs are called with plain `fetch`
-- Plain CSS with design tokens (`src/app.css`), light and dark mode
+Most amateur orchestras already keep their sheet music in Google Drive (one folder per piece, one PDF per part), their dates in Google Calendar and their concert history in a spreadsheet. Sheetmanagement reads all three and turns them into one app that members open on their phone: *when is the next rehearsal, am I coming, where's my part?* answered in seconds, even in a hall without reception.
 
-## Getting started
+Drive, Calendar and Sheets stay fully usable on their own. Nothing is locked in.
+
+- **Free to run:** Cloudflare's free plan and Google's free APIs. No paid services, no domain needed.
+- **For members on the phone:** installable, works offline, big touch targets, light and dark mode.
+- **For organisers on a laptop:** programmes, sign-ups, rehearsal plans, attendance, rented music, the GEMA list.
+- **Lightweight:** SvelteKit on Cloudflare Workers, no runtime dependencies besides SvelteKit, Google APIs called with plain `fetch`.
+- **English or German**, one language per deployment.
+
+## Screenshots
+
+| | |
+|---|---|
+| <img src="docs/screenshots/library.png" alt="The music library with search and filters"> <br> **Library**: every piece in the Drive archive, searchable, with what's missing | <img src="docs/screenshots/piece.png" alt="A piece with its parts, rented music and notes from rehearsals"> <br> **Piece**: parts, duration, rented music, notes agreed in rehearsal |
+| <img src="docs/screenshots/concert.png" alt="A concert with its programme and sign-ups"> <br> **Concert**: programme, sign-ups per section, the rehearsal plan | <img src="docs/screenshots/history.png" alt="The orchestra's history by decade"> <br> **History**: every past concert, most played pieces and composers |
+| <img src="docs/screenshots/calendar.png" alt="The calendar with rehearsals and concerts"> <br> **Calendar**: rehearsals and concerts from Google Calendar | <img src="docs/screenshots/overview-dark.png" alt="The overview in dark mode"> <br> **Dark mode**, with the orchestra's own accent colour |
+
+<p align="center">
+<img src="docs/screenshots/phone-overview.png" alt="The overview on a phone" width="250">
+<img src="docs/screenshots/phone-my-parts.png" alt="My parts on a phone, in programme order" width="250">
+<img src="docs/screenshots/phone-rehearsal.png" alt="A rehearsal on a phone" width="250">
+</p>
+
+## Features
+
+- **Library:** the Drive archive as a searchable list, one page per piece with all parts; missing or suspiciously short parts are flagged.
+- **My parts:** each member's own parts in programme order, a concert mode, everything as one PDF, saved offline.
+- **Calendar and sign-ups:** rehearsals and concerts from Google Calendar, "I'm coming / maybe / I can't" in one tap, reminders by push or email.
+- **Programmes and rehearsal plans:** what's played at which concert and rehearsed when.
+- **Notes from rehearsals:** cuts, repeats and bowings per piece and section; what to practise after each rehearsal.
+- **Attendance, rented music, the GEMA list, wishes and reports.**
+- **History:** every past concert by decade, first performances, the numbers; a printable season report.
+- **Practice tools:** metronome, tuner and drone next to the part.
+- **Privacy built in:** sign-in with Google or by email link, data export per member (GDPR Art. 15), optional retention period.
+
+More in the [wiki](https://github.com/lgreil/sheetmanagement/wiki/Features).
+
+## Quick start
 
 Requirements: [Node.js](https://nodejs.org) 22.17 or newer and [pnpm](https://pnpm.io).
 
 ```bash
 pnpm install
-cp .dev.vars.example .dev.vars   # optional: set ORCHESTRA_NAME
-pnpm dev
-```
-
-Open http://localhost:5173.
-
-Other scripts:
-
-| Script | What it does |
-|---|---|
-| `pnpm dev:demo` | Run the demo with sample data (see below) |
-| `pnpm check` | Type-check the project |
-| `pnpm test` | Run unit tests |
-| `pnpm test:e2e` | Run the end-to-end tests against the demo (Playwright; once: `pnpm exec playwright install chromium`) |
-| `pnpm preview` | Build and run the real Worker locally with Wrangler |
-| `pnpm run deploy` | Build and deploy to Cloudflare (`run` is needed: `pnpm deploy` is a built-in pnpm command) |
-
-On Windows, stop a running `pnpm preview` (or `pnpm dev`) before building again: the running Worker locks the build folder.
-
-### Try it without Google: demo mode
-
-```bash
 pnpm dev:demo
 ```
 
-The demo needs no Google account and no settings. It uses invented sample data: a small archive with generated PDFs, rehearsals and concerts around today, and a filled-in Repertoire sheet with members, a rehearsal plan, sign-ups, attendance, rented music, piece durations, reports and wishes. You're signed in automatically. The banner at the top switches between the admin's and a member's view, and resets the data.
+Open http://localhost:5173. The demo needs no Google account: it runs on invented sample data and signs you in as an admin; the banner switches to a member's view. For the English interface:
 
-Everything works, including the editors, but changes stay in memory: they're gone after a restart. Nothing is sent to Google.
+```bash
+APP_LANGUAGE=en pnpm dev:demo
+```
 
-- The settings come from `[env.demo]` in `wrangler.toml`. If you also have a `.dev.vars` with real settings, create an empty `.dev.vars.demo`, otherwise Wrangler loads `.dev.vars` for the demo too.
-- A public demo is a separate Worker that needs no secrets: `pnpm build && pnpm wrangler deploy --env demo`. On Cloudflare each Worker instance keeps its own copy of the data, so visitors may see each other's changes for a while, or not.
+| Script | What it does |
+|---|---|
+| `pnpm dev` | Run against your own Google account (copy `.dev.vars.example` to `.dev.vars` first) |
+| `pnpm dev:demo` | Run the demo with sample data |
+| `pnpm check` | Type-check |
+| `pnpm test` | Unit tests |
+| `pnpm test:e2e` | End-to-end tests against the demo (Playwright; once: `pnpm exec playwright install chromium`) |
+| `pnpm preview` | Build and run the real Worker locally with Wrangler |
+| `pnpm run deploy` | Build and deploy to Cloudflare |
 
-### On the phone
+## Running it for your orchestra
 
-- **Install it:** the app has a web manifest, so "Zum Home-Bildschirm" (Safari) or "App installieren" (Chrome) puts it on the home screen.
-- **Offline:** a service worker (`src/service-worker/`) keeps the pages a member opened, and "Offline speichern" on "Meine Noten" keeps their parts, for rehearsal halls without reception. Signing out deletes both.
-- **Updates:** after a deploy, an open app shows "Neue Version verfügbar · Neu laden" within a few minutes; nothing reloads by itself.
-- **Own calendar:** each member can create a personal calendar link on `/profil` (`/kalender/<token>.ics`) with their orchestra's dates, their own answer and what's rehearsed. It's signed with `SESSION_SECRET` and can be renewed or revoked; the version sits in the "Kalender-Version" column of "Mitglieder".
+1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up), then `pnpm wrangler login` and `pnpm run deploy`.
+2. Connect Google Drive, Calendar and Sheets: [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free).
+3. Open `/status` to check every connection, then `/setup` to prepare the sheet.
+4. Name, logo, colour and features: an admin changes them on `/einstellungen`, no code needed.
 
-### Rehearsal notes and the orchestra's history
-
-- **Notes on pieces** ("Hinweise" tab): cuts, repeats and bowings agreed in rehearsal, written on the piece's page by whoever plans programmes. A note can be for one section or instrument and for one concert; members see the ones for their instrument next to their part in "Meine Noten", and notes for concerts that are over are folded away.
-- **Notes after a rehearsal** ("Probennotizen" tab): what was rehearsed, what to practise and what comes next. They show on the rehearsal's page, on the next rehearsal's page and on the start page until the next rehearsal is over.
-- **Chronik** (`/chronik`): every past concert by decade with its programme, pieces played for the first time marked, and the numbers: most played pieces and composers, pieces not played for ten years, pieces never played, the repertoire per decade. Old concerts only need a year in the sheet.
-- **Season report** (`/chronik/saison`, for `mitglieder.verwalten`): a printable summary of a period for the annual meeting: concerts and programmes, new pieces, rehearsals and attendance as totals, reports and wishes.
-- **My data** (`/profil`): every member can download what the sheet keeps about them as a JSON file (Art. 15 GDPR), without other people's names or +1s.
-
-The new tabs are optional: the first note creates its tab, and /setup adds them with dropdowns. "Komponist (voll)" in "Stücke" holds the full name for the GEMA list; "Online nachschlagen" on a piece's edit page fills it from Wikidata.
-
-## Deploying (free)
-
-1. Create a free [Cloudflare account](https://dash.cloudflare.com/sign-up).
-2. `pnpm wrangler login`
-3. `pnpm run deploy`. The app is then live at `https://noten.<your-account>.workers.dev`. Change `name` in `wrangler.toml` to pick another subdomain.
-4. Connect Google Drive, Calendar and Sheets, and turn on sign-in: follow [docs/setup-google.md](docs/setup-google.md) (about 15 minutes, free). Deployment values are stored as secrets, e.g. `pnpm wrangler secret put ORCHESTRA_NAME`. All values are listed in [`.dev.vars.example`](.dev.vars.example).
-5. Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
-
-The first deploy also creates a small KV namespace (`CACHE`) for caching the archive index. Wrangler may write its id into `wrangler.toml`; the id is not secret. It also sets up a Durable Object (`SHEET_LOCK`, free plan) that lets saves to the sheet take turns, so two people saving at once don't end up in each other's rows; it stores nothing. `pnpm build` adds it to the worker (`scripts/wrap-worker.mjs`).
-
-What the app writes itself and nobody edits by hand (push subscriptions, which reminders went out) lives in a D1 database (`DB`, free plan), not in the sheet. To keep it in the EU, create it before the first deploy with `pnpm wrangler d1 create noten --jurisdiction eu` and put its `database_id` into `wrangler.toml`; otherwise the first deploy creates one. Its tables are in `migrations/`. D1 keeps 30 days of history on its own ([Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)): `pnpm wrangler d1 time-travel restore noten --timestamp=…` goes back to any minute in that time.
-
-The data people maintain (pieces, concerts, programmes, members, rights, sign-ups, loans, notes, settings) can move into D1 as well (#186). On **Datenbank** (`/setup/datenbank`) an admin sees what the sheet holds, tab by tab, with the columns the app doesn't know, and takes it over in one step. From then on every page reads D1 and every save goes there; the sheet becomes a copy that is written again every night when something changed that day (job "In die Tabelle schreiben" on `/status`), so it stays readable and printable and is a backup outside Cloudflare. Changes made by hand in the sheet are overwritten then. "Zurück zur Tabelle" writes everything into the sheet once more and makes it the source again. "Alles herunterladen" gives all data as JSON.
-
-In D1 each tab is a table with real links and checks (`src/lib/server/db/schema.ts`, written out in `migrations/0009_data.sql`). A programme row belongs to its concert and points to its piece; loans, notes and rehearsals point to pieces; a concert can play another's programme. Renaming a piece or concert therefore carries through everywhere, and a piece still in a programme can't be deleted. Where a name matches nothing (an encore, rented music) it stays as text, as in the sheet. Piece titles, concert names, member emails, groups, rights, settings and ids are unique, compared the way the app compares them. The import lists the rows that break a rule (the ones the app already ignores) and leaves them out. Each row carries a revision, so a save over a row someone else just changed is refused rather than overwriting it; that's why plain saves to D1 no longer take a turn on `SHEET_LOCK` (see `src/lib/server/sheet-lock.ts` for what still does).
-
-Reminders need a key pair for Web Push: `node scripts/vapid-keys.mjs`, then store both values with `pnpm wrangler secret put VAPID_PUBLIC_KEY` and `… VAPID_PRIVATE_KEY`. Members turn notifications on per device under **Profil**. A Cron Trigger runs the background jobs: filling the caches, reminders about unanswered rehearsals and rented music that is due, a daily check of the Google connection that notifies the admins when it breaks, and a completeness check that reads a few PDFs per run and lists parts that look empty or much shorter than the others as hints on **Fehlende Stimmen** (it never renames a file by itself). If a retention period is set on **/einstellungen**, a daily job also removes the names from sign-ups and attendance older than that many seasons; the rows stay, so counts don't change. `/status` shows when each last ran and can start one by hand.
-
-Email is optional: an admin connects the orchestra's Google account on `/status` (Gmail, scope `gmail.send` only). Members without a Google account then get a sign-in link by email, and members without notifications get their reminders by email, with one-click answers. See "Email" in [docs/setup-google.md](docs/setup-google.md#email).
+Step by step, with automatic deploys from GitHub, reminders, email and backups: **[Deploying](https://github.com/lgreil/sheetmanagement/wiki/Deploying)** and **[Configuration](https://github.com/lgreil/sheetmanagement/wiki/Configuration)** in the wiki.
 
 **Nothing deployment-specific belongs in the repository.** Ids, keys and member data go into Cloudflare secrets or the Google Sheet.
 
-### Automatic deploys from GitHub
+## Documentation
 
-Once set up, every merge into `main` deploys by itself (`.github/workflows/deploy.yml`): it type-checks, tests, builds, deploys with Wrangler and then runs a smoke test against the live site (`.github/scripts/smoke-test.sh`). It can also be started by hand under **Actions → Deploy → Run workflow**.
-
-It needs, in the GitHub repository settings:
-
-- Secret `CLOUDFLARE_API_TOKEN`: a Cloudflare API token from the template **Edit Cloudflare Workers** (Cloudflare dashboard → My Profile → API Tokens). It also applies the database schema, so the token needs **D1: Edit**; add it if the template doesn't include it.
-- Secret `CLOUDFLARE_ACCOUNT_ID`: shown by `pnpm wrangler whoami`.
-- Variable `APP_URL`: the app's address, e.g. `https://noten.<your-account>.workers.dev`.
-
-The app's own settings (Google keys, ids, sign-in) stay Cloudflare secrets, set once with `wrangler secret put`; the workflow doesn't touch them.
-
-### Checks on pull requests
-
-`.github/workflows/ci.yml` runs `pnpm check`, `pnpm test` and `pnpm build` on every pull request, and in a second job the end-to-end tests: Playwright opens the demo on a desktop and a phone size, goes through the main pages and the weekly flows (signing up, saving a programme, attendance) and checks each page with axe for accessibility problems. Screenshots and traces of a failure are kept as an artifact. With branch protection on `main`, both jobs and CodeQL have to pass before merging. Dependabot opens grouped update PRs every Monday (`.github/dependabot.yml`).
-
-## Adapting it for your orchestra
-
-Name, logo, accent colour, the look (bold: condensed headings and the logo behind the greeting; or plain) and the features in use can be changed by an admin on **/einstellungen** without touching code or variables. The page saves them in the sheet's "Einstellungen" tab; they win over the variables below, which win over the preset, and an empty field falls back to them.
-
-Everything else orchestra-specific lives in [`src/lib/config/`](src/lib/config):
-
-- **Instruments**: names, display order, alternative spellings
-- **Naming rules**: how part files are named (separator, status words like `FEHLT`, the `@` prefix for scores)
-- **Event keywords**: which calendar titles count as concert, rehearsal or dress rehearsal
-- **Name and accent colour**; per deployment also `ORCHESTRA_NAME` and `ORCHESTRA_ACCENT` (`#rrggbb`). The shades for the light and dark scheme are derived from the accent so text stays readable; /status shows them with their contrast
-- **Website and social media** in the footer: `ORCHESTRA_LINKS="Website https://…; Instagram https://…"` or the field on /einstellungen; none when neither is set
-- **Logo**: `ORCHESTRA_LOGO` (a file in `static/` or an https link) replaces `static/logo.png`; the demo uses `static/demo/musterorchester.svg`
-- **Features**: what the orchestra doesn't use (rented music, the GEMA list, attendance, sign-ups, wishes, the calendar feed, saving parts offline, the seasonal drawings) is turned off with `features` in the preset or `FEATURES_OFF="leihmaterial, gema"`; its pages, menu entries and sheet tabs go away
-
-Copy `presets/bachkreis.ts`, adjust it, and select your preset in `config/index.ts`.
-
-**Language:** German by default; English with `APP_LANGUAGE=en` when building (`APP_LANGUAGE=en pnpm deploy`, or in a `.env` file). One language per deployment: the texts are in [`src/lib/i18n/de.ts`](src/lib/i18n/de.ts) and [`en.ts`](src/lib/i18n/en.ts), and the type checker makes sure both have every text. A new English deployment also gets English tab and column names in its sheet; an existing sheet keeps its names, so don't switch the language of a deployment that already has one. Instrument names come from the preset and can be renamed on /einstellungen.
+| | |
+|---|---|
+| [Wiki](https://github.com/lgreil/sheetmanagement/wiki) | Features, deploying, configuration, the demo, FAQ |
+| [docs/setup-google.md](docs/setup-google.md) | Connecting Google Drive, Calendar, Sheets and Gmail |
+| [PRODUCT.md](PRODUCT.md) | Who it's for and what it's meant to do |
+| [DESIGN.md](DESIGN.md) | The design system |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute |
 
 ## Contributing
 
-Issues and pull requests are welcome. Please keep it lightweight: think twice before adding a dependency.
+Issues and pull requests are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md). Please keep it lightweight: think twice before adding a dependency. Security problems: see [SECURITY.md](SECURITY.md).
 
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE). Instrument icons from [game-icons.net](https://game-icons.net) (CC BY 3.0), Barlow Condensed (OFL).
