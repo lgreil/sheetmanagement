@@ -48,16 +48,30 @@ describe('moving the data into D1', () => {
 		let pieces = await readTab('pieces');
 		const [first, second] = pieces.rows;
 		await updateRecord('pieces', pieces, second.row, { notes: 'Neu eingerichtet' });
-		await deleteRows('pieces', pieces, [first.row]);
-		pieces = await readTab('pieces');
 		await appendRecords('pieces', pieces, [{ title: 'Finlandia', composer: 'Sibelius' }]);
+		pieces = await readTab('pieces');
+		expect(pieces.rows.find((row) => row.values.title === second.values.title)?.values.notes).toBe('Neu eingerichtet');
+		expect(pieces.rows.at(-1)?.values).toMatchObject({ title: 'Finlandia', composer: 'Sibelius' });
 
-		const now = (await readTab('pieces')).rows.map((row) => row.values);
-		expect(now).toHaveLength(pieces.rows.length + 1);
-		expect(now[0]).toMatchObject({ title: second.values.title, notes: 'Neu eingerichtet' });
-		expect(now.at(-1)).toMatchObject({ title: 'Finlandia', composer: 'Sibelius' });
+		// A piece in a programme can't go; one in none can.
+		await expect(deleteRows('pieces', pieces, [pieces.rows[0].row])).rejects.toMatchObject({ status: 409 });
+		await deleteRows('pieces', pieces, [pieces.rows.at(-1)!.row]);
+		expect((await readTab('pieces')).rows.map((row) => row.values.title)).not.toContain('Finlandia');
 		// The sheet isn't touched until the export.
 		expect((await sheetPieces())[0].title).toBe(first.values.title);
+		expect((await sheetPieces()).find((row) => row.title === second.values.title)?.notes).not.toBe('Neu eingerichtet');
+	});
+
+	it('follows a renamed piece into its programmes', async () => {
+		await importFromSheet();
+		const program = await readTab('program');
+		const title = program.rows[0].values.piece;
+		const pieces = await readTab('pieces');
+		const row = pieces.rows.find((r) => r.values.title === title)!;
+		await updateRecord('pieces', pieces, row.row, { title: `${title} (neu)` });
+		const now = await readTab('program');
+		expect(now.rows.filter((r) => r.values.piece === title)).toEqual([]);
+		expect(now.rows[0].values.piece).toBe(`${title} (neu)`);
 	});
 
 	it('refuses a save to a row someone else changed meanwhile', async () => {
@@ -72,7 +86,7 @@ describe('moving the data into D1', () => {
 		const columns = Object.keys(LAYOUT.missingParts.columns);
 		const row = columns.map((column) => (column === 'fileId' ? 'f1' : column === 'done' ? true : ''));
 		await replaceRows('missingParts', [row, columns.map(() => '')]);
-		expect((await store.readData(['missingParts'])).missingParts.map((r) => r.cells)).toEqual([{ fileId: 'f1', done: 'TRUE' }]);
+		expect((await store.readData(['missingParts'])).missingParts!.map((r) => r.cells)).toEqual([{ fileId: 'f1', done: 'TRUE' }]);
 	});
 
 	it('knows whether anything changed since the last export', async () => {

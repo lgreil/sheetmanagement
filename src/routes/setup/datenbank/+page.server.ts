@@ -22,7 +22,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	const state = await dataState({ force: true });
 	if (state.source === 'd1') {
 		const data = await getStore().readData();
-		return { source: state.source, hasD1: true, rows: Object.values(data).reduce((sum, rows) => sum + rows.length, 0), plan: null, problem: null };
+		return { source: state.source, hasD1: true, rows: Object.values(data).reduce((sum, rows) => sum + (rows?.length ?? 0), 0), plan: null, problem: null };
 	}
 	if (!hasD1()) return { source: state.source, hasD1: false, rows: 0, plan: null, problem: null };
 	try {

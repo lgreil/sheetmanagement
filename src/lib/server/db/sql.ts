@@ -1,5 +1,6 @@
+import { sqlData } from './data-sql.ts';
 import { fingerprint, type ErrorGroup, type ErrorSource } from '#lib/errors/errors.ts';
-import { reminderKey, type DataRow, type MarkShare, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
 type ErrorRow = { fingerprint: string; source: ErrorSource; place: string; message: string; status: number | null; count: number; first_at: string; last_at: string; notified: number };
 const errorFrom = (row: ErrorRow): ErrorGroup => ({
@@ -83,26 +84,6 @@ export function sqlStore(db: D1): Store {
 		}
 		return added;
 	}
-
-	/** Rows in as few statements as D1's 100 values per statement allow. */
-	function inserts(tab: string, rows: Record<string, string>[]): D1Statement[] {
-		const statements: D1Statement[] = [];
-		for (let i = 0; i < rows.length; i += 45) {
-			const chunk = rows.slice(i, i + 45);
-			statements.push(
-				db.prepare(`INSERT INTO data_rows (tab, cells) VALUES ${chunk.map(() => '(?, ?)').join(', ')}`).bind(...chunk.flatMap((cells) => [tab, JSON.stringify(cells)]))
-			);
-		}
-		return statements;
-	}
-	const setState = (key: string, value: string) =>
-		db.prepare(`INSERT INTO job_state (key, value) VALUES (?, ?) ON CONFLICT (key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`).bind(key, value);
-	/** Every change to the data counts its version up, in the same batch, so caches know. */
-	const bump = () =>
-		db.prepare(
-			`INSERT INTO job_state (key, value) VALUES ('data-version', '1') ON CONFLICT (key) DO UPDATE SET value = CAST(value AS INTEGER) + 1, updated_at = datetime('now')`
-		);
-	const chunked = <T>(items: T[], size: number) => Array.from({ length: Math.ceil(items.length / size) }, (_, i) => items.slice(i * size, i * size + size));
 
 	return {
 		kind: 'd1',
@@ -320,66 +301,7 @@ export function sqlStore(db: D1): Store {
 			else await run(`DELETE FROM error_log WHERE last_at < datetime('now', ?)`, `-${days} days`);
 		},
 
-		async dataState() {
-			const rows = await all<{ key: string; value: string }>(`SELECT key, value FROM job_state WHERE key IN ('data-source', 'data-version')`);
-			const value = (key: string) => rows.find((row) => row.key === key)?.value;
-			return { source: value('data-source') === 'd1' ? 'd1' : 'sheet', version: Number(value('data-version') ?? 0) };
-		},
-		async setDataSource(source) {
-			await schema();
-			await db.batch([setState('data-source', source), bump()]);
-		},
-		async readData(tabs) {
-			const only = tabs ? ` WHERE tab IN (${tabs.map(() => '?').join(', ')})` : '';
-			const [present, rows] = await Promise.all([
-				all<{ tab: string }>(`SELECT tab FROM data_tabs${only}`, ...(tabs ?? [])),
-				all<{ id: number; tab: string; cells: string }>(`SELECT id, tab, cells FROM data_rows${only} ORDER BY id`, ...(tabs ?? []))
-			]);
-			const data: Record<string, DataRow[]> = Object.fromEntries(present.map(({ tab }) => [tab, []]));
-			for (const row of rows) data[row.tab]?.push({ id: row.id, cells: JSON.parse(row.cells) });
-			return data;
-		},
-		async addDataTab(tab) {
-			await schema();
-			await db.batch([db.prepare('INSERT OR IGNORE INTO data_tabs (tab) VALUES (?)').bind(tab), bump()]);
-		},
-		async appendData(tab, rows) {
-			if (!rows.length) return;
-			await schema();
-			await db.batch([...inserts(tab, rows), bump()]);
-		},
-		async updateData(tab, rows) {
-			if (!rows.length) return;
-			await schema();
-			await db.batch([
-				...rows.map((row) => db.prepare(`UPDATE data_rows SET cells = ?, updated_at = datetime('now') WHERE id = ? AND tab = ?`).bind(JSON.stringify(row.cells), row.id, tab)),
-				bump()
-			]);
-		},
-		async deleteData(tab, ids) {
-			if (!ids.length) return;
-			await schema();
-			await db.batch([
-				...chunked(ids, 90).map((chunk) => db.prepare(`DELETE FROM data_rows WHERE tab = ? AND id IN (${chunk.map(() => '?').join(', ')})`).bind(tab, ...chunk)),
-				bump()
-			]);
-		},
-		async replaceData(tab, rows) {
-			await schema();
-			await db.batch([db.prepare('DELETE FROM data_rows WHERE tab = ?').bind(tab), db.prepare('INSERT OR IGNORE INTO data_tabs (tab) VALUES (?)').bind(tab), ...inserts(tab, rows), bump()]);
-		},
-		async importData(tabs) {
-			await schema();
-			// One batch is one transaction: nobody ever sees half an import.
-			await db.batch([
-				db.prepare('DELETE FROM data_rows'),
-				db.prepare('DELETE FROM data_tabs'),
-				...Object.keys(tabs).map((tab) => db.prepare('INSERT INTO data_tabs (tab) VALUES (?)').bind(tab)),
-				...Object.entries(tabs).flatMap(([tab, rows]) => inserts(tab, rows)),
-				setState('data-source', 'd1'),
-				bump()
-			]);
-		},
+		...sqlData(db, schema),
 
 		async hit(key, windowMinutes) {
 			const since = `-${windowMinutes} minutes`;

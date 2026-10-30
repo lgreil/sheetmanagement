@@ -1833,7 +1833,22 @@ export const en: Texts = {
 		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), and every night the sheet is a copy outside Cloudflare.',
 		statusD1: (rows: number) => `Source: database, ${rows} rows; the sheet is a copy`,
 		exportSheetOff: 'The sheet is the source; nothing to export.',
-		exportUnchanged: 'Nothing changed since the last export; the sheet is up to date.'
+		exportUnchanged: 'Nothing changed since the last export; the sheet is up to date.',
+		/** Why the database refused a save (#186). */
+		refused: {
+			link: (tab: string, column: string, value: string) => `${tab}, ${column}: “${value}” doesn’t exist. Add it first, then enter it here.`,
+			unique: (tab: string, column: string, value: string) => `${tab}, ${column}: ${value ? `“${value}”` : 'That'} exists already.`,
+			required: (tab: string, column: string) => `${tab}: ${column} is missing.`,
+			used: (tab: string) => `${tab}: This is still in use, e.g. in a programme. Remove it there first.`
+		},
+		skippedTitle: 'Not taken over',
+		skippedLead: 'The app ignores these rows already; they stay in the sheet but don’t go into the database.',
+		skipped: {
+			link: (tab: string, row: number, column: string, value: string) => `${tab}, row ${row}: ${column} “${value}” doesn’t exist`,
+			unique: (tab: string, row: number, column: string, value: string) => `${tab}, row ${row}: ${column} “${value}” twice`,
+			required: (tab: string, row: number, column: string) => `${tab}, row ${row}: ${column} missing`,
+			used: (tab: string, row: number) => `${tab}, row ${row}: still in use`
+		}
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

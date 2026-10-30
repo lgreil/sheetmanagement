@@ -1,3 +1,4 @@
+import { isHttpError } from '@sveltejs/kit';
 import { config, PRESET_INSTRUMENTS, useInstrumentOverrides, type InstrumentOverride, type OrchestraConfig } from '#lib/config/index.ts';
 import { joinList } from '#lib/repertoire/lists.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
@@ -80,7 +81,7 @@ export async function readSheet(client: GoogleClient, spreadsheetId: string) {
 /** All tabs from D1 (#186), as grids like the sheet's. */
 async function readD1Sheet() {
 	const data = await getStore().readData();
-	return rawFromGrids(Object.fromEntries(Object.entries(data).filter(([key]) => key in LAYOUT).map(([key, rows]) => [key, gridOf(key as TabKey, rows)])));
+	return rawFromGrids(Object.fromEntries(Object.entries(data).map(([key, rows]) => [key, gridOf(key as TabKey, rows ?? [])])));
 }
 
 export interface Sources {
@@ -129,9 +130,20 @@ async function syncSheet(client: GoogleClient, spreadsheetId: string, repertoire
 	const canWrite = (table: { missing: string[] }, id: string) => !table.missing.includes(id);
 	let wrote = false;
 	if (await usingD1()) {
-		if (plan.pieces.length) await appendRecords('pieces', pieces, plan.pieces);
-		if (plan.concerts.length) await appendRecords('concerts', concerts, plan.concerts);
-		return plan.pieces.length + plan.concerts.length > 0;
+		// One at a time: a folder or concert D1 refuses (its title is taken) stays out, the others come in.
+		let added = 0;
+		const add = async (key: 'pieces' | 'concerts', table: typeof pieces | typeof concerts, record: Record<string, string>) => {
+			try {
+				await appendRecords(key, table as never, [record]);
+				added++;
+			} catch (cause) {
+				if (!isHttpError(cause, 409)) throw cause;
+				console.warn(`Not added from Drive or the calendar: ${cause.body.message}`);
+			}
+		};
+		for (const record of plan.pieces) await add('pieces', pieces, record);
+		for (const record of plan.concerts) await add('concerts', concerts, record);
+		return added > 0;
 	}
 	if (plan.pieces.length && canWrite(pieces, 'driveFolderId')) {
 		await appendRows(client, spreadsheetId, tabRange(LAYOUT.pieces.tab), plan.pieces.map((row) => toSheetRow(row, pieces.indexes)));

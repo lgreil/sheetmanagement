@@ -2,6 +2,7 @@ import { LAYOUT, normalize, readTable, type TabKey } from '#lib/repertoire/sheet
 import { toSheetRow } from '#lib/repertoire/link.ts';
 import { dataState, forgetDataState, gridOf } from './data-source.ts';
 import { getStore } from './db/index.ts';
+import { prepareImport, type SkippedRow } from './db/schema.ts';
 import { batchUpdate, clearValues, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
 import { getRepertoire, readSheetGrids } from './repertoire.ts';
 import { getGoogle, requireSetting } from './services.ts';
@@ -27,7 +28,10 @@ export interface TabPlan {
 
 export interface ImportPlan {
 	tabs: TabPlan[];
+	/** Rows that go into D1. */
 	rows: number;
+	/** Rows that break a link or check and stay behind, with why. */
+	skipped: SkippedRow[];
 }
 
 const columnsOf = (key: TabKey) => LAYOUT[key].columns as Record<string, string>;
@@ -43,7 +47,7 @@ async function readSheetRecords() {
 	return (Object.entries(grids) as [TabKey, string[][]][]).map(([key, grid]) => {
 		const table = readTable(grid, columnsOf(key));
 		const known = new Set(Object.values(columnsOf(key)).map(normalize));
-		const rows = table.rows.map((row) => Object.fromEntries(Object.entries(row.values).filter(([, value]) => value)) as Record<string, string>);
+		const rows = table.rows.map((row) => ({ row: row.row, cells: Object.fromEntries(Object.entries(row.values).filter(([, value]) => value)) as Record<string, string> }));
 		return {
 			plan: {
 				key,
@@ -57,24 +61,30 @@ async function readSheetRecords() {
 	});
 }
 
-/** What the import would take over, without changing anything. */
+/** The sheet's rows checked against the schema, and what the import would do with them. */
+function prepare(tabs: Awaited<ReturnType<typeof readSheetRecords>>) {
+	const prepared = prepareImport(Object.fromEntries(tabs.map(({ plan, rows }) => [plan.key, rows])));
+	const plans = tabs.map(({ plan }) => ({ ...plan, rows: prepared.rows[plan.key]?.length ?? 0 }));
+	return { prepared, plan: { tabs: plans, rows: plans.reduce((sum, tab) => sum + tab.rows, 0), skipped: prepared.skipped } satisfies ImportPlan };
+}
+
+/** What the import would take over, and what not, without changing anything. */
 export async function planImport(): Promise<ImportPlan> {
-	const tabs = (await readSheetRecords()).map(({ plan }) => plan);
-	return { tabs, rows: tabs.reduce((sum, tab) => sum + tab.rows, 0) };
+	return prepare(await readSheetRecords()).plan;
 }
 
 /** Takes the sheet over into D1 and makes D1 the source. Earlier data in D1 is replaced. */
 export async function importFromSheet(): Promise<ImportPlan> {
 	// In the lock, so no save to the sheet lands between the read and the switch.
-	const tabs = await withSheetLock(async () => {
+	const plan = await withSheetLock(async () => {
 		const tabs = await readSheetRecords();
-		await getStore().importData(Object.fromEntries(tabs.map(({ plan, rows }) => [plan.key, rows])));
+		const { prepared, plan } = prepare(tabs);
+		await getStore().importData(prepared, tabs.map((tab) => tab.plan.key));
 		forgetDataState();
-		return tabs;
+		return plan;
 	});
 	await getRepertoire({ force: true });
-	const plans = tabs.map(({ plan }) => plan);
-	return { tabs: plans, rows: plans.reduce((sum, tab) => sum + tab.rows, 0) };
+	return plan;
 }
 
 /**
@@ -89,6 +99,7 @@ export async function exportToSheet(): Promise<{ tabs: number; rows: number }> {
 		const { version } = await dataState({ force: true });
 		const data = await getStore().readData();
 		const keys = (Object.keys(data) as TabKey[]).filter((key) => key in LAYOUT);
+		const rowsOf = (key: TabKey) => data[key] ?? [];
 		const present = new Set((await getTabs(client, spreadsheetId)).map((tab) => tab.title));
 		const added = keys.filter((key) => !present.has(LAYOUT[key].tab));
 		await batchUpdate(
@@ -106,7 +117,7 @@ export async function exportToSheet(): Promise<{ tabs: number; rows: number }> {
 				table.indexes[column] = header.length;
 				header.push(columnsOf(key)[column]);
 			}
-			const rows = gridOf(key, data[key]).slice(1).map((cells) => {
+			const rows = gridOf(key, rowsOf(key)).slice(1).map((cells) => {
 				const values = Object.fromEntries(Object.keys(columnsOf(key)).map((column, j) => [column, cells[j]]));
 				const row = toSheetRow(values, table.indexes);
 				return [...row, ...Array(Math.max(0, header.length - row.length)).fill('')];
@@ -143,7 +154,7 @@ export async function allData(): Promise<{ source: 'sheet' | 'd1'; tabs: Record<
 	const { source } = await dataState({ force: true });
 	if (source === 'd1') {
 		const data = await getStore().readData();
-		return { source, tabs: Object.fromEntries(Object.entries(data).map(([key, rows]) => [key, rows.map((row) => row.cells)])) };
+		return { source, tabs: Object.fromEntries(Object.entries(data).map(([key, rows]) => [key, (rows ?? []).map((row) => row.cells)])) };
 	}
-	return { source, tabs: Object.fromEntries((await readSheetRecords()).map(({ plan, rows }) => [plan.key, rows])) };
+	return { source, tabs: Object.fromEntries((await readSheetRecords()).map(({ plan, rows }) => [plan.key, rows.map((row) => row.cells)])) };
 }

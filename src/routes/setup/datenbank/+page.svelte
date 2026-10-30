@@ -5,9 +5,13 @@
 	import Icon from '#lib/components/Icon.svelte';
 	import PageHeader from '#lib/components/PageHeader.svelte';
 	import Title from '#lib/components/Title.svelte';
+	import { LAYOUT, type TabKey } from '#lib/repertoire/sheet.ts';
 
 	let { data, form } = $props();
 	const saving = new FormState();
+
+	const tabName = (tab: TabKey) => LAYOUT[tab].tab;
+	const columnName = (tab: TabKey, column: string) => (LAYOUT[tab].columns as Record<string, string>)[column] ?? column;
 
 	/** Asks first for the steps that change where the data lives. */
 	const ask = (question: string) => (event: SubmitEvent) => confirm(question) || event.preventDefault();
@@ -46,6 +50,17 @@
 			{/each}
 		</ul>
 		<p>{t.dataMove.total(data.plan.rows, data.plan.tabs.length)}</p>
+		{#if data.plan.skipped.length}
+			<details>
+				<summary class="warn">{t.dataMove.skippedTitle} ({data.plan.skipped.length})</summary>
+				<p class="muted small">{t.dataMove.skippedLead}</p>
+				<ul class="tabs">
+					{#each data.plan.skipped as skip (`${skip.tab} ${skip.row}`)}
+						<li class="muted small">{t.dataMove.skipped[skip.kind](tabName(skip.tab), skip.row, columnName(skip.tab, skip.column), skip.value)}</li>
+					{/each}
+				</ul>
+			</details>
+		{/if}
 		<form method="POST" action="?/import" onsubmit={ask(t.dataMove.importConfirm)} use:enhance={saving.submit()}>
 			<button class="button" disabled={saving.busy}>
 				<Icon name="download" size={16} />

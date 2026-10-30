@@ -1,5 +1,6 @@
 import { fingerprint, type ErrorGroup } from '#lib/errors/errors.ts';
-import { reminderKey, type DataRow, type DataState, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { memoryData } from './data-memory.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -24,12 +25,6 @@ export function memoryStore(now = () => Date.now()): Store {
 	const partChecks = new Map<string, PartCheck>();
 	const errors = new Map<string, ErrorGroup>();
 	const daysAgo = (days: number) => sqlTime(now() - days * 86_400_000);
-	/** The orchestra's data by tab (#186). */
-	const data = new Map<string, DataRow[]>();
-	const dataMeta: DataState = { source: 'sheet', version: 0 };
-	let nextRow = 1;
-	const newRows = (rows: Record<string, string>[]) => rows.map((cells) => ({ id: nextRow++, cells: { ...cells } }));
-	const changed = () => void dataMeta.version++;
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
 	return {
@@ -171,42 +166,8 @@ export function memoryStore(now = () => Date.now()): Store {
 			for (const [key, group] of errors) if (days <= 0 || group.lastAt < daysAgo(days)) errors.delete(key);
 		},
 
-		dataState: async () => ({ ...dataMeta }),
-		async setDataSource(source) {
-			dataMeta.source = source;
-			changed();
-		},
-		readData: async (tabs) =>
-			Object.fromEntries([...data].filter(([tab]) => !tabs || tabs.includes(tab)).map(([tab, rows]) => [tab, rows.map((row) => ({ id: row.id, cells: { ...row.cells } }))])),
-		async addDataTab(tab) {
-			if (!data.has(tab)) data.set(tab, []);
-			changed();
-		},
-		async appendData(tab, rows) {
-			if (!rows.length) return;
-			data.set(tab, [...(data.get(tab) ?? []), ...newRows(rows)]);
-			changed();
-		},
-		async updateData(tab, rows) {
-			const byId = new Map(rows.map((row) => [row.id, row.cells]));
-			data.set(tab, (data.get(tab) ?? []).map((row) => (byId.has(row.id) ? { id: row.id, cells: { ...byId.get(row.id)! } } : row)));
-			changed();
-		},
-		async deleteData(tab, ids) {
-			const gone = new Set(ids);
-			data.set(tab, (data.get(tab) ?? []).filter((row) => !gone.has(row.id)));
-			changed();
-		},
-		async replaceData(tab, rows) {
-			data.set(tab, newRows(rows));
-			changed();
-		},
-		async importData(tabs) {
-			data.clear();
-			for (const [tab, rows] of Object.entries(tabs)) data.set(tab, newRows(rows));
-			dataMeta.source = 'd1';
-			changed();
-		},
+		// The orchestra's data (#186).
+		...memoryData(),
 
 		async hit(key, windowMinutes) {
 			const last = hits.get(key);

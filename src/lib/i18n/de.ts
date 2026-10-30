@@ -1849,7 +1849,22 @@ export const de = {
 		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), und die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare.',
 		statusD1: (rows: number) => `Quelle: Datenbank, ${rows} Zeilen; die Tabelle ist eine Kopie`,
 		exportSheetOff: 'Die Tabelle ist die Quelle; nichts zu exportieren.',
-		exportUnchanged: 'Seit dem letzten Export nichts geändert; die Tabelle ist aktuell.'
+		exportUnchanged: 'Seit dem letzten Export nichts geändert; die Tabelle ist aktuell.',
+		/** Why the database refused a save (#186). */
+		refused: {
+			link: (tab: string, column: string, value: string) => `${tab}, ${column}: „${value}“ gibt es nicht. Erst anlegen, dann hier eintragen.`,
+			unique: (tab: string, column: string, value: string) => `${tab}, ${column}: ${value ? `„${value}“` : 'Das'} gibt es schon.`,
+			required: (tab: string, column: string) => `${tab}: ${column} fehlt.`,
+			used: (tab: string) => `${tab}: Das wird noch gebraucht, z. B. in einem Programm. Erst dort entfernen.`
+		},
+		skippedTitle: 'Wird nicht übernommen',
+		skippedLead: 'Diese Zeilen übergeht die App schon heute; sie bleiben in der Tabelle, kommen aber nicht in die Datenbank.',
+		skipped: {
+			link: (tab: string, row: number, column: string, value: string) => `${tab}, Zeile ${row}: ${column} „${value}“ gibt es nicht`,
+			unique: (tab: string, row: number, column: string, value: string) => `${tab}, Zeile ${row}: ${column} „${value}“ doppelt`,
+			required: (tab: string, row: number, column: string) => `${tab}, Zeile ${row}: ${column} fehlt`,
+			used: (tab: string, row: number) => `${tab}, Zeile ${row}: wird noch gebraucht`
+		}
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {
