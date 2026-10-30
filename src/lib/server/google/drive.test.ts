@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { GoogleClient } from './client.ts';
-import { createComment, queryString, renameFile, replyToComment } from './drive.ts';
+import { createComment, queryString, renameFile, replyToComment, uploadFile } from './drive.ts';
 
 describe('queryString', () => {
 	it('quotes a plain folder id as is', () => {
@@ -42,5 +42,29 @@ describe('writing to Drive', () => {
 		await renameFile(client, 'f1', 'Elegie - Viola - LEER.pdf');
 		expect(calls[0]).toMatchObject({ method: 'PATCH', body: { name: 'Elegie - Viola - LEER.pdf' } });
 		expect(calls[0].url.searchParams.get('supportsAllDrives')).toBe('true');
+	});
+});
+
+describe('uploadFile', () => {
+	it('sends the metadata and the content in one multipart request', async () => {
+		const calls: { url: URL; init: RequestInit }[] = [];
+		const client = new GoogleClient({ getToken: async () => 'token' }, (async (input: URL, init: RequestInit) => {
+			calls.push({ url: new URL(input), init });
+			return Response.json({ id: 'new-id', name: 'daten-2026-10-30.json', mimeType: 'application/json' });
+		}) as typeof fetch);
+		const file = await uploadFile(client, { name: 'daten-2026-10-30.json', mimeType: 'application/json', folderId: 'backups', content: '{"tabs":{}}' });
+		expect(file.id).toBe('new-id');
+
+		const [{ url, init }] = calls;
+		expect(init.method).toBe('POST');
+		expect(url.pathname).toBe('/upload/drive/v3/files');
+		expect(url.searchParams.get('uploadType')).toBe('multipart');
+		const type = (init.headers as Record<string, string>)['content-type'];
+		const boundary = type.match(/^multipart\/related; boundary=(.+)$/)?.[1];
+		expect(boundary).toBeTruthy();
+		const parts = (await (init.body as Blob).text()).split(`--${boundary}`);
+		expect(parts.at(-1)).toBe('--');
+		expect(JSON.parse(parts[1].split('\r\n\r\n')[1])).toEqual({ name: 'daten-2026-10-30.json', mimeType: 'application/json', parents: ['backups'] });
+		expect(parts[2]).toBe('\r\ncontent-type: application/json\r\n\r\n{"tabs":{}}\r\n');
 	});
 });

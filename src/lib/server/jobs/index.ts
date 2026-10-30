@@ -1,5 +1,6 @@
 import { appEnv } from '../env.ts';
 import { checkConnections } from './check.ts';
+import { backupData } from './backup.ts';
 import { announceErrors } from './errors.ts';
 import { exportData } from './export.ts';
 import { checkParts } from './parts.ts';
@@ -33,7 +34,8 @@ export const JOBS = {
 	parts: { everyMinutes: 10, run: () => checkParts() },
 	retention: { everyMinutes: 24 * 60, run: applyRetention },
 	errors: { everyMinutes: 60, run: announceErrors },
-	export: { everyMinutes: 24 * 60, run: exportData }
+	export: { everyMinutes: 24 * 60, run: exportData },
+	backup: { everyMinutes: 7 * 24 * 60, run: backupData }
 } satisfies Record<string, Job>;
 
 export type JobName = keyof typeof JOBS;

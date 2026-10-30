@@ -1709,7 +1709,7 @@ export const en: Texts = {
 		redirectUri: (uri: string) => `Redirect URI: ${uri}`,
 		bootstrapAdmins: (n: number) => `${n} bootstrap admins`,
 		jobs: 'Background jobs',
-		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention', errors: 'Report errors', export: 'Write to the sheet' },
+		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention', errors: 'Report errors', export: 'Write to the sheet', backup: 'Backup to Drive' },
 		retentionOff: 'No retention set; all names stay.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'entry' : 'entries'} from before ${cutoff} without names.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'part' : 'parts'} checked, ${left ? `${left} to go` : 'all checked'}.`,
@@ -1834,10 +1834,15 @@ export const en: Texts = {
 		back: 'The sheet is the source again.',
 		download: 'Download everything (JSON)',
 		failed: (message: string) => `That didn't work: ${message}`,
-		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), and every night the sheet is a copy outside Cloudflare.',
+		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), every night the sheet is a copy outside Cloudflare, and with DRIVE_BACKUP_FOLDER_ID a file with everything goes to Drive every week (the last 8 are kept).',
 		statusD1: (rows: number) => `Source: database, ${rows} rows; the sheet is a copy`,
 		exportSheetOff: 'The sheet is the source; nothing to export.',
 		exportUnchanged: 'Nothing changed since the last export; the sheet is up to date.',
+		backupSheetSource: 'The sheet is the source; Drive keeps its versions itself.',
+		backupOff: 'DRIVE_BACKUP_FOLDER_ID is not set; no backup to Drive.',
+		backupNoAccount: 'No Drive account to write with: connect the Drive account on Status, or DRIVE_WRITE for a shared drive.',
+		backedUp: (name: string, rows: number, trashed: number) =>
+			`Backed up ${name} with ${rows} rows to Drive${trashed ? `; ${trashed} old ${trashed === 1 ? 'backup' : 'backups'} moved to the bin` : ''}.`,
 		/** Why the database refused a save (#186). */
 		refused: {
 			link: (tab: string, column: string, value: string) => `${tab}, ${column}: “${value}” doesn’t exist. Add it first, then enter it here.`,

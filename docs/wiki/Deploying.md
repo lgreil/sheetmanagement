@@ -26,7 +26,7 @@ Open `/status` on your deployment to check every connection, then `/setup` to pr
 | `SHEET_LOCK` (Durable Object) | Lets saves to the sheet take turns | Stores nothing; added to the worker by `scripts/wrap-worker.mjs` |
 | `DB` (D1) | Push subscriptions, which reminders went out | See below |
 
-To keep the database in the EU, create it before the first deploy with `pnpm wrangler d1 create noten --jurisdiction eu` and put its `database_id` into `wrangler.toml`. Its tables are in `migrations/`. D1 keeps 30 days of history ([Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)): `pnpm wrangler d1 time-travel restore noten --timestamp=…` goes back to any minute in that time.
+To keep the database in the EU, create it before the first deploy with `pnpm wrangler d1 create noten --jurisdiction eu` and put its `database_id` into `wrangler.toml`. Its tables are in `migrations/`. D1 keeps 30 days of history ([Time Travel](https://developers.cloudflare.com/d1/reference/time-travel/)): `pnpm wrangler d1 time-travel restore noten --timestamp=…` goes back to any minute in that time. With `DRIVE_BACKUP_FOLDER_ID` set, a weekly JSON copy of all data also goes to a Drive folder, outside Cloudflare (see the setup guide, step 9).
 
 ## Reminders and background jobs
 

@@ -1725,7 +1725,7 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden', export: 'In die Tabelle schreiben' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden', export: 'In die Tabelle schreiben', backup: 'Sicherung in Drive' },
 		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
@@ -1850,10 +1850,15 @@ export const de = {
 		back: 'Die Tabelle ist wieder die Quelle.',
 		download: 'Alles herunterladen (JSON)',
 		failed: (message: string) => `Hat nicht geklappt: ${message}`,
-		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), und die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare.',
+		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare, und mit DRIVE_BACKUP_FOLDER_ID liegt jede Woche eine Datei mit allem in Drive (die letzten 8).',
 		statusD1: (rows: number) => `Quelle: Datenbank, ${rows} Zeilen; die Tabelle ist eine Kopie`,
 		exportSheetOff: 'Die Tabelle ist die Quelle; nichts zu exportieren.',
 		exportUnchanged: 'Seit dem letzten Export nichts geändert; die Tabelle ist aktuell.',
+		backupSheetSource: 'Die Tabelle ist die Quelle; Drive hält ihre Versionen selbst.',
+		backupOff: 'DRIVE_BACKUP_FOLDER_ID ist nicht gesetzt; keine Sicherung in Drive.',
+		backupNoAccount: 'Kein Drive-Konto zum Schreiben: auf Status das Drive-Konto verbinden, oder DRIVE_WRITE für einen geteilten Ordner.',
+		backedUp: (name: string, rows: number, trashed: number) =>
+			`${name} mit ${rows} Zeilen in Drive gesichert${trashed ? `; ${trashed} ${trashed === 1 ? 'alte Sicherung' : 'alte Sicherungen'} im Papierkorb` : ''}.`,
 		/** Why the database refused a save (#186). */
 		refused: {
 			link: (tab: string, column: string, value: string) => `${tab}, ${column}: „${value}“ gibt es nicht. Erst anlegen, dann hier eintragen.`,
