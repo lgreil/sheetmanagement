@@ -86,6 +86,24 @@
 	<a class="link" href="/setup">{t.status.setupSheet}</a>
 </div>
 
+{#if data.hasD1}
+	<!-- The way back from a backup file (#186): replaces everything in D1. -->
+	<section class="card restore">
+		<h2>{t.dataMove.restoreTitle}</h2>
+		<p class="muted">{t.dataMove.restoreLead}</p>
+		<form method="POST" action="?/restore" enctype="multipart/form-data" onsubmit={ask(t.dataMove.restoreConfirm)} use:enhance={saving.submit()}>
+			<label class="file">
+				<span>{t.dataMove.restoreFile}</span>
+				<input type="file" name="backup" accept="application/json,.json" required />
+			</label>
+			<button class="button secondary" disabled={saving.busy}>
+				<Icon name="history" size={16} />
+				{t.dataMove.restoreButton}
+			</button>
+		</form>
+	</section>
+{/if}
+
 <style>
 	.card {
 		--state: var(--border);
@@ -96,6 +114,24 @@
 		border: 1px solid color-mix(in oklab, var(--state) 45%, var(--border));
 		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--state) 6%, var(--surface));
+	}
+
+	.restore {
+		margin-top: var(--space-5);
+	}
+
+	.restore form {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: end;
+		gap: var(--space-3);
+	}
+
+	.file {
+		display: grid;
+		gap: var(--space-1);
+		font-size: var(--text-sm);
+		font-weight: 600;
 	}
 
 	.card.ok {

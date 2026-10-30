@@ -85,7 +85,8 @@
 		[
 			piece.folderUrl && { href: piece.folderUrl, icon: 'folder' as const, label: t.piece.folder, external: true },
 			piece.recording && { href: piece.recording, icon: 'headphones' as const, label: t.piece.recording, external: true },
-			data.canEdit && { href: `/stuecke/${encodeURIComponent(piece.id)}/bearbeiten`, icon: 'edit' as const, label: t.piece.editShort, external: false }
+			data.canEdit && { href: `/stuecke/${encodeURIComponent(piece.id)}/bearbeiten`, icon: 'edit' as const, label: t.piece.editShort, external: false },
+			data.canPrintSet && { href: `/stuecke/${encodeURIComponent(piece.id)}/stimmensatz`, icon: 'print' as const, label: t.partSet.link, external: false }
 		].filter((tile) => !!tile)
 	);
 

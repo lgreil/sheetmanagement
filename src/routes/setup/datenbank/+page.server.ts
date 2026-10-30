@@ -3,7 +3,7 @@ import type { Actions, PageServerLoad } from './$types';
 import { t } from '#lib/i18n/index.ts';
 import { requireAdminWhenSignInIsOn } from '#lib/server/auth/index.ts';
 import { dataState } from '#lib/server/data-source.ts';
-import { backToSheet, exportToSheet, importFromSheet, planImport } from '#lib/server/data-transfer.ts';
+import { backToSheet, BackupFormatError, exportToSheet, importFromSheet, planImport, restoreFromBackup } from '#lib/server/data-transfer.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { isDemo } from '#lib/server/env.ts';
 
@@ -13,6 +13,9 @@ import { isDemo } from '#lib/server/env.ts';
  */
 
 const message = (cause: unknown) => t.dataMove.failed(cause instanceof Error ? cause.message : String(cause));
+
+/** Far more than one orchestra's data; a bigger file is something else. */
+const MAX_BACKUP_BYTES = 20 * 1024 * 1024;
 
 /** A real D1 database; the memory store would lose everything on the next start. */
 const hasD1 = () => getStore().kind === 'd1' || isDemo();
@@ -51,6 +54,21 @@ export const actions: Actions = {
 			return { done: t.dataMove.exported(rows, tabs) };
 		} catch (cause) {
 			console.error('Exporting to the sheet failed:', cause);
+			return fail(500, { problem: message(cause) });
+		}
+	},
+	restore: async ({ locals, request }) => {
+		requireAdminWhenSignInIsOn(locals);
+		if (!hasD1()) return fail(400, { problem: t.dataMove.noD1 });
+		const file = (await request.formData()).get('backup');
+		if (!(file instanceof File) || !file.size) return fail(400, { problem: t.dataMove.restoreNoFile });
+		if (file.size > MAX_BACKUP_BYTES) return fail(400, { problem: t.dataMove.restoreTooLarge });
+		try {
+			const plan = await restoreFromBackup(JSON.parse(await file.text()));
+			return { done: t.dataMove.restored(plan.rows, plan.tabs.length, plan.skipped.length) };
+		} catch (cause) {
+			if (cause instanceof SyntaxError || cause instanceof BackupFormatError) return fail(400, { problem: t.dataMove.restoreNotBackup });
+			console.error('Restoring the backup failed:', cause);
 			return fail(500, { problem: message(cause) });
 		}
 	},

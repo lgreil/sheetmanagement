@@ -21,12 +21,14 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const members = countingMembers(access?.members ?? [], concert.orchestra, library.today);
 	const players = members.flatMap((member) => parseInstruments(member.instrument ?? '', music));
 	return {
-		concert: { id: concert.id, title: concert.title, date: concert.label?.long ?? concert.dateText },
+		back: { href: `/kalender/${encodeURIComponent(concert.id)}`, label: concert.title },
+		title: concert.title,
+		date: concert.label?.long ?? concert.dateText,
 		players: members.length,
 		pieces: concert.program.map((item) => {
 			const piece = item.pieceId ? library.piecesById.get(item.pieceId) : undefined;
 			const parts = piece?.detail ? playedParts(piece.detail) : [];
-			return { title: item.title, pieceId: item.pieceId, parts: partSet(parts, players, music) };
+			return { title: item.title, pieceId: item.pieceId ?? undefined, parts: partSet(parts, players, music) };
 		})
 	};
 };

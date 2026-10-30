@@ -19,6 +19,7 @@
 
 	let { data, form } = $props();
 	const orchestraSave = new FormState();
+	const publishSave = new FormState();
 	/** The orchestra whose Drive folder is being synced. */
 	let syncing = $state<string | null>(null);
 	const several = $derived(data.program.groups.length > 1);
@@ -326,6 +327,17 @@
 				{/if}
 			</div>
 		</div>
+		{#if data.program.published !== null}
+			<!-- In the public feed the orchestra's website reads (#197): a switch, saved at once. -->
+			<form class="publish" method="POST" action="?/publish" use:enhance={publishSave.submit()}>
+				<input type="hidden" name="published" value={data.program.published ? '' : 'on'} />
+				<span class="publish-state" class:on={data.program.published}>
+					<Icon name="globe" size={16} />
+					{data.program.published ? t.concert.publish.on : t.concert.publish.off}
+				</span>
+				<button class="btn small secondary" disabled={publishSave.busy}>{data.program.published ? t.concert.publish.withdraw : t.concert.publish.publish}</button>
+			</form>
+		{/if}
 		{#if data.program.saved}<p class="saved" role="status"><Icon name="check" size={16} />{t.editor.saved}</p>{/if}
 		{#if data.program.driveAuto === 'ok'}<p class="saved" role="status"><Icon name="folder" size={16} />{t.currentProgram.autoDone}</p>{/if}
 		{#if data.program.driveAuto === 'fehler'}<p class="saved warn" role="status"><Icon name="alert" size={16} />{t.currentProgram.autoFailed}</p>{/if}
@@ -1094,6 +1106,35 @@
 		padding: var(--space-2) var(--space-3);
 		border-radius: var(--radius-m);
 		background: color-mix(in oklab, var(--ok) 12%, transparent);
+	}
+
+	.publish {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: var(--space-2) var(--space-3);
+		margin: 0 0 var(--space-3);
+		padding: var(--space-2) var(--space-3);
+		border: 1px solid var(--border);
+		border-radius: var(--radius-m);
+	}
+
+	.publish-state {
+		display: inline-flex;
+		align-items: center;
+		gap: var(--space-2);
+		color: var(--text-muted);
+		font-size: var(--text-sm);
+	}
+
+	.publish-state.on {
+		color: var(--text);
+		font-weight: 600;
+	}
+
+	.publish-state.on :global(svg) {
+		color: var(--ok);
 	}
 
 	.note {

@@ -71,6 +71,8 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 			}
 		},
 		canEdit: locals.access.rights.has('stuecke.bearbeiten') && !!sheet,
+		// The Stimmensatz of this piece alone (#251), once there are parts to print.
+		canPrintSet: locals.access.rights.has('stuecke.bearbeiten') && !!piece.detail?.parts.length,
 		saved: url.searchParams.has('gespeichert'),
 		// How many programmes followed a rename.
 		renamedIn: Number(url.searchParams.get('gespeichert')) || 0,

@@ -18,6 +18,7 @@ import { setEventOrchestras } from '#lib/server/schedule.ts';
 import { getAccessList, getAttendance, getFeedback, getLoans, getMusicConfig, getRehearsalNotes, getRehearsalPlan, getSignups } from '#lib/server/repertoire.ts';
 import { checkRehearsalNote, isEmptyNote, type RehearsalNote } from '#lib/notes/rehearsal-notes.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
+import { publishedIds, setPublished } from '#lib/server/public-concerts.ts';
 import { appendRecords, deleteRows, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecord, withSheetLock } from '#lib/server/sheet-writes.ts';
 import { formatDay } from '#lib/events/format.ts';
 import { concertCheck } from '#lib/repertoire/concert-check.ts';
@@ -334,7 +335,9 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		suggestions: locals.access.rights.has('programme.bearbeiten') && concert?.sheet ? await openWishes(concert.sheet.title) : 0,
 		check: locals.access.rights.has('programme.bearbeiten') ? await check(concert, event, library, await getRehearsalPlan()) : null,
 		// How the Drive sync after saving in the editor went.
-		driveAuto: showDrive ? url.searchParams.get('drive') : null
+		driveAuto: showDrive ? url.searchParams.get('drive') : null,
+		// On the orchestra's website (#197): whether this concert is in the public feed; null for those who can't change it.
+		published: concert && locals.access.rights.has('programme.bearbeiten') ? (await publishedIds()).has(concert.id) : null
 	};
 
 	if (!event) {
@@ -448,6 +451,16 @@ export const actions: Actions = {
 				}
 			: {};
 		return signupChange(locals, params.id, (event, user) => saveSignup(event, user, { answer, ...details }));
+	},
+
+	/** In or out of the public feed for the orchestra's website (#197), upcoming or for the Chronik. */
+	publish: async ({ request, locals, params }) => {
+		requireRight(locals, 'programme.bearbeiten');
+		const concert = (await getLibrary()).concertsById.get(params.id);
+		if (!concert) error(404, t.messages.noEvent);
+		const published = (await request.formData()).get('published') === 'on';
+		await setPublished(concert.id, published);
+		return { publishSaved: published };
 	},
 
 	withdraw: ({ locals, params }) => signupChange(locals, params.id, (event, user) => withdrawSignup(event.id, user)),
