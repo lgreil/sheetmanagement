@@ -10,12 +10,16 @@ function localD1(): D1 {
 	const db = new DatabaseSync(':memory:');
 	// As in D1, where links are always checked.
 	db.exec('PRAGMA foreign_keys = ON');
-	const statement = (sql: string, values: unknown[] = []): D1Statement => ({
-		bind: (...next) => statement(sql, next),
-		all: async <T>() => ({ results: db.prepare(sql).all(...values) as T[] }),
-		first: async <T>() => (db.prepare(sql).get(...values) as T) ?? null,
-		run: async () => db.prepare(sql).run(...values)
-	});
+	const statement = (sql: string, values: unknown[] = []): D1Statement => {
+		// As in D1, whose SQLite allows at most 500 rows in one VALUES; Node's allows more.
+		if ((sql.match(/\), \(/g)?.length ?? 0) >= 500) throw new Error('D1_ERROR: too many terms in compound SELECT: SQLITE_ERROR');
+		return {
+			bind: (...next) => statement(sql, next),
+			all: async <T>() => ({ results: db.prepare(sql).all(...values) as T[] }),
+			first: async <T>() => (db.prepare(sql).get(...values) as T) ?? null,
+			run: async () => db.prepare(sql).run(...values)
+		};
+	};
 	return {
 		prepare: (sql) => statement(sql),
 		async batch(list) {
@@ -303,6 +307,12 @@ describe.each([
 		const data = await store.readData();
 		expect(data.pieces).toHaveLength(2000);
 		expect(data.pieces![7].cells.title).toBe(rows[7].title);
+	});
+
+	it('imports many short rows, more than one VALUES may hold', async () => {
+		const store = make();
+		await store.importData(sheet({ pieces: Array.from({ length: 1200 }, (_, i) => ({ title: `${i}` })) }), ['pieces']);
+		expect((await store.readData()).pieces).toHaveLength(1200);
 	});
 
 	it('counts uses for rate limits', async () => {

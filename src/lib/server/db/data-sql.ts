@@ -24,6 +24,8 @@ function literal(value: string | number | null | undefined): string {
 
 /** Below D1's 100 KB per statement. */
 const STATEMENT_BYTES = 90_000;
+/** D1 counts each row of a multi-row VALUES as a term of a compound SELECT, at most 500. */
+const STATEMENT_ROWS = 500;
 
 export function sqlData(db: D1, schema: () => Promise<unknown>): DataMethods {
 	const all = async <T>(sql: string, ...values: unknown[]) => (await schema(), (await db.prepare(sql).bind(...values).all<T>()).results);
@@ -150,7 +152,7 @@ export function sqlData(db: D1, schema: () => Promise<unknown>): DataMethods {
 				};
 				for (const { id, row } of rows) {
 					const tuple = `(${columns.map((column) => literal(column === 'id' ? id : row[column])).join(', ')})`;
-					if (bytes + tuple.length > STATEMENT_BYTES) flush();
+					if (bytes + tuple.length > STATEMENT_BYTES || values.length === STATEMENT_ROWS) flush();
 					values.push(tuple);
 					bytes += tuple.length + 2;
 				}
