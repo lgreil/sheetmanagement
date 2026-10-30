@@ -2,7 +2,7 @@ import { error, redirect } from '@sveltejs/kit';
 import { normalizeEmail } from '#lib/access/access.ts';
 import { t } from '#lib/i18n/index.ts';
 import { youtubeId } from '#lib/links.ts';
-import { partUrl, getCatalog } from '#lib/server/catalog.ts';
+import { FILE_ORIGINS, partUrl, getCatalog } from '#lib/server/catalog.ts';
 import { getStore } from '#lib/server/db/index.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { today } from '#lib/server/members.ts';
@@ -20,7 +20,7 @@ const PDF = 'application/pdf';
  * "Meine Noten" would open it.
  */
 export const load: PageServerLoad = async ({ params, locals }) => {
-	const elsewhere = () => redirect(303, partUrl(params.id, PDF, locals.access.viaLink));
+	const elsewhere = () => redirect(303, partUrl(params.id, PDF, locals.access.viaLink), { external: FILE_ORIGINS });
 	const user = locals.access.user;
 	if (locals.auth !== 'on' || !user || !locals.access.member) elsewhere();
 	const email = normalizeEmail(user!.email);

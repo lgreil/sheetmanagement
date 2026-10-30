@@ -33,6 +33,9 @@ export async function getCatalog(): Promise<CatalogResult> {
 const GOOGLE_DOC = 'application/vnd.google-apps.document';
 const GOOGLE_SHEET = 'application/vnd.google-apps.spreadsheet';
 
+/** Where `fileUrl` can point, for `redirect`'s allowlist of external origins. */
+export const FILE_ORIGINS = ['https://docs.google.com', 'https://drive.google.com'];
+
 /** Opens a file in Google's own viewer, so the visitor's Drive access applies. */
 export function fileUrl(id: string, mimeType: string): string {
 	// The demo's files exist only in the app, so its PDFs come through the app too.

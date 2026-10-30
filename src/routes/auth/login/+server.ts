@@ -26,7 +26,6 @@ export const GET: RequestHandler = ({ url, cookies, locals }) => {
 		maxAge: 10 * 60
 	});
 	redirect(303, authorizationUrl({ clientId: auth.clientId, redirectUri: `${url.origin}/auth/callback` }, state, { purpose }), {
-		// The only external address this app sends anyone to.
 		external: [GOOGLE_SIGN_IN_ORIGIN]
 	});
 };
