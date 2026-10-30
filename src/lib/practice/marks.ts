@@ -37,6 +37,11 @@ const round = (value: number) => Math.round(value * 10_000) / 10_000;
 /** Kept on the page: a line drawn past its edge ends at the edge. */
 export const onPage = (value: number) => Math.min(1, Math.max(0, value));
 
+/** A hand on the glass doesn't draw while the pen tool is on and a pen has drawn since (#235). */
+export function shouldIgnoreTouch(pointerType: string, penMode: boolean, penSeen: boolean): boolean {
+	return pointerType === 'touch' && penMode && penSeen;
+}
+
 /**
  * The strokes of one page as the viewer sent them, checked, on the page and rounded; null for
  * anything that isn't strokes or a page over MAX_PAGE_POINTS. A stroke with too many points keeps
