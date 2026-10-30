@@ -29,6 +29,8 @@ export interface AppEnv {
 	CALENDAR_ID?: string;
 	DRIVE_ARCHIVE_FOLDER_ID?: string;
 	DRIVE_CURRENT_PROGRAM_FOLDER_ID?: string;
+	/** A Drive folder only admins can open, for the weekly backup of the database (#186). Optional. */
+	DRIVE_BACKUP_FOLDER_ID?: string;
 	REPERTOIRE_SHEET_ID?: string;
 	/** "true" lets the app mirror problem reports into Drive (comments, status words in file names). Needs the service account as editor. */
 	DRIVE_WRITE?: string;

@@ -28,6 +28,10 @@ GOOGLE_SERVICE_ACCOUNT_JSON=""
 DRIVE_ARCHIVE_FOLDER_ID=""
 # Current-programme folders ("Programm A-Orchester" …), several separated by commas. Optional.
 # DRIVE_CURRENT_PROGRAM_FOLDER_ID="id-a,id-b"
+# Weekly backup of the database (D1) as JSON, the last 8 kept. A folder only the admins can open:
+# it holds members' names and email addresses. Written as the Drive account connected on /status,
+# or as the service account (Editor, DRIVE_WRITE) in a shared drive. Optional.
+# DRIVE_BACKUP_FOLDER_ID=""
 # Calendar id of the rehearsal/concert calendar (Calendar settings → "Integrate calendar").
 CALENDAR_ID=""
 # Id of the Repertoire sheet (the part after /spreadsheets/d/ in its URL); shared as editor.

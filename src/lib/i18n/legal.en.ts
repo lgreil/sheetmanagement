@@ -134,7 +134,7 @@ export const legal = {
 				list: [
 					'The orchestra’s Google sheet: member list, rights, access requests, sign-ups, attendance, reports, wishes, notes on pieces and rehearsals. Until you leave or ask to be deleted; access requests only until they are decided. If the orchestra sets a retention period, sign-ups and attendance lose your name after that many seasons.',
 					'A database at Cloudflare (D1): devices for notifications (until you turn them off), reminders sent (one year), whether you unsubscribed from emails and finished the tour, practice time and marks in parts (until you delete them), date polls (until the poll is deleted), and counters against misuse of the sign-in (one day).',
-					'Google Drive and Google Calendar: the music and the dates. They hold no data about you; comments on reported files appear without your name.',
+					'Google Drive and Google Calendar: the music and the dates. They hold no data about you; comments on reported files appear without your name. When the database is the source, the app also puts a weekly backup of all maintained data into a Drive folder only the admins can open; the last eight are kept, older ones go to the bin.',
 					'A cache at Cloudflare (KV): short-lived copies of the library, calendar and sheet, so pages load fast. They are replaced all the time.',
 					'Your browser: the cookies and settings from the section “Cookies and storage in the browser”.',
 					'After a deletion, entries that also count for others (sign-ups, attendance, “+1”, answers in date polls) stay without name and email address, so counts and season reports stay right. Nobody can link them to you any more.'

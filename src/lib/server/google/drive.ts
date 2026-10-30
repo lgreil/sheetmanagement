@@ -157,6 +157,30 @@ export function downloadFile(client: GoogleClient, fileId: string): Promise<Resp
 const UPLOAD_URL = 'https://www.googleapis.com/upload/drive/v3/files';
 
 /**
+ * A new file with its content in one request (Drive's multipart upload, up to 5 MB), for what
+ * the Worker writes itself, such as the weekly backup (#186). Larger files go via startUpload().
+ */
+export function uploadFile(
+	client: GoogleClient,
+	file: { name: string; mimeType: string; folderId: string; content: string }
+): Promise<DriveFile> {
+	const boundary = `noten-${crypto.randomUUID()}`;
+	const metadata = { name: file.name, mimeType: file.mimeType, parents: [file.folderId] };
+	const body = new Blob(
+		[
+			`--${boundary}\r\ncontent-type: application/json; charset=utf-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+			`--${boundary}\r\ncontent-type: ${file.mimeType}\r\n\r\n${file.content}\r\n--${boundary}--`
+		],
+		{ type: `multipart/related; boundary=${boundary}` }
+	);
+	return client.request<DriveFile>(UPLOAD_URL, {
+		method: 'POST',
+		params: { uploadType: 'multipart', supportsAllDrives: true, fields: 'id, name, mimeType' },
+		body
+	});
+}
+
+/**
  * Opens a resumable upload (#193) and returns its session address. The browser sends the
  * file there itself, so it never passes through the Worker; the address is the permission,
  * and Google lets the page's origin use it. With `replaceId`, the upload is a new revision

@@ -78,10 +78,11 @@ export class GoogleClient {
 					method,
 					headers: {
 						authorization: `Bearer ${token}`,
-						...(body === undefined ? {} : { 'content-type': 'application/json' }),
+						...(body === undefined ? {} : { 'content-type': body instanceof Blob ? body.type : 'application/json' }),
 						...headers
 					},
-					body: body === undefined ? undefined : JSON.stringify(body),
+					// A Blob goes as is (an upload's content), anything else as JSON.
+					body: body === undefined ? undefined : body instanceof Blob ? body : JSON.stringify(body),
 					signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS)
 				});
 			} catch (error) {
