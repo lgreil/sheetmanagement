@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_POINTS, MAX_STROKES, markLines, mergeMarks, pagePoints, parseStrokes, strokePath, symbolLines, thinPoints } from './marks.ts';
+import { MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_POINTS, MAX_STROKES, markLines, mergeMarks, pagePoints, parseStrokes, shouldIgnoreTouch, strokePath, symbolLines, thinPoints } from './marks.ts';
 
 describe('parseStrokes', () => {
 	it('takes strokes as the viewer sends them, rounded', () => {
@@ -31,6 +31,15 @@ describe('parseStrokes, lenient where a pen is', () => {
 		expect(stroke.points.length).toBe(MAX_POINTS * 2);
 		expect(stroke.points.slice(0, 2)).toEqual([0, 0.5]);
 		expect(stroke.points.at(-2)).toBeCloseTo(1, 3);
+	});
+});
+
+describe('touch after pen', () => {
+	it('blocks a touch only while the pen tool is active after a pen has been used', () => {
+		expect(shouldIgnoreTouch('touch', true, true)).toBe(true);
+		expect(shouldIgnoreTouch('touch', true, false)).toBe(false);
+		expect(shouldIgnoreTouch('touch', false, true)).toBe(false);
+		expect(shouldIgnoreTouch('pen', true, true)).toBe(false);
 	});
 });
 

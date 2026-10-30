@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { t } from '#lib/i18n/index.ts';
 	import type { OpenScore } from '#lib/music/score-reader.ts';
-	import { MARK_COLORS, MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_STROKES, markLines, onPage, pagePoints, strokePath, SYMBOL_SIZE, symbolLines, thinPoints, type MarkColor, type MarkSymbol, type Stroke } from '#lib/practice/marks.ts';
+	import { MARK_COLORS, MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_STROKES, markLines, onPage, pagePoints, shouldIgnoreTouch, strokePath, SYMBOL_SIZE, symbolLines, thinPoints, type MarkColor, type MarkSymbol, type Stroke } from '#lib/practice/marks.ts';
 	import type { Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 
@@ -401,7 +401,8 @@
 
 	/**
 	 * The one pointer drawing: a second finger or the palm on the glass doesn't join its line
-	 * (#235). Once a pen has drawn, fingers don't draw at all, so a resting hand leaves no marks.
+	 * (#235). Once a pen has drawn, fingers don't draw until the pen tool is turned off and on again,
+	 * so a resting hand leaves no marks.
 	 */
 	let pointer: { id: number; type: string } | null = null;
 	let penSeen = false;
@@ -410,7 +411,7 @@
 		if (!pen) return;
 		event.preventDefault();
 		if (event.pointerType === 'pen') penSeen = true;
-		else if (penSeen && event.pointerType === 'touch') return;
+		else if (shouldIgnoreTouch(event.pointerType, pen, penSeen)) return;
 		if (pointer) {
 			// A pen taking over from the hand it rests on: the hand's line goes.
 			if (event.pointerType !== 'pen' || pointer.type === 'pen') return;
@@ -529,7 +530,12 @@
 				<Icon name={fit === 'page' ? 'fitWidth' : 'fitHeight'} size={15} />{fit === 'page' ? t.practice.viewer.fitWidth : t.practice.viewer.fitPage}
 			</button>
 			{#if penAllowed}
-				<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => (pen ? (finishStroke(), (pen = false)) : (pen = true))}>
+				<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => {
+					if (pen) finishStroke();
+					// Turned off and on again, fingers draw again until a pen does.
+					penSeen = false;
+					pen = !pen;
+				}}>
 					<Icon name="edit" size={15} />{t.practice.marks.pen}
 				</button>
 			{/if}
