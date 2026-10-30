@@ -14,7 +14,7 @@ vi.mock('./repertoire.ts', async (original) => ({ ...(await original<typeof impo
 
 const { forgetDataState } = await import('./data-source.ts');
 const { appendRecords, deleteRows, readTab, replaceRows, updateRecord } = await import('./sheet-writes.ts');
-const { backToSheet, changedSinceExport, exportToSheet, importFromSheet, planImport } = await import('./data-transfer.ts');
+const { allData, backToSheet, backupTabs, BackupFormatError, changedSinceExport, exportToSheet, importFromSheet, planImport, restoreFromBackup } = await import('./data-transfer.ts');
 
 const sheetPieces = async () => {
 	const range = tabRange(LAYOUT.pieces.tab);
@@ -110,5 +110,39 @@ describe('moving the data into D1', () => {
 		await backToSheet();
 		expect((await store.dataState()).source).toBe('sheet');
 		expect((await readTab('pieces')).rows[0].values.notes).toBe('Aus D1');
+	});
+});
+
+describe('backupTabs', () => {
+	it('reads the tabs of a downloaded backup, numbered like sheet rows', () => {
+		const tabs = backupTabs({ exportedAt: '2026-10-30T00:00:00Z', source: 'd1', tabs: { pieces: [{ title: 'Elegie', duration: '' }, { title: 'Air' }] } });
+		expect(tabs.pieces).toEqual([
+			{ row: 2, cells: { title: 'Elegie' } },
+			{ row: 3, cells: { title: 'Air' } }
+		]);
+	});
+
+	it('leaves out unknown tabs, unknown columns and values that are not text', () => {
+		const tabs = backupTabs({ tabs: { pieces: [{ title: 'Elegie', invented: 'x', duration: 3 }, 'nonsense'], invented: [{ a: 'b' }] } });
+		expect(tabs).toEqual({ pieces: [{ row: 2, cells: { title: 'Elegie' } }] });
+	});
+
+	it('refuses anything that is not a backup', () => {
+		for (const file of [null, {}, { tabs: [] }, { tabs: { invented: [] } }, [1, 2]]) expect(() => backupTabs(file)).toThrow(BackupFormatError);
+	});
+});
+
+describe('restoreFromBackup', () => {
+	it('brings back what "Alles herunterladen" saved, into a fresh database', async () => {
+		await importFromSheet();
+		const backup = JSON.parse(JSON.stringify(await allData()));
+		const before = (await readTab('pieces')).rows.map((row) => row.values);
+
+		store = memoryStore();
+		forgetDataState();
+		const plan = await restoreFromBackup(backup);
+		expect(plan.skipped).toEqual([]);
+		expect((await store.dataState()).source).toBe('d1');
+		expect((await readTab('pieces')).rows.map((row) => row.values)).toEqual(before);
 	});
 });

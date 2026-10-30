@@ -288,6 +288,13 @@ export const de = {
 		}
 	},
 	concert: {
+		/** In the public feed for the orchestra's website (#197). */
+		publish: {
+			on: 'Auf der Website des Orchesters',
+			off: 'Nicht auf der Website des Orchesters',
+			publish: 'Veröffentlichen',
+			withdraw: 'Zurückziehen'
+		},
 		map: 'Karte',
 		openInCalendar: 'Im Google Kalender',
 		rehearsals: 'Proben',
@@ -664,7 +671,10 @@ export const de = {
 		answer: (answer: string) => `Deine Antwort: ${answer}`,
 		details: 'Details:',
 		parts: 'Deine Noten:',
-		calendarName: (orchestra: string) => `${orchestra} · Termine`
+		calendarName: (orchestra: string) => `${orchestra} · Termine`,
+		/** The concerts for the orchestra's website (#197). */
+		publicCalendarName: (orchestra: string) => `${orchestra} · Konzerte`,
+		publicProgram: 'Programm:'
 	},
 	/** The planners' checklist on a concert page, worked out from the data. */
 	check: {
@@ -1512,7 +1522,10 @@ export const de = {
 		build: 'Als eine PDF',
 		building: (i: number, n: number) => `Stimme ${i} von ${n} …`,
 		notPdf: 'keine PDF',
-		fileName: 'Stimmensatz'
+		fileName: 'Stimmensatz',
+		orchestra: 'Für',
+		allOrchestras: 'Alle Orchester',
+		apply: 'Anzeigen'
 	},
 	print: {
 		link: 'Drucken',
@@ -1849,6 +1862,16 @@ export const de = {
 		backConfirm: 'Die Tabelle wieder zur Quelle machen? Vorher wird alles aus der Datenbank hineingeschrieben.',
 		back: 'Die Tabelle ist wieder die Quelle.',
 		download: 'Alles herunterladen (JSON)',
+		restoreTitle: 'Aus einer Sicherung wiederherstellen',
+		restoreLead: 'Eine Datei von „Alles herunterladen“ oder eine Sicherung aus Drive. Ersetzt alles in der Datenbank und macht sie zur Quelle.',
+		restoreFile: 'Sicherung (JSON)',
+		restoreButton: 'Wiederherstellen',
+		restoreConfirm: 'Alles in der Datenbank durch diese Sicherung ersetzen? Was seitdem geändert wurde, geht verloren.',
+		restoreNoFile: 'Bitte eine Sicherungsdatei wählen.',
+		restoreTooLarge: 'Die Datei ist zu groß für eine Sicherung dieser App.',
+		restoreNotBackup: 'Das ist keine Sicherung dieser App.',
+		restored: (rows: number, tabs: number, skipped: number) =>
+			`Wiederhergestellt: ${rows} Zeilen aus ${tabs} Blättern${skipped ? `; ${skipped} ${skipped === 1 ? 'Zeile passte nicht und fehlt' : 'Zeilen passten nicht und fehlen'}` : ''}. Die Datenbank ist die Quelle.`,
 		failed: (message: string) => `Hat nicht geklappt: ${message}`,
 		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), und die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare.',
 		statusD1: (rows: number) => `Quelle: Datenbank, ${rows} Zeilen; die Tabelle ist eine Kopie`,

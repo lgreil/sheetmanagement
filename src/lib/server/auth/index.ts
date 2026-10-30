@@ -101,7 +101,10 @@ export function isPublicPath(path: string): boolean {
 		path.startsWith('/auth/') ||
 		// Answering a sign-up from a reminder email (#123): the signed link is the proof.
 		path.startsWith('/antwort/') ||
-		path === '/api/health'
+		path === '/api/health' ||
+		// Published concerts for the orchestra's website (#197): only what an organiser published.
+		path === '/api/konzerte' ||
+		path === '/api/konzerte.ics'
 	);
 }
 

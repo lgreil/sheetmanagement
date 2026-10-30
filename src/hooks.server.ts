@@ -8,6 +8,7 @@ import { isOn, runInBackground } from '#lib/server/env.ts';
 import { messageOf, recordError } from '#lib/server/errors.ts';
 import { isScheduledCall } from '#lib/server/jobs/token.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
+import { serverTiming } from '#lib/server/timing.ts';
 
 /** Sent with every response: no framing (clickjacking on the admin forms), no MIME sniffing. */
 const SECURITY_HEADERS = {
@@ -18,16 +19,25 @@ const SECURITY_HEADERS = {
 };
 
 export const handle: Handle = async ({ event, resolve }) => {
+	const marks: [string, number][] = [];
+	let last = performance.now();
+	const mark = (name: string) => {
+		const now = performance.now();
+		marks.push([name, now - last]);
+		last = now;
+	};
 	// Old addresses of moved pages; 308 keeps the method, so a form posted to the old page still arrives.
 	const moved = movedPath(event.url.pathname);
 	if (moved) return new Response(null, { status: 308, headers: { location: moved + event.url.search, ...SECURITY_HEADERS } });
 	// Name, colours and features from /einstellungen, from the cached sheet (#75, #134).
 	if (event.url.pathname !== '/api/health') await refreshStoredSettings();
+	mark('settings');
 	const auth = authConfig();
 	event.locals.auth = auth.mode;
 	// The health check must answer even while Google doesn't.
 	event.locals.access =
 		event.url.pathname === '/api/health' ? resolveAccess(null, null, []) : await accessFromCookies(event.cookies, auth);
+	mark('access');
 
 	// Pages redirect to sign-in in the root layout's load. That doesn't cover form
 	// actions and endpoints, so anything that isn't a plain read is checked here.
@@ -49,7 +59,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 	}
 	// The page's language for screen readers, hyphenation and translation tools (#124).
 	const response = await resolve(event, { transformPageChunk: ({ html }) => html.replace('%lang%', LANGUAGE) });
-	for (const [name, value] of Object.entries(SECURITY_HEADERS)) {
+	mark('page');
+	const headers: Record<string, string> = { ...SECURITY_HEADERS, 'server-timing': serverTiming(marks) };
+	for (const [name, value] of Object.entries(headers)) {
 		// Redirects and some responses have immutable headers; those carry no page anyway.
 		try {
 			if (!response.headers.has(name)) response.headers.set(name, value);
