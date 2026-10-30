@@ -5,6 +5,8 @@ import { matchRows } from '#lib/repertoire/row-match.ts';
 import { LAYOUT, readTable, type ColumnKey, type Table, type TabKey } from '#lib/repertoire/sheet.ts';
 import { appendRows, batchUpdate, columnLetter, getTabs, getValues, tabRange, updateValues } from './google/sheets.ts';
 import { getRepertoire } from './repertoire.ts';
+import { cellsOf, cellsOfRow, forgetDataState, gridOf, usingD1 } from './data-source.ts';
+import { getStore } from './db/index.ts';
 import { getGoogle, requireSetting } from './services.ts';
 import { withSheetLock } from './sheet-lock.ts';
 
@@ -17,6 +19,10 @@ import { withSheetLock } from './sheet-lock.ts';
  *
  * A read-modify-write (e.g. a +1 on a wish) wraps the whole thing in withSheetLock, so
  * nobody else's change lands between the read and the write.
+ *
+ * Once the data lives in D1 (#186), the same functions read and write there instead, with
+ * the same rules: rows found by content, writes one after another. Only the sheet's own
+ * tricks (tabs, ranges, the lock's purpose of guarding row numbers) fall away.
  */
 
 export { withSheetLock };
@@ -34,8 +40,25 @@ function target() {
 	return { client: getGoogle().client, spreadsheetId: requireSetting('REPERTOIRE_SHEET_ID') };
 }
 
+/** One tab in D1 with its row ids, by grid row (row 2 is ids[0]). */
+async function readD1Tab<K extends TabKey>(key: K): Promise<{ table: Table<Columns<K>>; ids: number[]; cells: Record<string, string>[] }> {
+	const rows = (await getStore().readData([key]))[key];
+	if (!rows) throw new SheetLayoutError(LAYOUT[key].tab);
+	return {
+		table: readTable(gridOf(key, rows), LAYOUT[key].columns as Record<Columns<K>, string>),
+		ids: rows.map((row) => row.id),
+		cells: rows.map((row) => row.cells)
+	};
+}
+
+/** After a write to D1: this instance reads the new state at once. */
+function changedD1() {
+	forgetDataState();
+}
+
 /** One tab, read now. Throws SheetLayoutError if the tab doesn't exist. */
 export async function readTab<K extends TabKey>(key: K): Promise<Table<Columns<K>>> {
+	if (await usingD1()) return (await readD1Tab(key)).table;
 	const { client, spreadsheetId } = target();
 	const tab = LAYOUT[key].tab;
 	if (!(await getTabs(client, spreadsheetId)).some((t) => t.title === tab)) throw new SheetLayoutError(tab);
@@ -47,6 +70,7 @@ export async function readTab<K extends TabKey>(key: K): Promise<Table<Columns<K
 /** Adds a missing tab with its header row, for tabs a page fills on its first save. */
 export function ensureTab(key: TabKey): Promise<void> {
 	return withSheetLock(async () => {
+		if (await usingD1()) return void (await getStore().addDataTab(key), changedD1());
 		const { client, spreadsheetId } = target();
 		const tab = LAYOUT[key].tab;
 		if ((await getTabs(client, spreadsheetId)).some((t) => t.title === tab)) return;
@@ -69,6 +93,10 @@ export async function appendRecords<K extends TabKey>(
 		throw new SheetLayoutError(LAYOUT[key].tab, missing.map((column) => names[column]));
 	}
 	await withSheetLock(async () => {
+		if (await usingD1()) {
+			await getStore().appendData(key, records.map((record) => cellsOf(key, record)));
+			return changedD1();
+		}
 		const { client, spreadsheetId } = target();
 		await appendRows(client, spreadsheetId, tabRange(LAYOUT[key].tab), records.map((record) => toSheetRow(record, table.indexes)));
 	});
@@ -92,6 +120,19 @@ export async function updateRecords<K extends TabKey>(
 ): Promise<void> {
 	if (updates.length === 0) return;
 	await withSheetLock(async () => {
+		if (await usingD1()) {
+			const now = await readD1Tab(key);
+			const found = matchRows(table, now.table, updates.map((update) => update.row));
+			if (!found) error(409, t.common.sheetChanged);
+			// Several updates to one row add up, as they would in the sheet.
+			const merged = new Map<number, Record<string, string>>();
+			for (const { row, values } of updates) {
+				const index = found.get(row)! - 2;
+				merged.set(index, cellsOf(key, values, merged.get(index) ?? now.cells[index]));
+			}
+			await getStore().updateData(key, [...merged].map(([index, cells]) => ({ id: now.ids[index], cells })));
+			return changedD1();
+		}
 		const { now, rows } = await locate(key, table, updates.map((update) => update.row));
 		const columns = [...new Set(updates.flatMap((update) => Object.keys(update.values) as Columns<K>[]))];
 		const missing = columns.filter((column) => now.indexes[column] === undefined);
@@ -118,6 +159,13 @@ export async function deleteRows<K extends TabKey>(key: K, table: Table<Columns<
 	rows = rows.filter((row) => row > 1);
 	if (rows.length === 0) return;
 	await withSheetLock(async () => {
+		if (await usingD1()) {
+			const now = await readD1Tab(key);
+			const found = matchRows(table, now.table, rows);
+			if (!found) error(409, t.common.sheetChanged);
+			await getStore().deleteData(key, [...new Set(found.values())].map((row) => now.ids[row - 2]));
+			return changedD1();
+		}
 		const { client, spreadsheetId } = target();
 		const tab = (await getTabs(client, spreadsheetId)).find((t) => t.title === LAYOUT[key].tab);
 		if (!tab) throw new SheetLayoutError(LAYOUT[key].tab);
@@ -149,6 +197,11 @@ async function locate<K extends TabKey>(key: K, table: Table<Columns<K>>, rows: 
 export async function replaceRows(key: TabKey, rows: (string | boolean)[][]): Promise<void> {
 	if (rows.length === 0) return;
 	await withSheetLock(async () => {
+		if (await usingD1()) {
+			// The rows are in the order of the tab as read, which in D1 is the layout's; padding is left out.
+			await getStore().replaceData(key, rows.map((row) => cellsOfRow(key, row)).filter((cells) => Object.keys(cells).length));
+			return changedD1();
+		}
 		const { client, spreadsheetId } = target();
 		const width = Math.max(...rows.map((row) => row.length));
 		const range = tabRange(LAYOUT[key].tab, `A2:${columnLetter(width - 1)}${rows.length + 1}`);

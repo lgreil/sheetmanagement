@@ -69,6 +69,13 @@
 								<span class="status {gap.status}">{t.piece.partStatus[gap.status]}</span>
 								{#if gap.reported}<span class="status reported" title={t.gaps.reportedHint}><Icon name="flag" size={12} />{t.gaps.reported}</span>{/if}
 								{#if gap.done}<span class="status done" title={t.gaps.doneHint}><Icon name="check" size={12} />{t.gaps.done}</span>{/if}
+								{#if data.canMark}
+									<form method="POST" action="?/markDone" use:enhance={marking.submit()}>
+										<input type="hidden" name="id" value={gap.id} />
+										<input type="hidden" name="done" value={String(!gap.done)} />
+										<button class="mini ghost" disabled={marking.busy}>{gap.done ? t.gaps.markOpen : t.gaps.markDone}</button>
+									</form>
+								{/if}
 							</li>
 						{/each}
 						{#each piece.reports as report (report.id)}

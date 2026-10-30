@@ -205,6 +205,42 @@ describe.each([
 		expect(await store.errorLog(7)).toEqual([]);
 	});
 
+	it('keeps the orchestra’s data by tab, in order, and counts every change (#186)', async () => {
+		const store = make();
+		expect(await store.dataState()).toEqual({ source: 'sheet', version: 0 });
+		await store.importData({ pieces: [{ title: 'Moldau' }, { title: 'Bolero' }], program: [] });
+		const imported = await store.dataState();
+		expect(imported.source).toBe('d1');
+		let data = await store.readData();
+		expect(Object.keys(data).sort()).toEqual(['pieces', 'program']);
+		expect(data.pieces.map((row) => row.cells.title)).toEqual(['Moldau', 'Bolero']);
+
+		await store.appendData('pieces', [{ title: 'Finlandia' }]);
+		const [moldau, bolero] = data.pieces;
+		await store.updateData('pieces', [{ id: bolero.id, cells: { title: 'Boléro', composer: 'Ravel' } }]);
+		await store.deleteData('pieces', [moldau.id]);
+		data = await store.readData(['pieces']);
+		expect(Object.keys(data)).toEqual(['pieces']);
+		expect(data.pieces.map((row) => row.cells)).toEqual([{ title: 'Boléro', composer: 'Ravel' }, { title: 'Finlandia' }]);
+
+		await store.addDataTab('loans');
+		await store.replaceData('missingParts', [{ fileId: 'f1' }]);
+		data = await store.readData();
+		expect(data.loans).toEqual([]);
+		expect(data.missingParts.map((row) => row.cells)).toEqual([{ fileId: 'f1' }]);
+		expect((await store.dataState()).version).toBeGreaterThan(imported.version + 4);
+
+		await store.setDataSource('sheet');
+		expect((await store.dataState()).source).toBe('sheet');
+	});
+
+	it('imports many rows in one go', async () => {
+		const store = make();
+		const rows = Array.from({ length: 500 }, (_, i) => ({ title: `Stück ${i}` }));
+		await store.importData({ pieces: rows });
+		expect((await store.readData()).pieces).toHaveLength(500);
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

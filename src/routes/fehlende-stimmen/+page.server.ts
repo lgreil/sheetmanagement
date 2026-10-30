@@ -7,6 +7,7 @@ import { confirmPartHint, dismissPartHint, getPartHints } from '#lib/server/part
 import { driveWriteEnabled, getArchiveIndex } from '#lib/server/services.ts';
 import { isGap, reportedGaps } from '#lib/repertoire/missing-parts.ts';
 import { getFeedback, getMissingPartsDone } from '#lib/server/repertoire.ts';
+import { readTab, refreshAfterWrite, SheetLayoutError, updateRecord } from '#lib/server/sheet-writes.ts';
 import type { Actions, PageServerLoad } from './$types';
 
 const RIGHT = 'stuecke.bearbeiten';
@@ -35,7 +36,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 				label: part.label,
 				status: part.status,
 				url: fileUrl(part.id, part.mimeType),
-				// Ticked in the sheet tab "Fehlende Stimmen"; stays listed until the file is renamed.
+				// Ticked here or in "Fehlende Stimmen"; stays listed until the file is renamed.
 				done: done.has(part.id),
 				reported: reportedFiles.has(part.id)
 			}));
@@ -81,6 +82,19 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 /** A hint from the completeness check, confirmed (the file gets the status word) or dismissed. */
 export const actions: Actions = {
+	/** Ticks a gap off ("erledigt", e.g. ordered) or opens it again; the row comes from the archive sync. */
+	markDone: async ({ locals, request }) => {
+		requireRight(locals, RIGHT);
+		const form = await request.formData();
+		const id = String(form.get('id') ?? '').slice(0, 100);
+		const done = form.get('done') === 'true';
+		const table = await readTab('missingParts').catch((cause) => (cause instanceof SheetLayoutError ? null : Promise.reject(cause)));
+		const row = table?.rows.find((r) => r.values.fileId === id);
+		if (!table || !row) return fail(404, { message: t.gaps.markGone });
+		await updateRecord('missingParts', table, row.row, { done });
+		await refreshAfterWrite();
+		return { saved: true };
+	},
 	confirmHint: async ({ locals, request }) => {
 		requireRight(locals, RIGHT);
 		const id = String((await request.formData()).get('id') ?? '').slice(0, 100);

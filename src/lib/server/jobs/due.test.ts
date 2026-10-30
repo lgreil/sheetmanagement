@@ -7,6 +7,7 @@ vi.mock('./check.ts', () => ({ checkConnections: vi.fn() }));
 vi.mock('./parts.ts', () => ({ checkParts: vi.fn() }));
 vi.mock('./retention.ts', () => ({ applyRetention: vi.fn() }));
 vi.mock('./errors.ts', () => ({ announceErrors: vi.fn() }));
+vi.mock('./export.ts', () => ({ exportData: vi.fn() }));
 
 const { dueJobs } = await import('./index.ts');
 
@@ -16,10 +17,10 @@ const run = (at: number) => ({ at, ms: 10, ok: true, summary: '', auto: true });
 describe('dueJobs', () => {
 	const now = minutes(1000);
 
-	const recent = { reminders: run(now - minutes(1)), check: run(now - minutes(60)), parts: run(now - minutes(1)), retention: run(now - minutes(60)), errors: run(now - minutes(1)) };
+	const recent = { reminders: run(now - minutes(1)), check: run(now - minutes(60)), parts: run(now - minutes(1)), retention: run(now - minutes(60)), errors: run(now - minutes(1)), export: run(now - minutes(60)) };
 
 	it('runs a job that never ran', () => {
-		expect(dueJobs({}, now)).toEqual(['warm', 'reminders', 'check', 'parts', 'retention', 'errors']);
+		expect(dueJobs({}, now)).toEqual(['warm', 'reminders', 'check', 'parts', 'retention', 'errors', 'export']);
 	});
 
 	it('waits until the interval has passed, with a minute of slack', () => {
@@ -31,7 +32,7 @@ describe('dueJobs', () => {
 
 	it('runs the connection check once a day', () => {
 		const warm = run(now - minutes(1));
-		expect(dueJobs({ warm, reminders: warm, parts: warm, retention: warm, errors: warm, check: run(now - minutes(23 * 60)) }, now)).toEqual([]);
-		expect(dueJobs({ warm, reminders: warm, parts: warm, retention: warm, errors: warm, check: run(now - minutes(24 * 60)) }, now)).toEqual(['check']);
+		expect(dueJobs({ warm, reminders: warm, parts: warm, retention: warm, errors: warm, export: warm, check: run(now - minutes(23 * 60)) }, now)).toEqual([]);
+		expect(dueJobs({ warm, reminders: warm, parts: warm, retention: warm, errors: warm, export: warm, check: run(now - minutes(24 * 60)) }, now)).toEqual(['check']);
 	});
 });

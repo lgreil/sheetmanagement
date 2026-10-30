@@ -7,6 +7,7 @@ import { FEATURES } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
 import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
 import { getStore } from '#lib/server/db/index.ts';
+import { usingD1 } from '#lib/server/data-source.ts';
 import { KEEP_ERRORS_DAYS } from '#lib/server/jobs/errors.ts';
 import { pushReady } from '#lib/server/push/index.ts';
 import { disconnectMail, mailAccount, mailError } from '#lib/server/mail/index.ts';
@@ -194,6 +195,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 							details: [
 								title,
 								t.status.sheetCounts(pieces.length, concerts.length),
+								...((await usingD1()) ? [t.dataMove.sourceD1] : []),
 								...(problems.length ? [t.status.sheetProblems(problems.length)] : [])
 							],
 							...(missingAccess.length
