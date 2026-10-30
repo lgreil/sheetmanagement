@@ -2,7 +2,7 @@
 	import { t } from '#lib/i18n/index.ts';
 	import type { OpenScore } from '#lib/music/score-reader.ts';
 	import { MARK_COLORS, MARK_SYMBOLS, MAX_PAGE_POINTS, MAX_STROKES, markLines, onPage, pagePoints, shouldIgnoreTouch, strokePath, SYMBOL_SIZE, symbolLines, thinPoints, type MarkColor, type MarkSymbol, type Stroke } from '#lib/practice/marks.ts';
-	import type { Snippet } from 'svelte';
+	import { flushSync, type Snippet } from 'svelte';
 	import Icon from './Icon.svelte';
 
 	/**
@@ -12,6 +12,8 @@
 	 * never over it (#235). With the pen, the member's own marks go on the page, drawn or as
 	 * symbols placed with a tap; they are saved a moment after the pen stops. They can be offered
 	 * to the others who play the part, who take them over, all or one by one, or decline.
+	 * Zoomed with two fingers, a trackpad pinch or the + and − buttons, e.g. to write between
+	 * the staves; the page is drawn sharp again once the fingers rest.
 	 */
 	let {
 		file,
@@ -74,8 +76,18 @@
 	let slot = $state<HTMLDivElement>();
 	let stageWidth = $state(0);
 	let stageHeight = $state(0);
+	/** The current page's size fitted to the screen, before zooming. */
+	let fittedSize = $state<{ width: number; height: number } | null>(null);
+	/** 1 is the fitted page; up to MAX_ZOOM times that. */
+	let zoom = $state(1);
+	/** The zoom the page is drawn at; follows `zoom` once a pinch rests, so it isn't drawn on every step. */
+	let drawnZoom = $state(1);
+	const MAX_ZOOM = 4;
 	/** The current page's size on screen. */
-	let size = $state<{ width: number; height: number } | null>(null);
+	const size = $derived(fittedSize && { width: Math.round(fittedSize.width * zoom), height: Math.round(fittedSize.height * zoom) });
+	let sheet = $state<HTMLDivElement>();
+	/** The page can be scrolled: at its width, or zoomed in. */
+	const scrolls = $derived(fit === 'width' || zoom > 1);
 	/** The current page's own size, unscaled. */
 	let base = $state<{ width: number; height: number } | null>(null);
 	/** The page's area: in full screen the tools above the page and the stage share its height. */
@@ -150,25 +162,29 @@
 	}
 
 	let shown = 0;
+	let shownPage = 0;
 	$effect(() => {
 		if (!score || !slot || !stageWidth || !stageHeight) return;
-		const [current, number, mode] = [score, page, fit];
+		const [current, number, mode, scale] = [score, page, fit, drawnZoom];
 		const token = ++shown;
 		void mode;
 		(async () => {
 			try {
 				const own = await baseSize(current, number);
 				const target = fitted(own);
-				const canvas = await canvasFor(current, number, target.width);
+				const canvas = await canvasFor(current, number, Math.round(target.width * scale));
 				if (token !== shown) return;
-				size = target;
+				const turned = number !== shownPage;
+				shownPage = number;
+				fittedSize = target;
 				base = own;
 				slot!.replaceChildren(canvas);
-				if (fit === 'width') stage?.scrollTo({ top: 0 });
+				// A new page starts at its top; a sharper drawing of the same page stays where it is.
+				if (turned && scrolls) stage?.scrollTo({ top: 0, left: 0 });
 				// The neighbours, ready for the next turn.
 				for (const other of [number + 1, number - 1]) {
 					if (other < 1 || other > pages) continue;
-					canvasFor(current, other, fitted(await baseSize(current, other)).width).catch(() => {});
+					canvasFor(current, other, Math.round(fitted(await baseSize(current, other)).width * scale)).catch(() => {});
 				}
 			} catch {
 				if (token === shown) failed = true;
@@ -184,13 +200,13 @@
 		} else if (onpast && pages && Math.abs(step) === 1) onpast(step as 1 | -1);
 	}
 
-	/** With the page at its width: down the page first, then to the next one. */
+	/** With the page at its width or zoomed: down the page first, then to the next one. */
 	function forward() {
-		if (fit === 'width' && stage && stage.scrollTop + stage.clientHeight < stage.scrollHeight - 4) stage.scrollBy({ top: stage.clientHeight * 0.85, behavior: 'smooth' });
+		if (scrolls && stage && stage.scrollTop + stage.clientHeight < stage.scrollHeight - 4) stage.scrollBy({ top: stage.clientHeight * 0.85, behavior: 'smooth' });
 		else turn(1);
 	}
 	function back() {
-		if (fit === 'width' && stage && stage.scrollTop > 4) stage.scrollBy({ top: -stage.clientHeight * 0.85, behavior: 'smooth' });
+		if (scrolls && stage && stage.scrollTop > 4) stage.scrollBy({ top: -stage.clientHeight * 0.85, behavior: 'smooth' });
 		else turn(-1);
 	}
 
@@ -211,9 +227,9 @@
 		event.preventDefault();
 	}
 
-	/** Tapping the left half goes back, the right half forward; not while drawing. */
+	/** Tapping the left half goes back, the right half forward; not while drawing or zoomed in. */
 	function onstageclick(event: MouseEvent) {
-		if (pen || !stage) return;
+		if (pen || zoom > 1 || !stage) return;
 		const rect = stage.getBoundingClientRect();
 		if (event.clientX - rect.left < rect.width / 2) back();
 		else forward();
@@ -246,6 +262,82 @@
 		};
 		document.addEventListener('fullscreenchange', changed);
 		return () => document.removeEventListener('fullscreenchange', changed);
+	});
+
+	/**
+	 * Zooms so the spot of the page at `fraction` (0–1 across and down) ends up under `point`
+	 * on screen: by default the spot under it now, so the music under the fingers stays put.
+	 */
+	let settle: ReturnType<typeof setTimeout> | undefined;
+	function zoomTo(next: number, point?: { x: number; y: number }, fraction?: { x: number; y: number }) {
+		if (!stage || !sheet) return;
+		next = Math.round(Math.min(MAX_ZOOM, Math.max(1, next)) * 100) / 100;
+		const area = stage.getBoundingClientRect();
+		const at = point ?? { x: area.left + area.width / 2, y: area.top + area.height / 2 };
+		const before = sheet.getBoundingClientRect();
+		const spot = fraction ?? { x: (at.x - before.left) / before.width, y: (at.y - before.top) / before.height };
+		if (next !== zoom) {
+			zoom = next;
+			flushSync();
+		}
+		const after = sheet.getBoundingClientRect();
+		stage.scrollLeft += after.left + spot.x * after.width - at.x;
+		stage.scrollTop += after.top + spot.y * after.height - at.y;
+		clearTimeout(settle);
+		settle = setTimeout(() => (drawnZoom = zoom), 250);
+	}
+	const ZOOM_STEP = 1.25;
+
+	// Two fingers zoom the page, not the browser's whole window; one finger still scrolls it.
+	// Touch events, not pointer events: they can stop Safari's own pinch, which pointer events can't.
+	let pinch: { distance: number; zoom: number; spot: { x: number; y: number } } | null = null;
+	$effect(() => {
+		const element = stage;
+		if (!element) return;
+		const distance = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+		const middle = (touches: TouchList) => ({ x: (touches[0].clientX + touches[1].clientX) / 2, y: (touches[0].clientY + touches[1].clientY) / 2 });
+		const start = (event: TouchEvent) => {
+			if (event.touches.length !== 2 || !sheet) return;
+			event.preventDefault();
+			dropTouchMark();
+			const rect = sheet.getBoundingClientRect();
+			const at = middle(event.touches);
+			pinch = { distance: distance(event.touches), zoom, spot: { x: (at.x - rect.left) / rect.width, y: (at.y - rect.top) / rect.height } };
+		};
+		const move = (event: TouchEvent) => {
+			if (!pinch || event.touches.length < 2) return;
+			event.preventDefault();
+			// The fingers moving together pan the page along: the spot follows their middle.
+			zoomTo((pinch.zoom * distance(event.touches)) / pinch.distance, middle(event.touches), pinch.spot);
+		};
+		const end = (event: TouchEvent) => {
+			if (event.touches.length < 2) pinch = null;
+		};
+		// Safari's own page zoom on iPhones and iPads.
+		const gesture = (event: Event) => event.preventDefault();
+		// A trackpad pinch arrives as a wheel with ctrl held; so does ctrl + wheel on a mouse.
+		const wheel = (event: WheelEvent) => {
+			if (!event.ctrlKey) return;
+			event.preventDefault();
+			zoomTo(zoom * Math.exp(-event.deltaY / 200), { x: event.clientX, y: event.clientY });
+		};
+		const options = { passive: false };
+		element.addEventListener('touchstart', start, options);
+		element.addEventListener('touchmove', move, options);
+		element.addEventListener('touchend', end);
+		element.addEventListener('touchcancel', end);
+		element.addEventListener('gesturestart', gesture, options);
+		element.addEventListener('gesturechange', gesture, options);
+		element.addEventListener('wheel', wheel, options);
+		return () => {
+			element.removeEventListener('touchstart', start);
+			element.removeEventListener('touchmove', move);
+			element.removeEventListener('touchend', end);
+			element.removeEventListener('touchcancel', end);
+			element.removeEventListener('gesturestart', gesture);
+			element.removeEventListener('gesturechange', gesture);
+			element.removeEventListener('wheel', wheel);
+		};
 	});
 
 	// The pen.
@@ -408,7 +500,7 @@
 	let penSeen = false;
 
 	function down(event: PointerEvent) {
-		if (!pen) return;
+		if (!pen || pinch) return;
 		event.preventDefault();
 		if (event.pointerType === 'pen') penSeen = true;
 		else if (shouldIgnoreTouch(event.pointerType, pen, penSeen)) return;
@@ -421,7 +513,10 @@
 		const at = point(event, element);
 		if (tool !== 'line' && tool !== 'eraser') {
 			const stamp: Stroke = { color: ink, points: at, symbol: tool };
-			if (fits(stamp)) change(page, [...current, stamp]);
+			if (fits(stamp)) {
+				change(page, [...current, stamp]);
+				lastStamp = { at: Date.now(), type: event.pointerType };
+			}
 			return;
 		}
 		pointer = { id: event.pointerId, type: event.pointerType };
@@ -437,7 +532,7 @@
 		} else drawing = { color: ink, points: at };
 	}
 	function move(event: PointerEvent) {
-		if (!pen || event.pointerId !== pointer?.id) return;
+		if (!pen || pinch || event.pointerId !== pointer?.id) return;
 		const element = event.currentTarget as Element;
 		if (tool === 'eraser') return erase(point(event, element));
 		if (!drawing) return;
@@ -452,6 +547,21 @@
 		pointer = null;
 		finishStroke();
 	}
+	/**
+	 * A second finger makes it a zoom: the first finger's line so far goes, and a symbol its
+	 * touch placed a moment ago too.
+	 */
+	let lastStamp: { at: number; type: string } | null = null;
+	function dropTouchMark() {
+		if (pointer?.type === 'touch') {
+			drawing = null;
+			pointer = null;
+			erasing = false;
+		}
+		if (lastStamp?.type === 'touch' && Date.now() - lastStamp.at < 400) undo();
+		lastStamp = null;
+	}
+
 	function finishStroke() {
 		erasing = false;
 		pointer = null;
@@ -529,6 +639,11 @@
 			<button type="button" class="tool text" onclick={() => (fit = fit === 'page' ? 'width' : 'page')}>
 				<Icon name={fit === 'page' ? 'fitWidth' : 'fitHeight'} size={15} />{fit === 'page' ? t.practice.viewer.fitWidth : t.practice.viewer.fitPage}
 			</button>
+			<span class="zoom" role="group" aria-label={t.practice.viewer.zoom}>
+				<button type="button" class="tool" onclick={() => zoomTo(zoom / ZOOM_STEP)} disabled={zoom <= 1} aria-label={t.practice.viewer.zoomOut}><Icon name="minus" size={16} /></button>
+				<button type="button" class="tool text percent" onclick={() => zoomTo(1)} disabled={zoom <= 1} aria-label={t.practice.viewer.zoomReset}>{Math.round(zoom * 100)} %</button>
+				<button type="button" class="tool" onclick={() => zoomTo(zoom * ZOOM_STEP)} disabled={zoom >= MAX_ZOOM} aria-label={t.practice.viewer.zoomIn}><Icon name="plus" size={16} /></button>
+			</span>
 			{#if penAllowed}
 				<button type="button" class="tool text" class:on={pen} aria-pressed={pen} onclick={() => {
 					if (pen) finishStroke();
@@ -646,7 +761,7 @@
 
 	<!-- Taps on the page turn it; the keys and pedals work anywhere on the page. -->
 	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div class="stage" class:width={fit === 'width'} bind:this={stage} bind:clientWidth={stageWidth} bind:clientHeight={stageHeight} onclick={onstageclick}>
+	<div class="stage" class:width={fit === 'width'} class:zoomed={zoom > 1} bind:this={stage} bind:clientWidth={stageWidth} bind:clientHeight={stageHeight} onclick={onstageclick}>
 		{#if failed}
 			<p class="msg error">{t.practice.viewer.failed}</p>
 		{:else if !score}
@@ -654,6 +769,7 @@
 		{/if}
 		<div
 			class="sheet"
+			bind:this={sheet}
 			style:width={size ? `${size.width}px` : undefined}
 			style:height={size ? `${size.height}px` : undefined}
 			style:margin-left={size ? `${pageLeft}px` : undefined}
@@ -709,6 +825,8 @@
 		--mark-red: #d0342c;
 		--mark-blue: #1f5fd1;
 		display: grid;
+		/* A zoomed page scrolls inside its stage; it doesn't widen the column. */
+		grid-template-columns: minmax(0, 1fr);
 		gap: var(--space-2);
 	}
 
@@ -765,6 +883,7 @@
 		position: relative;
 		display: flex;
 		flex-direction: column;
+		min-width: 0;
 	}
 
 	.full .area {
@@ -938,6 +1057,26 @@
 		overflow-y: auto;
 	}
 
+	/* One finger scrolls the zoomed page; two fingers are left to the zoom, not the browser's. */
+	.stage {
+		touch-action: pan-x pan-y;
+	}
+
+	.stage.zoomed {
+		overflow: auto;
+	}
+
+	.zoom {
+		display: inline-flex;
+		align-items: center;
+	}
+
+	.zoom .percent {
+		min-width: 4.5em;
+		justify-content: center;
+		font-variant-numeric: tabular-nums;
+	}
+
 	/* An outline, not a border: the page keeps exactly the size it was fitted to. */
 	.sheet {
 		position: relative;
@@ -949,8 +1088,11 @@
 		box-shadow: none;
 	}
 
+	/* Stretched while a pinch is under way, until the page is drawn at the new size. */
 	.slot :global(canvas) {
 		display: block;
+		width: 100% !important;
+		height: auto;
 	}
 
 	.marks {
