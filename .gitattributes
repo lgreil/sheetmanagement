@@ -1,2 +1,4 @@
 # Shell scripts run on Linux (GitHub Actions) and in Git Bash: always LF.
 *.sh text eol=lf
+# Migrations are imported as text and compared with schema.ts (store.test.ts): LF on Windows too.
+*.sql text eol=lf
