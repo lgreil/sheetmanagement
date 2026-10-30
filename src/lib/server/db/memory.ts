@@ -1,3 +1,4 @@
+import { fingerprint, type ErrorGroup } from '#lib/errors/errors.ts';
 import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { MIGRATIONS } from './sql.ts';
 
@@ -21,6 +22,8 @@ export function memoryStore(now = () => Date.now()): Store {
 	const answers = new Set<string>();
 	const hits = new Map<string, { count: number; since: number }>();
 	const partChecks = new Map<string, PartCheck>();
+	const errors = new Map<string, ErrorGroup>();
+	const daysAgo = (days: number) => sqlTime(now() - days * 86_400_000);
 	const latest = MIGRATIONS.at(-1)?.[0] ?? null;
 
 	return {
@@ -139,6 +142,27 @@ export function memoryStore(now = () => Date.now()): Store {
 		},
 		async clearPartChecks() {
 			partChecks.clear();
+		},
+
+		async logError(report) {
+			const key = fingerprint(report);
+			const old = errors.get(key);
+			const at = sqlTime(now());
+			errors.set(key, old ? { ...old, count: old.count + 1, lastAt: at, status: report.status } : { ...report, fingerprint: key, count: 1, firstAt: at, lastAt: at, notified: false });
+		},
+		errorLog: async (days) =>
+			[...errors.values()]
+				.filter((group) => group.lastAt >= daysAgo(days))
+				.sort((a, b) => b.lastAt.localeCompare(a.lastAt))
+				.slice(0, 200),
+		async markErrorsNotified(fingerprints) {
+			for (const key of fingerprints) {
+				const group = errors.get(key);
+				if (group) errors.set(key, { ...group, notified: true });
+			}
+		},
+		async pruneErrors(days) {
+			for (const [key, group] of errors) if (days <= 0 || group.lastAt < daysAgo(days)) errors.delete(key);
 		},
 
 		async hit(key, windowMinutes) {

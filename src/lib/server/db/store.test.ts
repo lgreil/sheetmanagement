@@ -187,6 +187,24 @@ describe.each([
 		expect(await store.shareOf('a@x.org', 'file-1')).toBeNull();
 	});
 
+	it('groups errors by kind, until they are notified and forgotten (#191)', async () => {
+		const store = make();
+		const report = { source: 'server' as const, place: '/stuecke/[id]', message: 'Sheet unreadable', status: 500 };
+		await store.logError(report);
+		await store.logError(report);
+		await store.logError({ ...report, source: 'client', status: undefined });
+		const log = await store.errorLog(7);
+		expect(log).toHaveLength(2);
+		const server = log.find((group) => group.source === 'server')!;
+		expect(server).toMatchObject({ place: '/stuecke/[id]', message: 'Sheet unreadable', status: 500, count: 2, notified: false });
+		await store.markErrorsNotified([server.fingerprint]);
+		expect((await store.errorLog(7)).filter((group) => group.notified)).toHaveLength(1);
+		await store.pruneErrors(30);
+		expect(await store.errorLog(7)).toHaveLength(2);
+		await store.pruneErrors(0);
+		expect(await store.errorLog(7)).toEqual([]);
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);

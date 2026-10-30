@@ -1,4 +1,18 @@
+import { fingerprint, type ErrorGroup, type ErrorSource } from '#lib/errors/errors.ts';
 import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
+
+type ErrorRow = { fingerprint: string; source: ErrorSource; place: string; message: string; status: number | null; count: number; first_at: string; last_at: string; notified: number };
+const errorFrom = (row: ErrorRow): ErrorGroup => ({
+	fingerprint: row.fingerprint,
+	source: row.source,
+	place: row.place,
+	message: row.message,
+	...(row.status ? { status: row.status } : {}),
+	count: row.count,
+	firstAt: row.first_at,
+	lastAt: row.last_at,
+	notified: !!row.notified
+});
 
 type ShareRow = { id: string; sender: string; file: string; pages: string; created_at: string };
 const shareFrom = (row: ShareRow): MarkShare => ({ id: row.id, sender: row.sender, file: row.file, pages: JSON.parse(row.pages), at: row.created_at });
@@ -254,6 +268,36 @@ export function sqlStore(db: D1): Store {
 		},
 		async clearPartChecks() {
 			await run('DELETE FROM part_checks');
+		},
+
+		async logError(report) {
+			await run(
+				`INSERT INTO error_log (fingerprint, source, place, message, status) VALUES (?, ?, ?, ?, ?)
+				 ON CONFLICT (fingerprint) DO UPDATE SET count = count + 1, last_at = datetime('now'), status = excluded.status`,
+				fingerprint(report),
+				report.source,
+				report.place,
+				report.message,
+				report.status ?? null
+			);
+		},
+		async errorLog(days) {
+			const rows = await all<ErrorRow>(
+				`SELECT fingerprint, source, place, message, status, count, first_at, last_at, notified FROM error_log
+				 WHERE last_at >= datetime('now', ?) ORDER BY last_at DESC LIMIT 200`,
+				`-${days} days`
+			);
+			return rows.map(errorFrom);
+		},
+		async markErrorsNotified(fingerprints) {
+			for (let i = 0; i < fingerprints.length; i += 90) {
+				const chunk = fingerprints.slice(i, i + 90);
+				await run(`UPDATE error_log SET notified = 1 WHERE fingerprint IN (${chunk.map(() => '?').join(', ')})`, ...chunk);
+			}
+		},
+		async pruneErrors(days) {
+			if (days <= 0) await run('DELETE FROM error_log');
+			else await run(`DELETE FROM error_log WHERE last_at < datetime('now', ?)`, `-${days} days`);
 		},
 
 		async hit(key, windowMinutes) {

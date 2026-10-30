@@ -1,5 +1,6 @@
 /** The store's types (#161); see index.ts. */
 
+import type { ErrorGroup, ErrorReport } from '#lib/errors/errors.ts';
 import type { Stroke } from '#lib/practice/marks.ts';
 import type { PracticeDay } from '#lib/practice/practice.ts';
 import type { TourOutcome } from '#lib/tour/tour.ts';
@@ -25,6 +26,7 @@ export interface SentReminder {
 export type { TourOutcome } from '#lib/tour/tour.ts';
 export type { PracticeDay } from '#lib/practice/practice.ts';
 export type { Stroke } from '#lib/practice/marks.ts';
+export type { ErrorGroup, ErrorReport } from '#lib/errors/errors.ts';
 
 /** One page's marks in a part. */
 export interface PageMarks {
@@ -128,6 +130,15 @@ export interface Store {
 	dismissPartCheck(fileId: string): Promise<void>;
 	/** Forgets every check, so the archive is read again from the start; for the demo's reset. */
 	clearPartChecks(): Promise<void>;
+
+	/** Counts one more error of its kind (#191); a new kind starts unnotified. */
+	logError(report: ErrorReport): Promise<void>;
+	/** The kinds of errors seen within this many days, the latest first. */
+	errorLog(days: number): Promise<ErrorGroup[]>;
+	/** Remembers that the admins were told about these kinds. */
+	markErrorsNotified(fingerprints: string[]): Promise<void>;
+	/** Forgets kinds not seen for this many days; 0 forgets all ("erledigt" on /status). */
+	pruneErrors(days: number): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

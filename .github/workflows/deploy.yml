@@ -40,6 +40,7 @@ jobs:
       - run: pnpm build
 
       - name: Deploy
+        id: deploy
         uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -58,3 +59,14 @@ jobs:
 
       - name: Smoke test
         run: bash .github/scripts/smoke-test.sh "${{ vars.APP_URL }}"
+
+      # A release that doesn't pass the smoke test goes back to the one before (#191). The run
+      # still fails, so the commit shows red. Migrations only ever add, so the older release
+      # works with the newer schema.
+      - name: Roll back
+        if: failure() && steps.deploy.outcome == 'success'
+        uses: cloudflare/wrangler-action@v4
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: rollback --yes --message "Smoke test failed for ${{ github.sha }}"

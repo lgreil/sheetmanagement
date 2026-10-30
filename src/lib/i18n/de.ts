@@ -1717,7 +1717,7 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden' },
 		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
@@ -1741,6 +1741,15 @@ export const de = {
 		storeMemoryHint: 'Die DB-Bindung in wrangler.toml anlegen, siehe README.',
 		storeDemo: 'Demo: alles nur im Speicher.',
 		storeFailed: (message: string) => `D1 antwortet nicht: ${message}`,
+		/** The error log (#191). */
+		errors: 'Fehlerprotokoll',
+		errorsNone: (days: number) => `Keine Fehler in den letzten ${days} Tagen.`,
+		errorsRecent: (n: number) => (n === 1 ? '1 Fehlerart in den letzten 24 Stunden.' : `${n} Fehlerarten in den letzten 24 Stunden.`),
+		errorsHint: 'Nur Ort und Meldung, ohne wer betroffen war. Was öfter vorkommt, bitte als Problem auf GitHub melden; „Erledigt“ leert die Liste.',
+		errorLine: (count: number, source: string, place: string, message: string, when: string) => `${count}× ${source} ${place}: ${message} (zuletzt ${when})`,
+		errorSources: { server: 'Server', client: 'Browser' },
+		errorsClear: 'Erledigt',
+		errorsCleared: 'Fehlerprotokoll geleert.',
 		/** The deployed version against GitHub (#206). */
 		version: 'Version',
 		versionRunning: (label: string) => `Läuft: ${label}`,
@@ -1804,7 +1813,11 @@ export const de = {
 		checkFailedBody: (what: string) => `Nicht erreichbar: ${what}. Mehr auf der Status-Seite.`,
 		checkOkTitle: 'Verbindung zu Google wieder in Ordnung',
 		checkOkBody: 'Archiv, Kalender und Tabelle sind wieder erreichbar.',
-		adminsTold: (n: number) => (n === 1 ? '1 Admin benachrichtigt.' : `${n} Admins benachrichtigt.`)
+		adminsTold: (n: number) => (n === 1 ? '1 Admin benachrichtigt.' : `${n} Admins benachrichtigt.`),
+		errorsNone: 'Keine neuen Fehler.',
+		errorsNew: (n: number) => (n === 1 ? '1 neue Fehlerart.' : `${n} neue Fehlerarten.`),
+		errorsTitle: (n: number) => (n === 1 ? 'Ein neuer Fehler in der App' : `${n} neue Fehler in der App`),
+		errorsBody: (place: string, message: string, more: number) => `${place}: ${message}${more ? ` und ${more} weitere` : ''}. Mehr auf der Status-Seite.`
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {
