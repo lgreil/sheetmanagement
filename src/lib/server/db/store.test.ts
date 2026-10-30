@@ -11,8 +11,8 @@ function localD1(): D1 {
 	// As in D1, where links are always checked.
 	db.exec('PRAGMA foreign_keys = ON');
 	const statement = (sql: string, values: unknown[] = []): D1Statement => {
-		// As in D1, whose SQLite allows at most 500 rows in one VALUES; Node's allows more.
-		if ((sql.match(/\), \(/g)?.length ?? 0) >= 500) throw new Error('D1_ERROR: too many terms in compound SELECT: SQLITE_ERROR');
+		// As in D1, which allows at most 5 terms in a compound SELECT (a VALUES list doesn't count); Node's SQLite allows 500.
+		if (sql.split(/\b(?:UNION|INTERSECT|EXCEPT)\b/).length > 5) throw new Error('D1_ERROR: too many terms in compound SELECT: SQLITE_ERROR');
 		return {
 			bind: (...next) => statement(sql, next),
 			all: async <T>() => ({ results: db.prepare(sql).all(...values) as T[] }),
@@ -309,7 +309,7 @@ describe.each([
 		expect(data.pieces![7].cells.title).toBe(rows[7].title);
 	});
 
-	it('imports many short rows, more than one VALUES may hold', async () => {
+	it('imports many short rows', async () => {
 		const store = make();
 		await store.importData(sheet({ pieces: Array.from({ length: 1200 }, (_, i) => ({ title: `${i}` })) }), ['pieces']);
 		expect((await store.readData()).pieces).toHaveLength(1200);

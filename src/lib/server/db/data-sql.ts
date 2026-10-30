@@ -24,8 +24,6 @@ function literal(value: string | number | null | undefined): string {
 
 /** Below D1's 100 KB per statement. */
 const STATEMENT_BYTES = 90_000;
-/** D1 counts each row of a multi-row VALUES as a term of a compound SELECT, at most 500. */
-const STATEMENT_ROWS = 500;
 
 export function sqlData(db: D1, schema: () => Promise<unknown>): DataMethods {
 	const all = async <T>(sql: string, ...values: unknown[]) => (await schema(), (await db.prepare(sql).bind(...values).all<T>()).results);
@@ -130,8 +128,9 @@ export function sqlData(db: D1, schema: () => Promise<unknown>): DataMethods {
 		async importData(prepared, tabs) {
 			await schema();
 			// What's there now goes, the tables linked to first; empty ones need no statement.
-			const counts = await all<{ tab: TabKey; n: number }>(TAB_ORDER.map((tab) => `SELECT '${tab}' AS tab, COUNT(*) AS n FROM ${tableOf(tab)}`).join(' UNION ALL '));
-			const filled = new Set(counts.filter((row) => row.n > 0).map((row) => row.tab));
+			// One row with a column per table: D1 allows only 5 terms in a UNION.
+			const [found] = await all<Record<TabKey, number>>(`SELECT ${TAB_ORDER.map((tab) => `EXISTS (SELECT 1 FROM ${tableOf(tab)}) AS ${quote(tab)}`).join(', ')}`);
+			const filled = new Set(TAB_ORDER.filter((tab) => found[tab]));
 			const statements: D1Statement[] = [
 				// Links are checked when the batch ends: a concert may name one that comes after it.
 				db.prepare('PRAGMA defer_foreign_keys = ON'),
@@ -152,7 +151,7 @@ export function sqlData(db: D1, schema: () => Promise<unknown>): DataMethods {
 				};
 				for (const { id, row } of rows) {
 					const tuple = `(${columns.map((column) => literal(column === 'id' ? id : row[column])).join(', ')})`;
-					if (bytes + tuple.length > STATEMENT_BYTES || values.length === STATEMENT_ROWS) flush();
+					if (bytes + tuple.length > STATEMENT_BYTES) flush();
 					values.push(tuple);
 					bytes += tuple.length + 2;
 				}
