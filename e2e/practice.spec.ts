@@ -49,6 +49,74 @@ test('Meine Noten opens the part in the practice viewer, which draws it', async 
 	await expectAccessible(page);
 });
 
+test('two fingers zoom the page, keeping the music under them, and the buttons zoom too', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	const stage = page.locator('.stage');
+	const stageWidth = (await stage.boundingBox())!.width;
+	const drawnBefore = await page.locator('.slot canvas').evaluate((canvas: HTMLCanvasElement) => canvas.width);
+
+	// Fingers 60 px apart at three quarters across the page, spread to 120 px: twice the size.
+	const result = await stage.evaluate((element) => {
+		const sheet = element.querySelector('.sheet')!;
+		const box = sheet.getBoundingClientRect();
+		const x = box.left + box.width * 0.75;
+		const y = box.top + Math.min(box.height, element.clientHeight) / 3;
+		const spot = { x: (x - box.left) / box.width, y: (y - box.top) / box.height };
+		const touches = (gap: number) => [new Touch({ identifier: 1, target: element, clientX: x - gap / 2, clientY: y }), new Touch({ identifier: 2, target: element, clientX: x + gap / 2, clientY: y })];
+		const send = (type: string, list: Touch[]) => element.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: list, targetTouches: list, changedTouches: list }));
+		const browserZoomStopped = !send('touchstart', touches(60));
+		for (let gap = 70; gap <= 120; gap += 10) send('touchmove', touches(gap));
+		send('touchend', []);
+		const after = sheet.getBoundingClientRect();
+		return {
+			browserZoomStopped,
+			spot,
+			now: { x: (x - after.left) / after.width, y: (y - after.top) / after.height },
+			// Only a page larger than its frame can scroll to keep the spot; a smaller one stays centred.
+			overflows: { x: after.width > element.clientWidth, y: after.height > element.clientHeight }
+		};
+	});
+	expect(result.browserZoomStopped).toBe(true);
+	await expect(page.locator('.zoom .percent')).toHaveText('200 %');
+	if (result.overflows.x) expect(result.now.x).toBeCloseTo(result.spot.x, 2);
+	if (result.overflows.y) expect(result.now.y).toBeCloseTo(result.spot.y, 2);
+	expect(result.overflows.x || result.overflows.y).toBe(true);
+	// The page scrolls inside its frame instead of widening it, and is drawn sharp at the new size.
+	expect((await stage.boundingBox())!.width).toBe(stageWidth);
+	await expect.poll(() => page.locator('.slot canvas').evaluate((canvas: HTMLCanvasElement) => canvas.width)).toBeGreaterThan(drawnBefore);
+
+	await page.getByRole('button', { name: 'Vergrößern' }).click();
+	await expect(page.locator('.zoom .percent')).toHaveText('250 %');
+	await page.getByRole('button', { name: 'Zurück auf 100 %' }).click();
+	await expect(page.locator('.zoom .percent')).toHaveText('100 %');
+	await expect(page.getByRole('button', { name: 'Verkleinern' })).toBeDisabled();
+});
+
+test('a second finger turns a line being drawn into a zoom, without leaving a mark', async ({ page }) => {
+	await open(page, PART);
+	await expect(page.locator('.slot canvas')).toHaveCount(1);
+	await page.getByRole('button', { name: 'Stift' }).click();
+	await page.locator('svg.marks').evaluate((svg) => {
+		const stage = svg.closest('.stage')!;
+		const box = svg.getBoundingClientRect();
+		const [x, y] = [box.left + box.width / 2, box.top + box.height / 4];
+		const pointer = (type: string, dx: number) =>
+			svg.dispatchEvent(new PointerEvent(type, { bubbles: true, pointerId: 3, pointerType: 'touch', isPrimary: true, buttons: 1, clientX: x + dx, clientY: y }));
+		pointer('pointerdown', 0);
+		pointer('pointermove', 10);
+		const touches = (gap: number) => [new Touch({ identifier: 1, target: svg, clientX: x + 10, clientY: y }), new Touch({ identifier: 2, target: svg, clientX: x + 10 + gap, clientY: y })];
+		const send = (type: string, list: Touch[]) => stage.dispatchEvent(new TouchEvent(type, { bubbles: true, cancelable: true, touches: list, targetTouches: list, changedTouches: list }));
+		send('touchstart', touches(50));
+		pointer('pointermove', 20);
+		send('touchmove', touches(100));
+		send('touchend', []);
+		pointer('pointerup', 20);
+	});
+	await expect(page.locator('.zoom .percent')).toHaveText('200 %');
+	await expect(page.locator('svg.marks path')).toHaveCount(0);
+});
+
 test('the page draws without JavaScript Safari and Android Chrome lack', async ({ page }) => {
 	// pdf.js 6's modern build needs these; its legacy build, which the app loads, doesn't.
 	await page.addInitScript(() => {
