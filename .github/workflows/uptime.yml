@@ -1,0 +1,60 @@
+# Checks the live app from outside every 15 minutes (#191). When it doesn't answer three times
+# in a row, an issue is opened (or the open one gets a comment, hourly); when it answers again, the
+# issue is closed. Together with the daily connection check (#159) and the error log on
+# /status. Needs the APP_URL variable, like the deploy.
+name: Uptime
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: uptime
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Is the app up?
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    if: ${{ vars.APP_URL != '' }}
+    env:
+      APP_URL: ${{ vars.APP_URL }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TITLE: 'Uptime: the app is not answering'
+    steps:
+      - name: Health and sign-in page
+        id: probe
+        run: |
+          base="${APP_URL%/}"
+          for attempt in 1 2 3; do
+            health=$(curl -s -o /dev/null -m 20 -w '%{http_code}' "$base/api/health" || echo 000)
+            signin=$(curl -s -o /dev/null -m 20 -w '%{http_code}' "$base/anmelden" || echo 000)
+            echo "attempt $attempt: /api/health $health, /anmelden $signin"
+            if [ "$health" = 200 ] && [ "$signin" = 200 ]; then echo "up=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+            echo "detail=/api/health $health, /anmelden $signin" >> "$GITHUB_OUTPUT"
+            sleep 20
+          done
+          echo "up=false" >> "$GITHUB_OUTPUT"
+
+      - name: Report
+        run: |
+          open=$(gh issue list --state open --search "in:title \"$TITLE\"" --json number,title --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          when=$(date -u '+%Y-%m-%d %H:%M UTC')
+          if [ "${{ steps.probe.outputs.up }}" = true ]; then
+            if [ -n "$open" ]; then gh issue close "$open" --comment "Answering again since $when."; fi
+          elif [ -n "$open" ]; then
+            # Once an hour is enough while it stays down.
+            [ "$(date -u +%-M)" -lt 15 ] || exit 1
+            gh issue comment "$open" --body "Still not answering at $when: ${{ steps.probe.outputs.detail }}."
+            exit 1
+          else
+            gh issue create --title "$TITLE" --body "$APP_URL didn't answer three times in a row at $when: ${{ steps.probe.outputs.detail }}. See the Cloudflare dashboard and /status. This issue closes itself when the app answers again."
+            exit 1
+          fi

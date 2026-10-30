@@ -1705,7 +1705,7 @@ export const en: Texts = {
 		redirectUri: (uri: string) => `Redirect URI: ${uri}`,
 		bootstrapAdmins: (n: number) => `${n} bootstrap admins`,
 		jobs: 'Background jobs',
-		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention' },
+		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention', errors: 'Report errors' },
 		retentionOff: 'No retention set; all names stay.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'entry' : 'entries'} from before ${cutoff} without names.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'part' : 'parts'} checked, ${left ? `${left} to go` : 'all checked'}.`,
@@ -1729,6 +1729,15 @@ export const en: Texts = {
 		storeMemoryHint: 'Add the DB binding in wrangler.toml, see the README.',
 		storeDemo: 'Demo: everything in memory only.',
 		storeFailed: (message: string) => `D1 doesn't answer: ${message}`,
+		/** The error log (#191). */
+		errors: 'Error log',
+		errorsNone: (days: number) => `No errors in the last ${days} days.`,
+		errorsRecent: (n: number) => (n === 1 ? '1 kind of error in the last 24 hours.' : `${n} kinds of errors in the last 24 hours.`),
+		errorsHint: 'Only where and what, not who it happened to. Please report what keeps coming back as an issue on GitHub; “Done” empties the list.',
+		errorLine: (count: number, source: string, place: string, message: string, when: string) => `${count}× ${source} ${place}: ${message} (last ${when})`,
+		errorSources: { server: 'server', client: 'browser' },
+		errorsClear: 'Done',
+		errorsCleared: 'Error log emptied.',
 		/** The deployed version against GitHub (#206). */
 		version: 'Version',
 		versionRunning: (label: string) => `Running: ${label}`,
@@ -1792,7 +1801,11 @@ export const en: Texts = {
 		checkFailedBody: (what: string) => `Not reachable: ${what}. More on the status page.`,
 		checkOkTitle: 'Connection to Google working again',
 		checkOkBody: 'Archive, calendar and sheet are reachable again.',
-		adminsTold: (n: number) => (n === 1 ? '1 admin notified.' : `${n} admins notified.`)
+		adminsTold: (n: number) => (n === 1 ? '1 admin notified.' : `${n} admins notified.`),
+		errorsNone: 'No new errors.',
+		errorsNew: (n: number) => (n === 1 ? '1 new kind of error.' : `${n} new kinds of errors.`),
+		errorsTitle: (n: number) => (n === 1 ? 'A new error in the app' : `${n} new errors in the app`),
+		errorsBody: (place: string, message: string, more: number) => `${place}: ${message}${more ? ` and ${more} more` : ''}. More on the status page.`
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

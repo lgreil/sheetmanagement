@@ -16,6 +16,7 @@
 		{ label: t.status.look, check: data.checks.look },
 		{ label: t.status.jobs, check: data.checks.jobs },
 		{ label: t.status.store, check: data.checks.store },
+		{ label: t.status.errors, check: data.checks.errors, id: 'fehler' },
 		{ label: t.status.push, check: data.checks.push },
 		{ label: t.email.status, check: data.checks.mail },
 		{ label: t.status.version, check: data.checks.version }
@@ -52,8 +53,8 @@
 <PageHeader title={t.status.title} lead={t.status.lead} />
 
 <ul class="checks">
-	{#each rows as { label, check } (label)}
-		<li class="check {check.state}">
+	{#each rows as { label, check, id } (label)}
+		<li class="check {check.state}" {id}>
 			<span class="icon"><Icon name={icons[check.state]} size={18} /></span>
 			<div class="body">
 				<div class="head">
@@ -63,6 +64,11 @@
 				{#each check.details as detail (detail)}<p>{detail}</p>{/each}
 				{#if check.problem}<p class="problem">{check.problem}</p>{/if}
 				{#if check.hint}<p class="hint">{check.hint}</p>{/if}
+				{#if id === 'fehler' && check.pill}
+					<form method="POST" action="?/clearErrors">
+						<button class="button secondary" type="submit">{t.status.errorsClear}</button>
+					</form>
+				{/if}
 				{#if check.link}
 					<a class="link external" href={check.link.href} target="_blank" rel="noopener noreferrer">{check.link.label}<Icon name="external" size={14} /></a>
 				{/if}
@@ -84,6 +90,9 @@
 			</form>
 		{/if}
 	</div>
+{/if}
+{#if form && 'errorsCleared' in form}
+	<p class="result" role="status">{t.status.errorsCleared}</p>
 {/if}
 {#if mailResult}
 	<p class="result" class:problem={data.mail.result !== null && data.mail.result !== 'verbunden' && !(form && 'mailDisconnected' in form)} role="status">{mailResult}</p>

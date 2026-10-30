@@ -1,5 +1,6 @@
 import { appEnv } from '../env.ts';
 import { checkConnections } from './check.ts';
+import { announceErrors } from './errors.ts';
 import { checkParts } from './parts.ts';
 import { applyRetention } from './retention.ts';
 import { sendReminders } from './reminders.ts';
@@ -29,7 +30,8 @@ export const JOBS = {
 	reminders: { everyMinutes: 30, run: () => sendReminders() },
 	check: { everyMinutes: 24 * 60, run: checkConnections },
 	parts: { everyMinutes: 10, run: () => checkParts() },
-	retention: { everyMinutes: 24 * 60, run: applyRetention }
+	retention: { everyMinutes: 24 * 60, run: applyRetention },
+	errors: { everyMinutes: 60, run: announceErrors }
 } satisfies Record<string, Job>;
 
 export type JobName = keyof typeof JOBS;

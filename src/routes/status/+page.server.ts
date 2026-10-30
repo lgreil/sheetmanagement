@@ -7,6 +7,7 @@ import { FEATURES } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
 import { appEnv, features, isDemo, orchestra, unknownFeatures } from '#lib/server/env.ts';
 import { getStore } from '#lib/server/db/index.ts';
+import { KEEP_ERRORS_DAYS } from '#lib/server/jobs/errors.ts';
 import { pushReady } from '#lib/server/push/index.ts';
 import { disconnectMail, mailAccount, mailError } from '#lib/server/mail/index.ts';
 import { canConnectDrive, disconnectDrive, driveAccount } from '#lib/server/drive-account.ts';
@@ -247,6 +248,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 			look: lookCheck(),
 			jobs: await jobsCheck(),
 			store: await storeCheck(),
+			errors: await errorsCheck(),
 			push: await pushCheck(),
 			mail: mail.check,
 			version: await versionCheck()
@@ -272,6 +274,13 @@ export const actions: Actions = {
 		requireAdminWhenSignInIsOn(locals);
 		await disconnectDrive();
 		return { driveDisconnected: true };
+	},
+
+	/** Empties the error log (#191) once the errors in it are dealt with. */
+	clearErrors: async ({ locals }) => {
+		requireAdminWhenSignInIsOn(locals);
+		await getStore().pruneErrors(0);
+		return { errorsCleared: true };
 	},
 
 	/** Starts a job by hand (#160), e.g. to try it after a deploy or in the demo. */
@@ -324,6 +333,26 @@ async function storeCheck(): Promise<Check> {
 	} catch (error) {
 		return { state: 'error', details: [], problem: t.status.storeFailed(error instanceof Error ? error.message : String(error)) };
 	}
+}
+
+/** Errors on the server and in members' browsers by kind (#191); recent ones are a problem. */
+async function errorsCheck(): Promise<Check> {
+	const log = await getStore()
+		.errorLog(KEEP_ERRORS_DAYS)
+		.catch(() => null);
+	if (!log) return { state: 'error', details: [], problem: t.status.storeFailed('') };
+	if (!log.length) return { state: 'ok', pill: '0', details: [t.status.errorsNone(KEEP_ERRORS_DAYS)] };
+	const dayAgo = new Date(Date.now() - 86_400_000).toISOString().slice(0, 19).replace('T', ' ');
+	const recent = log.filter((group) => group.lastAt >= dayAgo).length;
+	return {
+		state: recent ? 'error' : 'ok',
+		pill: String(log.length),
+		details: log
+			.slice(0, 10)
+			.map((group) => t.status.errorLine(group.count, t.status.errorSources[group.source], group.place, group.message, dateTime.format(new Date(`${group.lastAt.replace(' ', 'T')}Z`)))),
+		problem: recent ? t.status.errorsRecent(recent) : undefined,
+		hint: t.status.errorsHint
+	};
 }
 
 /** Whether notifications can be sent (#157), and to how many devices. */

@@ -1,10 +1,11 @@
-import type { Handle } from '@sveltejs/kit/hooks';
+import type { Handle, HandleServerError } from '@sveltejs/kit/hooks';
 import { resolveAccess } from '#lib/access/access.ts';
 import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
 import { movedPath } from '#lib/nav.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
-import { isOn } from '#lib/server/env.ts';
+import { isOn, runInBackground } from '#lib/server/env.ts';
+import { messageOf, recordError } from '#lib/server/errors.ts';
 import { isScheduledCall } from '#lib/server/jobs/token.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 
@@ -57,4 +58,14 @@ export const handle: Handle = async ({ event, resolve }) => {
 		}
 	}
 	return response;
+};
+
+/**
+ * Unexpected errors go to the error log (#191) by kind, so admins see them on /status before
+ * members report them. 404s and errors thrown on purpose with error() don't come here.
+ */
+export const handleError: HandleServerError = ({ kind, error, event }) => {
+	if (kind !== 'unknown') return;
+	console.error(error);
+	runInBackground(recordError({ source: 'server', place: event.route.id ?? event.url.pathname, message: messageOf(error), status: 500 }));
 };
