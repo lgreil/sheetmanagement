@@ -770,7 +770,10 @@ export const de = {
 		manage: 'Meldungen bearbeiten',
 		link: 'Alle fehlenden Stimmen',
 		done: 'erledigt',
-		doneHint: 'Im Blatt „Fehlende Stimmen“ abgehakt. Die Lücke verschwindet, sobald die Datei umbenannt ist.'
+		doneHint: 'Als erledigt markiert, z. B. bestellt. Die Lücke verschwindet, sobald die Datei umbenannt ist.',
+		markDone: 'Erledigt',
+		markOpen: 'Wieder offen',
+		markGone: 'Diese Lücke ist noch nicht in der Liste; gleich noch einmal versuchen.'
 	},
 	instrumentation: {
 		title: 'Besetzung',
@@ -1690,6 +1693,7 @@ export const de = {
 		refresh: 'Archiv neu einlesen',
 		setupGuide: 'Anleitung zur Einrichtung',
 		setupSheet: 'Tabelle einrichten',
+		dataMove: 'Datenbank',
 		noAccess: (what: string, status: number) => `Kein Zugriff auf ${what} (${status}).`,
 		shareWith: (what: string, email: string) => `Prüfe die ID und teile ${what} mit ${email} (Lesezugriff reicht).`,
 		checkShare: 'Prüfe die ID und die Freigabe.',
@@ -1721,7 +1725,7 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden', export: 'In die Tabelle schreiben' },
 		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,
@@ -1822,6 +1826,49 @@ export const de = {
 		errorsNew: (n: number) => (n === 1 ? '1 neue Fehlerart.' : `${n} neue Fehlerarten.`),
 		errorsTitle: (n: number) => (n === 1 ? 'Ein neuer Fehler in der App' : `${n} neue Fehler in der App`),
 		errorsBody: (place: string, message: string, more: number) => `${place}: ${message}${more ? ` und ${more} weitere` : ''}. Mehr auf der Status-Seite.`
+	},
+	/** Moving the data from the sheet into D1 and back (#186). */
+	dataMove: {
+		title: 'Datenbank',
+		lead: 'Wo die Daten liegen, die ihr pflegt: Stücke, Konzerte, Programme, Mitglieder, Rechte, Anmeldungen, Leihmaterial, Notizen und Einstellungen.',
+		sourceSheet: 'Die Google-Tabelle ist die Quelle. Jede Seite liest sie, jede Änderung geht hinein.',
+		sourceD1: 'Die Datenbank (D1) ist die Quelle. Die Tabelle ist eine Kopie, die jede Nacht neu geschrieben wird; Änderungen dort gehen beim nächsten Export verloren.',
+		noD1: 'Ohne D1-Datenbank bleibt die Tabelle die Quelle. Die DB-Bindung in wrangler.toml anlegen, siehe README.',
+		preview: 'Was übernommen würde',
+		previewLead: 'Gelesen gerade eben aus der Tabelle. Nichts ist geändert, bis du übernimmst.',
+		tabRows: (tab: string, rows: number) => `${tab}: ${rows === 1 ? '1 Zeile' : `${rows} Zeilen`}`,
+		unknown: (columns: string) => `Spalten, die die App nicht kennt und nicht übernimmt: ${columns}`,
+		missing: (columns: string) => `Fehlende Spalten, danach leer: ${columns}`,
+		total: (rows: number, tabs: number) => `${rows} Zeilen aus ${tabs} Blättern.`,
+		importButton: 'Aus Tabelle übernehmen',
+		importConfirm: 'Alle Daten aus der Tabelle in die Datenbank übernehmen? Danach ist die Tabelle nur noch eine Kopie; was dort jemand ändert, geht verloren.',
+		imported: (rows: number, tabs: number) => `Übernommen: ${rows} Zeilen aus ${tabs} Blättern. Die Datenbank ist jetzt die Quelle.`,
+		exportButton: 'Jetzt in die Tabelle schreiben',
+		exported: (rows: number, tabs: number) => `In die Tabelle geschrieben: ${rows} Zeilen in ${tabs} Blättern.`,
+		backButton: 'Zurück zur Tabelle',
+		backConfirm: 'Die Tabelle wieder zur Quelle machen? Vorher wird alles aus der Datenbank hineingeschrieben.',
+		back: 'Die Tabelle ist wieder die Quelle.',
+		download: 'Alles herunterladen (JSON)',
+		failed: (message: string) => `Hat nicht geklappt: ${message}`,
+		backup: 'Sicherung: D1 kann 30 Tage zurückgesetzt werden (Time Travel), und die Tabelle ist jede Nacht eine Kopie außerhalb von Cloudflare.',
+		statusD1: (rows: number) => `Quelle: Datenbank, ${rows} Zeilen; die Tabelle ist eine Kopie`,
+		exportSheetOff: 'Die Tabelle ist die Quelle; nichts zu exportieren.',
+		exportUnchanged: 'Seit dem letzten Export nichts geändert; die Tabelle ist aktuell.',
+		/** Why the database refused a save (#186). */
+		refused: {
+			link: (tab: string, column: string, value: string) => `${tab}, ${column}: „${value}“ gibt es nicht. Erst anlegen, dann hier eintragen.`,
+			unique: (tab: string, column: string, value: string) => `${tab}, ${column}: ${value ? `„${value}“` : 'Das'} gibt es schon.`,
+			required: (tab: string, column: string) => `${tab}: ${column} fehlt.`,
+			used: (tab: string) => `${tab}: Das wird noch gebraucht, z. B. in einem Programm. Erst dort entfernen.`
+		},
+		skippedTitle: 'Wird nicht übernommen',
+		skippedLead: 'Diese Zeilen übergeht die App schon heute; sie bleiben in der Tabelle, kommen aber nicht in die Datenbank.',
+		skipped: {
+			link: (tab: string, row: number, column: string, value: string) => `${tab}, Zeile ${row}: ${column} „${value}“ gibt es nicht`,
+			unique: (tab: string, row: number, column: string, value: string) => `${tab}, Zeile ${row}: ${column} „${value}“ doppelt`,
+			required: (tab: string, row: number, column: string) => `${tab}, Zeile ${row}: ${column} fehlt`,
+			used: (tab: string, row: number) => `${tab}, Zeile ${row}: wird noch gebraucht`
+		}
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

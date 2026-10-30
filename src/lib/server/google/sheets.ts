@@ -104,6 +104,12 @@ export async function updateValues(
 	});
 }
 
+/** Empties several ranges at once; formatting and dropdowns stay. */
+export async function clearValues(client: GoogleClient, spreadsheetId: string, ranges: string[]): Promise<void> {
+	if (ranges.length === 0) return;
+	await client.request(`${BASE}/${encodeURIComponent(spreadsheetId)}/values:batchClear`, { method: 'POST', body: { ranges } });
+}
+
 /** Structural and formatting changes (spreadsheets.batchUpdate). Returns one reply per request. */
 export async function batchUpdate(
 	client: GoogleClient,

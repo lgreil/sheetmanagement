@@ -1,6 +1,8 @@
 /** The store's types (#161); see index.ts. */
 
 import type { ErrorGroup, ErrorReport } from '#lib/errors/errors.ts';
+import type { TabKey } from '#lib/repertoire/sheet.ts';
+import type { PreparedImport } from './schema.ts';
 import type { Stroke } from '#lib/practice/marks.ts';
 import type { PracticeDay } from '#lib/practice/practice.ts';
 import type { TourOutcome } from '#lib/tour/tour.ts';
@@ -60,6 +62,23 @@ export interface PartCheck {
 	skipped: boolean;
 	/** An organiser said the hint is wrong. */
 	dismissed: boolean;
+}
+
+/**
+ * One row of a tab of the orchestra's data (#186): its cells by column key, empty ones left
+ * out, a link as the text it points to (see schema.ts).
+ */
+export interface DataRow {
+	id: number;
+	/** Counts the row's changes: a save names the one it read and fails if the row changed since. */
+	rev: number;
+	cells: Record<string, string>;
+}
+
+/** Where the data people maintain lives, and a number that changes with every change to it. */
+export interface DataState {
+	source: 'sheet' | 'd1';
+	version: number;
 }
 
 export interface Store {
@@ -139,6 +158,25 @@ export interface Store {
 	markErrorsNotified(fingerprints: string[]): Promise<void>;
 	/** Forgets kinds not seen for this many days; 0 forgets all ("erledigt" on /status). */
 	pruneErrors(days: number): Promise<void>;
+
+	/** Where the orchestra's data lives (#186); the sheet until an import. */
+	dataState(): Promise<DataState>;
+	/** Switches where the data is read from and written to, without changing it. */
+	setDataSource(source: DataState['source']): Promise<void>;
+	/** The tabs that exist with their rows in order; only `tabs` if given. */
+	readData(tabs?: TabKey[]): Promise<Partial<Record<TabKey, DataRow[]>>>;
+	/** Adds an empty tab; nothing if it exists. */
+	addDataTab(tab: TabKey): Promise<void>;
+	/** Adds rows; DataCheckError when one breaks a link or check (schema.ts), and then none is added. */
+	appendData(tab: TabKey, rows: Record<string, string>[]): Promise<void>;
+	/** Replaces the cells of these rows; DataConflictError, and nothing saved, if one changed since its `rev`. */
+	updateData(tab: TabKey, rows: DataRow[]): Promise<void>;
+	/** Deletes rows as read; DataConflictError if one changed since, DataCheckError if something still links to one. */
+	deleteData(tab: TabKey, rows: Pick<DataRow, 'id' | 'rev'>[]): Promise<void>;
+	/** Replaces all rows of a tab, e.g. a generated one. */
+	replaceData(tab: TabKey, rows: Record<string, string>[]): Promise<void>;
+	/** Replaces all tabs and rows at once and makes D1 the source; for the import from the sheet. */
+	importData(prepared: PreparedImport, tabs: TabKey[]): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

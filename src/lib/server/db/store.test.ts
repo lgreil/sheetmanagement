@@ -1,11 +1,15 @@
 import { DatabaseSync } from 'node:sqlite';
 import { describe, expect, it } from 'vitest';
+import type { TabKey } from '#lib/repertoire/sheet.ts';
 import { memoryStore } from './memory.ts';
+import { DataConflictError, prepareImport, schemaSql } from './schema.ts';
 import { MIGRATIONS, sqlStore, statements, type D1, type D1Statement } from './sql.ts';
 
 /** D1's API over Node's built-in SQLite, so the SQL and the migrations are tested for real. */
 function localD1(): D1 {
 	const db = new DatabaseSync(':memory:');
+	// As in D1, where links are always checked.
+	db.exec('PRAGMA foreign_keys = ON');
 	const statement = (sql: string, values: unknown[] = []): D1Statement => ({
 		bind: (...next) => statement(sql, next),
 		all: async <T>() => ({ results: db.prepare(sql).all(...values) as T[] }),
@@ -205,6 +209,102 @@ describe.each([
 		expect(await store.errorLog(7)).toEqual([]);
 	});
 
+	/** The sheet's rows as the import takes them: numbered from row 2. */
+	const sheet = (tabs: Partial<Record<TabKey, Record<string, string>[]>>) =>
+		prepareImport(Object.fromEntries(Object.entries(tabs).map(([tab, rows]) => [tab, rows!.map((cells, i) => ({ row: i + 2, cells }))])));
+	const sample = () =>
+		sheet({
+			pieces: [{ title: 'Moldau', driveFolderId: 'f1' }, { title: 'Boléro' }],
+			concerts: [{ title: 'Herbstkonzert', eventId: 'e1' }, { title: 'Zweites Herbstkonzert', sameProgramAs: 'herbstkonzert' }],
+			program: [
+				{ concert: 'Herbstkonzert', position: '1', piece: 'moldau' },
+				{ concert: 'Herbstkonzert', position: '2', piece: 'Zugabe' }
+			]
+		});
+
+	it('keeps the orchestra’s data by tab, in order, and counts every change (#186)', async () => {
+		const store = make();
+		expect(await store.dataState()).toEqual({ source: 'sheet', version: 0 });
+		await store.importData(sample(), ['pieces', 'concerts', 'program']);
+		const imported = await store.dataState();
+		expect(imported.source).toBe('d1');
+		const data = await store.readData();
+		expect(Object.keys(data).sort()).toEqual(['concerts', 'pieces', 'program']);
+		expect(data.pieces!.map((row) => row.cells.title)).toEqual(['Moldau', 'Boléro']);
+		// A link reads as the name it points to, spelt as there; a name that matches nothing stays as written.
+		expect(data.program!.map((row) => [row.cells.concert, row.cells.piece])).toEqual([
+			['Herbstkonzert', 'Moldau'],
+			['Herbstkonzert', 'Zugabe']
+		]);
+		expect(data.concerts![1].cells.sameProgramAs).toBe('Herbstkonzert');
+
+		await store.addDataTab('loans');
+		await store.replaceData('missingParts', [{ fileId: 'x1' }]);
+		const later = await store.readData(['loans', 'missingParts']);
+		expect(later.loans).toEqual([]);
+		expect(later.missingParts!.map((row) => row.cells)).toEqual([{ fileId: 'x1' }]);
+		expect((await store.dataState()).version).toBeGreaterThan(imported.version + 1);
+
+		await store.setDataSource('sheet');
+		expect((await store.dataState()).source).toBe('sheet');
+	});
+
+	it('follows a renamed piece or concert everywhere it is linked', async () => {
+		const store = make();
+		await store.importData(sample(), ['pieces', 'concerts', 'program']);
+		const [moldau] = (await store.readData(['pieces'])).pieces!;
+		await store.updateData('pieces', [{ ...moldau, cells: { ...moldau.cells, title: 'Die Moldau' } }]);
+		const [herbst] = (await store.readData(['concerts'])).concerts!;
+		await store.updateData('concerts', [{ ...herbst, cells: { ...herbst.cells, title: 'Herbstkonzert 2026' } }]);
+		const data = await store.readData();
+		expect(data.program!.map((row) => [row.cells.concert, row.cells.piece])).toEqual([
+			['Herbstkonzert 2026', 'Die Moldau'],
+			['Herbstkonzert 2026', 'Zugabe']
+		]);
+		expect(data.concerts![1].cells.sameProgramAs).toBe('Herbstkonzert 2026');
+	});
+
+	it('refuses what breaks a link or check, and then changes nothing', async () => {
+		const store = make();
+		await store.importData(sample(), ['pieces', 'concerts', 'program']);
+		const before = await store.readData();
+		// A second piece of the same name (without case and accents), a second folder, a row without either.
+		await expect(store.appendData('pieces', [{ title: 'Finlandia' }, { title: 'BOLERO' }])).rejects.toMatchObject({ kind: 'unique' });
+		await expect(store.appendData('pieces', [{ title: 'Neu', driveFolderId: 'f1' }])).rejects.toMatchObject({ kind: 'unique' });
+		await expect(store.appendData('pieces', [{ composer: 'Smetana' }])).rejects.toMatchObject({ kind: 'required' });
+		// A programme row needs its concert.
+		await expect(store.appendData('program', [{ concert: 'Gibt es nicht', piece: 'Moldau' }])).rejects.toMatchObject({ kind: 'link', column: 'concert' });
+		// A piece in a programme can't go; a concert takes its programme with it.
+		const pieces = before.pieces!;
+		await expect(store.deleteData('pieces', [pieces[0]])).rejects.toMatchObject({ kind: 'used' });
+		expect(await store.readData()).toEqual(before);
+		await store.deleteData('concerts', [before.concerts![0]]);
+		const after = await store.readData();
+		expect(after.program).toEqual([]);
+		expect(after.concerts!.map((row) => row.cells)).toEqual([{ title: 'Zweites Herbstkonzert' }]);
+	});
+
+	it('refuses a save or delete of a row changed since it was read', async () => {
+		const store = make();
+		await store.importData(sample(), ['pieces', 'concerts', 'program']);
+		const [, bolero] = (await store.readData(['pieces'])).pieces!;
+		await store.updateData('pieces', [{ ...bolero, cells: { ...bolero.cells, notes: 'eins' } }]);
+		await expect(store.updateData('pieces', [{ ...bolero, cells: { ...bolero.cells, notes: 'zwei' } }])).rejects.toBeInstanceOf(DataConflictError);
+		await expect(store.deleteData('pieces', [bolero])).rejects.toBeInstanceOf(DataConflictError);
+		const now = (await store.readData(['pieces'])).pieces![1];
+		expect(now.cells.notes).toBe('eins');
+		expect(now.rev).toBe(bolero.rev + 1);
+	});
+
+	it('imports many rows in one go', async () => {
+		const store = make();
+		const rows = Array.from({ length: 2000 }, (_, i) => ({ title: `Stück ${i} – ein „langer“ Titel mit 'Apostroph'`, notes: 'x'.repeat(40) }));
+		await store.importData(sheet({ pieces: rows }), ['pieces']);
+		const data = await store.readData();
+		expect(data.pieces).toHaveLength(2000);
+		expect(data.pieces![7].cells.title).toBe(rows[7].title);
+	});
+
 	it('counts uses for rate limits', async () => {
 		const store = make();
 		expect(await store.hit('mail:a@x.org', 60)).toBe(1);
@@ -227,7 +327,37 @@ describe.each([
 	});
 });
 
+describe('the import', () => {
+	it('leaves out what the app ignores already, saying why', () => {
+		const { rows, skipped } = prepareImport({
+			pieces: [
+				{ row: 2, cells: { title: 'Moldau' } },
+				{ row: 3, cells: { title: 'moldau' } },
+				{ row: 4, cells: { composer: 'Smetana' } }
+			],
+			concerts: [{ row: 2, cells: { title: 'Herbst' } }],
+			program: [
+				{ row: 2, cells: { concert: 'Herbst', piece: 'Moldau' } },
+				{ row: 3, cells: { concert: 'Frühling', piece: 'Moldau' } }
+			]
+		});
+		expect(rows.pieces).toHaveLength(1);
+		expect(rows.program).toHaveLength(1);
+		expect(skipped).toEqual([
+			{ tab: 'pieces', row: 3, kind: 'unique', column: 'title', value: 'moldau' },
+			{ tab: 'pieces', row: 4, kind: 'required', column: 'title', value: '' },
+			{ tab: 'program', row: 3, kind: 'link', column: 'concert', value: 'Frühling' }
+		]);
+	});
+});
+
 describe('migrations', () => {
+	it('0009 is the schema in schema.ts', () => {
+		const migration = MIGRATIONS.find(([name]) => name === '0009_data.sql')![1];
+		const tables = statements(migration).filter((statement) => statement.includes('"id" INTEGER PRIMARY KEY'));
+		expect(tables).toEqual(schemaSql());
+	});
+
 	it('are found and split into statements', () => {
 		expect(MIGRATIONS.map(([name]) => name)).toContain('0001_reminders.sql');
 		expect(statements('-- a comment; with a semicolon\nCREATE TABLE a (x);\n\nCREATE TABLE b (y);\n')).toEqual(['CREATE TABLE a (x)', 'CREATE TABLE b (y)']);

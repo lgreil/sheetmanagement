@@ -1,3 +1,4 @@
+import { sqlData } from './data-sql.ts';
 import { fingerprint, type ErrorGroup, type ErrorSource } from '#lib/errors/errors.ts';
 import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PracticeDay, type PushDevice, type SentReminder, type Store, type TourOutcome } from './types.ts';
 
@@ -299,6 +300,8 @@ export function sqlStore(db: D1): Store {
 			if (days <= 0) await run('DELETE FROM error_log');
 			else await run(`DELETE FROM error_log WHERE last_at < datetime('now', ?)`, `-${days} days`);
 		},
+
+		...sqlData(db, schema),
 
 		async hit(key, windowMinutes) {
 			const since = `-${windowMinutes} minutes`;

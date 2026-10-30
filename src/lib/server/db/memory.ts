@@ -1,5 +1,6 @@
 import { fingerprint, type ErrorGroup } from '#lib/errors/errors.ts';
 import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
+import { memoryData } from './data-memory.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -164,6 +165,9 @@ export function memoryStore(now = () => Date.now()): Store {
 		async pruneErrors(days) {
 			for (const [key, group] of errors) if (days <= 0 || group.lastAt < daysAgo(days)) errors.delete(key);
 		},
+
+		// The orchestra's data (#186).
+		...memoryData(),
 
 		async hit(key, windowMinutes) {
 			const last = hits.get(key);

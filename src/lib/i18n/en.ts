@@ -768,7 +768,10 @@ export const en: Texts = {
 		manage: 'Deal with reports',
 		link: 'All missing parts',
 		done: 'done',
-		doneHint: 'Ticked in the “Missing parts” tab. The gap disappears once the file is renamed.'
+		doneHint: 'Marked as done, e.g. ordered. The gap disappears once the file is renamed.',
+		markDone: 'Done',
+		markOpen: 'Open again',
+		markGone: 'This gap isn’t in the list yet; try again in a moment.'
 	},
 	instrumentation: {
 		title: 'Instrumentation',
@@ -1675,6 +1678,7 @@ export const en: Texts = {
 		refresh: 'Read the library again',
 		setupGuide: 'Setup guide',
 		setupSheet: 'Set up sheet',
+		dataMove: 'Database',
 		noAccess: (what: string, status: number) => `No access to ${what} (${status}).`,
 		shareWith: (what: string, email: string) => `Check the ID and share ${what} with ${email} (read access is enough).`,
 		checkShare: 'Check the ID and the sharing.',
@@ -1705,7 +1709,7 @@ export const en: Texts = {
 		redirectUri: (uri: string) => `Redirect URI: ${uri}`,
 		bootstrapAdmins: (n: number) => `${n} bootstrap admins`,
 		jobs: 'Background jobs',
-		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention', errors: 'Report errors' },
+		jobNames: { warm: 'Fill caches', reminders: 'Reminders', check: 'Check connection', parts: 'Check parts', retention: 'Retention', errors: 'Report errors', export: 'Write to the sheet' },
 		retentionOff: 'No retention set; all names stay.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'entry' : 'entries'} from before ${cutoff} without names.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'part' : 'parts'} checked, ${left ? `${left} to go` : 'all checked'}.`,
@@ -1806,6 +1810,49 @@ export const en: Texts = {
 		errorsNew: (n: number) => (n === 1 ? '1 new kind of error.' : `${n} new kinds of errors.`),
 		errorsTitle: (n: number) => (n === 1 ? 'A new error in the app' : `${n} new errors in the app`),
 		errorsBody: (place: string, message: string, more: number) => `${place}: ${message}${more ? ` and ${more} more` : ''}. More on the status page.`
+	},
+	/** Moving the data from the sheet into D1 and back (#186). */
+	dataMove: {
+		title: 'Database',
+		lead: 'Where the data you maintain lives: pieces, concerts, programmes, members, rights, sign-ups, rentals, notes and settings.',
+		sourceSheet: 'The Google Sheet is the source. Every page reads it, every change goes into it.',
+		sourceD1: 'The database (D1) is the source. The sheet is a copy written again every night; changes made there are lost at the next export.',
+		noD1: 'Without a D1 database the sheet stays the source. Add the DB binding in wrangler.toml, see the README.',
+		preview: 'What would be taken over',
+		previewLead: 'Read from the sheet just now. Nothing changes until you take it over.',
+		tabRows: (tab: string, rows: number) => `${tab}: ${rows === 1 ? '1 row' : `${rows} rows`}`,
+		unknown: (columns: string) => `Columns the app doesn't know and won't take over: ${columns}`,
+		missing: (columns: string) => `Missing columns, empty afterwards: ${columns}`,
+		total: (rows: number, tabs: number) => `${rows} rows from ${tabs} tabs.`,
+		importButton: 'Take over from the sheet',
+		importConfirm: 'Take all data from the sheet into the database? Afterwards the sheet is only a copy; changes made there are lost.',
+		imported: (rows: number, tabs: number) => `Taken over: ${rows} rows from ${tabs} tabs. The database is the source now.`,
+		exportButton: 'Write to the sheet now',
+		exported: (rows: number, tabs: number) => `Written to the sheet: ${rows} rows in ${tabs} tabs.`,
+		backButton: 'Back to the sheet',
+		backConfirm: 'Make the sheet the source again? Everything in the database is written into it first.',
+		back: 'The sheet is the source again.',
+		download: 'Download everything (JSON)',
+		failed: (message: string) => `That didn't work: ${message}`,
+		backup: 'Backup: D1 can be restored to any point in the last 30 days (Time Travel), and every night the sheet is a copy outside Cloudflare.',
+		statusD1: (rows: number) => `Source: database, ${rows} rows; the sheet is a copy`,
+		exportSheetOff: 'The sheet is the source; nothing to export.',
+		exportUnchanged: 'Nothing changed since the last export; the sheet is up to date.',
+		/** Why the database refused a save (#186). */
+		refused: {
+			link: (tab: string, column: string, value: string) => `${tab}, ${column}: “${value}” doesn’t exist. Add it first, then enter it here.`,
+			unique: (tab: string, column: string, value: string) => `${tab}, ${column}: ${value ? `“${value}”` : 'That'} exists already.`,
+			required: (tab: string, column: string) => `${tab}: ${column} is missing.`,
+			used: (tab: string) => `${tab}: This is still in use, e.g. in a programme. Remove it there first.`
+		},
+		skippedTitle: 'Not taken over',
+		skippedLead: 'The app ignores these rows already; they stay in the sheet but don’t go into the database.',
+		skipped: {
+			link: (tab: string, row: number, column: string, value: string) => `${tab}, row ${row}: ${column} “${value}” doesn’t exist`,
+			unique: (tab: string, row: number, column: string, value: string) => `${tab}, row ${row}: ${column} “${value}” twice`,
+			required: (tab: string, row: number, column: string) => `${tab}, row ${row}: ${column} missing`,
+			used: (tab: string, row: number) => `${tab}, row ${row}: still in use`
+		}
 	},
 	/** Allowing notifications on /profil (#157). */
 	push: {

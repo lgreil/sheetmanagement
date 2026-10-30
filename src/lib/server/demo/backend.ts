@@ -110,6 +110,16 @@ function sheets(url: URL, method: string, body: Record<string, unknown> | undefi
 		}
 		return json({});
 	}
+	if (method === 'POST' && rest === '/values:batchClear') {
+		// The app clears everything below a row ("'Stücke'!A2:ZZ"), so that's all this does.
+		for (const range of (body?.ranges ?? []) as string[]) {
+			const parsed = parseRange(range);
+			const tab = parsed && tabs.get(parsed.tab);
+			if (!parsed || !tab) return notFound('Tab not found');
+			tab.values.length = Math.min(tab.values.length, parsed.row);
+		}
+		return json({});
+	}
 	if (method === 'POST' && rest === ':batchUpdate') {
 		const replies = ((body?.requests as Record<string, any>[]) ?? []).map((request) => {
 			if (request.addSheet) {

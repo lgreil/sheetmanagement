@@ -1,3 +1,4 @@
+import { isHttpError } from '@sveltejs/kit';
 import { config, PRESET_INSTRUMENTS, useInstrumentOverrides, type InstrumentOverride, type OrchestraConfig } from '#lib/config/index.ts';
 import { joinList } from '#lib/repertoire/lists.ts';
 import { linkSources, planSync, toSheetRow, type CalendarConcert, type DrivePiece, type Links } from '#lib/repertoire/link.ts';
@@ -21,7 +22,9 @@ import type { GoogleClient } from './google/client.ts';
 import { appendRows, getSpreadsheetInfo, getValues, tabRange } from './google/sheets.ts';
 import { getSchedule } from './schedule.ts';
 import { getGoogle, NotConfiguredError, requireSetting } from './services.ts';
-import { replaceRows } from './sheet-writes.ts';
+import { appendRecords, replaceRows } from './sheet-writes.ts';
+import { dataState, gridOf, usingD1 } from './data-source.ts';
+import { getStore } from './db/index.ts';
 
 /** People edit the sheet by hand, so changes should show up quickly. */
 const SHEET_MAX_AGE_MS = 60 * 1000;
@@ -34,54 +37,51 @@ export class SheetNotSetUpError extends Error {
 	}
 }
 
-/**
- * Reads all tabs in one request. The repertoire tabs are required; the access and
- * feedback tabs are read when present, so an older sheet keeps working.
- */
-export async function readSheet(
-	client: GoogleClient,
-	spreadsheetId: string
-): Promise<{
-	values: SheetValues;
-	access: AccessValues;
-	feedback: FeedbackValues;
-	missingParts?: string[][];
-	instrumentGroups?: string[][];
-	signups?: string[][];
-	rehearsals?: string[][];
-	loans?: string[][];
-	attendance?: string[][];
-	settings?: string[][];
-	instruments?: string[][];
-	pieceNotes?: string[][];
-	rehearsalNotes?: string[][];
-}> {
+/** The tabs the app reads besides the repertoire; each only when present, so an older sheet keeps working. */
+export const OPTIONAL_TABS = [...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings', 'instruments', 'pieceNotes', 'rehearsalNotes'] as const;
+
+/** Every tab the sheet has, as raw values with the header row, in one request. */
+export async function readSheetGrids(client: GoogleClient, spreadsheetId: string): Promise<Partial<Record<TabKey, string[][]>>> {
 	const info = await getSpreadsheetInfo(client, spreadsheetId);
 	const missing = REPERTOIRE_TABS.map((key) => LAYOUT[key].tab).filter((tab) => !info.tabs.includes(tab));
 	if (missing.length) throw new SheetNotSetUpError(missing);
-	const optional = ([...ACCESS_TABS, ...FEEDBACK_TABS, 'missingParts', 'instrumentGroups', 'signups', 'rehearsals', 'loans', 'attendance', 'settings', 'instruments', 'pieceNotes', 'rehearsalNotes'] as const).filter((key) =>
-		info.tabs.includes(LAYOUT[key].tab)
-	);
-	const keys = [...REPERTOIRE_TABS, ...optional];
+	const keys = [...REPERTOIRE_TABS, ...OPTIONAL_TABS.filter((key) => info.tabs.includes(LAYOUT[key].tab))];
 	const ranges = keys.map((key) => tabRange(LAYOUT[key].tab));
 	const result = await getValues(client, spreadsheetId, ranges);
-	const all = Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]])) as Record<TabKey, string[][]>;
-	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, instruments, pieceNotes, rehearsalNotes, ...access } = all;
+	return Object.fromEntries(keys.map((key, i) => [key, result[ranges[i]]]));
+}
+
+/** The tabs grouped as the builders take them. The repertoire tabs are required, the rest read when present. */
+function rawFromGrids(grids: Partial<Record<TabKey, string[][]>>) {
+	const missing = REPERTOIRE_TABS.filter((key) => !grids[key]).map((key) => LAYOUT[key].tab);
+	if (missing.length) throw new SheetNotSetUpError(missing);
+	const { pieces, concerts, program, reports, wishes, missingParts, instrumentGroups, signups, rehearsals, loans, attendance, settings, instruments, pieceNotes, rehearsalNotes, ...access } = grids as Record<TabKey, string[][]>;
 	return {
-		values: { pieces, concerts, program },
-		access,
-		feedback: { reports, wishes },
-		missingParts,
-		instrumentGroups,
-		signups,
-		rehearsals,
-		loans,
-		attendance,
-		settings,
-		instruments,
-		pieceNotes,
-		rehearsalNotes
+		values: { pieces, concerts, program } as SheetValues,
+		access: access as AccessValues,
+		feedback: { reports, wishes } as FeedbackValues,
+		missingParts: missingParts as string[][] | undefined,
+		instrumentGroups: instrumentGroups as string[][] | undefined,
+		signups: signups as string[][] | undefined,
+		rehearsals: rehearsals as string[][] | undefined,
+		loans: loans as string[][] | undefined,
+		attendance: attendance as string[][] | undefined,
+		settings: settings as string[][] | undefined,
+		instruments: instruments as string[][] | undefined,
+		pieceNotes: pieceNotes as string[][] | undefined,
+		rehearsalNotes: rehearsalNotes as string[][] | undefined
 	};
+}
+
+/** Reads all tabs in one request. */
+export async function readSheet(client: GoogleClient, spreadsheetId: string) {
+	return rawFromGrids(await readSheetGrids(client, spreadsheetId));
+}
+
+/** All tabs from D1 (#186), as grids like the sheet's. */
+async function readD1Sheet() {
+	const data = await getStore().readData();
+	return rawFromGrids(Object.fromEntries(Object.entries(data).map(([key, rows]) => [key, gridOf(key as TabKey, rows ?? [])])));
 }
 
 export interface Sources {
@@ -129,6 +129,22 @@ async function syncSheet(client: GoogleClient, spreadsheetId: string, repertoire
 	// Without its id column a tab can't be synced: the next run would add everything again.
 	const canWrite = (table: { missing: string[] }, id: string) => !table.missing.includes(id);
 	let wrote = false;
+	if (await usingD1()) {
+		// One at a time: a folder or concert D1 refuses (its title is taken) stays out, the others come in.
+		let added = 0;
+		const add = async (key: 'pieces' | 'concerts', table: typeof pieces | typeof concerts, record: Record<string, string>) => {
+			try {
+				await appendRecords(key, table as never, [record]);
+				added++;
+			} catch (cause) {
+				if (!isHttpError(cause, 409)) throw cause;
+				console.warn(`Not added from Drive or the calendar: ${cause.body.message}`);
+			}
+		};
+		for (const record of plan.pieces) await add('pieces', pieces, record);
+		for (const record of plan.concerts) await add('concerts', concerts, record);
+		return added > 0;
+	}
 	if (plan.pieces.length && canWrite(pieces, 'driveFolderId')) {
 		await appendRows(client, spreadsheetId, tabRange(LAYOUT.pieces.tab), plan.pieces.map((row) => toSheetRow(row, pieces.indexes)));
 		wrote = true;
@@ -156,7 +172,7 @@ export type RepertoireResult =
 	| { ok: true; repertoire: Repertoire; links: Links; storedAt: number }
 	| { ok: false; reason: 'not-configured' | 'not-set-up' | 'failed'; missingTabs?: string[] };
 
-type RawSheet = Awaited<ReturnType<typeof readSheet>>;
+type RawSheet = ReturnType<typeof rawFromGrids>;
 
 interface SheetSnapshot {
 	repertoire: Repertoire;
@@ -189,7 +205,8 @@ interface SheetSnapshot {
  * member without waiting for Google, which matters most right after signing in. It's
  * only written when the sheet changed, so the free tier's 1,000 writes a day last.
  */
-function loadRawSheet(force: boolean) {
+async function loadRawSheet(force: boolean): Promise<{ value: RawSheet; storedAt: number }> {
+	if (await usingD1()) return loadD1Sheet(force);
 	const spreadsheetId = requireSetting('REPERTOIRE_SHEET_ID');
 	const { client } = getGoogle();
 	return cached<RawSheet>({
@@ -200,6 +217,19 @@ function loadRawSheet(force: boolean) {
 		waitUntil: runInBackground,
 		force
 	});
+}
+
+/**
+ * From D1 the whole data is read again only when its version changed (#186): one small query
+ * per request instead of the sheet's minute-old copy, so a change shows up everywhere at once.
+ */
+let d1Sheet: { version: number; value: RawSheet; storedAt: number } | undefined;
+
+async function loadD1Sheet(force: boolean): Promise<{ value: RawSheet; storedAt: number }> {
+	const { version } = await dataState({ force });
+	if (!force && d1Sheet?.version === version) return d1Sheet;
+	d1Sheet = { version, value: await readD1Sheet(), storedAt: Date.now() };
+	return d1Sheet;
 }
 
 // Built once per sheet snapshot and Worker instance, not on every request.
