@@ -27,6 +27,8 @@ export interface AppEnv {
 	FEATURES_OFF?: string;
 	/** Parts that are off unless turned on here, comma-separated: "karten" sells concert tickets (docs/tickets-plan.md). */
 	FEATURES_ON?: string;
+	/** The app's own address, e.g. "https://noten.example.org". Requests to the workers.dev address are redirected there. Optional. */
+	APP_URL?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
 	CALENDAR_ID?: string;
 	DRIVE_ARCHIVE_FOLDER_ID?: string;

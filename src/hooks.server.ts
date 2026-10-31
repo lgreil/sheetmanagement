@@ -4,7 +4,8 @@ import { LANGUAGE, t } from '#lib/i18n/index.ts';
 import { featureOfPath } from '#lib/features.ts';
 import { movedPath } from '#lib/nav.ts';
 import { accessFromCookies, authConfig, isPublicPath } from '#lib/server/auth/index.ts';
-import { isOn, runInBackground } from '#lib/server/env.ts';
+import { canonicalUrl } from '#lib/server/canonical.ts';
+import { appEnv, isOn, runInBackground } from '#lib/server/env.ts';
 import { messageOf, recordError } from '#lib/server/errors.ts';
 import { isScheduledCall } from '#lib/server/jobs/token.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
@@ -26,6 +27,9 @@ export const handle: Handle = async ({ event, resolve }) => {
 		marks.push([name, now - last]);
 		last = now;
 	};
+	// The old workers.dev address, once the app has its own domain; 308 keeps the method, like below.
+	const canonical = canonicalUrl(event.url, appEnv().APP_URL);
+	if (canonical) return new Response(null, { status: 308, headers: { location: canonical, ...SECURITY_HEADERS } });
 	// Old addresses of moved pages; 308 keeps the method, so a form posted to the old page still arrives.
 	const moved = movedPath(event.url.pathname);
 	if (moved) return new Response(null, { status: 308, headers: { location: moved + event.url.search, ...SECURITY_HEADERS } });
