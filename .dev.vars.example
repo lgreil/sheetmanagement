@@ -21,6 +21,10 @@ ORCHESTRA_NAME="Mein Orchester"
 # sheet tabs go away. Any of: leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline
 # FEATURES_OFF="leihmaterial, gema"
 
+# The app's own domain, e.g. "https://noten.example.org". With it, the workers.dev address
+# redirects there, so sign-in, links and the installed app all use one address. Optional.
+# APP_URL="https://noten.example.org"
+
 # --- Google connection -----------------------------------------------------------
 # Service-account key: the key file base64-encoded on one line (or its JSON as is).
 GOOGLE_SERVICE_ACCOUNT_JSON=""
