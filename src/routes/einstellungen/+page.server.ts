@@ -2,7 +2,7 @@ import { error, fail } from '@sveltejs/kit';
 import { FEATURES, type Feature } from '#lib/features.ts';
 import { t } from '#lib/i18n/index.ts';
 import { requireRight } from '#lib/server/auth/index.ts';
-import { defaultSettings, features } from '#lib/server/env.ts';
+import { defaultSettings, features, offeredFeature } from '#lib/server/env.ts';
 import { refreshStoredSettings } from '#lib/server/repertoire.ts';
 import { appendRecords, ensureTab, readTab, refreshAfterWrite, SheetLayoutError, updateRecords } from '#lib/server/sheet-writes.ts';
 import { NotConfiguredError } from '#lib/server/services.ts';
@@ -69,7 +69,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 			look: defaults.look,
 			links: linksText(defaults.links)
 		},
-		features: FEATURES.map((feature) => ({ key: feature, on: on[feature], default: defaults.features[feature] })),
+		features: FEATURES.filter(offeredFeature).map((feature) => ({ key: feature, on: on[feature], default: defaults.features[feature] })),
 		/** Whether the page decides the features, or FEATURES_OFF and the preset still do. */
 		featuresStored: !!stored.featuresOff,
 		// Each instrument with the file names' word, the preset's label and spellings, and the orchestra's own.
@@ -96,7 +96,8 @@ export const actions: Actions = {
 			// The colour picker always sends a colour; "default" keeps the field empty.
 			accent: data.has('accentDefault') ? '' : text('accent'),
 			look: text('look'),
-			featuresOff: FEATURES.filter((feature: Feature) => !on.has(feature)),
+			// An opt-in feature the page doesn't offer stays out of the list, so turning it on later works.
+			featuresOff: FEATURES.filter((feature: Feature) => offeredFeature(feature) && !on.has(feature)),
 			retention: text('retention'),
 			links: text('links')
 		};

@@ -1,6 +1,7 @@
-import { orchestra } from '#lib/server/env.ts';
+import { isOn, orchestra } from '#lib/server/env.ts';
 import { getLibrary } from '#lib/server/library.ts';
 import { FEED_VERSION, publicDetails, publicFeed, publishedIds } from '#lib/server/public-concerts.ts';
+import { openSales } from '#lib/server/tickets.ts';
 import type { RequestHandler } from './$types';
 
 /**
@@ -9,13 +10,15 @@ import type { RequestHandler } from './$types';
  * what an organiser chose to make public.
  */
 export const GET: RequestHandler = async () => {
-	const [library, published, details] = await Promise.all([getLibrary(), publishedIds(), publicDetails()]);
+	const [library, published, details, sales] = await Promise.all([getLibrary(), publishedIds(), publicDetails(), isOn('tickets') ? openSales() : new Set<string>()]);
 	const feed = publicFeed(library, published, details);
+	// Tickets on sale through /api/karten/<id> (docs/tickets-plan.md): the website links to its own sale page.
+	for (const concert of feed.upcoming) if (sales.has(concert.id)) concert.tickets = true;
 	return new Response(JSON.stringify({ version: FEED_VERSION, orchestra: orchestra().name, ...feed }), {
 		headers: {
 			'content-type': 'application/json; charset=utf-8',
 			'access-control-allow-origin': '*',
-			'cache-control': 'public, max-age=900'
+			'cache-control': 'public, max-age=300'
 		}
 	});
 };

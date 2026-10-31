@@ -9,6 +9,9 @@ export const RIGHTS = [
 	'anmeldungen.sehen',
 	'anwesenheit.erfassen',
 	'termine.planen',
+	// Concert tickets (docs/tickets-plan.md), only while the "tickets" feature is on.
+	'karten.verwalten',
+	'karten.einlass',
 	'mitglieder.verwalten'
 ] as const;
 export type Right = (typeof RIGHTS)[number];

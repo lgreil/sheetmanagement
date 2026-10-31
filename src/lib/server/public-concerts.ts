@@ -50,6 +50,8 @@ export interface PublicConcert {
 	text?: Bilingual;
 	ticketUrl?: string;
 	ticketNote?: Bilingual;
+	/** Tickets can be reserved through /api/karten/<id>; only on upcoming concerts. */
+	tickets?: boolean;
 }
 
 export interface PublicFeed {

@@ -104,7 +104,11 @@ export function isPublicPath(path: string): boolean {
 		path === '/api/health' ||
 		// Published concerts for the orchestra's website (#197): only what an organiser published.
 		path === '/api/konzerte' ||
-		path === '/api/konzerte.ics'
+		path === '/api/konzerte.ics' ||
+		// Concert tickets (docs/tickets-plan.md): the website's sale, and a buyer's tickets, whose
+		// address holds the order's long random id.
+		path.startsWith('/api/karten/') ||
+		path.startsWith('/karte/')
 	);
 }
 

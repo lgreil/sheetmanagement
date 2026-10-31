@@ -1,6 +1,6 @@
 # Plan: concert tickets and check-in at the door
 
-Status: proposal, nothing built. Written 2026-10-31. The public site (bachkreis-berg-de) already has a mock-up of the sale at `/konzerte/karten`; this plan is about what would sit behind it.
+Status: phases 1 and 2 are built (free seating, reservations paid at the Kasse, the online surcharge, check-in at the door). Written 2026-10-31. The public site (bachkreis-berg-de) sells through `/konzerte/karten`; this plan is about what sits behind it.
 
 ## 1. Where things stand
 
@@ -23,7 +23,8 @@ So the tickets live in noten, and the site is only the shop window.
 | **Payment** | Start with **reservations paid at the Kasse** (phase 1). Online payment comes later, as an option per orchestra, and is off by default. If it comes, **Wero** first: it's the cheapest card-free option. | Principle 3, "Nothing costs money": PayPal or Stripe take about 1.5–3 % of each sale. Wero through a payment provider costs about 0.77 % (Payone/Sparkasse) or 0.85 % + 5 ct (VR Payment, plus a monthly fee after the first year), as of October 2026. Bank transfer is free, but someone has to match payments by hand. |
 | **Build or use pretix** | Build it only if the orchestra wants everything in one app. Otherwise use pretix: it's open source, has seat plans and a scanner app (pretixSCAN), and the hosted version charges a fee per ticket. | This is a real project, not a page: orders, cancellations, seat plans, a scanner and the legal texts. |
 | **Who gets the ticket money** | The Förderverein or the school; the board decides. | It sets the name on the order confirmation, in the legal notice and as the payment receiver. |
-| **Feature switch** | A new feature `tickets` that is **off unless a deployment turns it on**. | Today every feature is on by default (`src/lib/features.ts`). Selling tickets has legal and payment consequences, so an orchestra has to choose it. |
+| **Feature switch** | A new feature `tickets` that is **off unless a deployment turns it on** (`FEATURES_ON="karten"` or the preset). | Today every feature is on by default (`src/lib/features.ts`). Selling tickets has legal and payment consequences, so an orchestra has to choose it. |
+| **Online surcharge** | Decided: online tickets cost the Kasse price **plus a surcharge** that covers the fees, set per concert as a percentage (rounded up to the cent) and/or a fixed amount per ticket. Free tickets stay free; tickets sold at the Kasse have none. | Transparent everywhere: the website, the confirmation mail and the ticket page show price and surcharge apart, and say what the surcharge is for. Each ticket stores its surcharge (`tickets.fee_cents`), so the organiser sees how much of the takings go to fees. |
 
 ## 3. Data (D1, new migration `0010_tickets.sql`)
 
@@ -90,15 +91,17 @@ A new right, `karten.verkaufen`, opens `/karten/verkauf`. It's the same seat pla
 
 ### 4.3 The public sale (site → noten)
 
-The site reaches noten through the same service binding as the feed. Three endpoints:
+The site reaches noten through the same service binding as the feed. The feed marks concerts with an open sale (`tickets: true`).
 
-- `GET /api/karten/[concert]`: prices, seating and which seats are free. Cached for a few seconds and holding no personal data.
-- `POST /api/karten/[concert]/halten`: holds seats and returns an order id.
-- `POST /api/karten/bestellung/[id]`: name and e-mail, then sends the confirmation with the tickets.
+- `GET /api/karten/[concert]`: prices (Kasse price, surcharge and online price apart), seating and seats left. Cached for a few seconds and holding no personal data.
+- `POST /api/karten/[concert]`: name, e-mail and the number of tickets per kind; places the reservation if it still fits and sends the confirmation. Built for free seating, so no hold step.
+- Phase 3 (seat plans) adds the hold: `POST /api/karten/[concert]/halten`, then the order.
+
+The buyer's tickets are at `/karte/[order]` on noten (the order id is 128 random bits), one QR code per ticket. The QR codes are drawn by noten itself (`src/lib/tickets/qr.ts`), without a library.
 
 Abuse protection:
-- rate limits through the existing `rate_limits` table;
-- Cloudflare Turnstile (free) on the order, which the site already plans for its forms;
+- rate limits through the existing `rate_limits` table: per caller, per buyer's e-mail and per concert;
+- Cloudflare Turnstile (free) on the order, which the site already plans for its forms (not built yet);
 - at most 10 tickets per order.
 
 ### 4.4 Check-in at the door
