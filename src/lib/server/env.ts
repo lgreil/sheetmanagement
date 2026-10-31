@@ -25,6 +25,8 @@ export interface AppEnv {
 	ORCHESTRA_LINKS?: string;
 	/** Parts of the app this orchestra doesn't use, comma-separated: "leihmaterial, gema, anwesenheit" (#134); see src/lib/features.ts. */
 	FEATURES_OFF?: string;
+	/** The app's own address, e.g. "https://noten.example.org". Requests to the workers.dev address are redirected there. Optional. */
+	APP_URL?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
 	CALENDAR_ID?: string;
 	DRIVE_ARCHIVE_FOLDER_ID?: string;

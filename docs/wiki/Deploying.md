@@ -18,6 +18,19 @@ Follow [docs/setup-google.md](https://github.com/lgreil/sheetmanagement/blob/mai
 
 Open `/status` on your deployment to check every connection, then `/setup` to prepare the Repertoire sheet.
 
+## Your own domain (optional)
+
+The app runs fine on `workers.dev`. To move it to an address like `noten.example.org`:
+
+1. Add the domain to the same Cloudflare account as the Worker (its nameservers point to Cloudflare).
+2. Workers & Pages → the Worker → **Settings → Domains & Routes → Add → Custom domain**: `noten.example.org`. Cloudflare creates the DNS record and the certificate.
+3. `pnpm wrangler secret put APP_URL` with `https://noten.example.org`. The `workers.dev` address then redirects there (308, path and query kept), so old bookmarks and calendar subscriptions keep working.
+4. Google Cloud → the OAuth client: add `https://noten.example.org/auth/callback` under **Authorized redirect URIs** (keep the old one until everyone has moved).
+5. If email is connected, connect it again on `/status` from the new address: links in emails use the address it was connected from.
+6. Update the GitHub variable `APP_URL`.
+
+Members sign in once more, and anyone who installed the app or turned on notifications does that again on the new address: browsers keep both per address.
+
 ## What gets created on Cloudflare
 
 | Binding | What | Notes |
