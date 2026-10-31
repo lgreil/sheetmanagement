@@ -1,6 +1,7 @@
 import { fingerprint, type ErrorGroup } from '#lib/errors/errors.ts';
 import { reminderKey, type MarkShare, type PageMarks, type PartCheck, type PushDevice, type Store, type TourOutcome } from './types.ts';
 import { memoryData } from './data-memory.ts';
+import { memoryTickets } from './tickets-memory.ts';
 import { MIGRATIONS } from './sql.ts';
 
 /** Like SQLite's datetime('now'). */
@@ -168,6 +169,7 @@ export function memoryStore(now = () => Date.now()): Store {
 
 		// The orchestra's data (#186).
 		...memoryData(),
+		...memoryTickets(),
 
 		async hit(key, windowMinutes) {
 			const last = hits.get(key);

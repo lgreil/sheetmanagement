@@ -20,6 +20,9 @@ ORCHESTRA_NAME="Mein Orchester"
 # Parts of the app this orchestra doesn't use, comma-separated. Their pages, menu entries and
 # sheet tabs go away. Any of: leihmaterial, gema, anwesenheit, anmeldungen, wuensche, kalender, offline
 # FEATURES_OFF="leihmaterial, gema"
+# Parts that are off unless turned on here. "karten": concert tickets, reserved on the website
+# and checked at the door (docs/tickets-plan.md).
+# FEATURES_ON="karten"
 
 # The app's own domain, e.g. "https://noten.example.org". With it, the workers.dev address
 # redirects there, so sign-in, links and the installed app all use one address. Optional.

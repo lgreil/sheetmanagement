@@ -383,6 +383,14 @@ export const load: PageServerLoad = async ({ params, locals, url }) => {
 		signups: await signups(event, orchestra, locals),
 		attendance: await attendance(event, library, plan, locals),
 		attendanceSaved: url.searchParams.has('anwesenheit'),
+		// Concert tickets (docs/tickets-plan.md): the sale's setup and the door, for those who run them.
+		tickets:
+			event.type === 'konzert' && on.tickets
+				? {
+						manageUrl: rights.has('karten.verwalten') ? `/kalender/${encodeURIComponent(event.id)}/karten` : undefined,
+						doorUrl: rights.has('karten.einlass') && !event.past ? `/einlass/${encodeURIComponent(event.id)}` : undefined
+					}
+				: null,
 		// Planners add a rehearsal for an upcoming concert from its page: the form on /kalender, filled in.
 		addRehearsalUrl:
 			event.type === 'konzert' && !event.past && rights.has('termine.planen') ? `/kalender?neu=probe&konzert=${encodeURIComponent(event.id)}#termin` : undefined,

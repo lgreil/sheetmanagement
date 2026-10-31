@@ -17,9 +17,11 @@ const NOTEN = 'noten-v1';
 const MAX_PAGES = 80;
 /** Paths come relative to the base path; requests are matched by their absolute path. */
 const ASSETS = new Set([...immutable, ...assets].map(({ path }) => `/${path.replace(/^\//, '')}`));
+/** Big files only the door's phones need (the code reader for iPhones): kept once fetched, not on install. */
+const onDemand = (path: string) => path.includes('zxing_reader');
 
 sw.addEventListener('install', (event) => {
-	event.waitUntil(caches.open(APP).then((cache) => cache.addAll([...ASSETS])));
+	event.waitUntil(caches.open(APP).then((cache) => cache.addAll([...ASSETS].filter((path) => !onDemand(path)))));
 });
 
 sw.addEventListener('activate', (event) => {
@@ -102,7 +104,16 @@ sw.addEventListener('fetch', (event) => {
 
 	// The app's own files, fixed per version.
 	if (ASSETS.has(url.pathname)) {
-		event.respondWith(caches.match(url.pathname).then((cached) => cached ?? fetch(request)));
+		event.respondWith(
+			caches.match(url.pathname).then(
+				(cached) =>
+					cached ??
+					fetch(request).then(async (response) => {
+						if (response.ok && onDemand(url.pathname)) await (await caches.open(APP)).put(url.pathname, response.clone());
+						return response;
+					})
+			)
+		);
 		return;
 	}
 

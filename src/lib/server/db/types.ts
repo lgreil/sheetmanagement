@@ -6,6 +6,7 @@ import type { PreparedImport } from './schema.ts';
 import type { Stroke } from '#lib/practice/marks.ts';
 import type { PracticeDay } from '#lib/practice/practice.ts';
 import type { TourOutcome } from '#lib/tour/tour.ts';
+import type { Ticket, TicketOrder, TicketSale } from '#lib/tickets/tickets.ts';
 
 export interface PushDevice {
 	/** The push service's address for this device; also its id. */
@@ -177,6 +178,27 @@ export interface Store {
 	replaceData(tab: TabKey, rows: Record<string, string>[]): Promise<void>;
 	/** Replaces all tabs and rows at once and makes D1 the source; for the import from the sheet. */
 	importData(prepared: PreparedImport, tabs: TabKey[]): Promise<void>;
+
+	/** The ticket sale of a concert (docs/tickets-plan.md); null if it never had one. */
+	ticketSale(concertId: string): Promise<TicketSale | null>;
+	/** Every concert's sale, open or not. */
+	ticketSales(): Promise<TicketSale[]>;
+	saveTicketSale(sale: TicketSale): Promise<void>;
+	/**
+	 * Places an order with its tickets, only if they still fit under `capacity` together with
+	 * every ticket of the concert's orders that aren't cancelled; false, and nothing kept, if not.
+	 * Two orders at once can't both take the last seats.
+	 */
+	placeTicketOrder(order: TicketOrder, tickets: Ticket[], capacity: number): Promise<boolean>;
+	/** One order with its tickets. */
+	ticketOrder(id: string): Promise<{ order: TicketOrder; tickets: Ticket[] } | null>;
+	/** Every order of a concert, cancelled ones too, oldest first, with all their tickets. */
+	ticketOrders(concertId: string): Promise<{ orders: TicketOrder[]; tickets: Ticket[] }>;
+	setTicketOrderStatus(id: string, status: TicketOrder['status']): Promise<void>;
+	/** Check-ins from the door; a ticket keeps the first one, so a second phone can't overwrite it. */
+	checkInTickets(concertId: string, entries: { code: string; at: string; by: string }[]): Promise<void>;
+	/** Forgets a concert's orders, tickets and check-ins, and its sale; some weeks after the concert. */
+	deleteTicketsOf(concertId: string): Promise<void>;
 
 	/**
 	 * Counts one more use of `key` in a window of this many minutes and returns the count so

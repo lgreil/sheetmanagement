@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { env, waitUntil } from 'cloudflare:workers';
 import { brandColours, brandStyle, DEFAULT_LOGO, lookStyle, parseColour } from '#lib/branding.ts';
 import { config } from '#lib/config/index.ts';
-import { ALL_ON, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
+import { ALL_ON, OPT_IN, resolveFeatures, type Feature, type Features } from '#lib/features.ts';
 import { parseLinks } from '#lib/links.ts';
 import { validLogo, type StoredSettings } from '#lib/settings.ts';
 import type { KvStore } from './cache.ts';
@@ -25,6 +25,8 @@ export interface AppEnv {
 	ORCHESTRA_LINKS?: string;
 	/** Parts of the app this orchestra doesn't use, comma-separated: "leihmaterial, gema, anwesenheit" (#134); see src/lib/features.ts. */
 	FEATURES_OFF?: string;
+	/** Parts that are off unless turned on here, comma-separated: "karten" sells concert tickets (docs/tickets-plan.md). */
+	FEATURES_ON?: string;
 	/** The app's own address, e.g. "https://noten.example.org". Requests to the workers.dev address are redirected there. Optional. */
 	APP_URL?: string;
 	GOOGLE_SERVICE_ACCOUNT_JSON?: string;
@@ -100,7 +102,7 @@ export function defaultSettings() {
 		accentLight: parseColour(env.ORCHESTRA_ACCENT) ? undefined : config.accentLight,
 		look: config.look ?? 'bold',
 		links: parseLinks(env.ORCHESTRA_LINKS),
-		features: resolveFeatures(config.features, env.FEATURES_OFF).features
+		features: resolveFeatures(config.features, env.FEATURES_OFF, env.FEATURES_ON).features
 	};
 }
 
@@ -131,13 +133,21 @@ export function orchestra() {
 
 /** Which parts of the app are on for this deployment (#134): as saved on /einstellungen, else FEATURES_OFF and the preset. */
 export function features(): Features {
-	if (stored.featuresOff) return { ...ALL_ON, ...Object.fromEntries(stored.featuresOff.map((feature) => [feature, false])) };
-	return resolveFeatures(config.features, appEnv().FEATURES_OFF).features;
+	const deployment = resolveFeatures(config.features, appEnv().FEATURES_OFF, appEnv().FEATURES_ON).features;
+	if (!stored.featuresOff) return deployment;
+	// The page can turn an opt-in feature off, but only the deployment turns it on.
+	const optIn = Object.fromEntries(OPT_IN.map((feature) => [feature, deployment[feature]]));
+	return { ...ALL_ON, ...optIn, ...Object.fromEntries(stored.featuresOff.map((feature) => [feature, false])) };
+}
+
+/** Whether /einstellungen offers the feature: an opt-in one only once the deployment turned it on. */
+export function offeredFeature(feature: Feature): boolean {
+	return !OPT_IN.includes(feature) || resolveFeatures(config.features, appEnv().FEATURES_OFF, appEnv().FEATURES_ON).features[feature];
 }
 
 /** Words in FEATURES_OFF that name no feature, for /status. */
 export function unknownFeatures(): string[] {
-	return resolveFeatures(config.features, appEnv().FEATURES_OFF).unknown;
+	return resolveFeatures(config.features, appEnv().FEATURES_OFF, appEnv().FEATURES_ON).unknown;
 }
 
 export const isOn = (feature: Feature) => features()[feature];

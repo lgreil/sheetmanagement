@@ -600,7 +600,8 @@ export const de = {
 			wishes: 'Stücke und Ideen vorschlagen, mit +1.',
 			calendarFeed: 'Persönlicher Kalender zum Abonnieren im Profil.',
 			offline: 'Stimmen in „Meine Noten“ für die Probe ohne Netz speichern.',
-			seasons: 'Kleine Zeichnungen zur Jahreszeit: Schneeflocke, Blüte, Kürbis.'
+			seasons: 'Kleine Zeichnungen zur Jahreszeit: Schneeflocke, Blüte, Kürbis.',
+			tickets: 'Karten für Konzerte über die Website reservieren, bezahlt an der Abendkasse, mit Einlass per Handy.'
 		} as Record<string, string>,
 		instruments: 'Instrumente',
 		instrumentsLead:
@@ -640,7 +641,121 @@ export const de = {
 		wishes: 'Wünsche',
 		calendarFeed: 'Kalender-Abo',
 		offline: 'Noten offline speichern',
-		seasons: 'Jahreszeiten'
+		seasons: 'Jahreszeiten',
+		tickets: 'Konzertkarten'
+	},
+	/** Concert tickets (docs/tickets-plan.md): the sale's setup, the mail, the ticket page and the door. */
+	tickets: {
+		title: 'Karten',
+		/** On the concert's page, for organisers. */
+		manage: 'Kartenverkauf',
+		door: 'Einlass',
+		notAConcert: 'Karten gibt es nur für Konzerte.',
+		setup: {
+			lead: 'Reservierungen über die Website, bezahlt wird an der Abendkasse. Gedruckte Karten aus dem Sekretariat zählen hier noch nicht mit: lass für sie Plätze frei.',
+			open: 'Verkauf auf der Website geöffnet',
+			capacity: 'Plätze online',
+			capacityHint: 'So viele Karten gibt es über die Website. Freie Platzwahl.',
+			prices: 'Preise',
+			pricesHint: 'Eine Kartenart pro Zeile, der Preis an der Kasse zuletzt: „Erwachsene 12“, „Ermäßigt 6,50“, „Kinder bis 12 0“.',
+			fee: 'Online-Zuschlag',
+			feeHint: 'Kommt bei Online-Karten auf den Preis, um die Gebühren zu decken. Die Website, die Mail und die Karte zeigen ihn immer getrennt vom Preis; an der Kasse gibt es ihn nicht, Freikarten bleiben frei.',
+			feePercent: 'Prozent vom Preis',
+			feeCents: 'Fester Betrag pro Karte (€)',
+			feeExample: (price: string, fee: string, total: string) => `Beispiel: ${price} + ${fee} Online-Zuschlag = ${total}`,
+			noFee: 'Kein Online-Zuschlag: Online-Karten kosten dasselbe wie an der Kasse.',
+			online: 'Online',
+			onlineUntil: 'Online-Verkauf endet',
+			onlineUntilHint: 'Danach gibt es Karten nur noch an der Abendkasse.',
+			save: 'Speichern',
+			saved: 'Gespeichert.',
+			badPrices: 'Jede Zeile braucht eine Kartenart und einen Preis, keine Art doppelt.',
+			badCapacity: 'Die Plätze müssen eine Zahl zwischen 1 und 5000 sein.',
+			badFee: 'Der Zuschlag muss zwischen 0 und 20 % und 0 und 5 € liegen.',
+			badUntil: 'Das Ende des Online-Verkaufs fehlt oder liegt nach dem Konzertbeginn.',
+			past: 'Das Konzert ist vorbei. Die Gästeliste wird einige Wochen danach gelöscht.'
+		},
+		counts: {
+			sold: 'Reserviert',
+			left: 'Frei',
+			checkedIn: 'Eingelassen',
+			takings: 'An der Kasse zu kassieren',
+			fees: (fees: string) => `davon ${fees} Online-Zuschlag für die Gebühren`
+		},
+		orders: {
+			title: 'Reservierungen',
+			empty: 'Noch keine Reservierungen.',
+			tickets: (n: number) => (n === 1 ? '1 Karte' : `${n} Karten`),
+			cancelled: 'storniert',
+			paid: 'bezahlt',
+			cancel: 'Stornieren',
+			restore: 'Wiederherstellen',
+			markPaid: 'Bezahlt',
+			csv: 'Gästeliste als CSV',
+			csvHeader: (): string[] => ['Name', 'E-Mail', 'Karten', 'Kartenarten', 'Betrag', 'davon Online-Zuschlag', 'Status', 'Reserviert am'],
+			conflict: 'Für die wiederhergestellte Reservierung sind nicht mehr genug Plätze frei.'
+		},
+		mail: {
+			subject: (concert: string) => `Deine Karten: ${concert}`,
+			hello: (name: string) => `Hallo ${name},`,
+			reserved: (concert: string, date: string, time: string) => `deine Karten für ${concert} am ${date}${time ? `, ${time}` : ''} sind reserviert:`,
+			line: (n: number, label: string, price: string, fee: string, sum: string) => `${n} × ${label} à ${price}${fee} = ${sum}`,
+			lineFee: (base: string, fee: string) => ` (${base} + ${fee} Online-Zuschlag)`,
+			total: (total: string) => `Zusammen: ${total}`,
+			feeExplained: (fees: string) => `Darin sind ${fees} Online-Zuschlag. Er deckt die Gebühren des Online-Verkaufs; an der Kasse gekaufte Karten haben ihn nicht.`,
+			payAtDoor: 'Bezahlt wird an der Abendkasse, bevor du hineingehst.',
+			link: 'Deine Karten mit den Codes für den Einlass, zum Vorzeigen auf dem Handy oder ausgedruckt:',
+			codes: 'Die Codes deiner Karten:',
+			cancel: (orchestra: string) => `Du kannst nicht kommen? Antworte einfach auf diese Mail, dann geben wir die Plätze frei. Viel Freude beim Konzert!\n${orchestra}`
+		},
+		ticket: {
+			lead: 'Zeig die Codes am Einlass vor, auf dem Handy oder ausgedruckt. Jeder Code lässt eine Person hinein.',
+			of: (i: number, n: number) => `Karte ${i} von ${n}`,
+			freeSeating: 'Freie Platzwahl',
+			priceWithFee: (total: string, base: string, fee: string) => `${total} (${base} + ${fee} Online-Zuschlag)`,
+			total: 'Zusammen',
+			fee: 'Der Online-Zuschlag deckt die Gebühren des Online-Verkaufs. An der Kasse gekaufte Karten haben ihn nicht.',
+			payAtDoor: 'Bezahlt wird an der Abendkasse, bevor du hineingehst.',
+			cancelled: 'Diese Reservierung ist storniert. Die Codes gelten nicht mehr.',
+			print: 'Drucken',
+			code: 'Code'
+		},
+		doorPage: {
+			lead: 'Codes scannen und Gäste einlassen. Lade die Liste, solange du Netz hast; danach geht es auch ohne.',
+			load: 'Liste laden',
+			reload: 'Liste neu laden',
+			loaded: (n: number, time: string) => `${n} Karten, geladen um ${time}.`,
+			noList: 'Noch keine Liste auf diesem Gerät. Lade sie, solange du Netz hast.',
+			loadFailed: 'Die Liste konnte nicht geladen werden. Mit der gespeicherten geht es weiter.',
+			scan: 'Scannen',
+			stop: 'Kamera aus',
+			noCamera: 'Die Kamera ist nicht verfügbar. Gib den Code ein oder such nach dem Namen.',
+			code: 'Code eingeben',
+			check: 'Prüfen',
+			welcome: 'Willkommen!',
+			used: (time: string) => `Schon eingelassen um ${time}`,
+			unknown: 'Unbekannter Code',
+			search: 'Name suchen',
+			admit: 'Einlassen',
+			admitted: 'drin',
+			counter: (n: number, of: number) => `${n} von ${of} drin`,
+			pending: (n: number) => (n === 1 ? '1 Einlass wartet auf Netz' : `${n} Einlässe warten auf Netz`),
+			synced: 'Alles übertragen',
+			offline: 'Ohne Netz: Einlässe werden gespeichert und später übertragen.'
+		},
+		problems: {
+			name: 'Bitte gib deinen Namen an.',
+			email: 'Bitte gib eine gültige E-Mail-Adresse an.',
+			empty: 'Wähle mindestens eine Karte.',
+			tooMany: 'Höchstens 10 Karten pro Bestellung.',
+			unknownType: 'Diese Kartenart gibt es nicht.',
+			closed: 'Für dieses Konzert gibt es keine Karten online.',
+			ended: 'Der Online-Verkauf ist vorbei. Karten gibt es an der Abendkasse.',
+			soldout: 'Online ist alles vergeben. Vielleicht gibt es an der Abendkasse noch Karten.',
+			full: 'So viele Plätze sind nicht mehr frei.',
+			rate: 'Zu viele Bestellungen in kurzer Zeit. Versuch es später noch einmal.',
+			noConcert: 'Dieses Konzert gibt es nicht.'
+		} as Record<string, string>
 	},
 	pwa: {
 		description: 'Noten, Proben und Konzerte des Orchesters, auch offline im Probenraum.',
@@ -1162,6 +1277,8 @@ export const de = {
 		'anmeldungen.sehen': 'Zu- und Absagen aller sehen',
 		'anwesenheit.erfassen': 'Anwesenheit bei Proben erfassen und sehen',
 		'termine.planen': 'Terminumfragen anlegen, abschließen und alle sehen',
+		'karten.verwalten': 'Kartenverkauf für Konzerte einrichten und die Gästeliste sehen',
+		'karten.einlass': 'Karten am Einlass prüfen',
 		'mitglieder.verwalten': 'Mitglieder und Rechte verwalten'
 	},
 	admin: {
@@ -1749,7 +1866,8 @@ export const de = {
 		bootstrapAdmins: (n: number) => `${n} Bootstrap-Admins`,
 		/** Background jobs (#160). */
 		jobs: 'Hintergrundaufgaben',
-		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden', export: 'In die Tabelle schreiben', backup: 'Sicherung in Drive' },
+		jobNames: { warm: 'Caches füllen', reminders: 'Erinnerungen', check: 'Verbindung prüfen', parts: 'Stimmen prüfen', retention: 'Aufbewahrung', errors: 'Fehler melden', export: 'In die Tabelle schreiben', backup: 'Sicherung in Drive', tickets: 'Gästelisten löschen' },
+		ticketsPruned: (n: number) => (n === 0 ? 'Keine Gästeliste fällig.' : n === 1 ? 'Die Gästeliste eines vergangenen Konzerts gelöscht.' : `Gästelisten von ${n} vergangenen Konzerten gelöscht.`),
 		retentionOff: 'Keine Aufbewahrungsfrist eingestellt; alle Namen bleiben.',
 		retentionDone: (n: number, cutoff: string) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'} von vor dem ${cutoff} ohne Namen.`,
 		partsChecked: (done: number, left: number) => `${done} ${done === 1 ? 'Stimme' : 'Stimmen'} geprüft, ${left ? `${left} noch offen` : 'alle geprüft'}.`,

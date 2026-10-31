@@ -330,6 +330,52 @@ describe.each([
 		expect(await store.getState('check')).toBe('failed');
 	});
 
+	it('sells concert tickets up to the capacity and checks them in once', async () => {
+		const store = make();
+		const sale = {
+			concertId: 'c1',
+			seating: 'free' as const,
+			capacity: 3,
+			prices: [{ type: 'erwachsene', label: 'Erwachsene', cents: 1200 }],
+			onlineFee: { percent: 3.5, cents: 25 },
+			onlineUntil: '2026-11-21T15:00:00.000Z',
+			open: true
+		};
+		await store.saveTicketSale(sale);
+		await store.saveTicketSale({ ...sale, capacity: 4 });
+		expect(await store.ticketSale('c1')).toEqual({ ...sale, capacity: 4 });
+		expect(await store.ticketSale('c2')).toBeNull();
+
+		const order = (id: string) => ({ id, concertId: 'c1', name: `Gast ${id}`, email: `${id}@x.org`, channel: 'online' as const, status: 'reserved' as const, createdAt: '' });
+		const tickets = (orderId: string, n: number) =>
+			Array.from({ length: n }, (_, i) => ({ code: `${orderId}-${i}`, orderId, concertId: 'c1', seat: '', type: 'erwachsene', cents: 1267, feeCents: 67 }));
+		expect(await store.placeTicketOrder(order('a'), tickets('a', 3), 4)).toBe(true);
+		// Two more don't fit, and the order isn't kept either.
+		expect(await store.placeTicketOrder(order('b'), tickets('b', 2), 4)).toBe(false);
+		expect(await store.ticketOrder('b')).toBeNull();
+		expect(await store.placeTicketOrder(order('c'), tickets('c', 1), 4)).toBe(true);
+		// A cancelled order frees its seats.
+		await store.setTicketOrderStatus('a', 'cancelled');
+		expect(await store.placeTicketOrder(order('d'), tickets('d', 3), 4)).toBe(true);
+
+		const found = await store.ticketOrder('c');
+		expect(found?.order).toMatchObject({ name: 'Gast c', email: 'c@x.org', status: 'reserved' });
+		expect(found?.tickets).toEqual([{ code: 'c-0', orderId: 'c', concertId: 'c1', seat: '', type: 'erwachsene', cents: 1267, feeCents: 67 }]);
+
+		await store.checkInTickets('c1', [{ code: 'c-0', at: '2026-11-21T16:01:00.000Z', by: 'tuer@x.org' }]);
+		await store.checkInTickets('c1', [{ code: 'c-0', at: '2026-11-21T16:05:00.000Z', by: 'tuer2@x.org' }]);
+		// Not this concert's ticket: nothing happens.
+		await store.checkInTickets('c2', [{ code: 'd-0', at: '2026-11-21T16:05:00.000Z', by: 'tuer2@x.org' }]);
+		const all = await store.ticketOrders('c1');
+		expect(all.orders.map((o) => o.id)).toEqual(['a', 'c', 'd']);
+		expect(all.tickets.find((t) => t.code === 'c-0')).toMatchObject({ checkedInAt: '2026-11-21T16:01:00.000Z', checkedInBy: 'tuer@x.org' });
+		expect(all.tickets.find((t) => t.code === 'd-0')?.checkedInAt).toBeUndefined();
+
+		await store.deleteTicketsOf('c1');
+		expect(await store.ticketOrders('c1')).toEqual({ orders: [], tickets: [] });
+		expect(await store.ticketSales()).toEqual([]);
+	});
+
 	it('creates its schema on first use', async () => {
 		const store = make();
 		await store.getState('anything');

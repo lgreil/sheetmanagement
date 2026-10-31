@@ -326,6 +326,8 @@
 				{#if data.program.canEdit && !several}
 					<a href={data.program.groups[0].editUrl}><Icon name="edit" size={16} />{t.editor.edit}</a>
 				{/if}
+				{#if data.tickets?.manageUrl}<a href={data.tickets.manageUrl}><Icon name="list" size={16} />{t.tickets.manage}</a>{/if}
+				{#if data.tickets?.doorUrl}<a href={data.tickets.doorUrl}><Icon name="check" size={16} />{t.tickets.door}</a>{/if}
 			</div>
 		</div>
 		{#if data.program.published !== null}
